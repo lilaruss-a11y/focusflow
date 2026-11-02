@@ -192,77 +192,74 @@
     <!-- ============================================== -->
     <!-- TAB 1: GOOGLE CALENDAR TIMELINE                -->
     <!-- ============================================== -->
-    <div id="view-timeline" class="space-y-6">
-      <div class="bg-dark-surface/90 border border-dark-border rounded-2xl p-6 shadow-xl">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-dark-border pb-5">
-          <div>
-            <div class="flex items-center gap-2">
-              <h2 class="text-xl font-bold text-slate-100">Today's Schedule &amp; Calendar Grid</h2>
-              <span class="text-xs px-2.5 py-0.5 rounded-full bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30 font-medium">Visual Day Plan</span>
+    <div id="view-timeline" class="space-y-3">
+      <!-- CONSOLIDATED SINGLE-ROW STICKY COMMAND BAR -->
+      <div class="sticky top-0 z-30 bg-dark-surface/95 backdrop-blur-md border border-dark-border rounded-2xl p-2 sm:p-2.5 shadow-xl flex flex-wrap items-center justify-between gap-2">
+        <!-- Left: Date, Today, View Switcher & Mini Week Strip -->
+        <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          <button type="button" onclick="jumpTimelineToToday()" class="px-2 py-1 rounded-lg bg-dark-base hover:bg-dark-elevated border border-dark-border text-slate-200 font-semibold text-xs flex items-center gap-1.5 transition shadow-sm" title="Jump to Today">
+            <span class="w-1.5 h-1.5 rounded-full bg-pastel-mint"></span>
+            <span id="timeline-today-date" class="font-bold text-xs truncate max-w-[120px] sm:max-w-none">Today</span>
+          </button>
+
+          <!-- Ultra-compact Mini 7-Day Week Strip (Inline) -->
+          <div class="flex items-center p-0.5 rounded-xl bg-dark-base/80 border border-dark-border gap-0.5 shadow-inner">
+            <button type="button" onclick="changeTimelineWeek(-1)" class="w-5 h-6 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0" title="Previous Week">
+              <i data-lucide="chevron-left" class="w-3 h-3"></i>
+            </button>
+            <div id="timeline-week-strip" class="flex items-center gap-0.5 px-0.5">
+              <!-- Dynamically populated: M 2, T 3, W 4... mini pills -->
             </div>
-            <p class="text-xs text-slate-400 mt-1">Physical time blocks display exactly when each event happens, how long it takes, and where you have breathing room.</p>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button type="button" onclick="openNewEventModal()" class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs shadow-md shadow-pastel-mint/20 hover:bg-emerald-300 transition">
-              <i data-lucide="plus" class="w-4 h-4"></i>
-              <span>Add Event</span>
-            </button>
-            <button type="button" onclick="openGCalSyncModal()" class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs shadow-md shadow-pastel-sky/20 hover:bg-sky-300 transition">
-              <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-              <span>Sync Calendars</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Timeline Control Bar: View Switcher, Date, Jump to Now -->
-        <div class="pt-4 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <!-- View Mode Switcher: Calendar Grid vs Compact List -->
-          <div class="flex items-center p-1 rounded-xl bg-dark-base border border-dark-border gap-1">
-            <button type="button" onclick="switchTimelineView('calendar')" id="btn-view-calendar" class="px-3.5 py-1.5 rounded-lg font-bold bg-pastel-mint text-dark-base transition flex items-center gap-1.5 shadow-sm">
-              <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-              <span>Calendar Day Grid</span>
-            </button>
-            <button type="button" onclick="switchTimelineView('list')" id="btn-view-list" class="px-3.5 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white transition flex items-center gap-1.5">
-              <i data-lucide="list" class="w-3.5 h-3.5"></i>
-              <span>List View</span>
+            <button type="button" onclick="changeTimelineWeek(1)" class="w-5 h-6 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0" title="Next Week">
+              <i data-lucide="chevron-right" class="w-3 h-3"></i>
             </button>
           </div>
 
-          <div class="flex items-center gap-2 flex-wrap">
-            <button type="button" onclick="jumpTimelineToToday()" class="px-3 py-1.5 rounded-xl bg-dark-base hover:bg-dark-elevated border border-dark-border text-slate-300 hover:text-white font-semibold text-xs flex items-center gap-1 transition shadow-sm" title="Jump to Today">
-              <i data-lucide="calendar-days" class="w-3.5 h-3.5 text-pastel-sky"></i>
-              <span>Today</span>
+          <!-- View Mode Switcher -->
+          <div class="flex items-center p-0.5 rounded-xl bg-dark-base border border-dark-border gap-0.5">
+            <button type="button" onclick="switchTimelineView('calendar')" id="btn-view-calendar" class="px-2 py-1 rounded-lg font-bold bg-pastel-mint text-dark-base text-xs transition flex items-center gap-1 shadow-sm">
+              <i data-lucide="calendar" class="w-3 h-3"></i>
+              <span class="hidden sm:inline">Grid</span>
             </button>
-            <span id="timeline-today-date" class="font-mono text-slate-300 font-semibold px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border">
-              <!-- Live Day & Date -->
-            </span>
-            <button type="button" onclick="scrollToCurrentTimeMarker()" class="px-3 py-1.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-pastel-mint font-semibold text-xs flex items-center gap-1 transition" title="Scroll to Current Time">
-              <span class="w-2 h-2 rounded-full bg-pastel-mint animate-pulse"></span>
-              <span>Jump to Now</span>
+            <button type="button" onclick="switchTimelineView('list')" id="btn-view-list" class="px-2 py-1 rounded-lg font-medium text-slate-400 hover:text-white text-xs transition flex items-center gap-1">
+              <i data-lucide="list" class="w-3 h-3"></i>
+              <span class="hidden sm:inline">List</span>
             </button>
+          </div>
+
+          <!-- Hour Block Size / Zoom Stepper -->
+          <div class="flex items-center p-0.5 rounded-xl bg-dark-base border border-dark-border gap-0.5 shadow-sm text-xs" title="Adjust hour block height to see events more clearly">
+            <button type="button" onclick="adjustHourHeight(-16)" class="w-5 h-6 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-xs transition" title="Smaller hour blocks">-</button>
+            <span id="calendar-zoom-label" class="px-1.5 font-mono text-[10px] text-slate-300 font-semibold select-none">84px</span>
+            <button type="button" onclick="adjustHourHeight(16)" class="w-5 h-6 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-xs transition" title="Taller hour blocks">+</button>
           </div>
         </div>
 
-        <!-- 7-DAY WEEK SELECTOR STRIP -->
-        <div class="pt-3">
-          <div class="p-2 rounded-2xl bg-dark-base/80 border border-dark-border flex items-center justify-between gap-1 shadow-inner">
-            <button type="button" onclick="changeTimelineWeek(-1)" class="w-8 h-10 sm:w-9 sm:h-11 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0" title="Previous Week">
-              <i data-lucide="chevron-left" class="w-4 h-4"></i>
+        <!-- Right: Undo/Redo, Add Event, Sync, Now -->
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <!-- Calendar Undo / Redo controls -->
+          <div class="flex items-center p-0.5 rounded-xl bg-dark-base border border-dark-border gap-0.5 shadow-sm">
+            <button type="button" id="calendar-undo-btn" onclick="calendarHistory.undo()" class="p-1 rounded-lg text-slate-300 hover:text-white transition opacity-30 cursor-not-allowed flex items-center gap-0.5 text-xs" title="Undo calendar edit (⌘Z)" disabled>
+              <i data-lucide="undo-2" class="w-3.5 h-3.5 text-pastel-sky"></i>
             </button>
-            
-            <div id="timeline-week-strip" class="grid grid-cols-7 gap-1 sm:gap-1.5 flex-1 px-1">
-              <!-- Dynamically populated: Mon, Tue, Wed, Thu, Fri, Sat, Sun buttons -->
-            </div>
-
-            <button type="button" onclick="changeTimelineWeek(1)" class="w-8 h-10 sm:w-9 sm:h-11 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0" title="Next Week">
-              <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <div class="w-px h-3 bg-dark-border"></div>
+            <button type="button" id="calendar-redo-btn" onclick="calendarHistory.redo()" class="p-1 rounded-lg text-slate-300 hover:text-white transition opacity-30 cursor-not-allowed flex items-center gap-0.5 text-xs" title="Redo calendar edit (⌘⇧Z)" disabled>
+              <i data-lucide="redo-2" class="w-3.5 h-3.5 text-pastel-sky"></i>
             </button>
           </div>
-        </div>
 
-        <!-- OPTIONAL ADHD SCHEDULE SUGGESTIONS (APPROVAL REQUIRED) -->
-        <div id="timeline-schedule-suggestions" class="pt-2 hidden space-y-2">
-          <!-- Dynamically populated suggestions with [Approve & Add] buttons -->
+          <button type="button" onclick="openNewEventModal()" class="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs shadow-md shadow-pastel-mint/20 hover:bg-emerald-300 transition">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>Add Event</span>
+          </button>
+          <button type="button" onclick="openGCalSyncModal()" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs shadow-md shadow-pastel-sky/20 hover:bg-sky-300 transition">
+            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+            <span>Sync</span>
+          </button>
+          <button type="button" onclick="scrollToCurrentTimeMarker()" class="px-2 py-1.5 rounded-xl bg-dark-base hover:bg-slate-700 border border-dark-border text-pastel-mint font-semibold text-xs flex items-center gap-1 transition" title="Scroll to Current Time">
+            <span class="w-1.5 h-1.5 rounded-full bg-pastel-mint animate-pulse"></span>
+            <span class="hidden md:inline">Now</span>
+          </button>
         </div>
       </div>
 
@@ -286,7 +283,7 @@
         <!-- Scrollable Hourly Grid Canvas -->
         <div id="timeline-calendar-scroll-canvas" class="relative max-h-[750px] overflow-y-auto">
           <!-- Calendar Day Grid (Left Time Gutter + Main Event Column) -->
-          <div id="timeline-day-grid" class="flex relative min-w-[320px]" style="height: 1344px;">
+          <div id="timeline-day-grid" class="flex relative min-w-[320px]" style="height: 1680px;">
             <!-- Left Time Gutter (Hours 7 AM - 11 PM) -->
             <div id="timeline-time-gutter" class="w-16 sm:w-20 shrink-0 border-r border-dark-border bg-dark-base/40 relative select-none">
               <!-- Hour labels rendered dynamically -->
@@ -1265,47 +1262,174 @@
   <!-- ============================================== -->
   <div id="event-tools-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
     <div class="bg-dark-surface border border-dark-border rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
-      <div class="p-5 border-b border-dark-border flex items-center justify-between bg-dark-elevated">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-dark-base border border-dark-border flex items-center justify-center text-pastel-mint" id="tool-modal-icon">
-            <i data-lucide="zap" class="w-5 h-5"></i>
+      <div class="p-4 sm:p-5 border-b border-dark-border flex items-center justify-between bg-dark-elevated">
+        <div class="flex items-center gap-3 min-w-0 flex-1 pr-2">
+          <div class="w-10 h-10 rounded-xl bg-dark-base border border-dark-border flex items-center justify-center text-pastel-sky shrink-0" id="tool-modal-icon">
+            <i data-lucide="calendar" class="w-5 h-5"></i>
           </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <span id="tool-modal-tag" class="text-xs font-semibold px-2 py-0.5 rounded bg-dark-base text-slate-300 border border-dark-border">Category</span>
-              <span id="tool-modal-time" class="text-xs text-slate-400 font-mono">09:00 - 10:00 (60m)</span>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span id="tool-modal-tag" class="text-[10px] font-bold px-2 py-0.5 rounded bg-dark-base text-slate-300 border border-dark-border">FOCUS</span>
+              <span id="tool-modal-time" class="text-xs text-pastel-sky font-mono font-bold">9:00 AM – 10:00 AM (1 hr)</span>
             </div>
-            <h3 id="tool-modal-title" class="text-lg font-bold text-white mt-0.5">Event Title</h3>
+            <h3 id="tool-modal-title" class="text-base sm:text-lg font-bold text-white mt-0.5 truncate">Event Title</h3>
           </div>
         </div>
-        <div class="flex items-center gap-2">
-          <button type="button" onclick="deleteActiveModalEvent()" class="px-2.5 py-1.5 rounded-xl bg-dark-base hover:bg-rose-950/40 text-rose-300 border border-dark-border text-xs flex items-center gap-1.5 transition" title="Delete this event from schedule">
-            <i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-400"></i>
-            <span class="hidden sm:inline font-semibold">Delete</span>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button type="button" id="btn-enter-edit-mode" onclick="switchToolTab('edit')" class="px-3 py-1.5 rounded-xl bg-pastel-sky hover:bg-sky-300 text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-sm transition">
+            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+            <span>Edit Event</span>
           </button>
-          <button type="button" onclick="closeToolsModal()" class="text-slate-400 hover:text-white p-2 rounded-lg bg-dark-base">
+          <button type="button" onclick="deleteActiveModalEvent()" class="p-2 rounded-xl bg-dark-base hover:bg-rose-950/40 text-rose-300 border border-dark-border text-xs flex items-center gap-1 transition" title="Delete this event from schedule">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-400"></i>
+          </button>
+          <button type="button" onclick="closeToolsModal()" class="text-slate-400 hover:text-white p-2 rounded-xl bg-dark-base border border-dark-border">
             <i data-lucide="x" class="w-4 h-4"></i>
           </button>
         </div>
       </div>
 
       <!-- Tool Tabs -->
-      <div class="grid grid-cols-3 border-b border-dark-border bg-dark-surface p-3 gap-2">
-        <button onclick="switchToolTab('magic')" id="tooltab-magic" class="py-2.5 px-3 rounded-xl text-xs font-semibold bg-pastel-mint text-dark-base flex items-center justify-center gap-1.5 transition">
-          <i data-lucide="wand-2" class="w-4 h-4"></i>
+      <div class="grid grid-cols-4 border-b border-dark-border bg-dark-surface p-2 gap-1.5 text-xs">
+        <button onclick="switchToolTab('details')" id="tooltab-details" class="py-2 px-2 rounded-xl font-bold bg-pastel-sky text-dark-base flex items-center justify-center gap-1 transition shadow-sm">
+          <i data-lucide="info" class="w-3.5 h-3.5"></i>
+          <span>Details</span>
+        </button>
+        <button onclick="switchToolTab('edit')" id="tooltab-edit" class="py-2 px-2 rounded-xl font-semibold bg-dark-elevated text-slate-300 hover:text-white flex items-center justify-center gap-1 transition">
+          <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+          <span>Edit Form</span>
+        </button>
+        <button onclick="switchToolTab('magic')" id="tooltab-magic" class="py-2 px-2 rounded-xl font-semibold bg-dark-elevated text-slate-300 hover:text-white flex items-center justify-center gap-1 transition">
+          <i data-lucide="wand-2" class="w-3.5 h-3.5"></i>
           <span>Magic ToDo</span>
         </button>
-        <button onclick="switchToolTab('estimator')" id="tooltab-estimator" class="py-2.5 px-3 rounded-xl text-xs font-semibold bg-dark-elevated text-slate-300 hover:text-white flex items-center justify-center gap-1.5 transition">
-          <i data-lucide="gauge" class="w-4 h-4"></i>
+        <button onclick="switchToolTab('estimator')" id="tooltab-estimator" class="py-2 px-2 rounded-xl font-semibold bg-dark-elevated text-slate-300 hover:text-white flex items-center justify-center gap-1 transition">
+          <i data-lucide="gauge" class="w-3.5 h-3.5"></i>
           <span>Estimator</span>
-        </button>
-        <button onclick="switchToolTab('chef')" id="tooltab-chef" class="py-2.5 px-3 rounded-xl text-xs font-semibold bg-dark-elevated text-slate-300 hover:text-white flex items-center justify-center gap-1.5 transition">
-          <i data-lucide="chef-hat" class="w-4 h-4"></i>
-          <span>Reverse Chef</span>
         </button>
       </div>
 
       <div class="p-6 overflow-y-auto flex-1 space-y-4">
+        <!-- TAB 0: READ-ONLY DETAILS VIEW (Opened by default without editing) -->
+        <div id="toolview-details" class="space-y-4">
+          <div class="p-4 rounded-2xl bg-dark-base border border-dark-border space-y-3">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <span class="text-xs font-mono font-bold text-pastel-sky flex items-center gap-1.5">
+                <i data-lucide="clock" class="w-4 h-4 text-pastel-sky"></i>
+                <span id="view-details-time-range">9:00 AM – 10:00 AM (60m)</span>
+              </span>
+              <span id="view-details-category-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-pastel-sky/15 text-pastel-sky border border-pastel-sky/30">
+                FOCUS
+              </span>
+            </div>
+
+            <!-- Location with Direct Google Maps Link -->
+            <div id="view-details-location-row" class="hidden pt-1">
+              <span class="text-[10px] text-slate-400 font-semibold block mb-0.5">Location:</span>
+              <a id="view-details-maps-link" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs text-pastel-sky hover:underline font-semibold bg-dark-elevated hover:bg-slate-700 border border-dark-border px-3 py-1.5 rounded-xl transition shadow-sm">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-pastel-sky"></i>
+                <span id="view-details-location-text">Open in Google Maps</span>
+                <i data-lucide="external-link" class="w-3 h-3 text-slate-400 ml-1"></i>
+              </a>
+            </div>
+
+            <!-- Boundary / Good-Enough Rule -->
+            <div id="view-details-goodenough-row" class="hidden pt-1">
+              <span class="text-[10px] text-pastel-butter font-semibold block mb-0.5">🎯 B-Minus / Stopping Rule (Anti-Rabbit Hole):</span>
+              <p id="view-details-goodenough-text" class="text-xs text-slate-200 bg-pastel-butter/10 border border-pastel-butter/30 p-2.5 rounded-xl leading-relaxed"></p>
+            </div>
+
+            <!-- Description / Notes -->
+            <div id="view-details-notes-row" class="hidden pt-1">
+              <span class="text-[10px] text-slate-400 font-semibold block mb-0.5">Notes &amp; Agenda:</span>
+              <p id="view-details-notes-text" class="text-xs text-slate-300 bg-dark-elevated p-2.5 rounded-xl leading-relaxed whitespace-pre-wrap"></p>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div class="flex items-center justify-between pt-2 border-t border-dark-border gap-2">
+            <button type="button" onclick="switchToolTab('edit')" class="px-4 py-2 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-md hover:bg-sky-300 transition">
+              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+              <span>Edit Details</span>
+            </button>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="launchEventIntoTaskmaster()" class="px-4 py-2 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-md hover:bg-emerald-300 transition">
+                <i data-lucide="play" class="w-3.5 h-3.5 fill-dark-base"></i>
+                <span>Start Focus HUD</span>
+              </button>
+              <button type="button" onclick="closeToolsModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs">Close</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TOOL 0: EDIT EVENT DETAILS -->
+        <div id="toolview-edit" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Event Title</label>
+              <input type="text" id="edit-event-title" placeholder="Event Name" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-sky">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Start Time</label>
+              <input type="time" id="edit-event-start" onchange="onEditEventTimeChange('start')" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-sky">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">End Time</label>
+              <input type="time" id="edit-event-end" onchange="onEditEventTimeChange('end')" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-sky">
+            </div>
+
+            <div class="sm:col-span-2">
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-xs font-semibold text-slate-300">Duration (Minutes)</label>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="setEditEventDuration(15)" class="px-1.5 py-0.5 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 text-[10px]">15m</button>
+                  <button type="button" onclick="setEditEventDuration(30)" class="px-1.5 py-0.5 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 text-[10px]">30m</button>
+                  <button type="button" onclick="setEditEventDuration(45)" class="px-1.5 py-0.5 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 text-[10px]">45m</button>
+                  <button type="button" onclick="setEditEventDuration(60)" class="px-1.5 py-0.5 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 text-[10px]">1h</button>
+                  <button type="button" onclick="setEditEventDuration(90)" class="px-1.5 py-0.5 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 text-[10px]">1.5h</button>
+                  <button type="button" onclick="setEditEventDuration(120)" class="px-1.5 py-0.5 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 text-[10px]">2h</button>
+                </div>
+              </div>
+              <input type="number" id="edit-event-duration" min="5" max="480" step="5" onchange="onEditEventTimeChange('duration')" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-sky">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Category &amp; Color</label>
+              <select id="edit-event-category" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs">
+                <option value="focus">Deep Focus &amp; Work (Sky Blue)</option>
+                <option value="care">Self-Care &amp; Habits (Mint Green)</option>
+                <option value="meal">Meal &amp; Nutrition (Coral Peach)</option>
+                <option value="chores">Household &amp; Chores (Butter Yellow)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Location / Link</label>
+              <input type="text" id="edit-event-location" placeholder="e.g. Room 204 or Zoom URL" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-sky">
+            </div>
+
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-semibold text-pastel-butter mb-1">B-Minus / Good-Enough Boundary (Stop rabbit holes)</label>
+              <input type="text" id="edit-event-goodenough" placeholder="e.g. Outline key points and wrap up; don't format slides" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-butter">
+            </div>
+
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Notes / Description</label>
+              <textarea id="edit-event-notes" rows="3" placeholder="Additional details or meeting agenda..." class="w-full bg-dark-base border border-dark-border rounded-xl p-2.5 text-white text-xs focus:border-pastel-sky"></textarea>
+            </div>
+          </div>
+
+          <div class="pt-2 flex justify-end gap-2 border-t border-dark-border">
+            <button type="button" onclick="closeToolsModal()" class="px-4 py-2 rounded-xl bg-dark-base border border-dark-border text-slate-300 text-xs">Cancel</button>
+            <button type="button" onclick="saveEventDetailsFromModal()" class="px-5 py-2 rounded-xl bg-pastel-sky hover:bg-sky-300 text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-md shadow-pastel-sky/20 transition">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>
+              <span>Save Changes</span>
+            </button>
+          </div>
+        </div>
+
         <!-- TOOL 1: MAGIC TODO -->
         <div id="toolview-magic" class="space-y-4">
           <div class="bg-dark-base border border-pastel-mint/30 rounded-xl p-3 space-y-2 text-xs text-slate-300">
@@ -2213,15 +2337,23 @@
           <label class="block text-slate-300 mb-1 font-semibold">Event Title</label>
           <input type="text" id="new-event-title" placeholder="e.g. Study Chemistry or Cook Lunch" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white">
         </div>
-        <div class="grid grid-cols-2 gap-2">
+        <div class="grid grid-cols-3 gap-2">
           <div>
             <label class="block text-slate-300 mb-1 font-semibold">Start Time</label>
-            <input type="time" id="new-event-start" value="14:00" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono">
+            <input type="time" id="new-event-start" value="09:00" onchange="onNewEventTimeChange('start')" class="w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-2 text-white font-mono text-xs">
           </div>
           <div>
-            <label class="block text-slate-300 mb-1 font-semibold">Duration (Mins)</label>
-            <input type="number" id="new-event-duration" value="45" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono">
+            <label class="block text-slate-300 mb-1 font-semibold">End Time</label>
+            <input type="time" id="new-event-end" value="10:00" onchange="onNewEventTimeChange('end')" class="w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-2 text-white font-mono text-xs">
           </div>
+          <div>
+            <label class="block text-slate-300 mb-1 font-semibold">Duration</label>
+            <input type="number" id="new-event-duration" value="60" min="5" max="480" step="5" onchange="onNewEventTimeChange('duration')" class="w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-2 text-white font-mono text-xs">
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-1 font-semibold">Location / Link</label>
+          <input type="text" id="new-event-location" placeholder="e.g. 101 Main St or Zoom URL" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs">
         </div>
         <div>
           <label class="block text-slate-300 mb-1 font-semibold">Category</label>
@@ -2376,7 +2508,7 @@
               <i data-lucide="link" class="w-4 h-4"></i>
               <span id="btn-connect-gcal-text">Connect with Google Calendar</span>
             </button>
-            <button type="button" id="btn-sync-gcal-now" onclick="syncGoogleCalendarDirectNow()" class="hidden px-4 py-2.5 rounded-xl bg-pastel-mint hover:bg-emerald-300 text-dark-base font-bold text-xs flex items-center gap-2 shadow-md transition">
+            <button type="button" id="btn-sync-gcal-now" onclick="syncGoogleCalendarDirectNow(true)" class="hidden px-4 py-2.5 rounded-xl bg-pastel-mint hover:bg-emerald-300 text-dark-base font-bold text-xs flex items-center gap-2 shadow-md transition">
               <i data-lucide="refresh-cw" class="w-4 h-4"></i>
               <span>Sync Live Events Now</span>
             </button>
@@ -2408,7 +2540,7 @@
           </div>
           <div class="flex gap-2">
             <button type="button" onclick="closeGCalSyncModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs hover:bg-slate-800 transition">Close</button>
-            <button type="button" id="sync-all-cals-btn" onclick="syncGoogleCalendarDirectNow()" class="px-5 py-2.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-pastel-mint/20 hover:bg-emerald-300 transition">
+            <button type="button" id="sync-all-cals-btn" onclick="syncGoogleCalendarDirectNow(true)" class="px-5 py-2.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-pastel-mint/20 hover:bg-emerald-300 transition">
               <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
               <span>Sync Live Events</span>
             </button>
@@ -2453,25 +2585,15 @@
 
       <p id="ff-sync-help" class="text-[11px] text-slate-400 leading-relaxed">Cloud sync keeps your planner the same on your phone and computer. Changes save automatically.</p>
 
-      <!-- Email & Password Form (Works natively inside iPhone app with NO redirects) -->
-      <div id="ff-sync-email-form" class="space-y-2 pt-1 border-t border-dark-border">
-        <span class="text-[10px] text-pastel-mint font-semibold block">Sign in with Email (Recommended for iPhone):</span>
-        <input type="email" id="ff-email-input" placeholder="Your email (e.g. lilaruss@gmail.com)" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-mint">
-        <input type="password" id="ff-password-input" placeholder="Password (at least 6 characters)" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-mint">
-        <button type="button" id="ff-sync-email-btn" onclick="ffSignInWithEmail()" class="w-full py-2.5 px-3 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs flex items-center justify-center gap-2 shadow-md transition active:scale-95">
-          <i data-lucide="mail" class="w-4 h-4"></i>
-          <span>Sign In / Create Sync Account</span>
-        </button>
-      </div>
-
-      <div class="relative flex items-center justify-center my-1" id="ff-sync-divider">
-        <div class="border-t border-dark-border w-full"></div>
-        <span class="bg-dark-elevated px-2 text-[10px] text-slate-500 absolute font-mono">OR</span>
-      </div>
-
-      <div class="space-y-2">
-        <button type="button" id="ff-sync-signin-btn" onclick="ffSignIn()" class="w-full py-2 px-3 rounded-xl bg-dark-base border border-dark-border hover:border-slate-500 text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition active:scale-95">
-          <i data-lucide="log-in" class="w-4 h-4"></i>
+      <!-- 1. Default Primary Method: Sign in with Google -->
+      <div class="space-y-2 pt-1 border-t border-dark-border">
+        <button type="button" id="ff-sync-signin-btn" onclick="ffSignIn()" class="w-full py-2.5 px-3 rounded-xl bg-pastel-sky hover:bg-sky-300 text-dark-base font-bold text-xs flex items-center justify-center gap-2.5 shadow-md shadow-pastel-sky/15 transition active:scale-95">
+          <svg class="w-4 h-4 bg-white rounded-full p-0.5 shrink-0" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
           <span>Sign in with Google</span>
         </button>
         <button type="button" id="ff-sync-now-btn" onclick="ffSyncNow()" class="hidden w-full py-2.5 px-3 rounded-xl bg-pastel-mint/15 border border-pastel-mint/30 hover:bg-pastel-mint/25 text-pastel-mint font-semibold text-xs flex items-center justify-center gap-2 transition active:scale-95">
@@ -2482,6 +2604,52 @@
           <i data-lucide="log-out" class="w-4 h-4"></i>
           <span>Sign out</span>
         </button>
+      </div>
+
+      <div class="relative flex items-center justify-center my-1" id="ff-sync-divider">
+        <div class="border-t border-dark-border w-full"></div>
+        <span class="bg-dark-elevated px-2 text-[10px] text-slate-500 absolute font-mono uppercase tracking-wider">Or Use Password</span>
+      </div>
+
+      <!-- 2. Email & Password Form (With Enter-to-focus and Enter-to-submit) -->
+      <div id="ff-sync-email-form" class="space-y-2">
+        <div>
+          <label class="block text-[10px] text-slate-400 mb-1 font-semibold">Email</label>
+          <input type="email" id="ff-email-input" placeholder="Your email (e.g. lilaruss@gmail.com)" onkeydown="if (event.key === 'Enter') { event.preventDefault(); document.getElementById('ff-password-input').focus(); }" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-sky">
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-[10px] text-slate-400 font-semibold">Password</label>
+            <button type="button" onclick="ffSendPasswordReset()" class="text-[10px] text-pastel-sky hover:underline">Forgot / Set Password?</button>
+          </div>
+          <input type="password" id="ff-password-input" placeholder="Password (at least 6 characters)" onkeydown="if (event.key === 'Enter') { event.preventDefault(); ffSignInWithEmail(); }" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-sky">
+        </div>
+        <button type="button" id="ff-sync-email-btn" onclick="ffSignInWithEmail()" class="w-full py-2 px-3 rounded-xl bg-dark-base hover:bg-dark-surface border border-dark-border text-slate-300 hover:text-white font-semibold text-xs flex items-center justify-center gap-2 transition active:scale-95">
+          <i data-lucide="mail" class="w-4 h-4"></i>
+          <span>Sign In with Password</span>
+        </button>
+      </div>
+
+      <!-- Set / Link Password for Currently Signed In Account (Subtle undertext, collapsed by default) -->
+      <div id="ff-link-password-box" class="hidden pt-1 text-center">
+        <div id="ff-link-password-collapsed">
+          <button type="button" onclick="togglePasswordLinkBox(true)" class="text-[11px] text-slate-500 hover:text-slate-300 underline underline-offset-2 transition font-medium">
+            Set a password for dual sign-in
+          </button>
+        </div>
+        <div id="ff-link-password-expanded" class="hidden text-left p-3 bg-dark-base/90 border border-dark-border rounded-2xl text-xs space-y-2 mt-2 shadow-lg">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold text-slate-300">🔑 Set or change account password:</span>
+            <button type="button" onclick="togglePasswordLinkBox(false)" class="text-[11px] text-slate-400 hover:text-white">✕</button>
+          </div>
+          <p class="text-[10px] text-slate-400 leading-snug">Sign in using either Google or your email & password across all devices.</p>
+          <div class="flex items-center gap-1.5">
+            <input type="password" id="ff-set-password-input" placeholder="New Password (min 6 chars)" class="flex-1 bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs focus:border-pastel-sky">
+            <button type="button" onclick="ffLinkOrUpdatePassword()" class="px-3 py-1.5 rounded-xl bg-pastel-sky hover:bg-sky-300 text-dark-base font-bold text-xs transition shrink-0">
+              Save
+            </button>
+          </div>
+        </div>
       </div>
 
       <div class="pt-2 flex justify-end border-t border-dark-border">
@@ -4012,9 +4180,27 @@
     // STRUCTURED CALENDAR DAY GRID & TIMELINE ENGINE
     // ==============================================
     state.timelineViewMode = 'calendar'; // 'calendar' or 'list'
-    const CALENDAR_START_HOUR = 7; // 7:00 AM
-    const CALENDAR_END_HOUR = 23;  // 11:00 PM
-    const CALENDAR_HOUR_HEIGHT = 84; // 84px per hour (1.4px per minute)
+    const CALENDAR_START_HOUR = 6; // 6:00 AM
+    const CALENDAR_END_HOUR = 26;  // 2:00 AM (Next Day)
+    let CALENDAR_HOUR_HEIGHT = parseInt(localStorage.getItem('focusflow_calendar_zoom')) || 84; // default 84px per hour
+
+    function adjustHourHeight(delta) {
+      CALENDAR_HOUR_HEIGHT = Math.max(50, Math.min(180, CALENDAR_HOUR_HEIGHT + delta));
+      localStorage.setItem('focusflow_calendar_zoom', CALENDAR_HOUR_HEIGHT);
+      updateHourHeightUI();
+      renderTimeline();
+    }
+
+    function updateHourHeightUI() {
+      const label = document.getElementById('calendar-zoom-label');
+      if (label) {
+        label.textContent = `${CALENDAR_HOUR_HEIGHT}px`;
+      }
+      const dayGrid = document.getElementById('timeline-day-grid');
+      if (dayGrid) {
+        dayGrid.style.height = `${(CALENDAR_END_HOUR - CALENDAR_START_HOUR) * CALENDAR_HOUR_HEIGHT}px`;
+      }
+    }
 
     function switchTimelineView(mode) {
       state.timelineViewMode = mode;
@@ -4052,14 +4238,15 @@
       return `${y}-${m}-${day}`;
     }
 
-    function getMondayOfWeek(dInput) {
+    function getSundayOfWeek(dInput) {
       const d = new Date(typeof dInput === 'string' ? dInput + 'T12:00:00' : dInput);
-      const day = d.getDay();
-      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-      const monday = new Date(d.setDate(diff));
-      monday.setHours(0, 0, 0, 0);
-      return monday;
+      const day = d.getDay(); // 0 is Sunday, 1 is Monday... 6 is Saturday
+      const sunday = new Date(d);
+      sunday.setDate(d.getDate() - day);
+      sunday.setHours(0, 0, 0, 0);
+      return sunday;
     }
+    const getMondayOfWeek = getSundayOfWeek; // Backward compatibility alias
 
     function getSelectedTimelineDateStr() {
       if (!state.selectedTimelineDate) {
@@ -4088,9 +4275,9 @@
 
     function changeTimelineWeek(offsetWeeks) {
       const curDateStr = getSelectedTimelineDateStr();
-      const curMonday = getMondayOfWeek(curDateStr);
-      curMonday.setDate(curMonday.getDate() + (offsetWeeks * 7));
-      state.selectedTimelineDate = formatDateString(curMonday);
+      const curSunday = getSundayOfWeek(curDateStr);
+      curSunday.setDate(curSunday.getDate() + (offsetWeeks * 7));
+      state.selectedTimelineDate = formatDateString(curSunday);
       renderTimeline();
     }
 
@@ -4106,9 +4293,9 @@
       strip.innerHTML = '';
 
       const selDateStr = getSelectedTimelineDateStr();
-      const weekStart = getMondayOfWeek(selDateStr);
+      const weekStart = getSundayOfWeek(selDateStr);
       const todayStr = getTodayDateString();
-      const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
       for (let i = 0; i < 7; i++) {
         const cur = new Date(weekStart);
@@ -4118,32 +4305,349 @@
         const isSelected = (dateStr === selDateStr);
         const isToday = (dateStr === todayStr);
 
-        // Count events on this day
-        const eventsOnDay = (state.events || []).filter(e => {
-          if (e.date) return e.date.replace(/-/g, '') === dateStr.replace(/-/g, '');
-          return dateStr === todayStr;
+        const dayShort = dayNames[i].slice(0, 1); // 'S', 'M', 'T', 'W', 'T', 'F', 'S'
+        const dayEvents = (state.events || []).filter(e => {
+          const eDate = e.date || todayStr;
+          return eDate === dateStr;
         });
-        const hasEvents = eventsOnDay.length > 0;
+        const hasEvents = dayEvents.length > 0;
 
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.onclick = () => selectTimelineDay(dateStr);
-        btn.className = `flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition text-center select-none ${
-          isSelected
-            ? 'bg-pastel-mint text-dark-base font-bold shadow-md shadow-pastel-mint/20'
-            : (isToday
-                ? 'bg-dark-elevated border border-pastel-sky/50 text-pastel-sky hover:bg-slate-700'
-                : 'bg-dark-elevated/60 text-slate-300 hover:bg-dark-elevated hover:text-white')
+        btn.className = `px-1.5 py-0.5 rounded-lg text-[10px] font-semibold flex flex-col items-center transition ${
+          isSelected 
+            ? 'bg-pastel-mint text-dark-base font-bold shadow-sm' 
+            : isToday 
+            ? 'bg-dark-elevated text-pastel-sky font-bold hover:bg-slate-700' 
+            : 'text-slate-400 hover:text-white hover:bg-dark-elevated'
         }`;
+        btn.title = `${dayNames[i]}, ${cur.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
 
         btn.innerHTML = `
-          <span class="text-[10px] font-semibold uppercase tracking-wider ${isSelected ? 'text-dark-base font-extrabold' : (isToday ? 'text-pastel-sky' : 'text-slate-400')}">${dayNames[i]}</span>
-          <span class="text-xs sm:text-sm font-mono font-bold leading-tight">${dayNum}</span>
-          <div class="h-1.5 flex items-center justify-center mt-0.5">
-            ${hasEvents ? `<span class="w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-dark-base' : 'bg-pastel-mint'}"></span>` : ''}
-          </div>
+          <span class="text-[9px] uppercase tracking-tighter opacity-75">${dayShort}</span>
+          <span class="text-[11px] leading-tight">${dayNum}</span>
+          ${hasEvents ? `<span class="w-1 h-1 rounded-full ${isSelected ? 'bg-dark-base' : 'bg-pastel-mint'}"></span>` : ''}
         `;
         strip.appendChild(btn);
+      }
+    }
+
+
+    // ==============================================
+    // DRAG & MOVE CALENDAR EVENTS (TOUCH & MOUSE)
+    // ==============================================
+    
+    // ==============================================
+    // GOOGLE CALENDAR 2-WAY SYNC ENGINE
+    // ==============================================
+    function getEventIsoDateTimes(ev) {
+      const dateStr = ev.date || (typeof getSelectedTimelineDateStr === 'function' ? getSelectedTimelineDateStr() : '') || getTodayDateString();
+      const [sH, sM] = (ev.startTime || '09:00').split(':').map(Number);
+      const dur = Math.max(5, parseInt(ev.duration, 10) || 30);
+
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const startDate = new Date(year, month - 1, day, sH, sM, 0);
+      const endDate = new Date(startDate.getTime() + (dur * 60000));
+
+      const pad = n => String(n).padStart(2, '0');
+      const getTimezoneOffsetStr = d => {
+        const offsetMin = -d.getTimezoneOffset();
+        const sign = offsetMin >= 0 ? '+' : '-';
+        const absMin = Math.abs(offsetMin);
+        return `${sign}${pad(Math.floor(absMin / 60))}:${pad(absMin % 60)}`;
+      };
+
+      const toRfc3339 = d => {
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${getTimezoneOffsetStr(d)}`;
+      };
+
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      return {
+        start: { dateTime: toRfc3339(startDate), timeZone: tz },
+        end: { dateTime: toRfc3339(endDate), timeZone: tz }
+      };
+    }
+
+    async function pushEventChangeToGoogle(ev, action = 'update') {
+      const token = localStorage.getItem('focusflow_gcal_oauth_token');
+      if (!token || !ev) return;
+
+      const calId = encodeURIComponent(ev.gcalCalendarId || 'primary');
+
+      try {
+        if (action === 'delete') {
+          if (!ev.gcalEventId) return;
+          const resp = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calId}/events/${encodeURIComponent(ev.gcalEventId)}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (resp.ok || resp.status === 404 || resp.status === 410) {
+            console.log(`[FocusFlow] Deleted event from Google Calendar:`, ev.title);
+          }
+          return;
+        }
+
+        const { start, end } = getEventIsoDateTimes(ev);
+        const payload = {
+          summary: ev.title || 'FocusFlow Event',
+          description: ev.description || '',
+          location: ev.location || '',
+          start,
+          end
+        };
+
+        if (ev.gcalEventId) {
+          // Update / Move existing event in Google Calendar
+          const patchUrl = `https://www.googleapis.com/calendar/v3/calendars/${calId}/events/${encodeURIComponent(ev.gcalEventId)}`;
+          const resp = await fetch(patchUrl, {
+            method: 'PATCH',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
+          if (resp.ok) {
+            ev.lastLocalEdit = Date.now();
+            console.log(`[FocusFlow] Successfully pushed update to Google Calendar:`, ev.title);
+          } else if (resp.status === 401) {
+            console.warn('[FocusFlow] Google Calendar token expired; will refresh next sign-in.');
+          }
+        } else if (action === 'create') {
+          // Create new event in user's primary Google Calendar
+          const postUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events`;
+          const resp = await fetch(postUrl, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
+          if (resp.ok) {
+            const created = await resp.json();
+            ev.gcalEventId = created.id;
+            ev.gcalCalendarId = 'primary';
+            ev.lastLocalEdit = Date.now();
+            saveAppState();
+            console.log(`[FocusFlow] Created event in Google Calendar:`, ev.title);
+          }
+        }
+      } catch (err) {
+        console.warn('[FocusFlow] Could not push change to Google Calendar:', err);
+      }
+    }
+
+    function attachEventDragListeners(block, ev) {
+      let holdTimer = null;
+      let isDragging = false;
+      let startClientY = 0;
+      let startTopPx = 0;
+      let currentTopPx = 0;
+      let ghostEl = null;
+
+      const blocksContainer = document.getElementById('timeline-event-blocks');
+
+      function onPointerDown(e) {
+        if (e.target.closest('button') || e.target.closest('input')) return;
+
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        startClientY = clientY;
+        const computedTop = parseFloat(block.style.top) || 0;
+        startTopPx = computedTop;
+        currentTopPx = computedTop;
+
+        holdTimer = setTimeout(() => {
+          startDragging(e);
+        }, 220);
+
+        window.addEventListener('mousemove', onPointerMove, { passive: false });
+        window.addEventListener('touchmove', onPointerMove, { passive: false });
+        window.addEventListener('mouseup', onPointerUp);
+        window.addEventListener('touchend', onPointerUp);
+      }
+
+      function onPointerMove(e) {
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const deltaY = clientY - startClientY;
+
+        if (!isDragging) {
+          if (Math.abs(deltaY) > 8) {
+            clearTimeout(holdTimer);
+            holdTimer = null;
+            cleanupListeners();
+          }
+          return;
+        }
+
+        if (e.cancelable) e.preventDefault();
+
+        const rawTop = startTopPx + deltaY;
+        const stepPx = CALENDAR_HOUR_HEIGHT / 4; // 15-minute snap = 21px
+        const snappedTop = Math.max(0, Math.min(((CALENDAR_END_HOUR - CALENDAR_START_HOUR) * CALENDAR_HOUR_HEIGHT) - (block.offsetHeight || 38), Math.round(rawTop / stepPx) * stepPx));
+        currentTopPx = snappedTop;
+
+        block.style.top = snappedTop + 'px';
+
+        const snappedMinutes = Math.round((snappedTop / CALENDAR_HOUR_HEIGHT) * 60) + (CALENDAR_START_HOUR * 60);
+        const endMinutes = snappedMinutes + (ev.duration || 30);
+        const sHH = String(Math.floor(snappedMinutes / 60)).padStart(2, '0');
+        const sMM = String(snappedMinutes % 60).padStart(2, '0');
+        const eHH = String(Math.floor(endMinutes / 60)).padStart(2, '0');
+        const eMM = String(endMinutes % 60).padStart(2, '0');
+        const timeBadgeText = `${formatTimeAmPm(`${sHH}:${sMM}`)} – ${formatTimeAmPm(`${eHH}:${eMM}`)}`;
+
+        if (ghostEl) {
+          ghostEl.textContent = `📍 ${timeBadgeText}`;
+          ghostEl.style.top = Math.max(0, snappedTop - 26) + 'px';
+        }
+      }
+
+      function startDragging(e) {
+        isDragging = true;
+        try { if (navigator.vibrate) navigator.vibrate(40); } catch(err) {}
+
+        block.classList.add('z-50', 'shadow-2xl', 'scale-[1.02]', 'ring-2', 'ring-pastel-sky', 'opacity-95');
+        block.style.cursor = 'grabbing';
+        block.dataset.isBeingDragged = "true";
+
+        if (blocksContainer) {
+          ghostEl = document.createElement('div');
+          ghostEl.className = 'absolute left-2 z-50 px-2.5 py-1 rounded-lg bg-pastel-sky text-dark-base font-bold text-xs shadow-xl pointer-events-none transition-all duration-75';
+          ghostEl.style.top = Math.max(0, currentTopPx - 26) + 'px';
+          ghostEl.textContent = `📍 Drag to Reschedule`;
+          blocksContainer.appendChild(ghostEl);
+        }
+      }
+
+      function onPointerUp(e) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+        cleanupListeners();
+
+        if (!isDragging) return;
+
+        isDragging = false;
+        block.classList.remove('z-50', 'shadow-2xl', 'scale-[1.02]', 'ring-2', 'ring-pastel-sky', 'opacity-95');
+        block.style.cursor = 'pointer';
+        setTimeout(() => { delete block.dataset.isBeingDragged; }, 120);
+
+        if (ghostEl && ghostEl.parentNode) {
+          ghostEl.parentNode.removeChild(ghostEl);
+          ghostEl = null;
+        }
+
+        const finalMinutes = Math.round((currentTopPx / CALENDAR_HOUR_HEIGHT) * 60) + (CALENDAR_START_HOUR * 60);
+        const finalHH = String(Math.floor(finalMinutes / 60)).padStart(2, '0');
+        const finalMM = String(finalMinutes % 60).padStart(2, '0');
+        const newTime = `${finalHH}:${finalMM}`;
+
+        if (newTime !== ev.startTime) {
+          calendarHistory.recordState(); // Undoable with ⌘Z!
+          ev.startTime = newTime;
+          ev.lastLocalEdit = Date.now();
+          saveAppState();
+          renderTimeline();
+          pushEventChangeToGoogle(ev, 'update');
+          if (typeof ffUploadNow === 'function') ffUploadNow(true);
+          playChime('bell');
+          alertBox(`Moved "${ev.title}" to ${formatTimeAmPm(newTime)}! (⌘Z to undo)`, "Event Rescheduled");
+        } else {
+          renderTimeline();
+        }
+      }
+
+      function cleanupListeners() {
+        window.removeEventListener('mousemove', onPointerMove);
+        window.removeEventListener('touchmove', onPointerMove);
+        window.removeEventListener('mouseup', onPointerUp);
+        window.removeEventListener('touchend', onPointerUp);
+      }
+
+      block.addEventListener('mousedown', onPointerDown);
+      block.addEventListener('touchstart', onPointerDown, { passive: true });
+    }
+
+    // ==============================================
+    // DUAL SIGN-IN: PASSWORD LINKING & RESET
+    // ==============================================
+    async function ffLinkOrUpdatePassword() {
+      const passInput = document.getElementById('ff-set-password-input');
+      const password = passInput ? passInput.value.trim() : '';
+      if (!password || password.length < 6) {
+        alertBox("Password must be at least 6 characters.", "Password Required");
+        return;
+      }
+      if (!ffSync.user) {
+        alertBox("Please sign in with Google first, then set your password.", "Sign In Required");
+        return;
+      }
+      try {
+        const cred = firebase.auth.EmailAuthProvider.credential(ffSync.user.email, password);
+        try {
+          await ffSync.user.linkWithCredential(cred);
+        } catch(err) {
+          if (err.code === 'auth/credential-already-in-use' || err.code === 'auth/provider-already-linked') {
+            await ffSync.user.updatePassword(password);
+          } else {
+            throw err;
+          }
+        }
+        passInput.value = '';
+        playChime('bell');
+        alertBox(`Password successfully saved for ${ffSync.user.email}! You can now sign in using either Google or this password on all devices.`, "Password Saved");
+      } catch(err) {
+        console.error("Password link error:", err);
+        alertBox(`Could not save password: ${err.message}`, "Password Notice");
+      }
+    }
+
+    async function ffSendPasswordReset() {
+      const emailInput = document.getElementById('ff-email-input');
+      const email = emailInput ? emailInput.value.trim() : (ffSync.user ? ffSync.user.email : '');
+      if (!email) {
+        alertBox("Please enter your email above, then tap 'Forgot / Set Password'.", "Email Required");
+        return;
+      }
+      try {
+        await firebase.auth().sendPasswordResetEmail(email);
+        playChime('bell');
+        alertBox(`Sent password setup link to ${email}! Open the link in your email to set or reset your password.`, "Reset Link Sent");
+      } catch(err) {
+        alertBox(`Could not send setup link: ${err.message}`, "Notice");
+      }
+    }
+
+    // ==============================================
+    // ADHD SUGGESTIONS: COLLAPSIBLE & AUTO-EXPAND ON SCROLL
+    // ==============================================
+    let activeScheduleSuggestions = [];
+    let suggestionsUserMinimized = false;
+
+    function toggleScheduleSuggestions(expand) {
+      suggestionsUserMinimized = !expand;
+      renderScheduleSuggestionsUI(expand);
+    }
+
+    function checkScrollForSuggestions() {
+      if (suggestionsUserMinimized || activeScheduleSuggestions.length === 0) return;
+      const canvas = document.getElementById('timeline-calendar-scroll-canvas');
+      if (!canvas) return;
+
+      const sug = activeScheduleSuggestions[0];
+      if (!sug || !sug.startTime) return;
+
+      const [sH, sM] = sug.startTime.split(':').map(Number);
+      const sugMinutes = (sH * 60) + sM;
+      const sugTopPx = ((sugMinutes - (CALENDAR_START_HOUR * 60)) / 60) * CALENDAR_HOUR_HEIGHT;
+
+      const scrollTop = canvas.scrollTop;
+      const viewHeight = canvas.clientHeight || 500;
+
+      // Auto-expand when scrolling within view of the target time block
+      if (sugTopPx >= (scrollTop - 40) && sugTopPx <= (scrollTop + viewHeight - 60)) {
+        renderScheduleSuggestionsUI(true);
       }
     }
 
@@ -4218,14 +4722,47 @@
         return;
       }
 
+      activeScheduleSuggestions = suggestions;
       container.classList.remove('hidden');
+      renderScheduleSuggestionsUI(!suggestionsUserMinimized);
 
-      suggestions.forEach(sug => {
+      // Attach scroll listener to auto-expand on approaching target time slot
+      const canvas = document.getElementById('timeline-calendar-scroll-canvas');
+      if (canvas && !canvas.dataset.hasSuggestionScrollListener) {
+        canvas.addEventListener('scroll', checkScrollForSuggestions, { passive: true });
+        canvas.dataset.hasSuggestionScrollListener = "true";
+      }
+    }
+
+    function renderScheduleSuggestionsUI(expanded) {
+      const container = document.getElementById('timeline-schedule-suggestions');
+      if (!container || activeScheduleSuggestions.length === 0) return;
+      container.innerHTML = '';
+
+      const sug = activeScheduleSuggestions[0];
+      if (!expanded) {
+        // Compact Collapsed Pill (takes zero screen space, grabs attention gently)
+        const pill = document.createElement('div');
+        pill.className = "p-2 px-3 rounded-xl bg-pastel-sky/15 border border-pastel-sky/40 flex items-center justify-between gap-2 shadow-sm cursor-pointer hover:bg-pastel-sky/25 transition";
+        pill.onclick = () => toggleScheduleSuggestions(true);
+        pill.innerHTML = `
+          <div class="flex items-center gap-2 text-xs truncate">
+            <span class="animate-pulse">${sug.type === 'meal' ? '🥗' : '🧘'}</span>
+            <span class="font-bold text-pastel-sky">ADHD Suggestion:</span>
+            <span class="text-slate-200 truncate">${sug.title} (${formatTimeAmPm(sug.startTime)})</span>
+          </div>
+          <button type="button" class="text-xs text-pastel-sky font-bold flex items-center gap-1 shrink-0">
+            <span>Expand ▾</span>
+          </button>
+        `;
+        container.appendChild(pill);
+      } else {
+        // Full Expanded Card with Minimize button
         const card = document.createElement('div');
-        card.className = "p-3 rounded-2xl bg-dark-base border border-pastel-sky/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md";
+        card.className = "p-3 rounded-2xl bg-dark-base border border-pastel-sky/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg ring-1 ring-pastel-sky/20 transition-all";
         card.innerHTML = `
           <div class="flex items-start gap-2.5 flex-1">
-            <span class="text-lg shrink-0">${sug.type === 'meal' ? '🥗' : '🧘'}</span>
+            <span class="text-xl shrink-0">${sug.type === 'meal' ? '🥗' : '🧘'}</span>
             <div class="space-y-0.5">
               <div class="flex items-center gap-2">
                 <span class="text-[10px] font-bold uppercase tracking-wider text-pastel-sky bg-pastel-sky/15 px-2 py-0.5 rounded">ADHD Suggestion</span>
@@ -4235,17 +4772,17 @@
             </div>
           </div>
           <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
-            <button type="button" onclick="dismissScheduleSuggestion('${sug.id}')" class="px-2.5 py-1.5 rounded-xl text-slate-400 hover:text-white text-xs">
-              Dismiss
+            <button type="button" onclick="toggleScheduleSuggestions(false)" class="px-2.5 py-1.5 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-300 text-xs flex items-center gap-1">
+              <span>Minimize ▴</span>
             </button>
-            <button type="button" onclick="approveScheduleSuggestion('${sug.type}', '${sug.startTime}', ${sug.duration}, '${encodeURIComponent(sug.afterTitle || '')}')" class="px-3 py-1.5 rounded-xl bg-pastel-sky hover:bg-sky-300 text-dark-base font-bold text-xs flex items-center gap-1 shadow-md transition">
+            <button type="button" onclick="approveScheduleSuggestion('${sug.type}', '${sug.startTime}', ${sug.duration}, '${encodeURIComponent(sug.afterTitle || '')}')" class="px-3.5 py-1.5 rounded-xl bg-pastel-sky hover:bg-sky-300 text-dark-base font-bold text-xs flex items-center gap-1 shadow-md transition">
               <i data-lucide="plus" class="w-3.5 h-3.5"></i>
               <span>+ Approve &amp; Add</span>
             </button>
           </div>
         `;
         container.appendChild(card);
-      });
+      }
       if (window.lucide) lucide.createIcons();
     }
 
@@ -4301,14 +4838,233 @@
       playChime('bell');
     }
 
+
+    // ==============================================
+    // CANVAS ADHD SUGGESTIONS (STICKY ON-GRID COMMENTS)
+    // ==============================================
+    state.expandedCanvasSuggestionId = null;
+
+    function toggleCanvasSuggestion(sugId, expand) {
+      state.expandedCanvasSuggestionId = expand ? sugId : null;
+      renderTimeline();
+    }
+
+    function renderCanvasScheduleSuggestions() {
+      const blocksContainer = document.getElementById('timeline-event-blocks');
+      if (!blocksContainer) return;
+
+      const dayEvents = getEventsForSelectedDay();
+      if (dayEvents.length === 0) return;
+
+      const sorted = [...dayEvents].sort((a, b) => {
+        const [aH, aM] = (a.startTime || '09:00').split(':').map(Number);
+        const [bH, bM] = (b.startTime || '09:00').split(':').map(Number);
+        return (aH * 60 + aM) - (bH * 60 + bM);
+      });
+
+      const suggestions = [];
+
+      // 1. Back-to-back buffer suggestion
+      for (let i = 0; i < sorted.length - 1; i++) {
+        const cur = sorted[i];
+        const nxt = sorted[i + 1];
+        const [cH, cM] = (cur.startTime || '09:00').split(':').map(Number);
+        const curEndMin = (cH * 60) + cM + (cur.duration || 30);
+        const [nH, nM] = (nxt.startTime || '10:00').split(':').map(Number);
+        const nxtStartMin = (nH * 60) + nM;
+        const gap = nxtStartMin - curEndMin;
+
+        if (gap >= 0 && gap <= 5 && !cur.title.includes('Buffer') && !nxt.title.includes('Buffer')) {
+          const bufH = String(Math.floor(curEndMin / 60)).padStart(2, '0');
+          const bufM = String(curEndMin % 60).padStart(2, '0');
+          suggestions.push({
+            id: `sug-buf-${cur.id}`,
+            type: 'buffer',
+            title: `10m Decompression Buffer`,
+            description: `Back-to-back detected after "${cur.title.slice(0, 18)}". Give yourself 10 mins to stretch & hydrate.`,
+            startTime: `${bufH}:${bufM}`,
+            duration: 10,
+            afterTitle: cur.title
+          });
+          break;
+        }
+      }
+
+      // 2. Lunch break suggestion
+      const hasMeal = sorted.some(e => {
+        const [eH, eM] = (e.startTime || '09:00').split(':').map(Number);
+        const sMin = (eH * 60) + eM;
+        return (e.category === 'meal' || /lunch|dinner|meal|eat/i.test(e.title)) && sMin >= 660 && sMin <= 870;
+      });
+
+      if (!hasMeal && sorted.length >= 2) {
+        suggestions.push({
+          id: `sug-lunch`,
+          type: 'meal',
+          title: `30m Nourishing Lunch & Reset`,
+          description: `No meal break scheduled between 11:30 AM and 2:00 PM. Taking time to eat fuels afternoon focus.`,
+          startTime: '12:30',
+          duration: 30
+        });
+      }
+
+      suggestions.forEach(sug => {
+        if (state.dismissedSuggestions && state.dismissedSuggestions.includes(sug.id)) return;
+
+        const [sH, sM] = (sug.startTime || '12:00').split(':').map(Number);
+        const sugMin = (sH * 60) + sM;
+        const minutesFromStart = Math.max(0, sugMin - (CALENDAR_START_HOUR * 60));
+        const topPx = (minutesFromStart / 60) * CALENDAR_HOUR_HEIGHT;
+
+        const isExpanded = state.expandedCanvasSuggestionId === sug.id;
+        const commentEl = document.createElement('div');
+        commentEl.className = 'absolute right-2 z-20 flex flex-col items-end max-w-[280px] pointer-events-auto hover:opacity-20 transition-opacity duration-200 select-none';
+        commentEl.style.top = `${topPx}px`;
+
+        if (!isExpanded) {
+          // Collapsed Comment Pill (hover:opacity-20 to see through to calendar grid)
+          commentEl.innerHTML = `
+            <button type="button" onclick="event.stopPropagation(); toggleCanvasSuggestion('${sug.id}', true)" class="px-2.5 py-1 rounded-xl bg-pastel-butter/95 hover:bg-amber-300 text-dark-base font-bold text-[11px] flex items-center gap-1.5 shadow-lg border border-amber-400/50 transition active:scale-95">
+              <span>${sug.type === 'meal' ? '🥗' : '🧘'}</span>
+              <span>ADHD Note: ${sug.title}</span>
+              <i data-lucide="message-square" class="w-3 h-3 text-dark-base"></i>
+            </button>
+          `;
+        } else {
+          // Expanded Comment Sticky Note (hover:opacity-20 to see through, ▲ to condense)
+          commentEl.innerHTML = `
+            <div class="p-3 rounded-2xl bg-dark-base/95 border border-pastel-butter text-slate-200 shadow-2xl space-y-2 backdrop-blur-md text-xs ring-1 ring-pastel-butter/40">
+              <div class="flex items-center justify-between gap-2 border-b border-dark-border/80 pb-1.5">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-pastel-butter flex items-center gap-1">
+                  <span>${sug.type === 'meal' ? '🥗' : '🧘'}</span>
+                  <span>ADHD Coach Note</span>
+                </span>
+                <button type="button" onclick="event.stopPropagation(); toggleCanvasSuggestion('${sug.id}', false)" class="text-slate-400 hover:text-white p-1 rounded-md hover:bg-dark-elevated transition flex items-center gap-1 text-[11px]" title="Condense note">
+                  <span class="font-bold text-pastel-butter">▲</span>
+                </button>
+              </div>
+              <p class="text-[11px] text-slate-300 leading-snug">${sug.description}</p>
+              <div class="pt-1 flex items-center justify-end gap-1.5">
+                <button type="button" onclick="event.stopPropagation(); dismissCanvasSuggestion('${sug.id}')" class="px-2 py-1 rounded-lg text-slate-400 hover:text-white text-[11px]">
+                  Dismiss
+                </button>
+                <button type="button" onclick="event.stopPropagation(); approveScheduleSuggestion('${sug.type}', '${sug.startTime}', ${sug.duration}, '${encodeURIComponent(sug.afterTitle || '')}')" class="px-2.5 py-1 rounded-lg bg-pastel-sky hover:bg-sky-300 text-dark-base font-bold text-[11px] flex items-center gap-1 shadow-sm">
+                  <i data-lucide="plus" class="w-3 h-3"></i>
+                  <span>Approve</span>
+                </button>
+              </div>
+            </div>
+          `;
+        }
+        blocksContainer.appendChild(commentEl);
+      });
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function dismissCanvasSuggestion(sugId) {
+      if (!state.dismissedSuggestions) state.dismissedSuggestions = [];
+      state.dismissedSuggestions.push(sugId);
+      renderTimeline();
+    }
+
+    const calendarHistory = {
+      undoStack: [],
+      redoStack: [],
+      maxStack: 40,
+
+      recordState() {
+        try {
+          const snap = JSON.stringify(state.events || []);
+          if (this.undoStack.length > 0 && this.undoStack[this.undoStack.length - 1] === snap) {
+            return;
+          }
+          this.undoStack.push(snap);
+          if (this.undoStack.length > this.maxStack) {
+            this.undoStack.shift();
+          }
+          this.redoStack = [];
+          this.updateUI();
+        } catch (e) {}
+      },
+
+      undo() {
+        if (this.undoStack.length === 0) {
+          alertBox("No previous calendar actions to undo.", "Undo");
+          return;
+        }
+        const currentSnap = JSON.stringify(state.events || []);
+        this.redoStack.push(currentSnap);
+        const prevSnap = this.undoStack.pop();
+        state.events = JSON.parse(prevSnap);
+        saveAppState();
+        renderTimeline();
+        if (typeof ffUploadNow === 'function') ffUploadNow(true);
+        this.updateUI();
+        playChime('bell');
+        alertBox("Undid last calendar change.", "Action Undone");
+      },
+
+      redo() {
+        if (this.redoStack.length === 0) {
+          alertBox("No calendar actions to redo.", "Redo");
+          return;
+        }
+        const currentSnap = JSON.stringify(state.events || []);
+        this.undoStack.push(currentSnap);
+        const nextSnap = this.redoStack.pop();
+        state.events = JSON.parse(nextSnap);
+        saveAppState();
+        renderTimeline();
+        if (typeof ffUploadNow === 'function') ffUploadNow(true);
+        this.updateUI();
+        playChime('bell');
+        alertBox("Redid calendar change.", "Action Redone");
+      },
+
+      updateUI() {
+        const undoBtn = document.getElementById('calendar-undo-btn');
+        const redoBtn = document.getElementById('calendar-redo-btn');
+        if (undoBtn) {
+          const canUndo = this.undoStack.length > 0;
+          undoBtn.disabled = !canUndo;
+          undoBtn.classList.toggle('opacity-30', !canUndo);
+          undoBtn.classList.toggle('cursor-not-allowed', !canUndo);
+        }
+        if (redoBtn) {
+          const canRedo = this.redoStack.length > 0;
+          redoBtn.disabled = !canRedo;
+          redoBtn.classList.toggle('opacity-30', !canRedo);
+          redoBtn.classList.toggle('cursor-not-allowed', !canRedo);
+        }
+      }
+    };
+
+    // Keyboard shortcut listener for Undo (⌘Z / Ctrl+Z) and Redo (⌘⇧Z / Ctrl+Y)
+    window.addEventListener('keydown', (e) => {
+      if (['INPUT', 'TEXTAREA'].includes((document.activeElement && document.activeElement.tagName) || '')) return;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          calendarHistory.redo();
+        } else {
+          calendarHistory.undo();
+        }
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        calendarHistory.redo();
+      }
+    });
+
     function clearAllCalendarEvents() {
       if (confirm("Clear all calendar events from FocusFlow? Your Google Calendar accounts and links will remain saved.")) {
+        calendarHistory.recordState();
         state.events = [];
         saveAppState();
         renderTimeline();
         if (typeof ffUploadNow === 'function') ffUploadNow(true);
+        calendarHistory.updateUI();
         playChime('bell');
-        alertBox("Cleared schedule. Tap 'Sync All Calendars' anytime to reload your real schedule.", "Schedule Cleared");
+        alertBox("Cleared schedule. Tap Undo (⌘Z) to restore.", "Schedule Cleared");
       }
     }
 
@@ -4317,12 +5073,15 @@
       const ev = (state.events || []).find(e => e.id === eventId);
       const title = ev ? ev.title : 'this event';
       if (confirm('Delete "' + title + '" from your schedule?')) {
+        calendarHistory.recordState();
+        if (ev) pushEventChangeToGoogle(ev, 'delete');
         state.events = (state.events || []).filter(e => e.id !== eventId);
         saveAppState();
         renderTimeline();
         if (typeof ffUploadNow === 'function') ffUploadNow(true);
+        calendarHistory.updateUI();
         playChime('bell');
-        alertBox('Deleted "' + title + '" from your schedule.', 'Event Removed');
+        alertBox('Deleted "' + title + '" from your schedule. Tap Undo (⌘Z) to restore.', 'Event Removed');
       }
     }
 
@@ -4358,10 +5117,15 @@
       // 4. Render List View (Fallback / Checklist)
       renderCompactTimelineListView();
 
+      if (typeof calendarHistory !== 'undefined' && calendarHistory.updateUI) {
+        calendarHistory.updateUI();
+      }
+
       if (window.lucide) lucide.createIcons();
     }
 
     function renderStructuredCalendarGrid() {
+      if (typeof updateHourHeightUI === 'function') updateHourHeightUI();
       const gutter = document.getElementById('timeline-time-gutter');
       const gridLines = document.getElementById('timeline-grid-lines');
       const blocksContainer = document.getElementById('timeline-event-blocks');
@@ -4374,7 +5138,8 @@
       // Build Hour Markers and Horizontal Grid Lines
       for (let h = CALENDAR_START_HOUR; h <= CALENDAR_END_HOUR; h++) {
         const topPx = (h - CALENDAR_START_HOUR) * CALENDAR_HOUR_HEIGHT;
-        const displayHour = h === 12 ? '12 PM' : (h > 12 ? `${h - 12} PM` : `${h} AM`);
+        const normH = h % 24;
+        const displayHour = normH === 0 ? '12 AM' : (normH === 12 ? '12 PM' : (normH > 12 ? `${normH - 12} PM` : `${normH} AM`));
 
         // Hour Label in Gutter
         const label = document.createElement('div');
@@ -4487,7 +5252,11 @@
           block.style.left = `calc(${leftPct}% + 4px)`;
           block.style.width = `calc(${colWidthPct}% - 8px)`;
           block.style.zIndex = isBuffer ? '5' : '10';
-          block.onclick = () => openEventToolsModal(ev.id);
+          block.onclick = (e) => {
+            if (block.dataset.isBeingDragged === "true") return;
+            openEventToolsModal(ev.id);
+          };
+          attachEventDragListeners(block, ev);
 
           if (heightPx < 52) {
             // Compact layout (for short events 15-30m): Title is always visible and prominent!
@@ -4525,7 +5294,7 @@
                   <!-- Event Title: Bold, white, prominent -->
                   <h3 class="font-bold text-white text-xs sm:text-sm leading-snug line-clamp-2">${ev.title}</h3>
                   
-                  ${ev.location ? `<p class="text-[10px] text-slate-300 truncate mt-0.5 flex items-center gap-1">📍 ${ev.location}</p>` : ''}
+                  ${ev.location ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.location)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="text-[10px] text-pastel-sky hover:underline truncate mt-0.5 flex items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3 shrink-0 text-pastel-sky"></i><span class="truncate">${ev.location}</span></a>` : ''}
                   ${ev.goodEnough && heightPx > 75 ? `<p class="text-[10px] text-pastel-butter/90 truncate mt-0.5">🎯 Boundary: ${ev.goodEnough}</p>` : ''}
                 </div>
 
@@ -4555,6 +5324,9 @@
           blocksContainer.appendChild(block);
         });
       });
+
+      // Render collapsible ADHD Suggestions directly onto the calendar grid canvas
+      renderCanvasScheduleSuggestions();
     }
 
     function formatTimeAmPm(timeStr) {
@@ -4991,21 +5763,166 @@
       }, 1500);
     }
 
+
+    // ==============================================
+    // TIME & DURATION HELPERS (START / END SYNC)
+    // ==============================================
+    function timeToMinutes(timeStr) {
+      if (!timeStr) return 0;
+      const [h, m] = timeStr.split(':').map(Number);
+      return (h * 60) + (m || 0);
+    }
+
+    function minutesToTime(totalMins) {
+      const norm = ((totalMins % 1440) + 1440) % 1440;
+      const hh = String(Math.floor(norm / 60)).padStart(2, '0');
+      const mm = String(norm % 60).padStart(2, '0');
+      return `${hh}:${mm}`;
+    }
+
+    function getEndTimeFromStartAndDuration(startTime, durationMins) {
+      return minutesToTime(timeToMinutes(startTime) + (parseInt(durationMins, 10) || 30));
+    }
+
+    function getDurationFromStartAndEnd(startTime, endTime) {
+      let diff = timeToMinutes(endTime) - timeToMinutes(startTime);
+      if (diff <= 0) diff += 1440;
+      return Math.max(5, diff);
+    }
+
+    function formatDurationFriendly(mins) {
+      const m = parseInt(mins, 10) || 0;
+      if (m < 60) return `${m}m`;
+      const hrs = Math.floor(m / 60);
+      const rem = m % 60;
+      return rem === 0 ? `${hrs}h` : `${hrs}h ${rem}m`;
+    }
+
+    function onNewEventTimeChange(changedField) {
+      const startEl = document.getElementById('new-event-start');
+      const endEl = document.getElementById('new-event-end');
+      const durEl = document.getElementById('new-event-duration');
+      if (!startEl || !endEl || !durEl) return;
+
+      if (changedField === 'start' || changedField === 'duration') {
+        endEl.value = getEndTimeFromStartAndDuration(startEl.value, durEl.value);
+      } else if (changedField === 'end') {
+        durEl.value = getDurationFromStartAndEnd(startEl.value, endEl.value);
+      }
+    }
+
+    function onEditEventTimeChange(changedField) {
+      const startEl = document.getElementById('edit-event-start');
+      const endEl = document.getElementById('edit-event-end');
+      const durEl = document.getElementById('edit-event-duration');
+      if (!startEl || !endEl || !durEl) return;
+
+      if (changedField === 'start' || changedField === 'duration') {
+        endEl.value = getEndTimeFromStartAndDuration(startEl.value, durEl.value);
+      } else if (changedField === 'end') {
+        durEl.value = getDurationFromStartAndEnd(startEl.value, endEl.value);
+      }
+    }
+
+    function setEditEventDuration(mins) {
+      const durEl = document.getElementById('edit-event-duration');
+      if (durEl) {
+        durEl.value = mins;
+        onEditEventTimeChange('duration');
+      }
+    }
+
+    function togglePasswordLinkBox(expand) {
+      const collapsed = document.getElementById('ff-link-password-collapsed');
+      const expanded = document.getElementById('ff-link-password-expanded');
+      if (collapsed) collapsed.classList.toggle('hidden', !!expand);
+      if (expanded) expanded.classList.toggle('hidden', !expand);
+    }
+
     // 4. Event Tools Hub: Magic ToDo, Estimator, Reverse Chef
     function openEventToolsModal(eventId) {
       const ev = state.events.find(e => e.id === eventId);
       if (!ev) return;
       state.activeEventModal = ev;
 
+      const endTime = getEndTimeFromStartAndDuration(ev.startTime, ev.duration);
+      const timeRangeFriendly = `${formatTimeAmPm(ev.startTime)} – ${formatTimeAmPm(endTime)} (${formatDurationFriendly(ev.duration)})`;
+
       document.getElementById('tool-modal-title').textContent = ev.title;
-      document.getElementById('tool-modal-time').textContent = `${ev.startTime} (${ev.duration}m)`;
-      document.getElementById('tool-modal-tag').textContent = ev.category.toUpperCase();
+      document.getElementById('tool-modal-time').textContent = timeRangeFriendly;
+      document.getElementById('tool-modal-tag').textContent = (ev.category || 'focus').toUpperCase();
       document.getElementById('user-good-enough-input').value = ev.goodEnough || '';
 
+      // Populate Read-Only Details View
+      const detailsTime = document.getElementById('view-details-time-range');
+      const detailsCatBadge = document.getElementById('view-details-category-badge');
+      const detailsLocRow = document.getElementById('view-details-location-row');
+      const detailsMapsLink = document.getElementById('view-details-maps-link');
+      const detailsLocText = document.getElementById('view-details-location-text');
+      const detailsGoodRow = document.getElementById('view-details-goodenough-row');
+      const detailsGoodText = document.getElementById('view-details-goodenough-text');
+      const detailsNotesRow = document.getElementById('view-details-notes-row');
+      const detailsNotesText = document.getElementById('view-details-notes-text');
+
+      if (detailsTime) detailsTime.textContent = timeRangeFriendly;
+      if (detailsCatBadge) {
+        detailsCatBadge.textContent = (ev.category || 'focus').toUpperCase();
+        const catInfo = getCategoryInfo(ev.category);
+        detailsCatBadge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${catInfo.colorMeta.badgeBg} ${catInfo.colorMeta.text} border ${catInfo.colorMeta.borderFull}`;
+      }
+
+      if (detailsLocRow) {
+        if (ev.location && ev.location.trim()) {
+          detailsLocRow.classList.remove('hidden');
+          if (detailsMapsLink) detailsMapsLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.location)}`;
+          if (detailsLocText) detailsLocText.textContent = ev.location;
+        } else {
+          detailsLocRow.classList.add('hidden');
+        }
+      }
+
+      if (detailsGoodRow) {
+        if (ev.goodEnough && ev.goodEnough.trim()) {
+          detailsGoodRow.classList.remove('hidden');
+          if (detailsGoodText) detailsGoodText.textContent = ev.goodEnough;
+        } else {
+          detailsGoodRow.classList.add('hidden');
+        }
+      }
+
+      if (detailsNotesRow) {
+        if (ev.description && ev.description.trim()) {
+          detailsNotesRow.classList.remove('hidden');
+          if (detailsNotesText) detailsNotesText.textContent = ev.description;
+        } else {
+          detailsNotesRow.classList.add('hidden');
+        }
+      }
+
+      // Populate Edit Event Inputs
+      const editTitle = document.getElementById('edit-event-title');
+      const editStart = document.getElementById('edit-event-start');
+      const editEnd = document.getElementById('edit-event-end');
+      const editDur = document.getElementById('edit-event-duration');
+      const editCat = document.getElementById('edit-event-category');
+      const editLoc = document.getElementById('edit-event-location');
+      const editGood = document.getElementById('edit-event-goodenough');
+      const editNotes = document.getElementById('edit-event-notes');
+
+      if (editTitle) editTitle.value = ev.title || '';
+      if (editStart) editStart.value = ev.startTime || '09:00';
+      if (editDur) editDur.value = ev.duration || 60;
+      if (editEnd) editEnd.value = getEndTimeFromStartAndDuration(editStart ? editStart.value : '09:00', editDur ? editDur.value : 60);
+      if (editCat) editCat.value = ev.category || 'focus';
+      if (editLoc) editLoc.value = ev.location || '';
+      if (editGood) editGood.value = ev.goodEnough || '';
+      if (editNotes) editNotes.value = ev.description || '';
+
       renderModalSubtasks();
-      switchToolTab('magic');
+      // Open in Read-Only Details Mode by default! User must click Edit Event to change details.
+      switchToolTab('details');
       document.getElementById('event-tools-modal').classList.remove('hidden');
-      lucide.createIcons();
+      if (window.lucide) lucide.createIcons();
     }
 
     function closeToolsModal() {
@@ -5014,20 +5931,59 @@
 
     function switchToolTab(tab) {
       state.activeToolTab = tab;
-      ['magic', 'estimator', 'chef'].forEach(t => {
+      ['details', 'edit', 'magic', 'estimator', 'chef'].forEach(t => {
         const view = document.getElementById(`toolview-${t}`);
         const btn = document.getElementById(`tooltab-${t}`);
         if (view) view.classList.toggle('hidden', t !== tab);
         if (btn) {
           if (t === tab) {
-            const col = t === 'magic' ? 'bg-pastel-mint' : (t === 'estimator' ? 'bg-pastel-sky' : 'bg-pastel-coral');
-            btn.className = `py-2.5 px-3 rounded-xl text-xs font-semibold ${col} text-dark-base flex items-center justify-center gap-1.5 transition`;
+            const col = (t === 'details' || t === 'edit') ? 'bg-pastel-sky' : (t === 'magic' ? 'bg-pastel-mint' : (t === 'estimator' ? 'bg-pastel-sky' : 'bg-pastel-coral'));
+            btn.className = `py-2 px-2 rounded-xl text-xs font-bold ${col} text-dark-base flex items-center justify-center gap-1 transition shadow-sm`;
           } else {
-            btn.className = "py-2.5 px-3 rounded-xl text-xs font-semibold bg-dark-elevated text-slate-300 hover:text-white flex items-center justify-center gap-1.5 transition";
+            btn.className = "py-2 px-2 rounded-xl text-xs font-semibold bg-dark-elevated text-slate-300 hover:text-white flex items-center justify-center gap-1 transition";
           }
         }
       });
-      lucide.createIcons();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function saveEventDetailsFromModal() {
+      const ev = state.activeEventModal;
+      if (!ev) return;
+
+      const editTitle = document.getElementById('edit-event-title');
+      const editStart = document.getElementById('edit-event-start');
+      const editEnd = document.getElementById('edit-event-end');
+      const editDur = document.getElementById('edit-event-duration');
+      const editCat = document.getElementById('edit-event-category');
+      const editLoc = document.getElementById('edit-event-location');
+      const editGood = document.getElementById('edit-event-goodenough');
+      const editNotes = document.getElementById('edit-event-notes');
+
+      const newTitle = editTitle ? editTitle.value.trim() : ev.title;
+      if (!newTitle) {
+        alertBox("Please enter an event title.", "Title Required");
+        return;
+      }
+
+      calendarHistory.recordState(); // Undoable with ⌘Z!
+
+      ev.title = newTitle;
+      if (editStart && editStart.value) ev.startTime = editStart.value;
+      if (editDur) ev.duration = Math.max(5, parseInt(editDur.value, 10) || 30);
+      if (editCat) ev.category = editCat.value;
+      if (editLoc) ev.location = editLoc.value.trim();
+      if (editGood) ev.goodEnough = editGood.value.trim();
+      if (editNotes) ev.description = editNotes.value.trim();
+
+      ev.lastLocalEdit = Date.now();
+      saveAppState();
+      renderTimeline();
+      pushEventChangeToGoogle(ev, 'update');
+      if (typeof ffUploadNow === 'function') ffUploadNow(true);
+      closeToolsModal();
+      playChime('bell');
+      alertBox(`Updated "${ev.title}"! (⌘Z to undo)`, "Event Saved");
     }
 
     function renderModalSubtasks() {
@@ -7904,20 +8860,29 @@
       const cat = document.getElementById('new-event-category').value;
       if (!title) return;
 
-      state.events.push({
+      calendarHistory.recordState();
+      const loc = (document.getElementById('new-event-location') && document.getElementById('new-event-location').value.trim()) || '';
+      const newEv = {
         id: `ev-${Date.now()}`,
         title,
         startTime: start,
         duration,
         category: cat,
+        location: loc,
+        date: getSelectedTimelineDateStr() || getTodayDateString(),
+        lastLocalEdit: Date.now(),
         subtasks: [
           { text: 'Start with 0-friction prep', minutes: 5, done: false },
-          { text: 'Complete essential core block', minutes: duration - 10, done: false },
+          { text: 'Complete essential core block', minutes: Math.max(10, duration - 10), done: false },
           { text: 'Wrap up and clean surfaces', minutes: 5, done: false }
         ]
-      });
-      closeNewEventModal();
+      };
+      state.events.push(newEv);
+      saveAppState();
       renderTimeline();
+      pushEventChangeToGoogle(newEv, 'create');
+      if (typeof ffUploadNow === 'function') ffUploadNow(true);
+      closeNewEventModal();
       playChime('bell');
     }
 
@@ -10775,8 +11740,8 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
           return;
         }
         const provider = new firebase.auth.GoogleAuthProvider();
-        provider.addScope('https://www.googleapis.com/auth/calendar.events.readonly');
-        provider.addScope('https://www.googleapis.com/auth/calendar.readonly');
+        provider.addScope('https://www.googleapis.com/auth/calendar.events');
+        provider.addScope('https://www.googleapis.com/auth/calendar');
         try { provider.setCustomParameters({ prompt: 'select_account' }); } catch (e) {}
         ffSync.lastErrorText = '';
         try {
@@ -10993,6 +11958,17 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         const signInBtn = document.getElementById('ff-sync-signin-btn');
         const syncNowBtn = document.getElementById('ff-sync-now-btn');
         const signOutBtn = document.getElementById('ff-sync-signout-btn');
+        const linkBox = document.getElementById('ff-link-password-box');
+        if (linkBox) {
+          linkBox.classList.toggle('hidden', !ffSync.user);
+          const hasLinked = localStorage.getItem('focusflow_has_linked_password') === 'true';
+          const collapsed = document.getElementById('ff-link-password-collapsed');
+          const expanded = document.getElementById('ff-link-password-expanded');
+          if (collapsed && expanded) {
+            collapsed.classList.toggle('hidden', !hasLinked);
+            expanded.classList.toggle('hidden', hasLinked);
+          }
+        }
         const toneText = { ok: 'text-pastel-mint', busy: 'text-pastel-sky', warn: 'text-pastel-butter', off: 'text-slate-200' };
         if (statusEl) {
           statusEl.textContent = st.text;
@@ -11836,8 +12812,8 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
 
         const provider = new firebase.auth.GoogleAuthProvider();
-        provider.addScope('https://www.googleapis.com/auth/calendar.events.readonly');
-        provider.addScope('https://www.googleapis.com/auth/calendar.readonly');
+        provider.addScope('https://www.googleapis.com/auth/calendar.events');
+        provider.addScope('https://www.googleapis.com/auth/calendar');
         provider.setCustomParameters({ prompt: 'select_account' });
 
         const result = await firebase.auth().signInWithPopup(provider);
@@ -11886,15 +12862,15 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       }
     }
 
-    async function syncGoogleCalendarDirectNow() {
+    async function syncGoogleCalendarDirectNow(isManual = false) {
       let token = localStorage.getItem('focusflow_gcal_oauth_token');
       if (!token) {
-        connectGoogleCalendarDirect();
+        if (isManual) connectGoogleCalendarDirect();
         return;
       }
 
       const syncBtn = document.getElementById('btn-sync-gcal-now');
-      if (syncBtn) {
+      if (syncBtn && isManual) {
         syncBtn.disabled = true;
         syncBtn.innerHTML = `<span class="animate-spin inline-block mr-1">⏳</span> Syncing live events...`;
       }
@@ -11908,7 +12884,9 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
           });
           if (calListResp.status === 401) {
             localStorage.removeItem('focusflow_gcal_oauth_token');
-            alertBox("Your Google Calendar session expired. Tap 'Connect with Google Calendar' to refresh it.", "Session Expired");
+            if (isManual) {
+              alertBox("Your Google Calendar session expired. Tap 'Connect with Google Calendar' to refresh it.", "Session Expired");
+            }
             updateGoogleCalendarDirectUI();
             return;
           }
@@ -11944,10 +12922,17 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
               const errData = await resp.json().catch(() => ({}));
               const errMsg = (errData.error && errData.error.message) || '';
               if (errMsg.includes('has not been used') || errMsg.includes('disabled')) {
-                alertBox(
-                  "⚠️ The Google Calendar API is not turned on yet in your Google Cloud project.\n\nPlease visit this link to turn it on (takes 1 click):\nhttps://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview?project=focusflow-40398\n\nOnce enabled, tap 'Sync Live Events Now'!",
-                  "Enable Google Calendar API"
-                );
+                if (isManual) {
+                  alertBox(
+                    `⚠️ The Google Calendar API is not turned on yet in your Google Cloud project.
+
+Please visit this link to turn it on (takes 1 click):
+https://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview?project=focusflow-40398
+
+Once enabled, tap 'Sync Live Events Now'!`,
+                    "Enable Google Calendar API"
+                  );
+                }
                 return;
               }
             }
@@ -11990,7 +12975,9 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
                 const timeFormatted = `${String(startHH).padStart(2, '0')}:${String(startMM).padStart(2, '0')}`;
 
                 fetchedEvents.push({
-                  id: `ev-gapi-${item.id || itemIdx}-${eventDateStr}`,
+                  id: `ev-gapi-${item.id}-${eventDateStr}`,
+                  gcalEventId: item.id,
+                  gcalCalendarId: cal.id || 'primary',
                   title: item.summary,
                   calendarName: cal.summary || 'Google Calendar',
                   calendarColor: calColor,
@@ -12015,7 +13002,11 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         }
 
         if (fetchedEvents.length > 0) {
-          const manualEvents = (state.events || []).filter(e => 
+          const nowMs = Date.now();
+          const currentEvents = state.events || [];
+
+          // Separate manual events
+          const manualEvents = currentEvents.filter(e => 
             !e.id.startsWith('ev-gapi-') && 
             !e.id.startsWith('ev-ical-') && 
             !e.id.startsWith('ev-buf-') && 
@@ -12023,25 +13014,62 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
             !e.title.includes('Focus & Task Execution')
           );
 
-          state.events = [...manualEvents, ...fetchedEvents];
+          // Merge fetched Google events while PRESERVING local user edits made in FocusFlow
+          const mergedGcalEvents = fetchedEvents.map(fetched => {
+            const existing = currentEvents.find(e => 
+              (e.gcalEventId && e.gcalEventId === fetched.gcalEventId) ||
+              e.id === fetched.id
+            );
 
-          state.events.sort((a, b) => {
+            if (existing) {
+              // If the user modified this event locally in the last 5 minutes, keep the local version
+              const wasRecentlyEditedLocally = existing.lastLocalEdit && (nowMs - existing.lastLocalEdit < 300000);
+              if (wasRecentlyEditedLocally) {
+                // Ensure gcal metadata is present
+                existing.gcalEventId = fetched.gcalEventId;
+                existing.gcalCalendarId = fetched.gcalCalendarId;
+                return existing;
+              }
+
+              // Otherwise update from Google, but preserve any custom subtasks or boundary rules
+              if (existing.subtasks && existing.subtasks.some(s => s.done)) {
+                fetched.subtasks = existing.subtasks;
+              }
+              if (existing.goodEnough && !existing.goodEnough.includes('perfectionism spiral')) {
+                fetched.goodEnough = existing.goodEnough;
+              }
+            }
+            return fetched;
+          });
+
+          // Check if events actually changed before re-rendering
+          const oldJson = JSON.stringify(currentEvents.map(e => ({ id: e.id, time: e.startTime, dur: e.duration, title: e.title })));
+          const newEvents = [...manualEvents, ...mergedGcalEvents];
+          newEvents.sort((a, b) => {
             const [aH, aM] = (a.startTime || '00:00').split(':').map(Number);
             const [bH, bM] = (b.startTime || '00:00').split(':').map(Number);
             return (aH * 60 + aM) - (bH * 60 + bM);
           });
+          const newJson = JSON.stringify(newEvents.map(e => ({ id: e.id, time: e.startTime, dur: e.duration, title: e.title })));
 
-          saveAppState();
-          closeGCalSyncModal();
-          renderTimeline();
-          playChime('bell');
-          alertBox(`Synced ${fetchedEvents.length} live events directly from your Google Calendars across all days of the week!`, "Google Calendar Synced");
-        } else {
+          if (oldJson !== newJson) {
+            calendarHistory.recordState();
+            state.events = newEvents;
+            saveAppState();
+            renderTimeline();
+          }
+
+          if (isManual) {
+            closeGCalSyncModal();
+            playChime('bell');
+            alertBox(`Synced ${fetchedEvents.length} live events directly from your Google Calendars across all days of the week!`, "Google Calendar Synced");
+          }
+        } else if (isManual) {
           alertBox("Connected successfully to Google, but found 0 events scheduled in the upcoming weeks.", "No Events Found");
         }
       } catch (err) {
         console.error("Direct sync error:", err);
-        alertBox(`Direct sync error: ${err.message}`, "Sync Error");
+        if (isManual) alertBox(`Direct sync error: ${err.message}`, "Sync Error");
       } finally {
         if (syncBtn) {
           syncBtn.disabled = false;

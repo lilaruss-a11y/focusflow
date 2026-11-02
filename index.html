@@ -2483,12 +2483,17 @@
         </div>
 
         <div class="pt-2 flex flex-wrap justify-between items-center gap-2 border-t border-dark-border">
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2.5 flex-wrap">
             <button type="button" onclick="loadSampleMultipleCalendars()" class="text-[11px] text-slate-400 hover:text-pastel-sky underline">
               Load Samples
             </button>
             <button type="button" onclick="clearAllCalendarEvents()" class="text-[11px] text-rose-400/80 hover:text-rose-300 underline">
-              Clear Synced Schedule
+              Clear Schedule
+            </button>
+            <input type="file" id="gcal-ics-file-input" accept=".ics,text/calendar" onchange="handleIcsFileUpload(event)" class="hidden">
+            <button type="button" onclick="document.getElementById('gcal-ics-file-input').click()" class="text-[11px] text-pastel-sky hover:text-sky-300 underline flex items-center gap-1" title="Upload downloaded .ics file for instant 0-second sync">
+              <i data-lucide="file-up" class="w-3 h-3"></i>
+              <span>Import .ics File</span>
             </button>
           </div>
           <div class="flex gap-2">
@@ -8064,29 +8069,23 @@
       const reader = new FileReader();
       reader.onload = function(e) {
         const text = e.target.result;
-        const parsed = parseICS(text);
+        const calName = file.name.replace(/\.ics$/i, '') || 'Imported Calendar';
+        const parsed = parseICalEvents(text, calName, 'focus', 'sky');
         if (parsed.length > 0) {
-          parsed.forEach((p, idx) => {
-            state.events.push({
-              id: `ev-${Date.now()}-${idx}`,
-              title: p.title,
-              startTime: p.startTime || '10:00',
-              duration: p.duration || 45,
-              category: 'focus',
-              goodEnough: 'Complete core agenda; avoid perfectionist rabbit holes',
-              subtasks: [
-                { text: 'Start with 0-friction prep', minutes: 5, done: false },
-                { text: 'Execute main task block', minutes: Math.max(10, (p.duration || 45) - 15), done: false },
-                { text: 'Wrap up and review', minutes: 10, done: false }
-              ]
-            });
-          });
+          const manualEvents = (state.events || []).filter(ev => 
+            !ev.id.startsWith('ev-ical-') && 
+            !ev.id.startsWith('ev-buf-') && 
+            ev.id !== 'ev-meal-choreo' &&
+            !ev.title.includes('Focus & Task Execution')
+          );
+          state.events = [...manualEvents, ...parsed];
+          saveAppState();
           closeGCalSyncModal();
           renderTimeline();
           playChime('bell');
-          alertBox(`Successfully imported ${parsed.length} events from ${file.name}!`, "Calendar Synced");
+          alertBox(`Successfully imported ${parsed.length} events from "${file.name}" across all days of the week!`, "Calendar Imported");
         } else {
-          alertBox("Could not find standard events in that file. Try exporting again from Google Calendar.", "Import Notice");
+          alertBox("Could not find standard events in that file. Please verify it is a valid .ics calendar export.", "Import Notice");
         }
       };
       reader.readAsText(file);
@@ -8253,12 +8252,6 @@
     }
 
 
-    function handleIcsFileUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      alertBox(`Imported calendar events from ${file.name}.`, "Calendar Loaded");
-      playChime('bell');
-    }
 
     function openApiKeyModal() { document.getElementById('apikey-modal').classList.remove('hidden'); }
     function closeApiKeyModal() { document.getElementById('apikey-modal').classList.add('hidden'); }
@@ -11837,6 +11830,47 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       return events;
     }
 
+    function fetchWithTimeout(url, timeoutMs = 4500) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeoutMs);
+      return fetch(url, { signal: controller.signal, cache: 'no-store' })
+        .finally(() => clearTimeout(id));
+    }
+
+    async function fetchCalendarIcsText(targetUrl) {
+      if (!targetUrl || (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) || targetUrl.includes('sample-')) {
+        return null;
+      }
+
+      const proxyUrls = [
+        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
+      ];
+
+      // Race all proxies simultaneously with 4.5s cap per request
+      const racePromises = proxyUrls.map(async (pUrl) => {
+        try {
+          const resp = await fetchWithTimeout(pUrl, 4500);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const text = await resp.text();
+          if (text && text.includes('BEGIN:VCALENDAR')) {
+            return text;
+          }
+          throw new Error('Not valid iCal text');
+        } catch (err) {
+          throw err;
+        }
+      });
+
+      try {
+        return await Promise.any(racePromises);
+      } catch (aggregateError) {
+        console.warn('All proxies timed out or failed for URL:', targetUrl);
+        return null;
+      }
+    }
+
     async function syncAllConnectedCalendars() {
       const activeCals = (state.connectedCalendars || []).filter(c => c.active);
       if (activeCals.length === 0) {
@@ -11847,54 +11881,31 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       const syncBtn = document.getElementById('sync-all-cals-btn');
       if (syncBtn) {
         syncBtn.disabled = true;
-        syncBtn.innerHTML = `<span class="animate-spin inline-block mr-1.5">⏳</span> Fetching live Google Calendars...`;
+        syncBtn.innerHTML = `<span class="animate-spin inline-block mr-1.5">⏳</span> Syncing ${activeCals.length} calendar${activeCals.length === 1 ? '' : 's'}...`;
       }
 
-      const mergedEvents = [];
       let successfulCalendars = 0;
       let failedCalendars = [];
+      const mergedEvents = [];
 
-      for (let idx = 0; idx < activeCals.length; idx++) {
-        const cal = activeCals[idx];
-        let fetchedIcsText = null;
+      // Fetch all active calendars in parallel with concurrent proxy racing!
+      const fetchResults = await Promise.all(activeCals.map(async (cal) => {
+        const targetUrl = (cal.url || '').trim().replace(/^webcal:\/\//i, 'https://');
+        const icsText = await fetchCalendarIcsText(targetUrl);
+        return { cal, icsText };
+      }));
 
-        let targetUrl = (cal.url || '').trim().replace(/^webcal:\/\//i, 'https://');
-        
-        if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) && !targetUrl.includes('sample-')) {
-          const proxyUrls = [
-            `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-            `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
-            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
-          ];
-
-          for (const pUrl of proxyUrls) {
-            try {
-              const resp = await fetch(pUrl, { cache: 'no-store' });
-              if (resp.ok) {
-                const text = await resp.text();
-                if (text && text.includes('BEGIN:VCALENDAR')) {
-                  fetchedIcsText = text;
-                  break;
-                }
-              }
-            } catch (err) {
-              console.warn(`Calendar proxy fetch attempt for ${cal.name}:`, err);
-            }
-          }
-        }
-
-        if (fetchedIcsText) {
-          const parsed = parseICalEvents(fetchedIcsText, cal.name, cal.category, cal.color);
+      fetchResults.forEach(({ cal, icsText }) => {
+        if (icsText) {
+          const parsed = parseICalEvents(icsText, cal.name, cal.category, cal.color);
           if (parsed.length > 0) {
             parsed.forEach(ev => mergedEvents.push(ev));
-            successfulCalendars++;
-          } else {
-            successfulCalendars++;
           }
+          successfulCalendars++;
         } else {
           failedCalendars.push(cal.name);
         }
-      }
+      });
 
       if (syncBtn) {
         syncBtn.disabled = false;
@@ -11903,7 +11914,7 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       }
 
       if (successfulCalendars === 0 && failedCalendars.length > 0) {
-        alertBox(`Could not reach the calendar link for: "${failedCalendars.join(', ')}". Please verify your secret iCal link was copied completely from Google Calendar desktop settings.`, "Sync Notice");
+        alertBox(`Could not reach the calendar link for: "${failedCalendars.join(', ')}". The request timed out. Please check that your secret iCal link is copied completely, or use the "Import .ics File" option for instant 0-second sync!`, "Sync Timed Out");
         return;
       }
 
@@ -11931,7 +11942,7 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
 
       let msg = `Synced ${mergedEvents.length} real events across all days of the week!`;
       if (failedCalendars.length > 0) {
-        msg += ` (${failedCalendars.join(', ')} could not be reached)`;
+        msg += ` (${failedCalendars.join(', ')} timed out)`;
       }
       alertBox(msg, "Calendars Synced");
     }

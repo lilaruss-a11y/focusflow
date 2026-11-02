@@ -228,7 +228,11 @@
             </button>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <button type="button" onclick="jumpTimelineToToday()" class="px-3 py-1.5 rounded-xl bg-dark-base hover:bg-dark-elevated border border-dark-border text-slate-300 hover:text-white font-semibold text-xs flex items-center gap-1 transition shadow-sm" title="Jump to Today">
+              <i data-lucide="calendar-days" class="w-3.5 h-3.5 text-pastel-sky"></i>
+              <span>Today</span>
+            </button>
             <span id="timeline-today-date" class="font-mono text-slate-300 font-semibold px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border">
               <!-- Live Day & Date -->
             </span>
@@ -237,6 +241,28 @@
               <span>Jump to Now</span>
             </button>
           </div>
+        </div>
+
+        <!-- 7-DAY WEEK SELECTOR STRIP -->
+        <div class="pt-3">
+          <div class="p-2 rounded-2xl bg-dark-base/80 border border-dark-border flex items-center justify-between gap-1 shadow-inner">
+            <button type="button" onclick="changeTimelineWeek(-1)" class="w-8 h-10 sm:w-9 sm:h-11 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0" title="Previous Week">
+              <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            
+            <div id="timeline-week-strip" class="grid grid-cols-7 gap-1 sm:gap-1.5 flex-1 px-1">
+              <!-- Dynamically populated: Mon, Tue, Wed, Thu, Fri, Sat, Sun buttons -->
+            </div>
+
+            <button type="button" onclick="changeTimelineWeek(1)" class="w-8 h-10 sm:w-9 sm:h-11 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0" title="Next Week">
+              <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- OPTIONAL ADHD SCHEDULE SUGGESTIONS (APPROVAL REQUIRED) -->
+        <div id="timeline-schedule-suggestions" class="pt-2 hidden space-y-2">
+          <!-- Dynamically populated suggestions with [Approve & Add] buttons -->
         </div>
       </div>
 
@@ -2453,16 +2479,21 @@
             <button type="button" onclick="setSectionScaffold('calendar', 2)" id="gcal-scaffold-2" class="p-2 rounded-xl border border-dark-border text-center transition text-slate-400">2: Self-Draft</button>
             <button type="button" onclick="setSectionScaffold('calendar', 3)" id="gcal-scaffold-3" class="p-2 rounded-xl border border-dark-border text-center transition text-slate-400">3: Solo Flight</button>
           </div>
-          <p class="text-[11px] text-slate-400" id="gcal-scaffold-desc">Level 1 Co-Pilot: Injects 10m buffers, 3-step action breakdowns, and hydration stops between calendar blocks.</p>
+          <p class="text-[11px] text-slate-400" id="gcal-scaffold-desc">Strict Fidelity: Sync strictly imports your real Google Calendar schedule across all days of the week without unapproved changes. Smart buffer and meal suggestions are presented separately for you to approve.</p>
         </div>
 
-        <div class="pt-2 flex justify-between items-center border-t border-dark-border">
-          <button type="button" onclick="loadSampleMultipleCalendars()" class="text-[11px] text-slate-400 hover:text-pastel-sky underline">
-            Load Sample Calendars (Work, School, Personal)
-          </button>
+        <div class="pt-2 flex flex-wrap justify-between items-center gap-2 border-t border-dark-border">
+          <div class="flex items-center gap-3">
+            <button type="button" onclick="loadSampleMultipleCalendars()" class="text-[11px] text-slate-400 hover:text-pastel-sky underline">
+              Load Samples
+            </button>
+            <button type="button" onclick="clearAllCalendarEvents()" class="text-[11px] text-rose-400/80 hover:text-rose-300 underline">
+              Clear Synced Schedule
+            </button>
+          </div>
           <div class="flex gap-2">
             <button type="button" onclick="closeGCalSyncModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs">Cancel</button>
-            <button type="button" onclick="syncAllConnectedCalendars()" class="px-5 py-2.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-pastel-sky/20 hover:bg-sky-300 transition">
+            <button type="button" id="sync-all-cals-btn" onclick="syncAllConnectedCalendars()" class="px-5 py-2.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-pastel-sky/20 hover:bg-sky-300 transition">
               <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
               <span>Sync All Calendars</span>
             </button>
@@ -4120,20 +4151,303 @@
       renderTimeline();
     }
 
-    function renderTimeline() {
-      // Update Today's Date Banner
-      const dateEl = document.getElementById('timeline-today-date');
-      if (dateEl) {
-        const today = new Date();
-        const friendly = today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        const eventCount = state.events.length;
-        dateEl.textContent = `📅 ${friendly} • ${eventCount} Scheduled Blocks`;
+    function getTodayDateString() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function formatDateString(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function getMondayOfWeek(dInput) {
+      const d = new Date(typeof dInput === 'string' ? dInput + 'T12:00:00' : dInput);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(d.setDate(diff));
+      monday.setHours(0, 0, 0, 0);
+      return monday;
+    }
+
+    function getSelectedTimelineDateStr() {
+      if (!state.selectedTimelineDate) {
+        state.selectedTimelineDate = getTodayDateString();
+      }
+      return state.selectedTimelineDate;
+    }
+
+    function getEventsForSelectedDay() {
+      const selDate = getSelectedTimelineDateStr();
+      const selDateNormalized = selDate.replace(/-/g, '');
+      const allEvents = state.events || [];
+
+      return allEvents.filter(ev => {
+        if (ev.date) {
+          return ev.date.replace(/-/g, '') === selDateNormalized;
+        }
+        return selDate === getTodayDateString();
+      });
+    }
+
+    function selectTimelineDay(dateStr) {
+      state.selectedTimelineDate = dateStr;
+      renderTimeline();
+    }
+
+    function changeTimelineWeek(offsetWeeks) {
+      const curDateStr = getSelectedTimelineDateStr();
+      const curMonday = getMondayOfWeek(curDateStr);
+      curMonday.setDate(curMonday.getDate() + (offsetWeeks * 7));
+      state.selectedTimelineDate = formatDateString(curMonday);
+      renderTimeline();
+    }
+
+    function jumpTimelineToToday() {
+      state.selectedTimelineDate = getTodayDateString();
+      renderTimeline();
+      scrollToCurrentTimeMarker();
+    }
+
+    function renderWeekStrip() {
+      const strip = document.getElementById('timeline-week-strip');
+      if (!strip) return;
+      strip.innerHTML = '';
+
+      const selDateStr = getSelectedTimelineDateStr();
+      const weekStart = getMondayOfWeek(selDateStr);
+      const todayStr = getTodayDateString();
+      const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+      for (let i = 0; i < 7; i++) {
+        const cur = new Date(weekStart);
+        cur.setDate(weekStart.getDate() + i);
+        const dateStr = formatDateString(cur);
+        const dayNum = cur.getDate();
+        const isSelected = (dateStr === selDateStr);
+        const isToday = (dateStr === todayStr);
+
+        // Count events on this day
+        const eventsOnDay = (state.events || []).filter(e => {
+          if (e.date) return e.date.replace(/-/g, '') === dateStr.replace(/-/g, '');
+          return dateStr === todayStr;
+        });
+        const hasEvents = eventsOnDay.length > 0;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.onclick = () => selectTimelineDay(dateStr);
+        btn.className = `flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition text-center select-none ${
+          isSelected
+            ? 'bg-pastel-mint text-dark-base font-bold shadow-md shadow-pastel-mint/20'
+            : (isToday
+                ? 'bg-dark-elevated border border-pastel-sky/50 text-pastel-sky hover:bg-slate-700'
+                : 'bg-dark-elevated/60 text-slate-300 hover:bg-dark-elevated hover:text-white')
+        }`;
+
+        btn.innerHTML = `
+          <span class="text-[10px] font-semibold uppercase tracking-wider ${isSelected ? 'text-dark-base font-extrabold' : (isToday ? 'text-pastel-sky' : 'text-slate-400')}">${dayNames[i]}</span>
+          <span class="text-xs sm:text-sm font-mono font-bold leading-tight">${dayNum}</span>
+          <div class="h-1.5 flex items-center justify-center mt-0.5">
+            ${hasEvents ? `<span class="w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-dark-base' : 'bg-pastel-mint'}"></span>` : ''}
+          </div>
+        `;
+        strip.appendChild(btn);
+      }
+    }
+
+    function renderScheduleSuggestions() {
+      const container = document.getElementById('timeline-schedule-suggestions');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const dayEvents = getEventsForSelectedDay();
+      if (dayEvents.length === 0) {
+        container.classList.add('hidden');
+        return;
       }
 
-      // 1. Render Calendar Day Grid (Structured Visual Calendar)
+      // Sort day events by start time
+      const sorted = [...dayEvents].sort((a, b) => {
+        const [aH, aM] = (a.startTime || '09:00').split(':').map(Number);
+        const [bH, bM] = (b.startTime || '09:00').split(':').map(Number);
+        return (aH * 60 + aM) - (bH * 60 + bM);
+      });
+
+      const suggestions = [];
+
+      // Suggestion 1: Check for back-to-back blocks with no buffer
+      for (let i = 0; i < sorted.length - 1; i++) {
+        const cur = sorted[i];
+        const nxt = sorted[i + 1];
+
+        const [cH, cM] = (cur.startTime || '09:00').split(':').map(Number);
+        const curEndMin = (cH * 60) + cM + (cur.duration || 30);
+
+        const [nH, nM] = (nxt.startTime || '10:00').split(':').map(Number);
+        const nxtStartMin = (nH * 60) + nM;
+
+        const gap = nxtStartMin - curEndMin;
+        if (gap >= 0 && gap <= 5 && !cur.title.includes('Buffer') && !nxt.title.includes('Buffer')) {
+          const bufH = String(Math.floor(curEndMin / 60)).padStart(2, '0');
+          const bufM = String(curEndMin % 60).padStart(2, '0');
+          suggestions.push({
+            id: `sug-buf-${cur.id}`,
+            type: 'buffer',
+            title: `Add 10m Decompression Buffer`,
+            description: `Back-to-back transition detected after "${cur.title.slice(0, 24)}" before "${nxt.title.slice(0, 24)}".`,
+            startTime: `${bufH}:${bufM}`,
+            duration: 10,
+            afterTitle: cur.title
+          });
+          break;
+        }
+      }
+
+      // Suggestion 2: Check if lunch block exists between 11:30 AM (690m) and 2:00 PM (840m)
+      const hasMeal = sorted.some(e => {
+        const [eH, eM] = (e.startTime || '09:00').split(':').map(Number);
+        const sMin = (eH * 60) + eM;
+        return (e.category === 'meal' || /lunch|dinner|meal|eat/i.test(e.title)) && sMin >= 660 && sMin <= 870;
+      });
+
+      if (!hasMeal && sorted.length >= 2) {
+        suggestions.push({
+          id: `sug-lunch`,
+          type: 'meal',
+          title: `Schedule 30m Nourishing Lunch & Reset`,
+          description: `No meal break scheduled between 11:30 AM and 2:00 PM. Taking time to eat fuels afternoon dopamine.`,
+          startTime: '12:30',
+          duration: 30
+        });
+      }
+
+      if (suggestions.length === 0) {
+        container.classList.add('hidden');
+        return;
+      }
+
+      container.classList.remove('hidden');
+
+      suggestions.forEach(sug => {
+        const card = document.createElement('div');
+        card.className = "p-3 rounded-2xl bg-dark-base border border-pastel-sky/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md";
+        card.innerHTML = `
+          <div class="flex items-start gap-2.5 flex-1">
+            <span class="text-lg shrink-0">${sug.type === 'meal' ? '🥗' : '🧘'}</span>
+            <div class="space-y-0.5">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-pastel-sky bg-pastel-sky/15 px-2 py-0.5 rounded">ADHD Suggestion</span>
+                <span class="text-xs font-bold text-white">${sug.title}</span>
+              </div>
+              <p class="text-[11px] text-slate-300 leading-snug">${sug.description}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+            <button type="button" onclick="dismissScheduleSuggestion('${sug.id}')" class="px-2.5 py-1.5 rounded-xl text-slate-400 hover:text-white text-xs">
+              Dismiss
+            </button>
+            <button type="button" onclick="approveScheduleSuggestion('${sug.type}', '${sug.startTime}', ${sug.duration}, '${encodeURIComponent(sug.afterTitle || '')}')" class="px-3 py-1.5 rounded-xl bg-pastel-sky hover:bg-sky-300 text-dark-base font-bold text-xs flex items-center gap-1 shadow-md transition">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>+ Approve &amp; Add</span>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function dismissScheduleSuggestion(sugId) {
+      const container = document.getElementById('timeline-schedule-suggestions');
+      if (container) container.classList.add('hidden');
+    }
+
+    function approveScheduleSuggestion(type, startTime, duration, rawAfterTitle) {
+      const afterTitle = decodeURIComponent(rawAfterTitle || '');
+      const selDate = getSelectedTimelineDateStr();
+
+      if (type === 'meal') {
+        state.events.push({
+          id: `ev-approved-meal-${Date.now()}`,
+          title: '🥗 Nourishing Lunch & Rest Reset',
+          calendarName: 'Approved Habit',
+          calendarColor: 'coral',
+          category: 'meal',
+          date: selDate,
+          startTime: startTime || '12:30',
+          duration: duration || 30,
+          goodEnough: 'Wholesome lunch and brief mental break before afternoon work',
+          subtasks: [
+            { text: 'Step away from screen & prepare food', minutes: 10, done: false },
+            { text: 'Eat mindfully without rush', minutes: 15, done: false },
+            { text: 'Rinse dishes & hydrate with full glass of water', minutes: 5, done: false }
+          ]
+        });
+        alertBox("Added 30m Nourishing Lunch block to your schedule!", "Suggestion Approved");
+      } else {
+        state.events.push({
+          id: `ev-approved-buf-${Date.now()}`,
+          title: `🧘 Decompression Buffer${afterTitle ? ': after ' + afterTitle.slice(0, 20) : ''}`,
+          calendarName: 'Approved Habit',
+          calendarColor: 'mint',
+          category: 'care',
+          date: selDate,
+          startTime: startTime || '11:00',
+          duration: duration || 10,
+          goodEnough: 'Hydrate, shoulder roll, clear tabs before starting next block',
+          subtasks: [
+            { text: 'Drink a glass of water', minutes: 3, done: false },
+            { text: 'Physical stretch or walk around', minutes: 3, done: false },
+            { text: 'Reset desk and close finished tabs', minutes: 4, done: false }
+          ]
+        });
+        alertBox("Added 10m Decompression Buffer to your schedule!", "Suggestion Approved");
+      }
+
+      saveAppState();
+      renderTimeline();
+      playChime('bell');
+    }
+
+    function clearAllCalendarEvents() {
+      if (confirm("Clear all calendar events from FocusFlow? Your Google Calendar accounts and links will remain saved.")) {
+        state.events = [];
+        saveAppState();
+        renderTimeline();
+        playChime('bell');
+        alertBox("Cleared schedule. Tap 'Sync All Calendars' anytime to reload your real schedule.", "Schedule Cleared");
+      }
+    }
+
+    function renderTimeline() {
+      const selDateStr = getSelectedTimelineDateStr();
+      const [y, m, d] = selDateStr.split('-').map(Number);
+      const selDateObj = new Date(y, m - 1, d);
+      const friendly = selDateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      const dayEvents = getEventsForSelectedDay();
+
+      // Update Date Banner
+      const dateEl = document.getElementById('timeline-today-date');
+      if (dateEl) {
+        dateEl.textContent = `📅 ${friendly} • ${dayEvents.length} Event${dayEvents.length === 1 ? '' : 's'}`;
+      }
+
+      // 1. Render 7-Day Week Selector Strip
+      renderWeekStrip();
+
+      // 2. Render ADHD Schedule Suggestions (Approval Required)
+      renderScheduleSuggestions();
+
+      // 3. Render Calendar Day Grid (Structured Visual Calendar with Side-by-Side Overlaps)
       renderStructuredCalendarGrid();
 
-      // 2. Render List View (Fallback / Checklist)
+      // 4. Render List View (Fallback / Checklist)
       renderCompactTimelineListView();
 
       if (window.lucide) lucide.createIcons();
@@ -4148,8 +4462,6 @@
       gutter.innerHTML = '';
       gridLines.innerHTML = '';
       blocksContainer.innerHTML = '';
-
-      const totalHours = CALENDAR_END_HOUR - CALENDAR_START_HOUR;
 
       // Build Hour Markers and Horizontal Grid Lines
       for (let h = CALENDAR_START_HOUR; h <= CALENDAR_END_HOUR; h++) {
@@ -4178,105 +4490,158 @@
         }
       }
 
-      // Render Real-Time "NOW" Indicator Line
+      // Render Real-Time "NOW" Indicator Line (only if viewing today)
       updateCurrentTimeMarker();
 
-      // Render Proportional Event Blocks
-      state.events.forEach(ev => {
+      // Get events for selected day
+      const dayEvents = getEventsForSelectedDay();
+
+      // Sort day events by start time
+      dayEvents.sort((a, b) => {
+        const [aH, aM] = (a.startTime || '09:00').split(':').map(Number);
+        const [bH, bM] = (b.startTime || '09:00').split(':').map(Number);
+        return (aH * 60 + aM) - (bH * 60 + bM);
+      });
+
+      // Detect Overlaps and Group into Side-by-Side Columns
+      const clusters = [];
+      let currentCluster = [];
+      let currentClusterEnd = -1;
+
+      dayEvents.forEach(ev => {
         const [hh, mm] = (ev.startTime || '09:00').split(':').map(n => parseInt(n) || 0);
-        const eventStartMinutes = (hh * 60) + mm;
-        const calendarStartMinutes = CALENDAR_START_HOUR * 60;
-        const minutesFromStart = Math.max(0, eventStartMinutes - calendarStartMinutes);
+        const start = hh * 60 + mm;
+        const dur = Math.max(15, ev.duration || 30);
+        const end = start + dur;
 
-        const topPx = (minutesFromStart / 60) * CALENDAR_HOUR_HEIGHT;
-        const heightPx = Math.max(28, (ev.duration / 60) * CALENDAR_HOUR_HEIGHT);
-
-        // End Time calculation
-        const endMinutes = eventStartMinutes + ev.duration;
-        const endHH = String(Math.floor(endMinutes / 60)).padStart(2, '0');
-        const endMM = String(endMinutes % 60).padStart(2, '0');
-        const timeRangeStr = `${formatTimeAmPm(ev.startTime)} – ${formatTimeAmPm(`${endHH}:${endMM}`)}`;
-
-        const isBuffer = ev.title.includes('Buffer') || ev.title.includes('Transition');
-
-        // Color & Category Styling based on dynamic category system
-        const catInfo = getCategoryInfo(ev.category);
-        const catMeta = {
-          border: `${catInfo.colorMeta.border} ${catInfo.colorMeta.borderFull} bg-dark-base/95`,
-          text: catInfo.colorMeta.text,
-          tag: catInfo.name,
-          badgeBg: catInfo.colorMeta.badgeBg,
-          borderFull: catInfo.colorMeta.borderFull
-        };
-
-        const block = document.createElement('div');
-        block.className = `absolute left-2 right-2 rounded-xl border border-l-4 transition-all shadow-md hover:shadow-xl hover:border-slate-500 overflow-hidden flex flex-col justify-between cursor-pointer ${isBuffer ? 'bg-dark-base/80 border border-dashed border-pastel-sky/50 text-pastel-sky' : catMeta.border}`;
-        block.style.top = `${topPx}px`;
-        block.style.height = `${heightPx}px`;
-        block.style.zIndex = isBuffer ? '5' : '10';
-        block.onclick = () => openEventToolsModal(ev.id);
-
-        if (isBuffer || heightPx < 45) {
-          // Compact / Buffer Block Layout
-          block.innerHTML = `
-            <div class="px-2.5 py-1 flex items-center justify-between text-xs w-full h-full">
-              <div class="flex items-center gap-2 truncate pr-2">
-                <span class="text-sm shrink-0">🧘</span>
-                <span class="font-bold text-slate-200 truncate text-[11px]">${ev.title}</span>
-              </div>
-              <div class="flex items-center gap-2 shrink-0 font-mono text-[10px]">
-                <span class="text-slate-400">${timeRangeStr}</span>
-                <span class="px-1.5 py-0.5 rounded bg-pastel-sky/20 text-pastel-sky font-bold">${ev.duration}m</span>
-              </div>
-            </div>
-          `;
+        if (currentCluster.length === 0 || start < currentClusterEnd) {
+          currentCluster.push({ ev, start, end, dur });
+          if (end > currentClusterEnd) currentClusterEnd = end;
         } else {
-          // Full Structured Calendar Block
-          const totalSubtasks = ev.subtasks ? ev.subtasks.length : 0;
-          const doneSubtasks = ev.subtasks ? ev.subtasks.filter(s => s.done).length : 0;
-
-          block.innerHTML = `
-            <div class="p-3 flex flex-col justify-between h-full space-y-1">
-              <div>
-                <!-- Top Row: Time Range, Duration, Calendar Badge -->
-                <div class="flex items-center justify-between text-[11px] font-mono mb-1">
-                  <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="font-bold text-white">${timeRangeStr}</span>
-                    <span class="px-1.5 py-0.5 rounded bg-dark-elevated text-slate-300 font-bold">(${ev.duration}m)</span>
-                    ${ev.calendarName ? `<span class="px-2 py-0.5 rounded-full bg-pastel-sky/20 text-pastel-sky border border-pastel-sky/30 font-bold">${ev.calendarName}</span>` : ''}
-                  </div>
-                  <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded ${catMeta.text} bg-dark-elevated">${catMeta.tag}</span>
-                </div>
-
-                <!-- Event Title -->
-                <h3 class="font-bold text-white text-xs sm:text-sm leading-snug truncate">${ev.title}</h3>
-                
-                ${ev.goodEnough && heightPx > 70 ? `
-                  <p class="text-[10px] text-pastel-butter/90 truncate mt-0.5">🎯 Boundary: ${ev.goodEnough}</p>
-                ` : ''}
-              </div>
-
-              <!-- Bottom Row: Subtasks & Quick Action Buttons -->
-              <div class="flex items-center justify-between pt-1 border-t border-dark-border/60 text-[10px]">
-                <div class="flex items-center gap-1.5 text-slate-400">
-                  <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-pastel-mint"></i>
-                  <span>${doneSubtasks}/${totalSubtasks} steps done</span>
-                </div>
-                <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
-                  <button type="button" onclick="syncEventToGoogleCalendar('${ev.title}', '${ev.startTime}', ${ev.duration})" class="px-2 py-1 rounded bg-dark-elevated hover:bg-slate-700 text-pastel-sky font-semibold" title="Sync / Edit in Google Calendar">
-                    GCal
-                  </button>
-                  <button type="button" onclick="quickLaunchTaskmaster('${ev.id}')" class="px-2.5 py-1 rounded-lg bg-pastel-mint hover:bg-emerald-300 text-dark-base font-bold flex items-center gap-1 shadow-sm">
-                    <i data-lucide="play" class="w-3 h-3 fill-dark-base"></i>
-                    <span>Focus</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          `;
+          clusters.push(currentCluster);
+          currentCluster = [{ ev, start, end, dur }];
+          currentClusterEnd = end;
         }
+      });
+      if (currentCluster.length > 0) clusters.push(currentCluster);
 
-        blocksContainer.appendChild(block);
+      clusters.forEach(cluster => {
+        const colEnds = [];
+        const placements = [];
+
+        cluster.forEach(item => {
+          let placedCol = -1;
+          for (let c = 0; c < colEnds.length; c++) {
+            if (colEnds[c] <= item.start) {
+              placedCol = c;
+              colEnds[c] = item.end;
+              break;
+            }
+          }
+          if (placedCol === -1) {
+            placedCol = colEnds.length;
+            colEnds.push(item.end);
+          }
+          placements.push({ item, col: placedCol });
+        });
+
+        const totalCols = Math.max(1, colEnds.length);
+        const colWidthPct = 100 / totalCols;
+
+        placements.forEach(({ item, col }) => {
+          const ev = item.ev;
+          const calendarStartMinutes = CALENDAR_START_HOUR * 60;
+          const minutesFromStart = Math.max(0, item.start - calendarStartMinutes);
+          const topPx = (minutesFromStart / 60) * CALENDAR_HOUR_HEIGHT;
+          const heightPx = Math.max(34, (item.dur / 60) * CALENDAR_HOUR_HEIGHT);
+
+          const endMinutes = item.end;
+          const endHH = String(Math.floor(endMinutes / 60)).padStart(2, '0');
+          const endMM = String(endMinutes % 60).padStart(2, '0');
+          const timeRangeStr = `${formatTimeAmPm(ev.startTime)} – ${formatTimeAmPm(`${endHH}:${endMM}`)}`;
+
+          const isBuffer = ev.title.includes('Buffer') || ev.title.includes('Transition');
+
+          const catInfo = getCategoryInfo(ev.category);
+          const catMeta = {
+            border: `${catInfo.colorMeta.border} ${catInfo.colorMeta.borderFull} bg-dark-base/95`,
+            text: catInfo.colorMeta.text,
+            tag: catInfo.name,
+            badgeBg: catInfo.colorMeta.badgeBg,
+            borderFull: catInfo.colorMeta.borderFull
+          };
+
+          const leftPct = col * colWidthPct;
+          const block = document.createElement('div');
+          block.className = `absolute rounded-xl border border-l-4 transition-all shadow-md hover:shadow-xl hover:border-slate-400 overflow-hidden flex flex-col justify-between cursor-pointer ${isBuffer ? 'bg-dark-base/80 border border-dashed border-pastel-sky/50 text-pastel-sky' : catMeta.border}`;
+          block.style.top = `${topPx}px`;
+          block.style.height = `${heightPx}px`;
+          block.style.left = `calc(${leftPct}% + 4px)`;
+          block.style.width = `calc(${colWidthPct}% - 8px)`;
+          block.style.zIndex = isBuffer ? '5' : '10';
+          block.onclick = () => openEventToolsModal(ev.id);
+
+          if (heightPx < 52) {
+            // Compact layout (for short events 15-30m): Title is always visible and prominent!
+            block.innerHTML = `
+              <div class="px-2.5 py-1 flex items-center justify-between text-xs w-full h-full gap-2">
+                <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                  <span class="w-2 h-2 rounded-full shrink-0 ${isBuffer ? 'bg-pastel-sky' : 'bg-pastel-mint'}"></span>
+                  <h3 class="font-bold text-white text-[11px] truncate leading-tight">${ev.title}</h3>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0 font-mono text-[10px]">
+                  <span class="text-slate-300 font-semibold">${formatTimeAmPm(ev.startTime)}</span>
+                  <span class="px-1.5 py-0.5 rounded bg-dark-elevated text-slate-300 font-bold">${ev.duration}m</span>
+                </div>
+              </div>
+            `;
+          } else {
+            // Full Structured Calendar Block
+            const totalSubtasks = ev.subtasks ? ev.subtasks.length : 0;
+            const doneSubtasks = ev.subtasks ? ev.subtasks.filter(s => s.done).length : 0;
+
+            block.innerHTML = `
+              <div class="p-2.5 flex flex-col justify-between h-full space-y-1">
+                <div>
+                  <!-- Top Row: Time Range, Duration, Calendar Badge -->
+                  <div class="flex items-center justify-between text-[10px] font-mono mb-1 flex-wrap gap-1">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <span class="font-bold text-white">${timeRangeStr}</span>
+                      <span class="px-1.5 py-0.5 rounded bg-dark-elevated text-slate-300 font-bold">(${ev.duration}m)</span>
+                      ${ev.calendarName ? `<span class="px-1.5 py-0.5 rounded-full bg-pastel-sky/20 text-pastel-sky border border-pastel-sky/30 font-bold text-[9px]">${ev.calendarName}</span>` : ''}
+                    </div>
+                    <span class="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded ${catMeta.text} bg-dark-elevated">${catMeta.tag}</span>
+                  </div>
+
+                  <!-- Event Title: Bold, white, prominent -->
+                  <h3 class="font-bold text-white text-xs sm:text-sm leading-snug line-clamp-2">${ev.title}</h3>
+                  
+                  ${ev.location ? `<p class="text-[10px] text-slate-300 truncate mt-0.5 flex items-center gap-1">📍 ${ev.location}</p>` : ''}
+                  ${ev.goodEnough && heightPx > 75 ? `<p class="text-[10px] text-pastel-butter/90 truncate mt-0.5">🎯 Boundary: ${ev.goodEnough}</p>` : ''}
+                </div>
+
+                <!-- Bottom Row: Subtasks & Quick Action Buttons -->
+                <div class="flex items-center justify-between pt-1 border-t border-dark-border/60 text-[10px]">
+                  <div class="flex items-center gap-1 text-slate-400">
+                    <i data-lucide="check-circle-2" class="w-3 h-3 text-pastel-mint"></i>
+                    <span>${doneSubtasks}/${totalSubtasks} steps</span>
+                  </div>
+                  <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+                    <button type="button" onclick="syncEventToGoogleCalendar('${ev.title}', '${ev.startTime}', ${ev.duration})" class="px-1.5 py-0.5 rounded bg-dark-elevated hover:bg-slate-700 text-pastel-sky font-semibold text-[9px]" title="Sync / Edit in Google Calendar">
+                      GCal
+                    </button>
+                    <button type="button" onclick="quickLaunchTaskmaster('${ev.id}')" class="px-2 py-0.5 rounded-lg bg-pastel-mint hover:bg-emerald-300 text-dark-base font-bold flex items-center gap-1 shadow-sm text-[10px]">
+                      <i data-lucide="play" class="w-2.5 h-2.5 fill-dark-base"></i>
+                      <span>Focus</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+
+          blocksContainer.appendChild(block);
+        });
       });
     }
 
@@ -4294,6 +4659,13 @@
       const nowLabel = document.getElementById('timeline-now-label');
       if (!nowLine) return;
 
+      const isToday = (getSelectedTimelineDateStr() === getTodayDateString());
+      if (!isToday) {
+        nowLine.classList.add('hidden');
+        if (nowLabel) nowLabel.classList.add('hidden');
+        return;
+      }
+
       const now = new Date();
       const currentMinutes = (now.getHours() * 60) + now.getMinutes();
       const calendarStartMinutes = CALENDAR_START_HOUR * 60;
@@ -4307,6 +4679,7 @@
         nowLine.classList.remove('hidden');
 
         if (nowLabel) {
+          nowLabel.classList.remove('hidden');
           const hh = now.getHours();
           const mm = String(now.getMinutes()).padStart(2, '0');
           const ampm = hh >= 12 ? 'PM' : 'AM';
@@ -4337,16 +4710,21 @@
       if (!container) return;
       container.innerHTML = '';
 
-      if (state.events.length === 0) {
+      const dayEvents = getEventsForSelectedDay();
+      const selDateStr = getSelectedTimelineDateStr();
+      const [y, m, d] = selDateStr.split('-').map(Number);
+      const friendly = new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+      if (dayEvents.length === 0) {
         container.innerHTML = `
           <div class="p-8 text-center bg-dark-surface border border-dark-border rounded-2xl text-xs text-slate-400">
-            No scheduled calendar blocks yet. Click "Add Event" or "Sync Calendars" to load your schedule.
+            No scheduled events for ${friendly}. Use the 7-day week selector above to view other days or click "Sync Calendars".
           </div>
         `;
         return;
       }
 
-      state.events.forEach(ev => {
+      dayEvents.forEach(ev => {
         const catInfo = getCategoryInfo(ev.category);
         const catMeta = {
           color: catInfo.colorMeta.border,
@@ -7771,74 +8149,26 @@
     }
 
     function saveAndSyncIcalUrl() {
-
       const inputEl = document.getElementById('gcal-feed-url-input') || document.getElementById('gcal-ical-url-input');
       const url = inputEl ? inputEl.value.trim() : '';
-      if (!url) {
-        alertBox("Please paste your secret iCal link from Google Calendar.", "Missing URL");
-        return;
+      if (url) {
+        localStorage.setItem('focusflow_gcal_ical_url', url);
+        if (!state.connectedCalendars) state.connectedCalendars = [];
+        const exists = state.connectedCalendars.some(c => c.url === url);
+        if (!exists) {
+          state.connectedCalendars.push({
+            id: `cal-${Date.now()}`,
+            name: 'Google Calendar',
+            url: url,
+            category: 'focus',
+            color: 'sky',
+            active: true
+          });
+          localStorage.setItem('focusflow_connected_calendars', JSON.stringify(state.connectedCalendars));
+          renderConnectedCalendars();
+        }
       }
-      localStorage.setItem('focusflow_gcal_ical_url', url);
-
-      const addBuffers = document.getElementById('sync-add-buffers') ? document.getElementById('sync-add-buffers').checked : true;
-      const autoMicrosteps = true;
-      const addHydration = document.getElementById('sync-add-hydration') ? document.getElementById('sync-add-hydration').checked : true;
-
-      closeGCalSyncModal();
-      playChime('bell');
-
-      // Generate scaffolded live schedule
-      const scaffoldedEvents = [];
-
-      // 1. Morning anchor block
-      scaffoldedEvents.push(scaffoldCalendarEvent("Morning Priority Sprint: Review & Key Task", "09:30", 50, "focus"));
-
-      // Transition buffer if checked
-      if (addBuffers) {
-        scaffoldedEvents.push({
-          id: `ev-buffer-1`,
-          title: "🧘 Transition Buffer: Step away from screen & breathe",
-          startTime: "10:20",
-          duration: 10,
-          category: "care",
-          goodEnough: "Allow brain to switch gears without rushing into next task",
-          subtasks: [
-            { text: "Stand up and stretch arms and shoulders", minutes: 3, done: false },
-            { text: "Drink a glass of cold water", minutes: 3, done: false },
-            { text: "Clear head before opening next work window", minutes: 4, done: false }
-          ]
-        });
-      }
-
-      // 2. Team meeting / calendar event
-      scaffoldedEvents.push(scaffoldCalendarEvent("Calendar Block: Team Sync & Project Check-in", "10:30", 45, "focus"));
-
-      // 3. Hydration break if checked
-      if (addHydration) {
-        scaffoldedEvents.push({
-          id: `ev-hydro-1`,
-          title: "💧 Dopamine Hydration & Sunlight Recharge",
-          startTime: "11:20",
-          duration: 15,
-          category: "care",
-          goodEnough: "Drink 300ml water and look out a window to reset dopamine baseline",
-          subtasks: [
-            { text: "Refill water bottle", minutes: 2, done: false },
-            { text: "Natural sunlight exposure / short stroll", minutes: 10, done: false },
-            { text: "Log hydration in Nutrition tab", minutes: 3, done: false }
-          ]
-        });
-      }
-
-      // 4. Meal block with Reverse Cooking scaffolding
-      scaffoldedEvents.push(scaffoldCalendarEvent("Nourishing Lunch & Kitchen Reset", "12:15", 45, "meal"));
-
-      // 5. Afternoon Focus Block
-      scaffoldedEvents.push(scaffoldCalendarEvent("Afternoon Focus: Deep Work & Milestones", "14:00", 60, "focus"));
-
-      state.events = scaffoldedEvents;
-      renderTimeline();
-      alertBox(`Synchronized schedule with Level ${state.scaffoldLevel} ADHD scaffolding!`, "Calendar Scaffolded");
+      syncAllConnectedCalendars();
     }
 
 
@@ -11330,22 +11660,35 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       alertBox("Loaded 4 sample Google Calendars (Work, School, Personal, Chores)!", "Calendars Ready");
     }
 
-    // Real-Time Google Calendar iCal Parser
+    // Real-Time Google Calendar iCal Parser (RFC 5545 & Multi-Day Week Support)
     function parseICalEvents(icsText, calName, calCategory, calColor) {
       const events = [];
       if (!icsText || typeof icsText !== 'string') return events;
 
-      // Unfold multi-line iCal lines (RFC 5545)
+      // 1. Unfold multi-line iCal lines (RFC 5545 fold starts with space or tab)
       const unfolded = icsText.replace(/\r\n[ \t]/g, '').replace(/\n[ \t]/g, '');
       const veventBlocks = unfolded.split(/BEGIN:VEVENT/i).slice(1);
 
+      // 2. Generate date index for a 4-week window around today (-7 days to +21 days)
       const today = new Date();
-      const todayY = today.getFullYear();
-      const todayM = String(today.getMonth() + 1).padStart(2, '0');
-      const todayD = String(today.getDate()).padStart(2, '0');
-      const todayStr = `${todayY}${todayM}${todayD}`;
-      const daysOfWeek = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
-      const todayDayCode = daysOfWeek[today.getDay()];
+      today.setHours(0, 0, 0, 0);
+      const windowDays = [];
+      const dayCodes = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+
+      for (let offset = -7; offset <= 21; offset++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + offset);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        windowDays.push({
+          dateObj: d,
+          dateStr: `${y}-${m}-${day}`,
+          dateNumStr: `${y}${m}${day}`,
+          dayCode: dayCodes[d.getDay()],
+          dayIndex: d.getDay()
+        });
+      }
 
       veventBlocks.forEach((block, idx) => {
         const rawContent = block.split(/END:VEVENT/i)[0] || '';
@@ -11353,76 +11696,77 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         const getField = (pattern) => {
           const m = rawContent.match(pattern);
           if (!m) return '';
-          return m[1].replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\n/g, '\n').trim();
+          return m[1].replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\n/g, '\n').replace(/\\\\/g, '\\').trim();
         };
 
-        const summary = getField(/^SUMMARY.*?:(.*)$/m) || `${calName} Event`;
-        const dtstartRaw = getField(/^DTSTART.*?:([0-9TZ]+)/m);
-        const dtendRaw = getField(/^DTEND.*?:([0-9TZ]+)/m);
-        const rruleRaw = getField(/^RRULE.*?:(.*)$/m);
-        const desc = getField(/^DESCRIPTION.*?:(.*)$/m);
-        const location = getField(/^LOCATION.*?:(.*)$/m);
+        const summary = getField(/^SUMMARY(?:;[^:]*)?:(.*)$/m) || `${calName} Event`;
+        const dtstartRaw = getField(/^DTSTART(?:;[^:]*)?:([0-9TZ]+)/m);
+        const dtendRaw = getField(/^DTEND(?:;[^:]*)?:([0-9TZ]+)/m);
+        const durationRaw = getField(/^DURATION(?:;[^:]*)?:(.*)$/m);
+        const rruleRaw = getField(/^RRULE(?:;[^:]*)?:(.*)$/m);
+        const desc = getField(/^DESCRIPTION(?:;[^:]*)?:(.*)$/m);
+        const location = getField(/^LOCATION(?:;[^:]*)?:(.*)$/m);
 
         if (!dtstartRaw) return;
 
-        let isForToday = false;
-        let eventDateStr = dtstartRaw.slice(0, 8);
-
-        if (rruleRaw) {
-          if (rruleRaw.includes('FREQ=DAILY')) {
-            isForToday = true;
-          } else if (rruleRaw.includes('FREQ=WEEKLY')) {
-            if (!rruleRaw.includes('BYDAY') || rruleRaw.includes(todayDayCode)) {
-              isForToday = true;
-            }
-          } else if (eventDateStr === todayStr) {
-            isForToday = true;
-          }
-        } else if (eventDateStr === todayStr) {
-          isForToday = true;
-        }
-
         let startHH = 9;
         let startMM = 0;
-        let durationMins = 45;
+        let durationMins = 60;
+        let originalDateNumStr = dtstartRaw.slice(0, 8);
+        const isUtc = dtstartRaw.endsWith('Z');
 
         if (dtstartRaw.includes('T')) {
           const timePart = dtstartRaw.split('T')[1] || '';
-          startHH = parseInt(timePart.slice(0, 2), 10) || 9;
-          startMM = parseInt(timePart.slice(2, 4), 10) || 0;
+          const rawH = parseInt(timePart.slice(0, 2), 10) || 0;
+          const rawM = parseInt(timePart.slice(2, 4), 10) || 0;
 
-          if (dtstartRaw.endsWith('Z')) {
+          if (isUtc) {
             const utcDate = new Date(Date.UTC(
-              parseInt(eventDateStr.slice(0, 4), 10),
-              parseInt(eventDateStr.slice(4, 6), 10) - 1,
-              parseInt(eventDateStr.slice(6, 8), 10),
-              startHH,
-              startMM
+              parseInt(originalDateNumStr.slice(0, 4), 10),
+              parseInt(originalDateNumStr.slice(4, 6), 10) - 1,
+              parseInt(originalDateNumStr.slice(6, 8), 10),
+              rawH,
+              rawM
             ));
             startHH = utcDate.getHours();
             startMM = utcDate.getMinutes();
+            const uy = utcDate.getFullYear();
+            const um = String(utcDate.getMonth() + 1).padStart(2, '0');
+            const ud = String(utcDate.getDate()).padStart(2, '0');
+            originalDateNumStr = `${uy}${um}${ud}`;
+          } else {
+            startHH = rawH;
+            startMM = rawM;
           }
 
           if (dtendRaw && dtendRaw.includes('T')) {
             const endTimePart = dtendRaw.split('T')[1] || '';
-            let endHH = parseInt(endTimePart.slice(0, 2), 10) || (startHH + 1);
-            let endMM = parseInt(endTimePart.slice(2, 4), 10) || startMM;
+            let endH = parseInt(endTimePart.slice(0, 2), 10) || (startHH + 1);
+            let endM = parseInt(endTimePart.slice(2, 4), 10) || startMM;
             if (dtendRaw.endsWith('Z')) {
-              const endDateStr = dtendRaw.slice(0, 8);
+              const endDateNumStr = dtendRaw.slice(0, 8);
               const utcEndDate = new Date(Date.UTC(
-                parseInt(endDateStr.slice(0, 4), 10),
-                parseInt(endDateStr.slice(4, 6), 10) - 1,
-                parseInt(endDateStr.slice(6, 8), 10),
-                endHH,
-                endMM
+                parseInt(endDateNumStr.slice(0, 4), 10),
+                parseInt(endDateNumStr.slice(4, 6), 10) - 1,
+                parseInt(endDateNumStr.slice(6, 8), 10),
+                endH,
+                endM
               ));
-              endHH = utcEndDate.getHours();
-              endMM = utcEndDate.getMinutes();
+              endH = utcEndDate.getHours();
+              endM = utcEndDate.getMinutes();
             }
-            const diff = (endHH * 60 + endMM) - (startHH * 60 + startMM);
-            if (diff > 0 && diff <= 360) durationMins = diff;
+            const diff = (endH * 60 + endM) - (startHH * 60 + startMM);
+            if (diff > 0 && diff <= 720) durationMins = diff;
+          } else if (durationRaw) {
+            const m = durationRaw.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+            if (m) {
+              const h = parseInt(m[1] || '0', 10);
+              const min = parseInt(m[2] || '0', 10);
+              durationMins = (h * 60) + min || 60;
+            }
           }
         } else {
+          // All-day event: default 9:00 AM, 60 mins
           startHH = 9;
           startMM = 0;
           durationMins = 60;
@@ -11430,23 +11774,63 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
 
         const timeFormatted = `${String(startHH).padStart(2, '0')}:${String(startMM).padStart(2, '0')}`;
 
-        events.push({
-          id: `ev-ical-${Date.now()}-${idx}`,
-          title: summary,
-          calendarName: calName,
-          calendarColor: calColor,
-          startTime: timeFormatted,
-          duration: durationMins,
-          category: calCategory || 'focus',
-          location: location,
-          description: desc,
-          isForToday: isForToday,
-          goodEnough: `Focus on top 1-2 objectives for "${summary}"; wrap up smoothly without perfectionism spiral`,
-          subtasks: [
-            { text: `Review materials & set up for: ${summary}`, minutes: Math.min(10, Math.max(3, Math.round(durationMins * 0.15))), done: false },
-            { text: `Core engagement & execution`, minutes: Math.max(15, Math.round(durationMins * 0.7)), done: false },
-            { text: `Wrap up, save notes & plan next step`, minutes: Math.min(10, Math.max(3, Math.round(durationMins * 0.15))), done: false }
-          ]
+        // Match event against the dates in our active window
+        windowDays.forEach(wDay => {
+          let occursOnThisDay = false;
+
+          if (rruleRaw) {
+            let untilNumStr = null;
+            const untilMatch = rruleRaw.match(/UNTIL=([0-9]{8})/);
+            if (untilMatch) untilNumStr = untilMatch[1];
+
+            if (wDay.dateNumStr >= originalDateNumStr && (!untilNumStr || wDay.dateNumStr <= untilNumStr)) {
+              if (rruleRaw.includes('FREQ=DAILY')) {
+                occursOnThisDay = true;
+              } else if (rruleRaw.includes('FREQ=WEEKLY')) {
+                const byDayMatch = rruleRaw.match(/BYDAY=([A-Z,]+)/);
+                if (byDayMatch) {
+                  const days = byDayMatch[1].split(',');
+                  if (days.includes(wDay.dayCode)) occursOnThisDay = true;
+                } else {
+                  const origDate = new Date(
+                    parseInt(originalDateNumStr.slice(0, 4), 10),
+                    parseInt(originalDateNumStr.slice(4, 6), 10) - 1,
+                    parseInt(originalDateNumStr.slice(6, 8), 10)
+                  );
+                  if (origDate.getDay() === wDay.dayIndex) occursOnThisDay = true;
+                }
+              } else if (wDay.dateNumStr === originalDateNumStr) {
+                occursOnThisDay = true;
+              }
+            }
+          } else {
+            // One-off event
+            if (wDay.dateNumStr === originalDateNumStr) {
+              occursOnThisDay = true;
+            }
+          }
+
+          if (occursOnThisDay) {
+            events.push({
+              id: `ev-ical-${calName.replace(/[^a-zA-Z0-9]/g, '')}-${idx}-${wDay.dateStr}`,
+              title: summary,
+              calendarName: calName,
+              calendarColor: calColor,
+              category: calCategory || 'focus',
+              date: wDay.dateStr,
+              dayOfWeek: wDay.dayCode,
+              startTime: timeFormatted,
+              duration: durationMins,
+              location: location,
+              description: desc,
+              goodEnough: `Focus on top 1-2 objectives for "${summary}"; wrap up smoothly without perfectionism spiral`,
+              subtasks: [
+                { text: `Review materials & set up for: ${summary}`, minutes: Math.min(10, Math.max(3, Math.round(durationMins * 0.15))), done: false },
+                { text: `Core engagement & execution`, minutes: Math.max(15, Math.round(durationMins * 0.7)), done: false },
+                { text: `Wrap up, save notes & plan next step`, minutes: Math.min(10, Math.max(3, Math.round(durationMins * 0.15))), done: false }
+              ]
+            });
+          }
         });
       });
 
@@ -11467,7 +11851,8 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       }
 
       const mergedEvents = [];
-      let liveEventCount = 0;
+      let successfulCalendars = 0;
+      let failedCalendars = [];
 
       for (let idx = 0; idx < activeCals.length; idx++) {
         const cal = activeCals[idx];
@@ -11478,7 +11863,8 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) && !targetUrl.includes('sample-')) {
           const proxyUrls = [
             `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-            `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
+            `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
           ];
 
           for (const pUrl of proxyUrls) {
@@ -11492,126 +11878,62 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
                 }
               }
             } catch (err) {
-              console.warn(`Calendar proxy fetch attempt:`, err);
+              console.warn(`Calendar proxy fetch attempt for ${cal.name}:`, err);
             }
           }
         }
 
         if (fetchedIcsText) {
           const parsed = parseICalEvents(fetchedIcsText, cal.name, cal.category, cal.color);
-          const todayEvents = parsed.filter(e => e.isForToday);
-          const eventsToInclude = todayEvents.length > 0 ? todayEvents : parsed.slice(0, 2);
-
-          if (eventsToInclude.length > 0) {
-            eventsToInclude.forEach(ev => {
-              mergedEvents.push(ev);
-              liveEventCount++;
-
-              const [startH, startM] = ev.startTime.split(':').map(Number);
-              const endTotalMinutes = startH * 60 + startM + ev.duration;
-              const bufH = String(Math.floor(endTotalMinutes / 60)).padStart(2, '0');
-              const bufM = String(endTotalMinutes % 60).padStart(2, '0');
-
-              mergedEvents.push({
-                id: `ev-buf-${ev.id}`,
-                title: `🧘 Buffer: Decompress after ${ev.title.slice(0, 24)}`,
-                calendarName: 'FocusFlow Buffer',
-                calendarColor: 'mint',
-                startTime: `${bufH}:${bufM}`,
-                duration: 10,
-                category: 'care',
-                goodEnough: 'Stand up, drink water, shoulder stretch, and clear mental cache before next block',
-                subtasks: [
-                  { text: 'Drink a glass of water', minutes: 3, done: false },
-                  { text: 'Shoulder roll and stretch', minutes: 3, done: false },
-                  { text: 'Close previous tabs and reset desk', minutes: 4, done: false }
-                ]
-              });
-            });
+          if (parsed.length > 0) {
+            parsed.forEach(ev => mergedEvents.push(ev));
+            successfulCalendars++;
+          } else {
+            successfulCalendars++;
           }
         } else {
-          let defaultStartMinutes = 9 * 60 + 30 + (idx * 60);
-          const hh = String(Math.floor(defaultStartMinutes / 60)).padStart(2, '0');
-          const mm = String(defaultStartMinutes % 60).padStart(2, '0');
-
-          mergedEvents.push({
-            id: `ev-cal-${cal.id}-${idx}`,
-            title: `${cal.name}: Focus & Task Execution`,
-            calendarName: cal.name,
-            calendarColor: cal.color,
-            startTime: `${hh}:${mm}`,
-            duration: 45,
-            category: cal.category,
-            goodEnough: `Focus on top 1-2 objectives for ${cal.name}; stop before perfectionism spiral`,
-            subtasks: [
-              { text: `Open ${cal.name} materials and review requirements`, minutes: 5, done: false },
-              { text: `Deep execution block`, minutes: 30, done: false },
-              { text: `Wrap up and note next physical action`, minutes: 10, done: false }
-            ]
-          });
-
-          let bufMinutes = defaultStartMinutes + 45;
-          const bufHH = String(Math.floor(bufMinutes / 60)).padStart(2, '0');
-          const bufMM = String(bufMinutes % 60).padStart(2, '0');
-          mergedEvents.push({
-            id: `ev-buf-${cal.id}-${idx}`,
-            title: `🧘 Buffer: Transition from ${cal.name}`,
-            calendarName: 'FocusFlow Buffer',
-            calendarColor: 'mint',
-            startTime: `${bufHH}:${bufMM}`,
-            duration: 10,
-            category: 'care',
-            goodEnough: 'Stand up, hydrate, and clear mental cache between calendar contexts',
-            subtasks: [
-              { text: 'Drink a glass of water', minutes: 3, done: false },
-              { text: 'Shoulder roll and stretch', minutes: 3, done: false },
-              { text: 'Close previous tabs', minutes: 4, done: false }
-            ]
-          });
+          failedCalendars.push(cal.name);
         }
       }
 
-      // Nourishing Lunch & Reset Block
-      mergedEvents.push({
-        id: `ev-meal-choreo`,
-        title: 'Nourishing Lunch & Kitchen Reset',
-        calendarName: 'Nutrition',
-        calendarColor: 'coral',
-        startTime: '12:30',
-        duration: 40,
-        category: 'meal',
-        goodEnough: 'Cook or assemble wholesome meal; wash prep tools before sitting',
-        subtasks: [
-          { text: 'Mise-en-place prep', minutes: 10, done: false },
-          { text: 'Heat and serve', minutes: 15, done: false },
-          { text: 'Rinse prep knives & skillet', minutes: 10, done: false },
-          { text: 'Enjoy meal', minutes: 5, done: false }
-        ]
-      });
+      if (syncBtn) {
+        syncBtn.disabled = false;
+        syncBtn.innerHTML = `<i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i><span>Sync All Calendars</span>`;
+        if (window.lucide) lucide.createIcons();
+      }
+
+      if (successfulCalendars === 0 && failedCalendars.length > 0) {
+        alertBox(`Could not reach the calendar link for: "${failedCalendars.join(', ')}". Please verify your secret iCal link was copied completely from Google Calendar desktop settings.`, "Sync Notice");
+        return;
+      }
+
+      // Preserve real manual events that aren't auto-synced or old dummy events
+      const manualEvents = (state.events || []).filter(e => 
+        !e.id.startsWith('ev-ical-') && 
+        !e.id.startsWith('ev-buf-') && 
+        e.id !== 'ev-meal-choreo' &&
+        !e.title.includes('Focus & Task Execution')
+      );
+
+      state.events = [...manualEvents, ...mergedEvents];
 
       // Sort chronologically
-      mergedEvents.sort((a, b) => {
+      state.events.sort((a, b) => {
         const [aH, aM] = (a.startTime || '00:00').split(':').map(Number);
         const [bH, bM] = (b.startTime || '00:00').split(':').map(Number);
         return (aH * 60 + aM) - (bH * 60 + bM);
       });
 
-      state.events = mergedEvents;
       saveAppState();
       closeGCalSyncModal();
       renderTimeline();
       playChime('bell');
 
-      if (syncBtn) {
-        syncBtn.disabled = false;
-        syncBtn.innerHTML = `<span>Sync All Calendars</span>`;
+      let msg = `Synced ${mergedEvents.length} real events across all days of the week!`;
+      if (failedCalendars.length > 0) {
+        msg += ` (${failedCalendars.join(', ')} could not be reached)`;
       }
-
-      if (liveEventCount > 0) {
-        alertBox(`Synced ${liveEventCount} real events from your Google Calendars with transition buffers!`, "Calendars Synced");
-      } else {
-        alertBox(`Merged ${activeCals.length} calendars into your daily timeline with protective transition buffers!`, "Calendars Synced");
-      }
+      alertBox(msg, "Calendars Synced");
     }
 
   </script>

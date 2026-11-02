@@ -10501,11 +10501,6 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         const provider = new firebase.auth.GoogleAuthProvider();
         try { provider.setCustomParameters({ prompt: 'select_account' }); } catch (e) {}
         ffSync.lastErrorText = '';
-        if (ffIsStandaloneApp()) {
-          // Home-screen apps can't use pop-up windows reliably — go to Google's page and come back
-          await ffSync.auth.signInWithRedirect(provider);
-          return;
-        }
         try {
           await ffSync.auth.signInWithPopup(provider);
         } catch (e) {
@@ -10515,9 +10510,12 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
             ffUpdateSyncUI();
             return;
           }
-          if (code === 'auth/network-request-failed') throw e;
-          // Pop-up blocked or not supported → use a full-page redirect instead
-          await ffSync.auth.signInWithRedirect(provider);
+          if (code === 'auth/popup-blocked') {
+            ffSync.lastErrorText = 'Pop-up blocked. Please tap "Allow Pop-ups" in your browser bar to sign in.';
+            ffUpdateSyncUI();
+            return;
+          }
+          throw e;
         }
       } catch (e) {
         ffSync.lastErrorText = ffFriendlyError(e);

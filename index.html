@@ -11330,72 +11330,254 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       alertBox("Loaded 4 sample Google Calendars (Work, School, Personal, Chores)!", "Calendars Ready");
     }
 
-    function syncAllConnectedCalendars() {
+    // Real-Time Google Calendar iCal Parser
+    function parseICalEvents(icsText, calName, calCategory, calColor) {
+      const events = [];
+      if (!icsText || typeof icsText !== 'string') return events;
+
+      // Unfold multi-line iCal lines (RFC 5545)
+      const unfolded = icsText.replace(/\r\n[ \t]/g, '').replace(/\n[ \t]/g, '');
+      const veventBlocks = unfolded.split(/BEGIN:VEVENT/i).slice(1);
+
+      const today = new Date();
+      const todayY = today.getFullYear();
+      const todayM = String(today.getMonth() + 1).padStart(2, '0');
+      const todayD = String(today.getDate()).padStart(2, '0');
+      const todayStr = `${todayY}${todayM}${todayD}`;
+      const daysOfWeek = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+      const todayDayCode = daysOfWeek[today.getDay()];
+
+      veventBlocks.forEach((block, idx) => {
+        const rawContent = block.split(/END:VEVENT/i)[0] || '';
+        
+        const getField = (pattern) => {
+          const m = rawContent.match(pattern);
+          if (!m) return '';
+          return m[1].replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\n/g, '\n').trim();
+        };
+
+        const summary = getField(/^SUMMARY.*?:(.*)$/m) || `${calName} Event`;
+        const dtstartRaw = getField(/^DTSTART.*?:([0-9TZ]+)/m);
+        const dtendRaw = getField(/^DTEND.*?:([0-9TZ]+)/m);
+        const rruleRaw = getField(/^RRULE.*?:(.*)$/m);
+        const desc = getField(/^DESCRIPTION.*?:(.*)$/m);
+        const location = getField(/^LOCATION.*?:(.*)$/m);
+
+        if (!dtstartRaw) return;
+
+        let isForToday = false;
+        let eventDateStr = dtstartRaw.slice(0, 8);
+
+        if (rruleRaw) {
+          if (rruleRaw.includes('FREQ=DAILY')) {
+            isForToday = true;
+          } else if (rruleRaw.includes('FREQ=WEEKLY')) {
+            if (!rruleRaw.includes('BYDAY') || rruleRaw.includes(todayDayCode)) {
+              isForToday = true;
+            }
+          } else if (eventDateStr === todayStr) {
+            isForToday = true;
+          }
+        } else if (eventDateStr === todayStr) {
+          isForToday = true;
+        }
+
+        let startHH = 9;
+        let startMM = 0;
+        let durationMins = 45;
+
+        if (dtstartRaw.includes('T')) {
+          const timePart = dtstartRaw.split('T')[1] || '';
+          startHH = parseInt(timePart.slice(0, 2), 10) || 9;
+          startMM = parseInt(timePart.slice(2, 4), 10) || 0;
+
+          if (dtstartRaw.endsWith('Z')) {
+            const utcDate = new Date(Date.UTC(
+              parseInt(eventDateStr.slice(0, 4), 10),
+              parseInt(eventDateStr.slice(4, 6), 10) - 1,
+              parseInt(eventDateStr.slice(6, 8), 10),
+              startHH,
+              startMM
+            ));
+            startHH = utcDate.getHours();
+            startMM = utcDate.getMinutes();
+          }
+
+          if (dtendRaw && dtendRaw.includes('T')) {
+            const endTimePart = dtendRaw.split('T')[1] || '';
+            let endHH = parseInt(endTimePart.slice(0, 2), 10) || (startHH + 1);
+            let endMM = parseInt(endTimePart.slice(2, 4), 10) || startMM;
+            if (dtendRaw.endsWith('Z')) {
+              const endDateStr = dtendRaw.slice(0, 8);
+              const utcEndDate = new Date(Date.UTC(
+                parseInt(endDateStr.slice(0, 4), 10),
+                parseInt(endDateStr.slice(4, 6), 10) - 1,
+                parseInt(endDateStr.slice(6, 8), 10),
+                endHH,
+                endMM
+              ));
+              endHH = utcEndDate.getHours();
+              endMM = utcEndDate.getMinutes();
+            }
+            const diff = (endHH * 60 + endMM) - (startHH * 60 + startMM);
+            if (diff > 0 && diff <= 360) durationMins = diff;
+          }
+        } else {
+          startHH = 9;
+          startMM = 0;
+          durationMins = 60;
+        }
+
+        const timeFormatted = `${String(startHH).padStart(2, '0')}:${String(startMM).padStart(2, '0')}`;
+
+        events.push({
+          id: `ev-ical-${Date.now()}-${idx}`,
+          title: summary,
+          calendarName: calName,
+          calendarColor: calColor,
+          startTime: timeFormatted,
+          duration: durationMins,
+          category: calCategory || 'focus',
+          location: location,
+          description: desc,
+          isForToday: isForToday,
+          goodEnough: `Focus on top 1-2 objectives for "${summary}"; wrap up smoothly without perfectionism spiral`,
+          subtasks: [
+            { text: `Review materials & set up for: ${summary}`, minutes: Math.min(10, Math.max(3, Math.round(durationMins * 0.15))), done: false },
+            { text: `Core engagement & execution`, minutes: Math.max(15, Math.round(durationMins * 0.7)), done: false },
+            { text: `Wrap up, save notes & plan next step`, minutes: Math.min(10, Math.max(3, Math.round(durationMins * 0.15))), done: false }
+          ]
+        });
+      });
+
+      return events;
+    }
+
+    async function syncAllConnectedCalendars() {
       const activeCals = (state.connectedCalendars || []).filter(c => c.active);
       if (activeCals.length === 0) {
         alertBox("Please enable or add at least one calendar to sync.", "No Active Calendars");
         return;
       }
 
-      // Merge events from all active calendars with ADHD scaffolding
+      const syncBtn = document.getElementById('sync-all-cals-btn');
+      if (syncBtn) {
+        syncBtn.disabled = true;
+        syncBtn.innerHTML = `<span class="animate-spin inline-block mr-1.5">⏳</span> Fetching live Google Calendars...`;
+      }
+
       const mergedEvents = [];
-      let startTimeMinutes = 9 * 60 + 30; // 9:30 AM anchor
+      let liveEventCount = 0;
 
-      activeCals.forEach((cal, idx) => {
-        const hh = String(Math.floor(startTimeMinutes / 60)).padStart(2, '0');
-        const mm = String(startTimeMinutes % 60).padStart(2, '0');
+      for (let idx = 0; idx < activeCals.length; idx++) {
+        const cal = activeCals[idx];
+        let fetchedIcsText = null;
 
-        // Main calendar block
-        const eventTitle = `${cal.name}: Focus & Task Execution`;
-        mergedEvents.push({
-          id: `ev-cal-${cal.id}-${idx}`,
-          title: eventTitle,
-          calendarName: cal.name,
-          calendarColor: cal.color,
-          startTime: `${hh}:${mm}`,
-          duration: 45,
-          category: cal.category,
-          goodEnough: `Focus on top 1-2 objectives for ${cal.name}; stop before perfectionism spiral`,
-          subtasks: [
-            { text: `Open ${cal.name} materials and review requirements`, minutes: 5, done: false },
-            { text: `Deep execution block`, minutes: 30, done: false },
-            { text: `Wrap up and note next physical action`, minutes: 10, done: false }
-          ]
-        });
+        let targetUrl = (cal.url || '').trim().replace(/^webcal:\/\//i, 'https://');
+        
+        if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) && !targetUrl.includes('sample-')) {
+          const proxyUrls = [
+            `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+            `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
+          ];
 
-        startTimeMinutes += 45;
+          for (const pUrl of proxyUrls) {
+            try {
+              const resp = await fetch(pUrl, { cache: 'no-store' });
+              if (resp.ok) {
+                const text = await resp.text();
+                if (text && text.includes('BEGIN:VCALENDAR')) {
+                  fetchedIcsText = text;
+                  break;
+                }
+              }
+            } catch (err) {
+              console.warn(`Calendar proxy fetch attempt:`, err);
+            }
+          }
+        }
 
-        // Injected transition buffer
-        const bufHH = String(Math.floor(startTimeMinutes / 60)).padStart(2, '0');
-        const bufMM = String(startTimeMinutes % 60).padStart(2, '0');
-        mergedEvents.push({
-          id: `ev-buf-${cal.id}-${idx}`,
-          title: `🧘 Buffer: Transition from ${cal.name}`,
-          calendarName: 'FocusFlow Buffer',
-          calendarColor: 'mint',
-          startTime: `${bufHH}:${bufMM}`,
-          duration: 10,
-          category: 'care',
-          goodEnough: 'Stand up, hydrate, and clear mental cache between calendar contexts',
-          subtasks: [
-            { text: 'Drink a glass of water', minutes: 3, done: false },
-            { text: 'Shoulder roll and stretch', minutes: 3, done: false },
-            { text: 'Close previous tabs', minutes: 4, done: false }
-          ]
-        });
+        if (fetchedIcsText) {
+          const parsed = parseICalEvents(fetchedIcsText, cal.name, cal.category, cal.color);
+          const todayEvents = parsed.filter(e => e.isForToday);
+          const eventsToInclude = todayEvents.length > 0 ? todayEvents : parsed.slice(0, 2);
 
-        startTimeMinutes += 15;
-      });
+          if (eventsToInclude.length > 0) {
+            eventsToInclude.forEach(ev => {
+              mergedEvents.push(ev);
+              liveEventCount++;
 
-      // Add a nourishing meal block
-      const mealHH = String(Math.floor(startTimeMinutes / 60)).padStart(2, '0');
-      const mealMM = String(startTimeMinutes % 60).padStart(2, '0');
+              const [startH, startM] = ev.startTime.split(':').map(Number);
+              const endTotalMinutes = startH * 60 + startM + ev.duration;
+              const bufH = String(Math.floor(endTotalMinutes / 60)).padStart(2, '0');
+              const bufM = String(endTotalMinutes % 60).padStart(2, '0');
+
+              mergedEvents.push({
+                id: `ev-buf-${ev.id}`,
+                title: `🧘 Buffer: Decompress after ${ev.title.slice(0, 24)}`,
+                calendarName: 'FocusFlow Buffer',
+                calendarColor: 'mint',
+                startTime: `${bufH}:${bufM}`,
+                duration: 10,
+                category: 'care',
+                goodEnough: 'Stand up, drink water, shoulder stretch, and clear mental cache before next block',
+                subtasks: [
+                  { text: 'Drink a glass of water', minutes: 3, done: false },
+                  { text: 'Shoulder roll and stretch', minutes: 3, done: false },
+                  { text: 'Close previous tabs and reset desk', minutes: 4, done: false }
+                ]
+              });
+            });
+          }
+        } else {
+          let defaultStartMinutes = 9 * 60 + 30 + (idx * 60);
+          const hh = String(Math.floor(defaultStartMinutes / 60)).padStart(2, '0');
+          const mm = String(defaultStartMinutes % 60).padStart(2, '0');
+
+          mergedEvents.push({
+            id: `ev-cal-${cal.id}-${idx}`,
+            title: `${cal.name}: Focus & Task Execution`,
+            calendarName: cal.name,
+            calendarColor: cal.color,
+            startTime: `${hh}:${mm}`,
+            duration: 45,
+            category: cal.category,
+            goodEnough: `Focus on top 1-2 objectives for ${cal.name}; stop before perfectionism spiral`,
+            subtasks: [
+              { text: `Open ${cal.name} materials and review requirements`, minutes: 5, done: false },
+              { text: `Deep execution block`, minutes: 30, done: false },
+              { text: `Wrap up and note next physical action`, minutes: 10, done: false }
+            ]
+          });
+
+          let bufMinutes = defaultStartMinutes + 45;
+          const bufHH = String(Math.floor(bufMinutes / 60)).padStart(2, '0');
+          const bufMM = String(bufMinutes % 60).padStart(2, '0');
+          mergedEvents.push({
+            id: `ev-buf-${cal.id}-${idx}`,
+            title: `🧘 Buffer: Transition from ${cal.name}`,
+            calendarName: 'FocusFlow Buffer',
+            calendarColor: 'mint',
+            startTime: `${bufHH}:${bufMM}`,
+            duration: 10,
+            category: 'care',
+            goodEnough: 'Stand up, hydrate, and clear mental cache between calendar contexts',
+            subtasks: [
+              { text: 'Drink a glass of water', minutes: 3, done: false },
+              { text: 'Shoulder roll and stretch', minutes: 3, done: false },
+              { text: 'Close previous tabs', minutes: 4, done: false }
+            ]
+          });
+        }
+      }
+
+      // Nourishing Lunch & Reset Block
       mergedEvents.push({
         id: `ev-meal-choreo`,
         title: 'Nourishing Lunch & Kitchen Reset',
         calendarName: 'Nutrition',
         calendarColor: 'coral',
-        startTime: `${mealHH}:${mealMM}`,
+        startTime: '12:30',
         duration: 40,
         category: 'meal',
         goodEnough: 'Cook or assemble wholesome meal; wash prep tools before sitting',
@@ -11407,12 +11589,29 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         ]
       });
 
+      // Sort chronologically
+      mergedEvents.sort((a, b) => {
+        const [aH, aM] = (a.startTime || '00:00').split(':').map(Number);
+        const [bH, bM] = (b.startTime || '00:00').split(':').map(Number);
+        return (aH * 60 + aM) - (bH * 60 + bM);
+      });
+
       state.events = mergedEvents;
       saveAppState();
       closeGCalSyncModal();
       renderTimeline();
       playChime('bell');
-      alertBox(`Merged ${activeCals.length} Google Calendars into your daily timeline with protective transition buffers!`, "Calendars Synced");
+
+      if (syncBtn) {
+        syncBtn.disabled = false;
+        syncBtn.innerHTML = `<span>Sync All Calendars</span>`;
+      }
+
+      if (liveEventCount > 0) {
+        alertBox(`Synced ${liveEventCount} real events from your Google Calendars with transition buffers!`, "Calendars Synced");
+      } else {
+        alertBox(`Merged ${activeCals.length} calendars into your daily timeline with protective transition buffers!`, "Calendars Synced");
+      }
     }
 
   </script>

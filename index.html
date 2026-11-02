@@ -2505,10 +2505,26 @@
         </div>
       </div>
 
-      <p id="ff-sync-help" class="text-[11px] text-slate-400 leading-relaxed">Cloud sync hasn't been switched on for this copy of FocusFlow yet. Your data is still saved on this device.</p>
+      <p id="ff-sync-help" class="text-[11px] text-slate-400 leading-relaxed">Cloud sync keeps your planner the same on your phone and computer. Changes save automatically.</p>
+
+      <!-- Email & Password Form (Works natively inside iPhone app with NO redirects) -->
+      <div id="ff-sync-email-form" class="space-y-2 pt-1 border-t border-dark-border">
+        <span class="text-[10px] text-pastel-mint font-semibold block">Sign in with Email (Recommended for iPhone):</span>
+        <input type="email" id="ff-email-input" placeholder="Your email (e.g. lilaruss@gmail.com)" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-mint">
+        <input type="password" id="ff-password-input" placeholder="Password (at least 6 characters)" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-mint">
+        <button type="button" id="ff-sync-email-btn" onclick="ffSignInWithEmail()" class="w-full py-2.5 px-3 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs flex items-center justify-center gap-2 shadow-md transition active:scale-95">
+          <i data-lucide="mail" class="w-4 h-4"></i>
+          <span>Sign In / Create Sync Account</span>
+        </button>
+      </div>
+
+      <div class="relative flex items-center justify-center my-1" id="ff-sync-divider">
+        <div class="border-t border-dark-border w-full"></div>
+        <span class="bg-dark-elevated px-2 text-[10px] text-slate-500 absolute font-mono">OR</span>
+      </div>
 
       <div class="space-y-2">
-        <button type="button" id="ff-sync-signin-btn" onclick="ffSignIn()" class="w-full py-2.5 px-3 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs flex items-center justify-center gap-2 shadow-md transition active:scale-95">
+        <button type="button" id="ff-sync-signin-btn" onclick="ffSignIn()" class="w-full py-2 px-3 rounded-xl bg-dark-base border border-dark-border hover:border-slate-500 text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition active:scale-95">
           <i data-lucide="log-in" class="w-4 h-4"></i>
           <span>Sign in with Google</span>
         </button>
@@ -10523,6 +10539,68 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       }
     }
 
+    async function ffSignInWithEmail() {
+      try {
+        if (!FIREBASE_CONFIG) { ffUpdateSyncUI(); return; }
+        const emailInput = document.getElementById('ff-email-input');
+        const passInput = document.getElementById('ff-password-input');
+        const email = emailInput ? emailInput.value.trim() : '';
+        const password = passInput ? passInput.value.trim() : '';
+
+        if (!email || !password) {
+          ffSync.lastErrorText = "Please enter your email and a password.";
+          ffUpdateSyncUI();
+          return;
+        }
+
+        if (password.length < 6) {
+          ffSync.lastErrorText = "Password must be at least 6 characters.";
+          ffUpdateSyncUI();
+          return;
+        }
+
+        ffSync.phase = 'syncing';
+        ffSync.lastErrorText = 'Signing in…';
+        ffUpdateSyncUI();
+
+        try {
+          await ffSync.auth.signInWithEmailAndPassword(email, password);
+        } catch (err) {
+          if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+            try {
+              await ffSync.auth.createUserWithEmailAndPassword(email, password);
+            } catch (createErr) {
+              if (createErr.code === 'auth/email-already-in-use') {
+                ffSync.lastErrorText = "Account exists, but password was incorrect.";
+              } else {
+                ffSync.lastErrorText = createErr.message || "Sign-up failed.";
+              }
+              ffSync.phase = 'error';
+              ffUpdateSyncUI();
+              return;
+            }
+          } else if (err.code === 'auth/wrong-password') {
+            ffSync.lastErrorText = "Incorrect password. Please try again.";
+            ffSync.phase = 'error';
+            ffUpdateSyncUI();
+            return;
+          } else if (err.code === 'auth/operation-not-allowed') {
+            ffSync.lastErrorText = "Enable Email/Password in Firebase Console (Authentication → Sign-in method).";
+            ffSync.phase = 'error';
+            ffUpdateSyncUI();
+            return;
+          } else {
+            ffSync.lastErrorText = err.message || "Sign-in error.";
+            ffSync.phase = 'error';
+            ffUpdateSyncUI();
+            return;
+          }
+        }
+      } catch (e) {
+        ffHandleError(e);
+      }
+    }
+
     async function ffSignOut() {
       try {
         if (ffSync.uploadTimer) { clearTimeout(ffSync.uploadTimer); ffSync.uploadTimer = null; }
@@ -10666,6 +10744,10 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
           if (ffSync.lastErrorText && st.tone !== 'ok') help = ffSync.lastErrorText + ' ' + help;
           helpEl.textContent = help;
         }
+        const emailForm = document.getElementById('ff-sync-email-form');
+        const divider = document.getElementById('ff-sync-divider');
+        if (emailForm) emailForm.classList.toggle('hidden', !configured || signedIn);
+        if (divider) divider.classList.toggle('hidden', !configured || signedIn);
         if (signInBtn) signInBtn.classList.toggle('hidden', !configured || signedIn);
         if (syncNowBtn) syncNowBtn.classList.toggle('hidden', !signedIn);
         if (signOutBtn) signOutBtn.classList.toggle('hidden', !signedIn);

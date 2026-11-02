@@ -79,6 +79,12 @@
       min-height: 44px;
       touch-action: manipulation;
     }
+  
+    /* ADHD Coach Notes Dimmed State (When hovering left side of any note, all overlapping notes become see-through) */
+    .adhd-notes-dimmed .adhd-coach-note-body {
+      opacity: 0.15 !important;
+      backdrop-filter: none !important;
+    }
   </style>
 </head>
 <body class="bg-dark-base text-slate-100 h-full h-[100dvh] overflow-hidden font-sans selection:bg-pastel-mint selection:text-slate-950 flex flex-col antialiased">
@@ -192,91 +198,98 @@
     <!-- ============================================== -->
     <!-- TAB 1: GOOGLE CALENDAR TIMELINE                -->
     <!-- ============================================== -->
-    <div id="view-timeline" class="space-y-3">
-      <!-- CONSOLIDATED SINGLE-ROW STICKY COMMAND BAR -->
+    <div id="view-timeline" class="space-y-2.5">
+      <!-- LAYER 1: STICKY NAVIGATION & PRIMARY ACTIONS -->
       <div class="sticky top-0 z-30 bg-dark-surface/95 backdrop-blur-md border border-dark-border rounded-2xl p-2 sm:p-2.5 shadow-xl flex flex-wrap items-center justify-between gap-2">
-        <!-- Left: Date, Today, View Switcher & Mini Week Strip -->
+        <!-- Left: Date Picker & 7-Day Week Selector Strip -->
         <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-          <button type="button" onclick="jumpTimelineToToday()" class="px-2 py-1 rounded-lg bg-dark-base hover:bg-dark-elevated border border-dark-border text-slate-200 font-semibold text-xs flex items-center gap-1.5 transition shadow-sm" title="Jump to Today">
+          <button type="button" onclick="jumpTimelineToToday()" class="px-2.5 py-1.5 rounded-xl bg-dark-base hover:bg-dark-elevated border border-dark-border text-slate-200 font-semibold text-xs flex items-center gap-1.5 transition shadow-sm" title="Jump to Today">
             <span class="w-1.5 h-1.5 rounded-full bg-pastel-mint"></span>
-            <span id="timeline-today-date" class="font-bold text-xs truncate max-w-[120px] sm:max-w-none">Today</span>
+            <span id="timeline-today-date" class="font-bold text-xs truncate max-w-[130px] sm:max-w-none">Today</span>
           </button>
 
-          <!-- Ultra-compact Mini 7-Day Week Strip (Inline) -->
+          <!-- Ultra-compact 7-Day Week Strip (Starts Sunday) -->
           <div class="flex items-center p-0.5 rounded-xl bg-dark-base/80 border border-dark-border gap-0.5 shadow-inner">
             <button type="button" onclick="changeTimelineWeek(-1)" class="w-5 h-6 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0" title="Previous Week">
               <i data-lucide="chevron-left" class="w-3 h-3"></i>
             </button>
             <div id="timeline-week-strip" class="flex items-center gap-0.5 px-0.5">
-              <!-- Dynamically populated: M 2, T 3, W 4... mini pills -->
+              <!-- Dynamically populated: Sun, Mon, Tue... -->
             </div>
             <button type="button" onclick="changeTimelineWeek(1)" class="w-5 h-6 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0" title="Next Week">
               <i data-lucide="chevron-right" class="w-3 h-3"></i>
             </button>
           </div>
-
-          <!-- View Mode Switcher -->
-          <div class="flex items-center p-0.5 rounded-xl bg-dark-base border border-dark-border gap-0.5">
-            <button type="button" onclick="switchTimelineView('calendar')" id="btn-view-calendar" class="px-2 py-1 rounded-lg font-bold bg-pastel-mint text-dark-base text-xs transition flex items-center gap-1 shadow-sm">
-              <i data-lucide="calendar" class="w-3 h-3"></i>
-              <span class="hidden sm:inline">Grid</span>
-            </button>
-            <button type="button" onclick="switchTimelineView('list')" id="btn-view-list" class="px-2 py-1 rounded-lg font-medium text-slate-400 hover:text-white text-xs transition flex items-center gap-1">
-              <i data-lucide="list" class="w-3 h-3"></i>
-              <span class="hidden sm:inline">List</span>
-            </button>
-          </div>
-
-          <!-- Hour Block Size / Zoom Stepper -->
-          <div class="flex items-center p-0.5 rounded-xl bg-dark-base border border-dark-border gap-0.5 shadow-sm text-xs" title="Adjust hour block height to see events more clearly">
-            <button type="button" onclick="adjustHourHeight(-16)" class="w-5 h-6 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-xs transition" title="Smaller hour blocks">-</button>
-            <span id="calendar-zoom-label" class="px-1.5 font-mono text-[10px] text-slate-300 font-semibold select-none">84px</span>
-            <button type="button" onclick="adjustHourHeight(16)" class="w-5 h-6 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-xs transition" title="Taller hour blocks">+</button>
-          </div>
         </div>
 
-        <!-- Right: Undo/Redo, Add Event, Sync, Now -->
+        <!-- Right: Action Buttons (Undo/Redo, Add Event, Sync, Now) -->
         <div class="flex items-center gap-1.5 flex-wrap">
           <!-- Calendar Undo / Redo controls -->
           <div class="flex items-center p-0.5 rounded-xl bg-dark-base border border-dark-border gap-0.5 shadow-sm">
-            <button type="button" id="calendar-undo-btn" onclick="calendarHistory.undo()" class="p-1 rounded-lg text-slate-300 hover:text-white transition opacity-30 cursor-not-allowed flex items-center gap-0.5 text-xs" title="Undo calendar edit (⌘Z)" disabled>
+            <button type="button" id="calendar-undo-btn" onclick="calendarHistory.undo()" class="p-1.5 rounded-lg text-slate-300 hover:text-white transition opacity-30 cursor-not-allowed flex items-center gap-0.5 text-xs" title="Undo calendar edit (⌘Z)" disabled>
               <i data-lucide="undo-2" class="w-3.5 h-3.5 text-pastel-sky"></i>
             </button>
             <div class="w-px h-3 bg-dark-border"></div>
-            <button type="button" id="calendar-redo-btn" onclick="calendarHistory.redo()" class="p-1 rounded-lg text-slate-300 hover:text-white transition opacity-30 cursor-not-allowed flex items-center gap-0.5 text-xs" title="Redo calendar edit (⌘⇧Z)" disabled>
+            <button type="button" id="calendar-redo-btn" onclick="calendarHistory.redo()" class="p-1.5 rounded-lg text-slate-300 hover:text-white transition opacity-30 cursor-not-allowed flex items-center gap-0.5 text-xs" title="Redo calendar edit (⌘⇧Z)" disabled>
               <i data-lucide="redo-2" class="w-3.5 h-3.5 text-pastel-sky"></i>
             </button>
           </div>
 
-          <button type="button" onclick="openNewEventModal()" class="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs shadow-md shadow-pastel-mint/20 hover:bg-emerald-300 transition">
+          <button type="button" onclick="openNewEventModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs shadow-md shadow-pastel-mint/20 hover:bg-emerald-300 transition">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
             <span>Add Event</span>
           </button>
-          <button type="button" onclick="openGCalSyncModal()" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs shadow-md shadow-pastel-sky/20 hover:bg-sky-300 transition">
+          <button type="button" onclick="openGCalSyncModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs shadow-md shadow-pastel-sky/20 hover:bg-sky-300 transition">
             <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
             <span>Sync</span>
           </button>
-          <button type="button" onclick="scrollToCurrentTimeMarker()" class="px-2 py-1.5 rounded-xl bg-dark-base hover:bg-slate-700 border border-dark-border text-pastel-mint font-semibold text-xs flex items-center gap-1 transition" title="Scroll to Current Time">
+          <button type="button" onclick="scrollToCurrentTimeMarker()" class="px-2.5 py-1.5 rounded-xl bg-dark-base hover:bg-slate-700 border border-dark-border text-pastel-mint font-semibold text-xs flex items-center gap-1 transition" title="Scroll to Current Time">
             <span class="w-1.5 h-1.5 rounded-full bg-pastel-mint animate-pulse"></span>
             <span class="hidden md:inline">Now</span>
           </button>
         </div>
       </div>
 
-      <!-- VIEW A: STRUCTURED CALENDAR DAY GRID (HOURLY SCALE & PROPORTIONAL TIME BLOCKS) -->
+      <!-- LAYER 2: VIEW CONTROLS & TIMELINE LEGEND -->
       <div id="timeline-calendar-wrapper" class="bg-dark-surface/90 border border-dark-border rounded-2xl shadow-xl overflow-hidden">
-        <!-- Calendar Grid Header Legend -->
-        <div class="p-3.5 bg-dark-base/80 border-b border-dark-border flex flex-wrap items-center justify-between gap-2 text-xs">
-          <span class="text-slate-400 text-[11px] font-semibold flex items-center gap-1.5">
-            <i data-lucide="clock" class="w-3.5 h-3.5 text-pastel-mint"></i>
-            7:00 AM – 11:00 PM Timeline (Proportional Duration &amp; Transitions)
-          </span>
-          <div class="flex flex-wrap items-center gap-2 text-[10px] font-mono">
-            <span class="flex items-center gap-1 text-pastel-mint"><span class="w-2 h-2 rounded-full bg-pastel-mint"></span> Deep Focus</span>
-            <span class="flex items-center gap-1 text-pastel-sky"><span class="w-2 h-2 rounded-full bg-pastel-sky"></span> Work / GCal</span>
-            <span class="flex items-center gap-1 text-pastel-coral"><span class="w-2 h-2 rounded-full bg-pastel-coral"></span> Meal &amp; Choreo</span>
+        <div class="px-3.5 py-2.5 bg-dark-base/80 border-b border-dark-border flex flex-wrap items-center justify-between gap-2.5 text-xs">
+          <!-- Left: View Switcher (Grid/List) & Height Level Stepper (1-5) -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <!-- View Mode Switcher -->
+            <div class="flex items-center p-0.5 rounded-xl bg-dark-elevated border border-dark-border gap-0.5">
+              <button type="button" onclick="switchTimelineView('calendar')" id="btn-view-calendar" class="px-2.5 py-1 rounded-lg font-bold bg-pastel-mint text-dark-base text-xs transition flex items-center gap-1 shadow-sm">
+                <i data-lucide="calendar" class="w-3 h-3"></i>
+                <span>Grid</span>
+              </button>
+              <button type="button" onclick="switchTimelineView('list')" id="btn-view-list" class="px-2.5 py-1 rounded-lg font-medium text-slate-400 hover:text-white text-xs transition flex items-center gap-1">
+                <i data-lucide="list" class="w-3 h-3"></i>
+                <span>List</span>
+              </button>
+            </div>
+
+            <!-- Hour Block Height Scale (Levels 1-5) -->
+            <div class="flex items-center p-0.5 rounded-xl bg-dark-elevated border border-dark-border gap-1 shadow-sm text-xs" title="Adjust hour block height scale (Level 1: whole day at once, Level 5: deep detail for 10m events)">
+              <span class="text-[10px] uppercase font-bold text-slate-400 px-1 select-none">Height</span>
+              <button type="button" onclick="changeCalendarZoomLevel(-1)" class="w-5 h-5 rounded bg-dark-base hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-xs transition" title="Smaller height (see whole day)">-</button>
+              <span id="calendar-zoom-label" class="px-1.5 font-mono text-[11px] text-pastel-mint font-bold select-none min-w-[50px] text-center">Level 3</span>
+              <button type="button" onclick="changeCalendarZoomLevel(1)" class="w-5 h-5 rounded bg-dark-base hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-xs transition" title="Taller height (view 10m event details)">+</button>
+            </div>
+
+            <span id="calendar-zoom-desc" class="hidden sm:inline text-[10px] text-slate-400 font-medium">Standard</span>
+          </div>
+
+          <!-- Right: Timeline Hours & Category Legend -->
+          <div class="flex flex-wrap items-center gap-2.5 text-[10px] font-mono text-slate-300">
+            <span class="text-slate-400 font-semibold flex items-center gap-1">
+              <i data-lucide="clock" class="w-3 h-3 text-pastel-mint"></i>
+              6:00 AM – 2:00 AM
+            </span>
+            <div class="w-px h-3 bg-dark-border hidden sm:block"></div>
+            <span class="flex items-center gap-1 text-pastel-mint"><span class="w-2 h-2 rounded-full bg-pastel-mint"></span> Focus</span>
+            <span class="flex items-center gap-1 text-pastel-sky"><span class="w-2 h-2 rounded-full bg-pastel-sky"></span> GCal</span>
+            <span class="flex items-center gap-1 text-pastel-coral"><span class="w-2 h-2 rounded-full bg-pastel-coral"></span> Meal</span>
             <span class="flex items-center gap-1 text-pastel-butter"><span class="w-2 h-2 rounded-full bg-pastel-butter"></span> Chores</span>
-            <span class="flex items-center gap-1 text-slate-400"><span class="w-2 h-2 rounded-full border border-dashed border-pastel-sky/60"></span> Transition Buffer</span>
+            <span class="flex items-center gap-1 text-slate-400"><span class="w-2 h-2 rounded-full border border-dashed border-pastel-sky/60"></span> Buffer</span>
           </div>
         </div>
 
@@ -4182,19 +4195,42 @@
     state.timelineViewMode = 'calendar'; // 'calendar' or 'list'
     const CALENDAR_START_HOUR = 6; // 6:00 AM
     const CALENDAR_END_HOUR = 26;  // 2:00 AM (Next Day)
-    let CALENDAR_HOUR_HEIGHT = parseInt(localStorage.getItem('focusflow_calendar_zoom')) || 84; // default 84px per hour
+    const CALENDAR_HEIGHT_LEVELS = [
+      { level: 1, height: 35, label: 'Level 1', desc: 'Whole Day' },
+      { level: 2, height: 56, label: 'Level 2', desc: 'Compact' },
+      { level: 3, height: 84, label: 'Level 3', desc: 'Standard' },
+      { level: 4, height: 135, label: 'Level 4', desc: 'Roomy' },
+      { level: 5, height: 230, label: 'Level 5', desc: 'Deep Detail' }
+    ];
 
-    function adjustHourHeight(delta) {
-      CALENDAR_HOUR_HEIGHT = Math.max(50, Math.min(180, CALENDAR_HOUR_HEIGHT + delta));
+    let calendarZoomLevel = parseInt(localStorage.getItem('focusflow_calendar_zoom_level'), 10) || 3;
+    if (calendarZoomLevel < 1) calendarZoomLevel = 1;
+    if (calendarZoomLevel > 5) calendarZoomLevel = 5;
+
+    let CALENDAR_HOUR_HEIGHT = CALENDAR_HEIGHT_LEVELS[calendarZoomLevel - 1].height;
+
+    function changeCalendarZoomLevel(delta) {
+      calendarZoomLevel = Math.max(1, Math.min(5, calendarZoomLevel + delta));
+      localStorage.setItem('focusflow_calendar_zoom_level', calendarZoomLevel);
+      CALENDAR_HOUR_HEIGHT = CALENDAR_HEIGHT_LEVELS[calendarZoomLevel - 1].height;
       localStorage.setItem('focusflow_calendar_zoom', CALENDAR_HOUR_HEIGHT);
       updateHourHeightUI();
       renderTimeline();
     }
 
+    function adjustHourHeight(delta) {
+      changeCalendarZoomLevel(delta > 0 ? 1 : -1);
+    }
+
     function updateHourHeightUI() {
+      const current = CALENDAR_HEIGHT_LEVELS[calendarZoomLevel - 1];
       const label = document.getElementById('calendar-zoom-label');
       if (label) {
-        label.textContent = `${CALENDAR_HOUR_HEIGHT}px`;
+        label.textContent = current.label;
+      }
+      const desc = document.getElementById('calendar-zoom-desc');
+      if (desc) {
+        desc.textContent = current.desc;
       }
       const dayGrid = document.getElementById('timeline-day-grid');
       if (dayGrid) {
@@ -4844,6 +4880,13 @@
     // ==============================================
     state.expandedCanvasSuggestionId = null;
 
+        function setAllAdhdNotesTransparent(transparent) {
+      const container = document.getElementById('timeline-event-blocks');
+      if (container) {
+        container.classList.toggle('adhd-notes-dimmed', !!transparent);
+      }
+    }
+
     function toggleCanvasSuggestion(sugId, expand) {
       state.expandedCanvasSuggestionId = expand ? sugId : null;
       renderTimeline();
@@ -4918,40 +4961,48 @@
 
         const isExpanded = state.expandedCanvasSuggestionId === sug.id;
         const commentEl = document.createElement('div');
-        commentEl.className = 'absolute right-2 z-20 flex flex-col items-end max-w-[280px] pointer-events-auto hover:opacity-20 transition-opacity duration-200 select-none';
+        commentEl.className = 'absolute right-2 z-20 flex flex-col items-end max-w-[280px] pointer-events-auto select-none adhd-coach-note';
         commentEl.style.top = `${topPx}px`;
 
         if (!isExpanded) {
-          // Collapsed Comment Pill (hover:opacity-20 to see through to calendar grid)
+          // Collapsed Comment Pill
+          // Left side triggers transparency on all overlapping notes; Right side is open button
           commentEl.innerHTML = `
-            <button type="button" onclick="event.stopPropagation(); toggleCanvasSuggestion('${sug.id}', true)" class="px-2.5 py-1 rounded-xl bg-pastel-butter/95 hover:bg-amber-300 text-dark-base font-bold text-[11px] flex items-center gap-1.5 shadow-lg border border-amber-400/50 transition active:scale-95">
-              <span>${sug.type === 'meal' ? '🥗' : '🧘'}</span>
-              <span>ADHD Note: ${sug.title}</span>
-              <i data-lucide="message-square" class="w-3 h-3 text-dark-base"></i>
-            </button>
+            <div class="flex items-center rounded-xl bg-pastel-butter/95 text-dark-base shadow-lg border border-amber-400/50 overflow-hidden adhd-coach-note-body transition-all duration-200">
+              <div onmouseenter="setAllAdhdNotesTransparent(true)" onmouseleave="setAllAdhdNotesTransparent(false)" onclick="event.stopPropagation(); toggleCanvasSuggestion('${sug.id}', true)" class="px-2.5 py-1.5 flex items-center gap-1.5 cursor-pointer font-bold text-[11px] hover:bg-amber-300 transition" title="Hover left side to see calendar underneath; tap to open details">
+                <span>${sug.type === 'meal' ? '🥗' : '🧘'}</span>
+                <span class="truncate max-w-[170px]">ADHD Note: ${sug.title}</span>
+              </div>
+              <button type="button" onclick="event.stopPropagation(); toggleCanvasSuggestion('${sug.id}', true)" class="adhd-coach-note-controls px-2 py-1.5 border-l border-amber-400/60 hover:bg-amber-300 transition text-dark-base shrink-0" title="Open Note">
+                <i data-lucide="message-square" class="w-3 h-3"></i>
+              </button>
+            </div>
           `;
         } else {
-          // Expanded Comment Sticky Note (hover:opacity-20 to see through, ▲ to condense)
+          // Expanded Comment Sticky Note
+          // Left side of header & description trigger see-through; ▲, Dismiss, Approve stay solid & clickable
           commentEl.innerHTML = `
-            <div class="p-3 rounded-2xl bg-dark-base/95 border border-pastel-butter text-slate-200 shadow-2xl space-y-2 backdrop-blur-md text-xs ring-1 ring-pastel-butter/40">
-              <div class="flex items-center justify-between gap-2 border-b border-dark-border/80 pb-1.5">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-pastel-butter flex items-center gap-1">
-                  <span>${sug.type === 'meal' ? '🥗' : '🧘'}</span>
-                  <span>ADHD Coach Note</span>
-                </span>
-                <button type="button" onclick="event.stopPropagation(); toggleCanvasSuggestion('${sug.id}', false)" class="text-slate-400 hover:text-white p-1 rounded-md hover:bg-dark-elevated transition flex items-center gap-1 text-[11px]" title="Condense note">
-                  <span class="font-bold text-pastel-butter">▲</span>
-                </button>
-              </div>
-              <p class="text-[11px] text-slate-300 leading-snug">${sug.description}</p>
-              <div class="pt-1 flex items-center justify-end gap-1.5">
-                <button type="button" onclick="event.stopPropagation(); dismissCanvasSuggestion('${sug.id}')" class="px-2 py-1 rounded-lg text-slate-400 hover:text-white text-[11px]">
-                  Dismiss
-                </button>
-                <button type="button" onclick="event.stopPropagation(); approveScheduleSuggestion('${sug.type}', '${sug.startTime}', ${sug.duration}, '${encodeURIComponent(sug.afterTitle || '')}')" class="px-2.5 py-1 rounded-lg bg-pastel-sky hover:bg-sky-300 text-dark-base font-bold text-[11px] flex items-center gap-1 shadow-sm">
-                  <i data-lucide="plus" class="w-3 h-3"></i>
-                  <span>Approve</span>
-                </button>
+            <div class="relative rounded-2xl bg-dark-base/95 border border-pastel-butter text-slate-200 shadow-2xl backdrop-blur-md text-xs ring-1 ring-pastel-butter/40 overflow-hidden max-w-[280px]">
+              <div class="p-3 space-y-2">
+                <div class="flex items-center justify-between gap-2 border-b border-dark-border/80 pb-1.5">
+                  <div onmouseenter="setAllAdhdNotesTransparent(true)" onmouseleave="setAllAdhdNotesTransparent(false)" class="adhd-coach-note-body flex-1 flex items-center gap-1 cursor-default py-0.5 select-none transition-opacity duration-200" title="Hover left side to see calendar underneath">
+                    <span>${sug.type === 'meal' ? '🥗' : '🧘'}</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-pastel-butter">ADHD Coach Note</span>
+                  </div>
+                  <button type="button" onclick="event.stopPropagation(); toggleCanvasSuggestion('${sug.id}', false)" class="adhd-coach-note-controls text-slate-400 hover:text-white p-1 rounded-md hover:bg-dark-elevated transition flex items-center gap-0.5 text-[10px] shrink-0" title="Condense note">
+                    <span class="font-bold text-pastel-butter">▲</span>
+                  </button>
+                </div>
+                <p onmouseenter="setAllAdhdNotesTransparent(true)" onmouseleave="setAllAdhdNotesTransparent(false)" class="adhd-coach-note-body text-[11px] text-slate-300 leading-snug cursor-default select-none transition-opacity duration-200" title="Hover left side to see calendar underneath">${sug.description}</p>
+                <div class="adhd-coach-note-controls pt-1 flex items-center justify-end gap-1.5">
+                  <button type="button" onclick="event.stopPropagation(); dismissCanvasSuggestion('${sug.id}')" class="px-2 py-1 rounded-lg text-slate-400 hover:text-white text-[11px] transition hover:bg-dark-elevated">
+                    Dismiss
+                  </button>
+                  <button type="button" onclick="event.stopPropagation(); approveScheduleSuggestion('${sug.type}', '${sug.startTime}', ${sug.duration}, '${encodeURIComponent(sug.afterTitle || '')}')" class="px-2.5 py-1 rounded-lg bg-pastel-sky hover:bg-sky-300 text-dark-base font-bold text-[11px] flex items-center gap-1 shadow-sm transition active:scale-95">
+                    <i data-lucide="plus" class="w-3 h-3"></i>
+                    <span>Approve</span>
+                  </button>
+                </div>
               </div>
             </div>
           `;
@@ -5226,7 +5277,10 @@
           const calendarStartMinutes = CALENDAR_START_HOUR * 60;
           const minutesFromStart = Math.max(0, item.start - calendarStartMinutes);
           const topPx = (minutesFromStart / 60) * CALENDAR_HOUR_HEIGHT;
-          const heightPx = Math.max(34, (item.dur / 60) * CALENDAR_HOUR_HEIGHT);
+          const isDeepZoom = (typeof calendarZoomLevel !== 'undefined' && calendarZoomLevel === 5);
+          const isMinZoom = (typeof calendarZoomLevel !== 'undefined' && calendarZoomLevel === 1);
+          const minBlockHeight = isDeepZoom ? 72 : (isMinZoom ? 26 : 34);
+          const heightPx = Math.max(minBlockHeight, (item.dur / 60) * CALENDAR_HOUR_HEIGHT);
 
           const endMinutes = item.end;
           const endHH = String(Math.floor(endMinutes / 60)).padStart(2, '0');
@@ -5258,7 +5312,7 @@
           };
           attachEventDragListeners(block, ev);
 
-          if (heightPx < 52) {
+          if (heightPx < 52 && !isDeepZoom) {
             // Compact layout (for short events 15-30m): Title is always visible and prominent!
             block.innerHTML = `
               <div class="px-2.5 py-1 flex items-center justify-between text-xs w-full h-full gap-2">
@@ -5295,6 +5349,7 @@
                   <h3 class="font-bold text-white text-xs sm:text-sm leading-snug line-clamp-2">${ev.title}</h3>
                   
                   ${ev.location ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.location)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="text-[10px] text-pastel-sky hover:underline truncate mt-0.5 flex items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3 shrink-0 text-pastel-sky"></i><span class="truncate">${ev.location}</span></a>` : ''}
+                  ${ev.description ? `<p class="text-[10px] text-slate-300 mt-1 leading-snug line-clamp-3 bg-dark-base/60 p-1.5 rounded-lg border border-dark-border/50">${ev.description}</p>` : ''}
                   ${ev.goodEnough && heightPx > 75 ? `<p class="text-[10px] text-pastel-butter/90 truncate mt-0.5">🎯 Boundary: ${ev.goodEnough}</p>` : ''}
                 </div>
 
@@ -5833,6 +5888,7 @@
     }
 
     function togglePasswordLinkBox(expand) {
+      state.passwordBoxUserExpanded = !!expand;
       const collapsed = document.getElementById('ff-link-password-collapsed');
       const expanded = document.getElementById('ff-link-password-expanded');
       if (collapsed) collapsed.classList.toggle('hidden', !!expand);
@@ -11961,12 +12017,14 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         const linkBox = document.getElementById('ff-link-password-box');
         if (linkBox) {
           linkBox.classList.toggle('hidden', !ffSync.user);
-          const hasLinked = localStorage.getItem('focusflow_has_linked_password') === 'true';
           const collapsed = document.getElementById('ff-link-password-collapsed');
           const expanded = document.getElementById('ff-link-password-expanded');
           if (collapsed && expanded) {
-            collapsed.classList.toggle('hidden', !hasLinked);
-            expanded.classList.toggle('hidden', hasLinked);
+            // Minimized / collapsed by default! User must click it to expand.
+            if (!state.passwordBoxUserExpanded) {
+              collapsed.classList.remove('hidden');
+              expanded.classList.add('hidden');
+            }
           }
         }
         const toneText = { ok: 'text-pastel-mint', busy: 'text-pastel-sky', warn: 'text-pastel-butter', off: 'text-slate-200' };

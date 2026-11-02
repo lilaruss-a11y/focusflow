@@ -2323,6 +2323,7 @@
     </div>
   </div>
   <!-- MODAL: GCAL SYNC & CALENDAR CONNECT -->
+    <!-- MODAL: GOOGLE CALENDAR SYNC -->
   <div id="gcal-sync-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-sky/50 rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl my-6">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
@@ -2331,8 +2332,8 @@
             <i data-lucide="calendar" class="w-5 h-5"></i>
           </div>
           <div>
-            <h3 class="text-base font-bold text-white">Google Calendar Multi-Sync</h3>
-            <p class="text-xs text-slate-400">Connect multiple calendars (Work, School, Personal, etc.)</p>
+            <h3 class="text-base font-bold text-white">Google Calendar Sync</h3>
+            <p class="text-xs text-slate-400">Live 2-way sync across all your calendars (Work, School, Personal)</p>
           </div>
         </div>
         <button onclick="closeGCalSyncModal()" class="text-slate-400 hover:text-white p-1">
@@ -2342,10 +2343,10 @@
 
       <div class="space-y-4 text-xs text-slate-300">
         <!-- PRIMARY: ONE-TAP DIRECT GOOGLE CALENDAR SYNC -->
-        <div class="p-4 rounded-3xl bg-gradient-to-br from-dark-elevated via-dark-base to-dark-surface border border-pastel-sky/50 space-y-3.5 shadow-xl">
+        <div class="p-5 rounded-3xl bg-gradient-to-br from-dark-elevated via-dark-base to-dark-surface border border-pastel-sky/50 space-y-4 shadow-xl">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-2xl bg-white flex items-center justify-center p-2 shadow-sm shrink-0">
+              <div class="w-11 h-11 rounded-2xl bg-white flex items-center justify-center p-2 shadow-sm shrink-0">
                 <svg class="w-full h-full" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -2360,7 +2361,7 @@
             </div>
           </div>
 
-          <div id="gcal-direct-status-box" class="p-2.5 rounded-xl bg-dark-base/80 border border-dark-border text-xs text-slate-300">
+          <div id="gcal-direct-status-box" class="p-3 rounded-xl bg-dark-base/80 border border-dark-border text-xs text-slate-300">
             <!-- Connection status dynamically updated -->
           </div>
 
@@ -2379,153 +2380,6 @@
           </div>
         </div>
 
-        <!-- Collapsible: Alternative Secret iCal Links & File Import -->
-        <details class="p-3 bg-dark-base border border-dark-border rounded-2xl space-y-2 text-xs">
-          <summary class="font-bold text-slate-400 cursor-pointer hover:text-white select-none">
-            Alternative: Subscribe via Secret iCal URL or File Import
-          </summary>
-          <div class="pt-3 space-y-3">
-            <div class="p-2.5 rounded-xl bg-pastel-butter/10 border border-pastel-butter/30 text-pastel-butter text-[11px] leading-relaxed">
-              <strong>Tip:</strong> If you prefer URL links instead of direct Google sign-in, you can paste secret links below.
-            </div>
-
-            <div class="pt-1 flex flex-wrap gap-2">
-              <button type="button" onclick="copyGCalSettingsLink()" class="px-3 py-1.5 rounded-xl bg-pastel-sky/20 border border-pastel-sky/40 text-pastel-sky font-semibold text-xs flex items-center gap-1.5 shadow-sm hover:bg-pastel-sky/30 transition">
-                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-                <span id="copy-gcal-link-btn-text">Copy GCal Settings Link</span>
-              </button>
-              <a href="https://calendar.google.com/calendar/u/0/r/settings" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-300 text-xs flex items-center gap-1">
-                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                <span>Open in Chrome</span>
-              </a>
-            </div>
-
-        <!-- Connected Multiple Calendars List -->
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-white text-xs uppercase tracking-wider flex items-center gap-1.5">
-              <i data-lucide="layers" class="w-3.5 h-3.5 text-pastel-sky"></i>
-              Your Connected Calendars (<span id="connected-cal-count">0</span>):
-            </span>
-            <span class="text-[10px] text-slate-400">Merged into your daily schedule</span>
-          </div>
-          <div id="connected-calendars-list" class="space-y-2 max-h-48 overflow-y-auto">
-            <!-- Populated dynamically -->
-          </div>
-        </div>
-
-        <!-- Instant File / Text Import (Zero Proxy Latency) -->
-        <div class="p-3.5 bg-dark-base border border-pastel-mint/30 rounded-2xl space-y-2.5 shadow-sm">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-pastel-mint flex items-center gap-1.5">
-              <i data-lucide="zap" class="w-3.5 h-3.5 text-pastel-mint"></i>
-              Instant 0-Second Sync (No Network Timeouts):
-            </span>
-          </div>
-          <p class="text-[11px] text-slate-300 leading-relaxed">
-            If proxies are slow, paste your secret iCal link into your phone or Mac browser's address bar to immediately download <strong class="text-pastel-sky font-mono">basic.ics</strong>, then tap below:
-          </p>
-          <div class="flex items-center gap-2 flex-wrap">
-            <input type="file" id="gcal-ics-file-input" accept=".ics,text/calendar" onchange="handleIcsFileUpload(event)" class="hidden">
-            <button type="button" onclick="document.getElementById('gcal-ics-file-input').click()" class="px-3.5 py-2 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-md hover:bg-emerald-300 transition">
-              <i data-lucide="upload" class="w-3.5 h-3.5"></i>
-              <span>Import .ics File</span>
-            </button>
-            <button type="button" onclick="togglePasteIcalBox()" class="px-3.5 py-2 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-300 text-xs flex items-center gap-1.5 transition">
-              <i data-lucide="clipboard-paste" class="w-3.5 h-3.5 text-pastel-sky"></i>
-              <span>Or Paste iCal Text</span>
-            </button>
-          </div>
-          <div id="paste-ical-text-box" class="hidden pt-2 space-y-2 border-t border-dark-border/60">
-            <textarea id="paste-ical-raw-input" rows="4" placeholder="Paste your raw BEGIN:VCALENDAR text here..." class="w-full bg-dark-elevated border border-dark-border rounded-xl p-2.5 text-white font-mono text-[11px] focus:border-pastel-sky"></textarea>
-            <button type="button" onclick="importRawIcalText()" class="w-full py-2 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs hover:bg-sky-300 transition flex items-center justify-center gap-1 shadow-sm">
-              <i data-lucide="check" class="w-3.5 h-3.5"></i>
-              <span>Import Pasted Calendar Events</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Add Another Calendar Form -->
-        <div class="p-4 rounded-2xl bg-dark-base border border-dark-border space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-slate-200 block text-xs flex items-center gap-1.5">
-              <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-pastel-mint"></i>
-              Add a Google Calendar:
-            </span>
-            <button type="button" onclick="toggleNewCategoryCreator(true)" class="text-[11px] text-pastel-sky hover:underline font-bold flex items-center gap-1">
-              <i data-lucide="tag" class="w-3 h-3"></i>
-              <span>+ Add New Category</span>
-            </button>
-          </div>
-
-          <!-- Inline New Category Creator -->
-          <div id="new-category-creator-box" class="hidden p-3 rounded-xl bg-dark-elevated border border-pastel-sky/40 space-y-2.5">
-            <div class="flex items-center justify-between border-b border-dark-border pb-1.5">
-              <span class="text-xs font-bold text-pastel-sky flex items-center gap-1.5">
-                <i data-lucide="palette" class="w-3.5 h-3.5"></i>
-                Create New Category &amp; Set Color:
-              </span>
-              <button type="button" onclick="toggleNewCategoryCreator(false)" class="text-slate-400 hover:text-white text-xs">✕ Cancel</button>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <div>
-                <label class="block text-[10px] text-slate-400 mb-1 font-semibold">Category Name</label>
-                <input type="text" id="custom-cat-name" placeholder="e.g. Fitness, Client Work, Clubs..." class="w-full bg-dark-base border border-dark-border rounded-lg px-2.5 py-1.5 text-white text-xs focus:border-pastel-sky">
-              </div>
-              <div>
-                <label class="block text-[10px] text-slate-400 mb-1 font-semibold">Category Color</label>
-                <select id="custom-cat-color" class="w-full bg-dark-base border border-dark-border rounded-lg px-2.5 py-1.5 text-white text-xs font-semibold">
-                  <option value="sky">☁️ Sky Blue</option>
-                  <option value="mint">🌿 Mint Green</option>
-                  <option value="lavender">💜 Lavender Purple</option>
-                  <option value="coral">🪸 Coral Peach</option>
-                  <option value="butter">🧈 Butter Yellow</option>
-                  <option value="rose">🌸 Rose Pink</option>
-                  <option value="teal">🌊 Teal</option>
-                  <option value="indigo">🌌 Indigo</option>
-                  <option value="amber">🍊 Warm Orange</option>
-                </select>
-              </div>
-            </div>
-            <button type="button" onclick="saveNewCalendarCategory()" class="w-full py-1.5 rounded-lg bg-pastel-sky text-dark-base font-bold text-xs hover:bg-sky-300 transition flex items-center justify-center gap-1 shadow-sm">
-              <i data-lucide="check" class="w-3.5 h-3.5"></i>
-              <span>Save Category &amp; Apply Color</span>
-            </button>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <div>
-              <label class="block text-slate-400 mb-1 text-[11px] font-semibold">Calendar Name</label>
-              <input type="text" id="new-cal-name" placeholder="e.g. Work, Classes, Personal..." class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs focus:border-pastel-sky">
-            </div>
-            <div>
-              <label class="block text-slate-400 mb-1 text-[11px] font-semibold">Category (Sets Calendar Color)</label>
-              <select id="new-cal-category" onchange="onCalendarCategorySelected()" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs">
-                <!-- Dynamically populated from state.calendarCategories -->
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-slate-400 mb-1 text-[11px] font-semibold">Secret iCal URL for this calendar</label>
-            <input type="url" id="new-cal-url" placeholder="https://calendar.google.com/calendar/ical/.../basic.ics" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-[11px] focus:border-pastel-sky">
-          </div>
-
-          <!-- Live Color Preview Based on Category -->
-          <div class="flex items-center justify-between pt-1">
-            <div id="cal-category-color-badge" class="flex items-center gap-2 px-2.5 py-1 rounded-xl border text-[11px] font-semibold bg-sky-500/15 text-sky-300 border-sky-500/30">
-              <span id="cal-category-color-dot" class="w-2.5 h-2.5 rounded-full bg-sky-400 shrink-0"></span>
-              <span id="cal-category-color-name">Sky Blue • Deep Focus &amp; Work</span>
-            </div>
-            <button type="button" onclick="addNewConnectedCalendar()" class="px-4 py-2 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs hover:bg-emerald-300 transition flex items-center gap-1 shadow-md shadow-pastel-mint/15">
-              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-              <span>Add This Calendar</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </details>
-
         <!-- ADHD Scaffolding Controls for Calendars -->
         <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-2.5">
           <div class="flex items-center justify-between">
@@ -2542,23 +2396,15 @@
 
         <div class="pt-2 flex flex-wrap justify-between items-center gap-2 border-t border-dark-border">
           <div class="flex items-center gap-2.5 flex-wrap">
-            <button type="button" onclick="loadSampleMultipleCalendars()" class="text-[11px] text-slate-400 hover:text-pastel-sky underline">
-              Load Samples
-            </button>
             <button type="button" onclick="clearAllCalendarEvents()" class="text-[11px] text-rose-400/80 hover:text-rose-300 underline">
               Clear Schedule
             </button>
-            <input type="file" id="gcal-ics-file-input" accept=".ics,text/calendar" onchange="handleIcsFileUpload(event)" class="hidden">
-            <button type="button" onclick="document.getElementById('gcal-ics-file-input').click()" class="text-[11px] text-pastel-sky hover:text-sky-300 underline flex items-center gap-1" title="Upload downloaded .ics file for instant 0-second sync">
-              <i data-lucide="file-up" class="w-3 h-3"></i>
-              <span>Import .ics File</span>
-            </button>
           </div>
           <div class="flex gap-2">
-            <button type="button" onclick="closeGCalSyncModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs">Cancel</button>
-            <button type="button" id="sync-all-cals-btn" onclick="syncAllConnectedCalendars()" class="px-5 py-2.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-pastel-sky/20 hover:bg-sky-300 transition">
+            <button type="button" onclick="closeGCalSyncModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs hover:bg-slate-800 transition">Close</button>
+            <button type="button" id="sync-all-cals-btn" onclick="syncGoogleCalendarDirectNow()" class="px-5 py-2.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-pastel-mint/20 hover:bg-emerald-300 transition">
               <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-              <span>Sync All Calendars</span>
+              <span>Sync Live Events</span>
             </button>
           </div>
         </div>
@@ -2566,7 +2412,7 @@
     </div>
   </div>
 
-  <!-- MODAL: CLOUD SYNC (Google sign-in + backup across devices) -->
+    <!-- MODAL: CLOUD SYNC (Google sign-in + backup across devices) -->
   <div id="ff-sync-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto" onclick="if (event.target === this) closeSyncModal()">
     <div class="bg-dark-elevated border border-pastel-sky/50 rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">

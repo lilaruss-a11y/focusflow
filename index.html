@@ -2341,39 +2341,64 @@
       </div>
 
       <div class="space-y-4 text-xs text-slate-300">
-        <!-- iPhone App Bypass & Step-by-Step Guide -->
-        <div class="p-3.5 bg-dark-base border border-pastel-sky/30 rounded-2xl space-y-2.5">
+        <!-- PRIMARY: ONE-TAP DIRECT GOOGLE CALENDAR SYNC -->
+        <div class="p-4 rounded-3xl bg-gradient-to-br from-dark-elevated via-dark-base to-dark-surface border border-pastel-sky/50 space-y-3.5 shadow-xl">
           <div class="flex items-center justify-between">
-            <strong class="text-pastel-sky font-bold flex items-center gap-1.5 text-xs">
-              <i data-lucide="smartphone" class="w-4 h-4 text-pastel-sky"></i>
-              How to get your private links without opening the app:
-            </strong>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-white flex items-center justify-center p-2 shadow-sm shrink-0">
+                <svg class="w-full h-full" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+              </div>
+              <div>
+                <h4 class="font-bold text-white text-sm">Direct Google Calendar Connection</h4>
+                <p class="text-[11px] text-slate-300">Live, automatic updates whenever you edit your Google Calendar</p>
+              </div>
+            </div>
           </div>
 
-          <div class="p-2.5 rounded-xl bg-pastel-butter/10 border border-pastel-butter/30 text-pastel-butter text-[11px] leading-relaxed">
-            <strong>⚠️ Why your iPhone opened the app:</strong> iPhones automatically launch the Google Calendar app when you tap calendar links. Because the app hides the secret link, you must open settings in <strong>Google Chrome</strong>!
+          <div id="gcal-direct-status-box" class="p-2.5 rounded-xl bg-dark-base/80 border border-dark-border text-xs text-slate-300">
+            <!-- Connection status dynamically updated -->
           </div>
 
-          <p class="text-[11px] text-slate-300 font-semibold">Easy 30-Second Chrome Steps:</p>
-          <ol class="list-decimal pl-4 space-y-1.5 text-[11px] text-slate-300 leading-relaxed">
-            <li>Tap the button below to <strong>Copy Google Calendar Link</strong> to your clipboard.</li>
-            <li>In Chrome on your phone, open a <strong>new tab</strong>, tap the address bar, paste the link, and tap <strong>Go</strong>.</li>
-            <li>In Chrome, tap the <strong>⋮ (three dots)</strong> menu in the corner and check <strong>"Desktop site"</strong>.</li>
-            <li>On the left side under <strong>"My calendars"</strong>, you'll see all your calendars (Work, Personal, School, etc.). Tap the <strong>⋮ (three dots)</strong> next to each calendar &gt; <strong>Settings and sharing</strong> &gt; copy the <strong>"Secret address in iCal format"</strong>.</li>
-            <li>Paste each calendar link into FocusFlow below!</li>
-          </ol>
-
-          <div class="pt-1 flex flex-wrap gap-2">
-            <button type="button" onclick="copyGCalSettingsLink()" class="px-3.5 py-2 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-md hover:bg-sky-300 transition">
-              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-              <span id="copy-gcal-link-btn-text">1. Copy Desktop Settings Link</span>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button type="button" id="btn-connect-gcal-direct" onclick="connectGoogleCalendarDirect()" class="px-4 py-2.5 rounded-xl bg-pastel-sky hover:bg-sky-300 text-dark-base font-bold text-xs flex items-center gap-2 shadow-md transition">
+              <i data-lucide="link" class="w-4 h-4"></i>
+              <span id="btn-connect-gcal-text">Connect with Google Calendar</span>
             </button>
-            <a href="https://calendar.google.com/calendar/u/0/r/settings" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-300 text-xs flex items-center gap-1">
-              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-              <span>Or Long-Press &gt; Open New Tab</span>
-            </a>
+            <button type="button" id="btn-sync-gcal-now" onclick="syncGoogleCalendarDirectNow()" class="hidden px-4 py-2.5 rounded-xl bg-pastel-mint hover:bg-emerald-300 text-dark-base font-bold text-xs flex items-center gap-2 shadow-md transition">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+              <span>Sync Live Events Now</span>
+            </button>
+            <button type="button" id="btn-disconnect-gcal" onclick="disconnectGoogleCalendarDirect()" class="hidden px-3 py-2 rounded-xl bg-dark-base hover:bg-rose-950/40 text-rose-300 text-xs border border-dark-border transition">
+              Disconnect
+            </button>
           </div>
         </div>
+
+        <!-- Collapsible: Alternative Secret iCal Links & File Import -->
+        <details class="p-3 bg-dark-base border border-dark-border rounded-2xl space-y-2 text-xs">
+          <summary class="font-bold text-slate-400 cursor-pointer hover:text-white select-none">
+            Alternative: Subscribe via Secret iCal URL or File Import
+          </summary>
+          <div class="pt-3 space-y-3">
+            <div class="p-2.5 rounded-xl bg-pastel-butter/10 border border-pastel-butter/30 text-pastel-butter text-[11px] leading-relaxed">
+              <strong>Tip:</strong> If you prefer URL links instead of direct Google sign-in, you can paste secret links below.
+            </div>
+
+            <div class="pt-1 flex flex-wrap gap-2">
+              <button type="button" onclick="copyGCalSettingsLink()" class="px-3 py-1.5 rounded-xl bg-pastel-sky/20 border border-pastel-sky/40 text-pastel-sky font-semibold text-xs flex items-center gap-1.5 shadow-sm hover:bg-pastel-sky/30 transition">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                <span id="copy-gcal-link-btn-text">Copy GCal Settings Link</span>
+              </button>
+              <a href="https://calendar.google.com/calendar/u/0/r/settings" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-300 text-xs flex items-center gap-1">
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                <span>Open in Chrome</span>
+              </a>
+            </div>
 
         <!-- Connected Multiple Calendars List -->
         <div class="space-y-2">
@@ -2498,6 +2523,8 @@
             </button>
           </div>
         </div>
+      </div>
+    </details>
 
         <!-- ADHD Scaffolding Controls for Calendars -->
         <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-2.5">
@@ -8045,6 +8072,7 @@
     function openGCalSyncModal() {
       populateCalendarCategoriesDropdowns();
       renderConnectedCalendars();
+      updateGoogleCalendarDirectUI();
       document.getElementById('gcal-sync-modal').classList.remove('hidden');
     }
     function closeGCalSyncModal() { document.getElementById('gcal-sync-modal').classList.add('hidden'); }
@@ -10424,6 +10452,12 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       checkIncomingSharedRecipe();
       checkAppInstallState();
       checkForAppUpdates();
+      try {
+        updateGoogleCalendarDirectUI();
+        if (localStorage.getItem('focusflow_gcal_oauth_token')) {
+          setTimeout(() => syncGoogleCalendarDirectNow(), 1500);
+        }
+      } catch (e) {}
     };
 
     // Re-draws every screen from the current `state` (used after cloud data arrives).
@@ -10432,6 +10466,7 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       const steps = [
         () => populateCalendarCategoriesDropdowns(),
         () => renderConnectedCalendars(),
+        () => updateGoogleCalendarDirectUI(),
         () => renderTimeline(),
         () => renderMatrix(),
         () => renderPantry(),
@@ -10869,10 +10904,20 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
           return;
         }
         const provider = new firebase.auth.GoogleAuthProvider();
+        provider.addScope('https://www.googleapis.com/auth/calendar.events.readonly');
+        provider.addScope('https://www.googleapis.com/auth/calendar.readonly');
         try { provider.setCustomParameters({ prompt: 'select_account' }); } catch (e) {}
         ffSync.lastErrorText = '';
         try {
-          await ffSync.auth.signInWithPopup(provider);
+          const res = await ffSync.auth.signInWithPopup(provider);
+          if (res && res.credential && res.credential.accessToken) {
+            localStorage.setItem('focusflow_gcal_oauth_token', res.credential.accessToken);
+            localStorage.setItem('focusflow_gcal_user_email', (res.user && res.user.email) || '');
+            try {
+              updateGoogleCalendarDirectUI();
+              syncGoogleCalendarDirectNow();
+            } catch (e) {}
+          }
         } catch (e) {
           const code = (e && e.code) || '';
           if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request' || code === 'auth/user-cancelled') {
@@ -11868,6 +11913,264 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       });
 
       return events;
+    }
+
+    // ==============================================
+    // DIRECT GOOGLE CALENDAR CONNECTION (OFFICIAL API)
+    // ==============================================
+
+    function updateGoogleCalendarDirectUI() {
+      const token = localStorage.getItem('focusflow_gcal_oauth_token');
+      const email = localStorage.getItem('focusflow_gcal_user_email');
+      const statusBox = document.getElementById('gcal-direct-status-box');
+      const connectBtn = document.getElementById('btn-connect-gcal-direct');
+      const syncBtn = document.getElementById('btn-sync-gcal-now');
+      const disconnectBtn = document.getElementById('btn-disconnect-gcal');
+
+      if (token) {
+        if (statusBox) {
+          statusBox.innerHTML = `
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-pastel-mint font-semibold flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-pastel-mint animate-pulse"></span>
+                Connected: ${email || 'Google Account'}
+              </span>
+              <span class="text-[10px] text-slate-400">Live 2-Way Sync Active</span>
+            </div>
+          `;
+        }
+        if (connectBtn) connectBtn.classList.add('hidden');
+        if (syncBtn) syncBtn.classList.remove('hidden');
+        if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+      } else {
+        if (statusBox) {
+          statusBox.innerHTML = `<span class="text-slate-400">Not connected yet. Connect your Google account once to automatically sync live changes.</span>`;
+        }
+        if (connectBtn) {
+          connectBtn.classList.remove('hidden');
+          const btnText = document.getElementById('btn-connect-gcal-text');
+          if (btnText) btnText.textContent = 'Connect with Google Calendar';
+        }
+        if (syncBtn) syncBtn.classList.add('hidden');
+        if (disconnectBtn) disconnectBtn.classList.add('hidden');
+      }
+    }
+
+    async function connectGoogleCalendarDirect() {
+      try {
+        const btnText = document.getElementById('btn-connect-gcal-text');
+        if (btnText) btnText.textContent = 'Opening Google sign-in...';
+
+        if (!ffSync.auth) await ffLoadFirebaseSdk();
+        if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.addScope('https://www.googleapis.com/auth/calendar.events.readonly');
+        provider.addScope('https://www.googleapis.com/auth/calendar.readonly');
+        provider.setCustomParameters({ prompt: 'select_account' });
+
+        const result = await firebase.auth().signInWithPopup(provider);
+        const credential = result.credential;
+        const token = credential ? credential.accessToken : null;
+
+        if (token) {
+          localStorage.setItem('focusflow_gcal_oauth_token', token);
+          localStorage.setItem('focusflow_gcal_user_email', (result.user && result.user.email) || '');
+          playChime('bell');
+          updateGoogleCalendarDirectUI();
+          alertBox("Connected to your Google Calendar! Fetching your live schedule now...", "Google Connected");
+          await syncGoogleCalendarDirectNow();
+        } else {
+          alertBox("Signed in, but Google did not return a calendar access token. Please tap Connect again and ensure calendar permissions are checked.", "Permission Needed");
+        }
+      } catch (err) {
+        console.error("Google Calendar connection error:", err);
+        if (err.code === 'auth/popup-closed-by-user') {
+          alertBox("Google sign-in was cancelled.", "Cancelled");
+        } else if (err.code === 'auth/popup-blocked') {
+          alertBox("Pop-up blocked by your browser. Please tap 'Allow Pop-ups' in your browser address bar to connect.", "Pop-up Blocked");
+        } else {
+          alertBox(`Could not connect: ${err.message}`, "Connection Notice");
+        }
+      } finally {
+        updateGoogleCalendarDirectUI();
+      }
+    }
+
+    function disconnectGoogleCalendarDirect() {
+      if (confirm("Disconnect Google Calendar direct sync? Your current events will remain on your device until cleared.")) {
+        localStorage.removeItem('focusflow_gcal_oauth_token');
+        localStorage.removeItem('focusflow_gcal_user_email');
+        updateGoogleCalendarDirectUI();
+        playChime('bell');
+        alertBox("Disconnected Google Calendar direct sync.", "Disconnected");
+      }
+    }
+
+    async function syncGoogleCalendarDirectNow() {
+      let token = localStorage.getItem('focusflow_gcal_oauth_token');
+      if (!token) {
+        connectGoogleCalendarDirect();
+        return;
+      }
+
+      const syncBtn = document.getElementById('btn-sync-gcal-now');
+      if (syncBtn) {
+        syncBtn.disabled = true;
+        syncBtn.innerHTML = `<span class="animate-spin inline-block mr-1">⏳</span> Syncing live events...`;
+      }
+
+      try {
+        // 1. Fetch user's calendars list (discovers Work, School, Personal, etc.)
+        let calendarsToSync = [{ id: 'primary', summary: 'Personal' }];
+        try {
+          const calListResp = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (calListResp.status === 401) {
+            localStorage.removeItem('focusflow_gcal_oauth_token');
+            alertBox("Your Google Calendar session expired. Tap 'Connect with Google Calendar' to refresh it.", "Session Expired");
+            updateGoogleCalendarDirectUI();
+            return;
+          }
+          if (calListResp.ok) {
+            const calListData = await calListResp.json();
+            if (calListData.items && calListData.items.length > 0) {
+              calendarsToSync = calListData.items.filter(c => c.selected !== false);
+            }
+          }
+        } catch (e) {
+          console.warn("Could not fetch calendarList, falling back to primary:", e);
+        }
+
+        // 2. Fetch events across a 4-week window (-7 days to +21 days)
+        const now = new Date();
+        const timeMin = new Date(now.getTime() - 7 * 24 * 3600 * 1000).toISOString();
+        const timeMax = new Date(now.getTime() + 21 * 24 * 3600 * 1000).toISOString();
+
+        const fetchedEvents = [];
+        const colors = ['sky', 'lavender', 'mint', 'coral', 'butter', 'teal', 'rose'];
+
+        for (let i = 0; i < calendarsToSync.length; i++) {
+          const cal = calendarsToSync[i];
+          const calColor = colors[i % colors.length];
+
+          try {
+            const eventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?singleEvents=true&orderBy=startTime&timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&maxResults=250`;
+            const resp = await fetch(eventsUrl, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (resp.status === 403) {
+              const errData = await resp.json().catch(() => ({}));
+              const errMsg = (errData.error && errData.error.message) || '';
+              if (errMsg.includes('has not been used') || errMsg.includes('disabled')) {
+                alertBox(
+                  "⚠️ The Google Calendar API is not turned on yet in your Google Cloud project.\n\nPlease visit this link to turn it on (takes 1 click):\nhttps://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview?project=focusflow-40398\n\nOnce enabled, tap 'Sync Live Events Now'!",
+                  "Enable Google Calendar API"
+                );
+                return;
+              }
+            }
+
+            if (resp.ok) {
+              const data = await resp.json();
+              const items = data.items || [];
+
+              items.forEach((item, itemIdx) => {
+                if (!item.summary) return;
+
+                let startHH = 9;
+                let startMM = 0;
+                let durationMins = 60;
+                let eventDateStr = '';
+
+                if (item.start && item.start.dateTime) {
+                  const startDate = new Date(item.start.dateTime);
+                  startHH = startDate.getHours();
+                  startMM = startDate.getMinutes();
+                  const sy = startDate.getFullYear();
+                  const sm = String(startDate.getMonth() + 1).padStart(2, '0');
+                  const sd = String(startDate.getDate()).padStart(2, '0');
+                  eventDateStr = `${sy}-${sm}-${sd}`;
+
+                  if (item.end && item.end.dateTime) {
+                    const endDate = new Date(item.end.dateTime);
+                    const diffMins = Math.round((endDate.getTime() - startDate.getTime()) / 60000);
+                    if (diffMins > 0) durationMins = diffMins;
+                  }
+                } else if (item.start && item.start.date) {
+                  eventDateStr = item.start.date;
+                  startHH = 9;
+                  startMM = 0;
+                  durationMins = 60;
+                }
+
+                if (!eventDateStr) return;
+
+                const timeFormatted = `${String(startHH).padStart(2, '0')}:${String(startMM).padStart(2, '0')}`;
+
+                fetchedEvents.push({
+                  id: `ev-gapi-${item.id || itemIdx}-${eventDateStr}`,
+                  title: item.summary,
+                  calendarName: cal.summary || 'Google Calendar',
+                  calendarColor: calColor,
+                  category: 'focus',
+                  date: eventDateStr,
+                  startTime: timeFormatted,
+                  duration: durationMins,
+                  location: item.location || '',
+                  description: item.description || '',
+                  goodEnough: `Focus on top 1-2 objectives for "${item.summary}"; wrap up smoothly without perfectionism spiral`,
+                  subtasks: [
+                    { text: `Review materials & set up for: ${item.summary}`, minutes: Math.min(10, Math.max(3, Math.round(durationMins * 0.15))), done: false },
+                    { text: `Core engagement & execution`, minutes: Math.max(15, Math.round(durationMins * 0.7)), done: false },
+                    { text: `Wrap up, save notes & plan next step`, minutes: Math.min(10, Math.max(3, Math.round(durationMins * 0.15))), done: false }
+                  ]
+                });
+              });
+            }
+          } catch (err) {
+            console.warn(`Error fetching events for ${cal.summary}:`, err);
+          }
+        }
+
+        if (fetchedEvents.length > 0) {
+          const manualEvents = (state.events || []).filter(e => 
+            !e.id.startsWith('ev-gapi-') && 
+            !e.id.startsWith('ev-ical-') && 
+            !e.id.startsWith('ev-buf-') && 
+            e.id !== 'ev-meal-choreo' &&
+            !e.title.includes('Focus & Task Execution')
+          );
+
+          state.events = [...manualEvents, ...fetchedEvents];
+
+          state.events.sort((a, b) => {
+            const [aH, aM] = (a.startTime || '00:00').split(':').map(Number);
+            const [bH, bM] = (b.startTime || '00:00').split(':').map(Number);
+            return (aH * 60 + aM) - (bH * 60 + bM);
+          });
+
+          saveAppState();
+          closeGCalSyncModal();
+          renderTimeline();
+          playChime('bell');
+          alertBox(`Synced ${fetchedEvents.length} live events directly from your Google Calendars across all days of the week!`, "Google Calendar Synced");
+        } else {
+          alertBox("Connected successfully to Google, but found 0 events scheduled in the upcoming weeks.", "No Events Found");
+        }
+      } catch (err) {
+        console.error("Direct sync error:", err);
+        alertBox(`Direct sync error: ${err.message}`, "Sync Error");
+      } finally {
+        if (syncBtn) {
+          syncBtn.disabled = false;
+          syncBtn.innerHTML = `<i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Sync Live Events Now</span>`;
+          if (window.lucide) lucide.createIcons();
+        }
+        updateGoogleCalendarDirectUI();
+      }
     }
 
     function togglePasteIcalBox() {

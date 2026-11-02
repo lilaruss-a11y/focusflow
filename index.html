@@ -2389,6 +2389,37 @@
           </div>
         </div>
 
+        <!-- Instant File / Text Import (Zero Proxy Latency) -->
+        <div class="p-3.5 bg-dark-base border border-pastel-mint/30 rounded-2xl space-y-2.5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-pastel-mint flex items-center gap-1.5">
+              <i data-lucide="zap" class="w-3.5 h-3.5 text-pastel-mint"></i>
+              Instant 0-Second Sync (No Network Timeouts):
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-300 leading-relaxed">
+            If proxies are slow, paste your secret iCal link into your phone or Mac browser's address bar to immediately download <strong class="text-pastel-sky font-mono">basic.ics</strong>, then tap below:
+          </p>
+          <div class="flex items-center gap-2 flex-wrap">
+            <input type="file" id="gcal-ics-file-input" accept=".ics,text/calendar" onchange="handleIcsFileUpload(event)" class="hidden">
+            <button type="button" onclick="document.getElementById('gcal-ics-file-input').click()" class="px-3.5 py-2 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-md hover:bg-emerald-300 transition">
+              <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+              <span>Import .ics File</span>
+            </button>
+            <button type="button" onclick="togglePasteIcalBox()" class="px-3.5 py-2 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-300 text-xs flex items-center gap-1.5 transition">
+              <i data-lucide="clipboard-paste" class="w-3.5 h-3.5 text-pastel-sky"></i>
+              <span>Or Paste iCal Text</span>
+            </button>
+          </div>
+          <div id="paste-ical-text-box" class="hidden pt-2 space-y-2 border-t border-dark-border/60">
+            <textarea id="paste-ical-raw-input" rows="4" placeholder="Paste your raw BEGIN:VCALENDAR text here..." class="w-full bg-dark-elevated border border-dark-border rounded-xl p-2.5 text-white font-mono text-[11px] focus:border-pastel-sky"></textarea>
+            <button type="button" onclick="importRawIcalText()" class="w-full py-2 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs hover:bg-sky-300 transition flex items-center justify-center gap-1 shadow-sm">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>
+              <span>Import Pasted Calendar Events</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Add Another Calendar Form -->
         <div class="p-4 rounded-2xl bg-dark-base border border-dark-border space-y-3">
           <div class="flex items-center justify-between">
@@ -11604,6 +11635,15 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         return;
       }
 
+      // Friendly format warning for Google Calendar links
+      const lowerUrl = url.toLowerCase();
+      if (lowerUrl.includes('/embed') || lowerUrl.includes('/settings') || (!lowerUrl.includes('.ics') && lowerUrl.includes('google.com'))) {
+        alertBox(
+          "⚠️ Notice: That link may not be Google Calendar's Secret iCal link.\n\nIn Google Calendar Settings under 'Integrate calendar', look for 'Secret address in iCal format' (which ends with .ics).\n\nFocusFlow will still save this, but if sync fails, verify your link ends with .ics or use the 'Import .ics File' option!",
+          "Check Link Format"
+        );
+      }
+
       const catInfo = getCategoryInfo(catId);
 
       if (!state.connectedCalendars) state.connectedCalendars = [];
@@ -11830,7 +11870,38 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       return events;
     }
 
-    function fetchWithTimeout(url, timeoutMs = 4500) {
+    function togglePasteIcalBox() {
+      const box = document.getElementById('paste-ical-text-box');
+      if (box) box.classList.toggle('hidden');
+    }
+
+    function importRawIcalText() {
+      const textarea = document.getElementById('paste-ical-raw-input');
+      const text = textarea ? textarea.value.trim() : '';
+      if (!text || !text.includes('BEGIN:VCALENDAR')) {
+        alertBox("Please paste text that includes 'BEGIN:VCALENDAR'.", "Invalid iCal Text");
+        return;
+      }
+      const parsed = parseICalEvents(text, 'Pasted Calendar', 'focus', 'sky');
+      if (parsed.length > 0) {
+        const manualEvents = (state.events || []).filter(ev => 
+          !ev.id.startsWith('ev-ical-') && 
+          !ev.id.startsWith('ev-buf-') && 
+          ev.id !== 'ev-meal-choreo' &&
+          !ev.title.includes('Focus & Task Execution')
+        );
+        state.events = [...manualEvents, ...parsed];
+        saveAppState();
+        closeGCalSyncModal();
+        renderTimeline();
+        playChime('bell');
+        alertBox(`Successfully imported ${parsed.length} events across all days of the week!`, "Calendar Imported");
+      } else {
+        alertBox("Could not find standard events in that text. Please verify it contains standard VEVENT items.", "Import Notice");
+      }
+    }
+
+    function fetchWithTimeout(url, timeoutMs = 12000) {
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), timeoutMs);
       return fetch(url, { signal: controller.signal, cache: 'no-store' })
@@ -11842,31 +11913,48 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         return null;
       }
 
-      const proxyUrls = [
-        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
-      ];
+      const cleanUrl = targetUrl.trim();
 
-      // Race all proxies simultaneously with 4.5s cap per request
-      const racePromises = proxyUrls.map(async (pUrl) => {
-        try {
-          const resp = await fetchWithTimeout(pUrl, 4500);
+      const proxyAttempts = [
+        // 1. Corsproxy.io
+        async () => {
+          const resp = await fetchWithTimeout(`https://corsproxy.io/?${encodeURIComponent(cleanUrl)}`, 12000);
           if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
           const text = await resp.text();
-          if (text && text.includes('BEGIN:VCALENDAR')) {
-            return text;
-          }
+          if (text && text.includes('BEGIN:VCALENDAR')) return text;
           throw new Error('Not valid iCal text');
-        } catch (err) {
-          throw err;
+        },
+        // 2. AllOrigins raw
+        async () => {
+          const resp = await fetchWithTimeout(`https://api.allorigins.win/raw?url=${encodeURIComponent(cleanUrl)}`, 12000);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const text = await resp.text();
+          if (text && text.includes('BEGIN:VCALENDAR')) return text;
+          throw new Error('Not valid iCal text');
+        },
+        // 3. AllOrigins JSON get
+        async () => {
+          const resp = await fetchWithTimeout(`https://api.allorigins.win/get?url=${encodeURIComponent(cleanUrl)}`, 12000);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const data = await resp.json();
+          if (data && data.contents && data.contents.includes('BEGIN:VCALENDAR')) return data.contents;
+          throw new Error('Not valid iCal text in contents');
+        },
+        // 4. Codetabs proxy
+        async () => {
+          const resp = await fetchWithTimeout(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cleanUrl)}`, 12000);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const text = await resp.text();
+          if (text && text.includes('BEGIN:VCALENDAR')) return text;
+          throw new Error('Not valid iCal text');
         }
-      });
+      ];
 
       try {
-        return await Promise.any(racePromises);
+        const text = await Promise.any(proxyAttempts.map(fn => fn()));
+        return text;
       } catch (aggregateError) {
-        console.warn('All proxies timed out or failed for URL:', targetUrl);
+        console.warn('All proxies timed out or failed for URL:', cleanUrl);
         return null;
       }
     }
@@ -11914,7 +12002,10 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       }
 
       if (successfulCalendars === 0 && failedCalendars.length > 0) {
-        alertBox(`Could not reach the calendar link for: "${failedCalendars.join(', ')}". The request timed out. Please check that your secret iCal link is copied completely, or use the "Import .ics File" option for instant 0-second sync!`, "Sync Timed Out");
+        alertBox(
+          `Could not connect to: "${failedCalendars.join(', ')}" through the web proxy.\n\n⚡ Quick fix: Open that secret link in your phone or computer browser to immediately download "basic.ics", then tap "Import .ics File" in FocusFlow for an instant 0-second sync!`,
+          "Sync Timed Out"
+        );
         return;
       }
 

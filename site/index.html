@@ -74,6 +74,12 @@
       -webkit-backdrop-filter: none !important;
       backdrop-filter: none !important;
     }
+    @media (max-width: 767px) {
+      .safe-top-header {
+        padding-top: 14px !important;
+        padding-top: max(14px, calc(env(safe-area-inset-top, 0px) + 20px)) !important;
+      }
+    }
     @media (min-width: 768px) {
       .safe-top-header {
         padding-top: 12px !important;
@@ -83,14 +89,14 @@
     /* Standalone PWA Home-Screen Mode (iOS & Android) */
     @media all and (display-mode: standalone) {
       .safe-top-header {
-        padding-top: 54px !important;
-        padding-top: calc(env(safe-area-inset-top) + 8px) !important;
+        padding-top: 68px !important;
+        padding-top: max(68px, calc(env(safe-area-inset-top, 0px) + 20px)) !important;
       }
     }
 
     .ff-standalone-mode .safe-top-header {
-      padding-top: 54px !important;
-      padding-top: calc(env(safe-area-inset-top) + 8px) !important;
+      padding-top: 68px !important;
+      padding-top: max(68px, calc(env(safe-area-inset-top, 0px) + 20px)) !important;
     }
 
     .safe-bottom-nav {
@@ -120,7 +126,7 @@
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || localStorage.getItem('focusflow_app_installed') === 'true';
       if (isStandalone) {
         document.documentElement.classList.add('ff-standalone-mode');
-        document.write('<style>#btn-install-app { display: none !important; } .safe-top-header { padding-top: 54px !important; padding-top: calc(env(safe-area-inset-top) + 8px) !important; }</style>');
+        document.write('<style>.safe-top-header { padding-top: 68px !important; padding-top: max(68px, calc(env(safe-area-inset-top, 0px) + 20px)) !important; }</style>');
       }
     } catch(e) {}
   </script>
@@ -131,14 +137,12 @@
     <div class="max-w-6xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
       <!-- App Brand Title -->
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-dark-elevated border border-pastel-mint/50 flex items-center justify-center text-pastel-mint shrink-0 shadow-sm">
-          <i data-lucide="sparkles" class="w-5 h-5 text-pastel-mint"></i>
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pastel-mint via-pastel-sky to-pastel-lavender flex items-center justify-center shadow-lg shadow-pastel-mint/20 shrink-0">
+          <i data-lucide="sparkles" class="w-5 h-5 text-dark-base"></i>
         </div>
         <div>
-          <h1 class="text-xl font-black tracking-tight text-white antialiased flex items-center">
-            <span>Focus</span><span class="text-pastel-mint ml-0.5">Flow</span>
-          </h1>
-          <p class="text-[11px] font-medium text-slate-300 antialiased">ADHD Day Planner &amp; Executive Suite</p>
+          <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-pastel-mint via-pastel-sky to-pastel-lavender bg-clip-text text-transparent flex items-center" style="-webkit-background-clip: text; -webkit-text-fill-color: transparent;">FocusFlow</h1>
+          <p class="text-xs text-slate-400">ADHD Day Planner &amp; Executive Suite</p>
         </div>
       </div>
 
@@ -190,11 +194,6 @@
           <span class="font-semibold hidden xs:inline">Scaffold</span>
         </button>
 
-        <!-- Install to Phone (Home Screen) Guide: Auto-hides once installed as app -->
-        <button type="button" onclick="openInstallAppModal()" id="btn-install-app" class="px-2 py-1 rounded-xl bg-pastel-lavender/15 border border-pastel-lavender/30 hover:bg-pastel-lavender/25 text-pastel-lavender font-semibold text-[10px] sm:text-[11px] flex items-center gap-1 touch-nav-item active:scale-95 transition" title="Install FocusFlow directly to your phone screen">
-          <i data-lucide="smartphone" class="w-3 h-3"></i>
-          <span class="hidden sm:inline">Install</span>
-        </button>
 
         <button onclick="toggleAudioChime()" id="audio-toggle-btn" class="p-1.5 sm:p-2 rounded-xl bg-dark-elevated border border-dark-border text-pastel-mint hover:text-white text-xs touch-nav-item" title="Toggle audio chime">
           <i data-lucide="volume-2" class="w-3.5 h-3.5" id="audio-icon"></i>

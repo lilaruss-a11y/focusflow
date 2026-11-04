@@ -7,7 +7,7 @@
   <!-- Antigravity App Descriptor -->
     <!-- iOS & Mobile Web App Config (PWA) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="FocusFlow">
   <meta name="theme-color" content="#151b28">
   <meta name="mobile-web-app-capable" content="yes">
@@ -77,8 +77,8 @@
     }
     @media (max-width: 767px) {
       .safe-top-header {
-        padding-top: 12px !important;
-        padding-top: max(12px, env(safe-area-inset-top, 0px)) !important;
+        padding-top: 68px !important;
+        padding-top: max(68px, calc(env(safe-area-inset-top, 0px) + 20px)) !important;
       }
     }
     @media (min-width: 768px) {
@@ -90,14 +90,14 @@
     /* Standalone PWA Home-Screen Mode (iOS & Android) */
     @media all and (display-mode: standalone) {
       .safe-top-header {
-        padding-top: 12px !important;
-        padding-top: max(12px, env(safe-area-inset-top, 0px)) !important;
+        padding-top: 68px !important;
+        padding-top: max(68px, calc(env(safe-area-inset-top, 0px) + 20px)) !important;
       }
     }
 
     .ff-standalone-mode .safe-top-header {
-      padding-top: 12px !important;
-      padding-top: max(12px, env(safe-area-inset-top, 0px)) !important;
+      padding-top: 68px !important;
+      padding-top: max(68px, calc(env(safe-area-inset-top, 0px) + 20px)) !important;
     }
 
     /* Header action buttons: sleek, balanced bubbles without excessive vertical height */
@@ -161,6 +161,7 @@
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || localStorage.getItem('focusflow_app_installed') === 'true';
       if (isStandalone) {
         document.documentElement.classList.add('ff-standalone-mode');
+        document.write('<style>.safe-top-header { padding-top: 68px !important; padding-top: max(68px, calc(env(safe-area-inset-top, 0px) + 20px)) !important; }</style>');
       }
     } catch(e) {}
     window.addEventListener('focus', () => { setTimeout(resetViewportZoom, 150); });

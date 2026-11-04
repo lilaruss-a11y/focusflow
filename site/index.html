@@ -7359,7 +7359,6 @@
       if (input) input.value = '';
       alertBox(`Added "${name}" to your pantry!`, "Pantry Updated");
     }
-    }
 
     function openAddPantryItemModal() { document.getElementById('pantry-item-modal').classList.remove('hidden'); }
     function closeAddPantryItemModal() { document.getElementById('pantry-item-modal').classList.add('hidden'); }
@@ -13190,24 +13189,42 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       `;
     }
 
+    function checkIncomingSharedRecipe() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const sharedRecipeData = params.get('recipe');
+        if (sharedRecipeData) {
+          const recipe = JSON.parse(decodeURIComponent(sharedRecipeData));
+          if (recipe && recipe.title) {
+            state.recipes = state.recipes || [];
+            if (!state.recipes.some(r => r.title === recipe.title)) {
+              state.recipes.push(recipe);
+              saveAppState();
+              alertBox(`Added shared recipe: "${recipe.title}"!`, "Recipe Received");
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
     window.onload = function() {
       // Cloud sync + offline support start in the background (never blocks or breaks the app)
       try { ffRegisterServiceWorker(); } catch (e) {}
       try { Promise.resolve(initCloudSync()).catch(() => {}); } catch (e) {}
-      loadAppState();
-      populateCalendarCategoriesDropdowns();
-      renderConnectedCalendars();
-      renderTimeline();
-      renderMatrix();
-      renderPantry();
-      renderTaskmasterCalendarEvents();
-      initAppleHealthSync();
-      renderNutrition();
-      renderWeightGoalTimeline();
-      lucide.createIcons();
-      checkIncomingSharedRecipe();
-      checkAppInstallState();
-      checkForAppUpdates();
+      try { loadAppState(); } catch (e) { console.error("Error loading app state:", e); }
+      try { populateCalendarCategoriesDropdowns(); } catch (e) {}
+      try { renderConnectedCalendars(); } catch (e) {}
+      try { renderTimeline(); } catch (e) { console.error("Error rendering timeline:", e); }
+      try { renderMatrix(); } catch (e) {}
+      try { renderPantry(); } catch (e) { console.error("Error rendering pantry:", e); }
+      try { renderTaskmasterCalendarEvents(); } catch (e) {}
+      try { initAppleHealthSync(); } catch (e) {}
+      try { renderNutrition(); } catch (e) {}
+      try { renderWeightGoalTimeline(); } catch (e) {}
+      try { if (window.lucide) lucide.createIcons(); } catch (e) {}
+      try { checkIncomingSharedRecipe(); } catch (e) {}
+      try { checkAppInstallState(); } catch (e) {}
+      try { checkForAppUpdates(); } catch (e) {}
       try {
         updateGoogleCalendarDirectUI();
         if (localStorage.getItem('focusflow_gcal_oauth_token')) {

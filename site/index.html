@@ -69,16 +69,15 @@
 
     /* Header standard mode */
     .safe-top-header {
-      padding-top: 10px !important;
-      padding-top: max(10px, env(safe-area-inset-top, 0px)) !important;
+      padding-top: 12px !important;
       background-color: #151b28 !important;
       -webkit-backdrop-filter: none !important;
       backdrop-filter: none !important;
     }
     @media (max-width: 767px) {
       .safe-top-header {
-        padding-top: 68px !important;
-        padding-top: max(68px, calc(env(safe-area-inset-top, 0px) + 20px)) !important;
+        padding-top: 56px !important;
+        padding-top: max(56px, calc(env(safe-area-inset-top, 0px) + 10px)) !important;
       }
     }
     @media (min-width: 768px) {
@@ -87,17 +86,22 @@
       }
     }
 
-    /* Standalone PWA Home-Screen Mode (iOS & Android) */
-    @media all and (display-mode: standalone) {
+    /* Standalone PWA Home-Screen Mode - STRICTLY MOBILE ONLY */
+    @media all and (display-mode: standalone) and (max-width: 767px) {
       .safe-top-header {
-        padding-top: 68px !important;
-        padding-top: max(68px, calc(env(safe-area-inset-top, 0px) + 20px)) !important;
+        padding-top: 56px !important;
+        padding-top: max(56px, calc(env(safe-area-inset-top, 0px) + 10px)) !important;
       }
     }
 
     .ff-standalone-mode .safe-top-header {
-      padding-top: 68px !important;
-      padding-top: max(68px, calc(env(safe-area-inset-top, 0px) + 20px)) !important;
+      padding-top: 12px !important;
+    }
+    @media (max-width: 767px) {
+      .ff-standalone-mode .safe-top-header {
+        padding-top: 56px !important;
+        padding-top: max(56px, calc(env(safe-area-inset-top, 0px) + 10px)) !important;
+      }
     }
 
     /* Header action buttons: sleek, balanced bubbles without excessive vertical height */
@@ -161,7 +165,7 @@
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || localStorage.getItem('focusflow_app_installed') === 'true';
       if (isStandalone) {
         document.documentElement.classList.add('ff-standalone-mode');
-        document.write('<style>.safe-top-header { padding-top: 68px !important; padding-top: max(68px, calc(env(safe-area-inset-top, 0px) + 20px)) !important; }</style>');
+        document.write('<style>@media (max-width: 767px) { .safe-top-header { padding-top: 56px !important; padding-top: max(56px, calc(env(safe-area-inset-top, 0px) + 10px)) !important; } } @media (min-width: 768px) { .safe-top-header { padding-top: 12px !important; } }</style>');
       }
     } catch(e) {}
     window.addEventListener('focus', () => { setTimeout(resetViewportZoom, 150); });

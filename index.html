@@ -68,7 +68,7 @@
     }
 
     .safe-top-header {
-      padding-top: max(8px, env(safe-area-inset-top, 8px)) !important;
+      padding-top: max(10px, calc(env(safe-area-inset-top, 0px) + 8px)) !important;
       background-color: #151b28 !important;
       -webkit-backdrop-filter: none !important;
       backdrop-filter: none !important;
@@ -5426,7 +5426,7 @@
           label.style.top = "2px";
         } else if (h === CALENDAR_END_HOUR) {
           // At 2 AM (end of day), centered on the 2 AM line with clean clearance below
-          label.className = "absolute right-2 text-[11px] font-mono font-semibold text-pastel-lavender/90 -translate-y-1/2";
+          label.className = "absolute right-2 text-[11px] font-mono font-semibold text-slate-400 -translate-y-1/2";
           label.style.top = `${topPx}px`;
         } else {
           label.className = "absolute right-2 text-[11px] font-mono font-semibold text-slate-400 -translate-y-1/2";
@@ -12488,7 +12488,9 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         if (!('serviceWorker' in navigator)) return;
         const host = location.hostname;
         if (!(location.protocol === 'https:' || host === 'localhost' || host === '127.0.0.1')) return;
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
+        navigator.serviceWorker.register('./sw.js').then((reg) => {
+          if (reg) reg.update().catch(() => {});
+        }).catch(() => {});
       } catch (e) {}
     }
   

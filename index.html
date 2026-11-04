@@ -2,17 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>FocusFlow • ADHD Executive Daily Assistant</title>
   <!-- Antigravity App Descriptor -->
     <!-- iOS & Mobile Web App Config (PWA) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="FocusFlow">
-  <meta name="theme-color" content="#0c0f17">
+  <meta name="theme-color" content="#151b28">
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%23151b28%22/><text y=%22.9em%22 font-size=%2275%22 x=%2212%22>✨</text></svg>">
-  <link rel="manifest" href="data:application/manifest+json;utf-8,%7B%22name%22%3A%22FocusFlow%22%2C%22short_name%22%3A%22FocusFlow%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230c0f17%22%2C%22theme_color%22%3A%22%230c0f17%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Crect%20width%3D%27100%27%20height%3D%27100%27%20rx%3D%2722%27%20fill%3D%27%23151b28%27%2F%3E%3Ctext%20y%3D%27.9em%27%20font-size%3D%2775%27%20x%3D%2712%27%3E%E2%9C%A8%3C%2Ftext%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+  <link rel="manifest" href="data:application/manifest+json;utf-8,%7B%22name%22%3A%22FocusFlow%22%2C%22short_name%22%3A%22FocusFlow%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23151b28%22%2C%22theme_color%22%3A%22%23151b28%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Crect%20width%3D%27100%27%20height%3D%27100%27%20rx%3D%2722%27%20fill%3D%27%23151b28%27%2F%3E%3Ctext%20y%3D%27.9em%27%20font-size%3D%2775%27%20x%3D%2712%27%3E%E2%9C%A8%3C%2Ftext%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
   <meta name="application-name" content="FocusFlow">
   <meta name="description" content="ADHD Focus & Flow Daily Assistant with Fading Neuro-Scaffolding, Reverse-Chain Cooking, and Cronometer-grade Nutrition.">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -45,6 +45,9 @@
   </script>
   <style>
     /* App Shell Fixed Architecture: Stationary Top & Bottom Bars */
+    html {
+      background-color: #151b28;
+    }
     html, body {
       height: 100%;
       height: 100dvh;
@@ -62,6 +65,18 @@
       overscroll-behavior-y: contain;
       -webkit-overflow-scrolling: touch;
       position: relative;
+    }
+
+    .safe-top-header {
+      padding-top: max(8px, env(safe-area-inset-top, 8px)) !important;
+      background-color: #151b28 !important;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+    }
+    @media (min-width: 768px) {
+      .safe-top-header {
+        padding-top: 10px !important;
+      }
     }
 
     .safe-bottom-nav {
@@ -86,22 +101,28 @@
       backdrop-filter: none !important;
     }
   </style>
+  <script>
+    try {
+      if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || localStorage.getItem('focusflow_app_installed') === 'true') {
+        document.write('<style>#btn-install-app { display: none !important; }</style>');
+      }
+    } catch(e) {}
+  </script>
 </head>
 <body class="bg-dark-base text-slate-100 h-full h-[100dvh] overflow-hidden font-sans selection:bg-pastel-mint selection:text-slate-950 flex flex-col antialiased">
-
   <!-- Top Navigation & Global Controls -->
-  <header class="shrink-0 z-40 bg-dark-surface border-b border-dark-border w-full">
-    <div class="max-w-6xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+  <header class="shrink-0 z-50 bg-[#151b28] border-b border-dark-border w-full relative shadow-md safe-top-header">
+    <div class="max-w-6xl mx-auto px-3 sm:px-4 py-1.5 sm:py-2 flex flex-wrap items-center justify-between gap-2">
       <!-- App Brand Title -->
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-dark-elevated border border-pastel-mint/50 flex items-center justify-center text-pastel-mint shrink-0">
-          <i data-lucide="sparkles" class="w-5 h-5 text-pastel-mint"></i>
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-dark-elevated border border-pastel-mint/50 flex items-center justify-center text-pastel-mint shrink-0 shadow-sm">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-pastel-mint"></i>
         </div>
         <div>
-          <h1 class="text-xl font-black tracking-tight text-white antialiased flex items-center">
+          <h1 class="text-base sm:text-lg font-black tracking-tight text-white antialiased flex items-center">
             <span>Focus</span><span class="text-pastel-mint ml-0.5">Flow</span>
           </h1>
-          <p class="text-[11px] font-medium text-slate-300 antialiased">ADHD Day Planner &amp; Executive Suite</p>
+          <p class="hidden sm:block text-[10px] font-medium text-slate-300 antialiased leading-none">ADHD Day Planner &amp; Executive Suite</p>
         </div>
       </div>
 
@@ -134,45 +155,44 @@
         </button>
       </nav>
 
-      <!-- Global Controls: Pacing, Scaffold Stage, Sound, API Key -->
-      <div class="flex items-center gap-2">
+      <!-- Global Controls -->
+      <div class="flex items-center gap-1.5">
         <!-- Quick Focus Button (Instant Standalone Session) -->
-        <button type="button" onclick="openStandaloneFocusModal()" class="px-2.5 py-1.5 rounded-xl bg-pastel-mint/15 border border-pastel-mint/30 hover:bg-pastel-mint/25 text-pastel-mint font-semibold text-[11px] flex items-center gap-1.5 touch-nav-item active:scale-95 transition shadow-sm" title="Start an unlinked Focus Session instantly">
-          <i data-lucide="play" class="w-3.5 h-3.5 fill-pastel-mint text-pastel-mint"></i>
+        <button type="button" onclick="openStandaloneFocusModal()" class="px-2 py-1 rounded-xl bg-pastel-mint/15 border border-pastel-mint/30 hover:bg-pastel-mint/25 text-pastel-mint font-semibold text-[11px] flex items-center gap-1 touch-nav-item active:scale-95 transition shadow-sm" title="Start an unlinked Focus Session instantly">
+          <i data-lucide="play" class="w-3 h-3 fill-pastel-mint text-pastel-mint"></i>
           <span class="hidden sm:inline">Quick Focus</span>
         </button>
 
-        <button onclick="togglePacingMetronome()" id="pacing-toggle-btn" class="p-2.5 rounded-xl bg-dark-elevated border border-dark-border text-slate-400 hover:text-pastel-butter text-xs flex items-center gap-1.5 touch-nav-item" title="Toggle 5-minute anti-distraction pacing check-in">
-          <i data-lucide="bell-ring" class="w-4 h-4" id="pacing-icon"></i>
-          <span class="hidden sm:inline text-[11px]" id="pacing-label">Pacing: Off</span>
+        <button onclick="togglePacingMetronome()" id="pacing-toggle-btn" class="p-1.5 sm:p-2 rounded-xl bg-dark-elevated border border-dark-border text-slate-400 hover:text-pastel-butter text-xs flex items-center gap-1 touch-nav-item" title="Toggle 5-minute anti-distraction pacing check-in">
+          <i data-lucide="bell-ring" class="w-3.5 h-3.5" id="pacing-icon"></i>
+          <span class="hidden sm:inline text-[10px]" id="pacing-label">Pacing: Off</span>
         </button>
         
         <!-- Sectional Scaffolding Stage Hub -->
-        <button onclick="openScaffoldHubModal()" class="px-2.5 py-1.5 rounded-xl bg-dark-elevated border border-dark-border text-slate-300 hover:text-white text-[11px] flex items-center gap-1.5 touch-nav-item transition" title="Adjust scaffolding levels independently for Tasks, Cooking, Calendar, and Focus">
-          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-pastel-mint"></i>
-          <span class="font-semibold">Scaffold Hub</span>
+        <button onclick="openScaffoldHubModal()" class="px-2 py-1 rounded-xl bg-dark-elevated border border-dark-border text-slate-300 hover:text-white text-[10px] sm:text-[11px] flex items-center gap-1 touch-nav-item transition" title="Adjust scaffolding levels independently for Tasks, Cooking, Calendar, and Focus">
+          <i data-lucide="shield-check" class="w-3 h-3 text-pastel-mint"></i>
+          <span class="font-semibold hidden xs:inline">Scaffold</span>
         </button>
 
-                <!-- Install to Phone (Home Screen) Guide: Auto-hides once installed as app -->
-        <button type="button" onclick="openInstallAppModal()" id="btn-install-app" class="px-2.5 py-1.5 rounded-xl bg-pastel-lavender/15 border border-pastel-lavender/30 hover:bg-pastel-lavender/25 text-pastel-lavender font-semibold text-[11px] flex items-center gap-1.5 touch-nav-item active:scale-95 transition" title="Install FocusFlow directly to your phone screen">
-          <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
-          <span class="hidden sm:inline">Install App</span>
+        <!-- Install to Phone (Home Screen) Guide: Auto-hides once installed as app -->
+        <button type="button" onclick="openInstallAppModal()" id="btn-install-app" class="px-2 py-1 rounded-xl bg-pastel-lavender/15 border border-pastel-lavender/30 hover:bg-pastel-lavender/25 text-pastel-lavender font-semibold text-[10px] sm:text-[11px] flex items-center gap-1 touch-nav-item active:scale-95 transition" title="Install FocusFlow directly to your phone screen">
+          <i data-lucide="smartphone" class="w-3 h-3"></i>
+          <span class="hidden sm:inline">Install</span>
         </button>
 
-
-        <button onclick="toggleAudioChime()" id="audio-toggle-btn" class="p-2.5 rounded-xl bg-dark-elevated border border-dark-border text-pastel-mint hover:text-white text-xs touch-nav-item" title="Toggle audio chime">
-          <i data-lucide="volume-2" class="w-4 h-4" id="audio-icon"></i>
+        <button onclick="toggleAudioChime()" id="audio-toggle-btn" class="p-1.5 sm:p-2 rounded-xl bg-dark-elevated border border-dark-border text-pastel-mint hover:text-white text-xs touch-nav-item" title="Toggle audio chime">
+          <i data-lucide="volume-2" class="w-3.5 h-3.5" id="audio-icon"></i>
         </button>
         <!-- Cloud Sync status pill (Google sign-in + backup across devices) -->
-        <button type="button" onclick="openSyncModal()" id="ff-sync-pill" class="px-2.5 py-1.5 rounded-xl bg-dark-elevated border border-dark-border text-slate-300 hover:text-pastel-sky text-[11px] flex items-center gap-1.5 touch-nav-item transition" title="Cloud sync: Cloud sync not set up yet">
+        <button type="button" onclick="openSyncModal()" id="ff-sync-pill" class="px-2 py-1 rounded-xl bg-dark-elevated border border-dark-border text-slate-300 hover:text-pastel-sky text-[10px] sm:text-[11px] flex items-center gap-1 touch-nav-item transition" title="Cloud sync: Cloud sync not set up yet">
           <span class="relative flex items-center">
-            <i data-lucide="cloud" class="w-3.5 h-3.5 text-pastel-sky"></i>
+            <i data-lucide="cloud" class="w-3 h-3 text-pastel-sky"></i>
             <span id="ff-sync-dot" class="absolute -top-0.5 -right-1 w-1.5 h-1.5 rounded-full bg-slate-500"></span>
           </span>
           <span id="ff-sync-pill-label" class="hidden sm:inline font-semibold">Sync</span>
         </button>
-        <button onclick="openApiKeyModal()" class="p-2.5 rounded-xl bg-dark-elevated border border-dark-border text-slate-300 hover:text-pastel-lavender text-xs flex items-center gap-1.5 touch-nav-item" title="Gemini AI Settings">
-          <i data-lucide="key" class="w-4 h-4"></i>
+        <button onclick="openApiKeyModal()" class="p-1.5 sm:p-2 rounded-xl bg-dark-elevated border border-dark-border text-slate-300 hover:text-pastel-lavender text-xs flex items-center gap-1 touch-nav-item" title="Gemini AI Settings">
+          <i data-lucide="key" class="w-3.5 h-3.5"></i>
         </button>
       </div>
     </div>
@@ -191,107 +211,99 @@
     </div>
   </div>
 
-  <!-- Main View Container -->
-  <main id="main-content-scroll" class="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain w-full relative">
-    <div class="max-w-6xl mx-auto px-4 py-6 pb-20 md:pb-8">
+  <!-- Main View Container: Zero outer scrollbar on Timeline -->
+  <main id="main-content-scroll" class="flex-1 overflow-hidden w-full relative flex flex-col min-h-0">
 
     <!-- ============================================== -->
-    <!-- TAB 1: GOOGLE CALENDAR TIMELINE                -->
+    <!-- TAB 1: GOOGLE CALENDAR TIMELINE (THE ONLY SCROLLBAR IS INSIDE) -->
     <!-- ============================================== -->
-    <div id="view-timeline" class="space-y-2.5">
-      <!-- LAYER 1: STICKY NAVIGATION & PRIMARY ACTIONS -->
-      <div class="sticky top-0 z-30 bg-dark-surface/95 backdrop-blur-md border border-dark-border rounded-2xl p-2 sm:p-2.5 shadow-xl flex flex-wrap items-center justify-between gap-2">
-        <!-- Left: Date Picker & 7-Day Week Selector Strip (Always side-by-side on mobile & desktop) -->
-        <div class="flex items-center gap-1 sm:gap-2 flex-nowrap shrink-0 overflow-x-auto">
-          <button type="button" onclick="jumpTimelineToToday()" class="px-2 py-1.5 sm:px-2.5 rounded-xl bg-dark-base hover:bg-dark-elevated border border-dark-border text-slate-200 font-semibold text-xs flex items-center gap-1 transition shadow-sm shrink-0" title="Jump to Today">
-            <span class="w-1.5 h-1.5 rounded-full bg-pastel-mint"></span>
-            <span id="timeline-today-date" class="font-bold text-xs">Today</span>
-          </button>
-
-          <!-- Ultra-compact 7-Day Week Strip (Directly next to Date on mobile) -->
-          <div class="flex items-center p-0.5 rounded-xl bg-dark-base/80 border border-dark-border gap-0.5 shadow-inner shrink-0">
-            <button type="button" onclick="changeTimelineWeek(-1)" class="w-4 sm:w-5 h-6 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0" title="Previous Week">
-              <i data-lucide="chevron-left" class="w-2.5 sm:w-3 h-2.5 sm:h-3"></i>
+    <div id="view-timeline" class="flex-1 min-h-0 flex flex-col h-full w-full max-w-6xl mx-auto px-2 sm:px-4 pt-1.5 pb-1 gap-1.5 overflow-hidden">
+      <!-- CONSOLIDATED HEADER (2 ROWS + CALENDAR KEY BELOW) -->
+      <div class="shrink-0 bg-dark-surface border border-dark-border rounded-2xl p-2 sm:p-2.5 shadow-xl space-y-1.5">
+        <!-- ROW 1: DATE, 7-DAY WEEK STRIP, AND VIEW SWITCHER (GRID/LIST) -->
+        <div class="flex items-center justify-between gap-1.5 w-full">
+          <!-- Left: Date Jump (Unified Today & Time Marker) & 7-Day Week Selector Strip -->
+          <div class="flex items-center gap-1 sm:gap-2 flex-nowrap shrink-0 overflow-x-auto">
+            <button type="button" onclick="jumpTimelineToToday()" class="px-2 py-1.5 sm:px-2.5 rounded-xl bg-dark-base hover:bg-dark-elevated border border-dark-border text-slate-200 font-semibold text-xs flex items-center gap-1 transition shadow-sm shrink-0" title="Jump to Today & Current Time">
+              <span class="w-1.5 h-1.5 rounded-full bg-pastel-mint animate-pulse"></span>
+              <span id="timeline-today-date" class="font-bold text-xs">Today</span>
             </button>
-            <div id="timeline-week-strip" class="flex items-center gap-0.5 px-0.5">
-              <!-- Dynamically populated: Sun, Mon, Tue... -->
+
+            <!-- Ultra-compact 7-Day Week Strip (Directly next to Date) -->
+            <div class="flex items-center p-0.5 rounded-xl bg-dark-base/80 border border-dark-border gap-0.5 shadow-inner shrink-0">
+              <button type="button" onclick="changeTimelineWeek(-1)" class="w-4 sm:w-5 h-6 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0" title="Previous Week">
+                <i data-lucide="chevron-left" class="w-2.5 sm:w-3 h-2.5 sm:h-3"></i>
+              </button>
+              <div id="timeline-week-strip" class="flex items-center gap-0.5 px-0.5">
+                <!-- Dynamically populated: Sun, Mon, Tue... -->
+              </div>
+              <button type="button" onclick="changeTimelineWeek(1)" class="w-4 sm:w-5 h-6 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0" title="Next Week">
+                <i data-lucide="chevron-right" class="w-2.5 sm:w-3 h-2.5 sm:h-3"></i>
+              </button>
             </div>
-            <button type="button" onclick="changeTimelineWeek(1)" class="w-4 sm:w-5 h-6 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0" title="Next Week">
-              <i data-lucide="chevron-right" class="w-2.5 sm:w-3 h-2.5 sm:h-3"></i>
+          </div>
+
+          <!-- Right: Consolidated View Mode Switcher: Icons Only -->
+          <div class="flex items-center p-0.5 rounded-xl bg-dark-base border border-dark-border gap-0.5 shadow-sm shrink-0">
+            <button type="button" onclick="switchTimelineView('calendar')" id="btn-view-calendar" class="p-1.5 rounded-lg font-bold bg-pastel-mint text-dark-base text-xs transition flex items-center justify-center shadow-sm" title="Calendar Grid View">
+              <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+            </button>
+            <button type="button" onclick="switchTimelineView('list')" id="btn-view-list" class="p-1.5 rounded-lg font-medium text-slate-400 hover:text-white text-xs transition flex items-center justify-center" title="Schedule List View">
+              <i data-lucide="list" class="w-3.5 h-3.5"></i>
             </button>
           </div>
         </div>
 
-        <!-- Right: Action Buttons (Undo/Redo, Add Event, Sync, Now) -->
-        <div class="flex items-center gap-1.5 flex-wrap">
-          <!-- Calendar Undo / Redo controls -->
-          <div class="flex items-center p-0.5 rounded-xl bg-dark-base border border-dark-border gap-0.5 shadow-sm">
-            <button type="button" id="calendar-undo-btn" onclick="calendarHistory.undo()" class="p-1.5 rounded-lg text-slate-300 hover:text-white transition opacity-30 cursor-not-allowed flex items-center gap-0.5 text-xs" title="Undo calendar edit (⌘Z)" disabled>
-              <i data-lucide="undo-2" class="w-3.5 h-3.5 text-pastel-sky"></i>
-            </button>
-            <div class="w-px h-3 bg-dark-border"></div>
-            <button type="button" id="calendar-redo-btn" onclick="calendarHistory.redo()" class="p-1.5 rounded-lg text-slate-300 hover:text-white transition opacity-30 cursor-not-allowed flex items-center gap-0.5 text-xs" title="Redo calendar edit (⌘⇧Z)" disabled>
-              <i data-lucide="redo-2" class="w-3.5 h-3.5 text-pastel-sky"></i>
-            </button>
+        <!-- ROW 2: HEIGHT (HT 1-5), UNDO/REDO, SYNC, AND + ADD EVENT -->
+        <div class="flex items-center justify-between gap-1.5 w-full pt-1.5 border-t border-dark-border/50">
+          <!-- Left: Height Stepper (Ht 1 - Ht 5) and Undo/Redo -->
+          <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            <!-- Consolidated Height Indicator: Ht 1 to Ht 5 -->
+            <div class="flex items-center p-0.5 rounded-xl bg-dark-base border border-dark-border gap-0.5 shadow-sm text-xs" title="Adjust hour block height (Ht 1: whole day, Ht 5: deep detail for 10m events)">
+              <button type="button" onclick="changeCalendarZoomLevel(-1)" class="w-5 h-5 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-xs transition" title="Smaller height">-</button>
+              <span id="calendar-zoom-label" class="px-1.5 font-mono text-[11px] text-pastel-mint font-bold select-none min-w-[34px] text-center">Ht 3</span>
+              <button type="button" onclick="changeCalendarZoomLevel(1)" class="w-5 h-5 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-xs transition" title="Taller height">+</button>
+            </div>
+
+            <!-- Calendar Undo / Redo controls -->
+            <div class="flex items-center p-0.5 rounded-xl bg-dark-base border border-dark-border gap-0.5 shadow-sm">
+              <button type="button" id="calendar-undo-btn" onclick="calendarHistory.undo()" class="p-1.5 rounded-lg text-slate-300 hover:text-white transition opacity-30 cursor-not-allowed flex items-center gap-0.5 text-xs" title="Undo calendar edit (⌘Z)" disabled>
+                <i data-lucide="undo-2" class="w-3.5 h-3.5 text-pastel-sky"></i>
+              </button>
+              <div class="w-px h-3 bg-dark-border"></div>
+              <button type="button" id="calendar-redo-btn" onclick="calendarHistory.redo()" class="p-1.5 rounded-lg text-slate-300 hover:text-white transition opacity-30 cursor-not-allowed flex items-center gap-0.5 text-xs" title="Redo calendar edit (⌘⇧Z)" disabled>
+                <i data-lucide="redo-2" class="w-3.5 h-3.5 text-pastel-sky"></i>
+              </button>
+            </div>
           </div>
 
-          <button type="button" onclick="openNewEventModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs shadow-md shadow-pastel-mint/20 hover:bg-emerald-300 transition">
-            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-            <span>Add Event</span>
-          </button>
-          <button type="button" onclick="openGCalSyncModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs shadow-md shadow-pastel-sky/20 hover:bg-sky-300 transition">
-            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-            <span>Sync</span>
-          </button>
-          <button type="button" onclick="scrollToCurrentTimeMarker()" class="px-2.5 py-1.5 rounded-xl bg-dark-base hover:bg-slate-700 border border-dark-border text-pastel-mint font-semibold text-xs flex items-center gap-1 transition" title="Scroll to Current Time">
-            <span class="w-1.5 h-1.5 rounded-full bg-pastel-mint animate-pulse"></span>
-            <span class="hidden md:inline">Now</span>
-          </button>
+          <!-- Right: Sync & Add Event Buttons -->
+          <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            <button type="button" onclick="openGCalSyncModal()" class="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs shadow-md shadow-pastel-sky/20 hover:bg-sky-300 transition shrink-0" title="Google Calendar Sync">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+              <span>Sync</span>
+            </button>
+            <button type="button" onclick="openNewEventModal()" class="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs shadow-md shadow-pastel-mint/20 hover:bg-emerald-300 transition shrink-0" title="Create New Event">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Add Event</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ROW 3: CALENDAR KEY / CATEGORY LEGEND (BELOW THE TWO HEADER ROWS) -->
+        <div class="pt-1.5 border-t border-dark-border/40 flex items-center justify-center sm:justify-start gap-2.5 overflow-x-auto text-[9px] font-mono text-slate-300 w-full select-none py-0.5">
+          <div id="timeline-category-legend" class="flex items-center gap-2.5 overflow-x-auto shrink-0">
+            <!-- Dynamically populated from state.calendarCategories -->
+          </div>
         </div>
       </div>
 
-      <!-- LAYER 2: VIEW CONTROLS & TIMELINE LEGEND -->
-      <div id="timeline-calendar-wrapper" class="bg-dark-surface/90 border border-dark-border rounded-2xl shadow-xl overflow-hidden">
-        <div class="px-3.5 py-2.5 bg-dark-base/80 border-b border-dark-border flex flex-wrap items-center justify-between gap-2.5 text-xs">
-          <!-- Left: Consolidated Icons-Only View Switcher & Height Indicator (Ht 1 - Ht 5) -->
-          <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-            <!-- Consolidated View Mode Switcher: Icons Only -->
-            <div class="flex items-center p-0.5 rounded-xl bg-dark-elevated border border-dark-border gap-0.5">
-              <button type="button" onclick="switchTimelineView('calendar')" id="btn-view-calendar" class="p-1.5 rounded-lg font-bold bg-pastel-mint text-dark-base text-xs transition flex items-center justify-center shadow-sm" title="Calendar Grid View">
-                <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-              </button>
-              <button type="button" onclick="switchTimelineView('list')" id="btn-view-list" class="p-1.5 rounded-lg font-medium text-slate-400 hover:text-white text-xs transition flex items-center justify-center" title="Schedule List View">
-                <i data-lucide="list" class="w-3.5 h-3.5"></i>
-              </button>
-            </div>
-
-            <!-- Consolidated Height Indicator: Ht 1 to Ht 5 -->
-            <div class="flex items-center p-0.5 rounded-xl bg-dark-elevated border border-dark-border gap-0.5 shadow-sm text-xs" title="Adjust hour block height (Ht 1: whole day at once, Ht 5: deep detail for 10m events)">
-              <button type="button" onclick="changeCalendarZoomLevel(-1)" class="w-5 h-5 rounded bg-dark-base hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-xs transition" title="Smaller height (see whole day)">-</button>
-              <span id="calendar-zoom-label" class="px-1.5 font-mono text-[11px] text-pastel-mint font-bold select-none min-w-[36px] text-center">Ht 3</span>
-              <button type="button" onclick="changeCalendarZoomLevel(1)" class="w-5 h-5 rounded bg-dark-base hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-xs transition" title="Taller height (view 10m event details)">+</button>
-            </div>
-          </div>
-
-          <!-- Right: Timeline Hours & Category Legend -->
-          <div class="flex flex-wrap items-center gap-2.5 text-[10px] font-mono text-slate-300">
-            <span class="text-slate-400 font-semibold flex items-center gap-1">
-              <i data-lucide="clock" class="w-3 h-3 text-pastel-mint"></i>
-              6:00 AM – 2:00 AM
-            </span>
-            <div class="w-px h-3 bg-dark-border hidden sm:block"></div>
-            <span class="flex items-center gap-1 text-pastel-mint"><span class="w-2 h-2 rounded-full bg-pastel-mint"></span> Focus</span>
-            <span class="flex items-center gap-1 text-pastel-sky"><span class="w-2 h-2 rounded-full bg-pastel-sky"></span> GCal</span>
-            <span class="flex items-center gap-1 text-pastel-coral"><span class="w-2 h-2 rounded-full bg-pastel-coral"></span> Meal</span>
-            <span class="flex items-center gap-1 text-pastel-butter"><span class="w-2 h-2 rounded-full bg-pastel-butter"></span> Chores</span>
-            <span class="flex items-center gap-1 text-slate-400"><span class="w-2 h-2 rounded-full border border-dashed border-pastel-sky/60"></span> Buffer</span>
-          </div>
-        </div>
-
-        <!-- Scrollable Hourly Grid Canvas -->
-        <div id="timeline-calendar-scroll-canvas" class="relative max-h-[750px] overflow-y-auto">
+      <!-- VIEW A: STRUCTURED CALENDAR DAY GRID -->
+      <div id="timeline-calendar-wrapper" class="flex-1 min-h-0 flex flex-col h-full bg-dark-surface border border-dark-border rounded-2xl shadow-xl overflow-hidden">
+        <!-- Scrollable Hourly Grid Canvas (THE ONLY SCROLLBAR ON SCREEN) -->
+        <div id="timeline-calendar-scroll-canvas" class="flex-1 min-h-0 h-full overflow-y-auto overscroll-y-contain" style="-webkit-overflow-scrolling: touch; touch-action: pan-y;">
           <!-- Calendar Day Grid (Left Time Gutter + Main Event Column) -->
-          <div id="timeline-day-grid" class="flex relative min-w-[320px]" style="height: 1680px;">
+          <div id="timeline-day-grid" class="flex relative min-w-[320px]" style="height: 1700px;">
             <!-- Left Time Gutter (Hours 7 AM - 11 PM) -->
             <div id="timeline-time-gutter" class="w-16 sm:w-20 shrink-0 border-r border-dark-border bg-dark-base/40 relative select-none">
               <!-- Hour labels rendered dynamically -->
@@ -319,10 +331,14 @@
       </div>
 
       <!-- VIEW B: COMPACT LIST VIEW (CONTAINER) -->
-      <div id="timeline-events-container" class="hidden space-y-3">
+      <div id="timeline-events-container" class="hidden flex-1 min-h-0 h-full overflow-y-auto space-y-3 pb-6">
         <!-- Rendered Dynamically -->
       </div>
     </div>
+
+    <!-- WRAPPER FOR SCROLLABLE SECONDARY TABS (Priorities, Tasks, Recipes, Kitchen, Nutrition) -->
+    <div id="secondary-tabs-scroll" class="hidden flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain w-full">
+      <div class="max-w-6xl mx-auto px-4 py-6 pb-20 md:pb-8">
 
     <!-- ============================================== -->
     <!-- TAB 2: EISENHOWER PRIORITY MATRIX              -->
@@ -1137,6 +1153,7 @@
       </div>
     </div>
       </div>
+    </div>
   </main>
   <!-- Stationary Bottom Navigation Tab Bar -->
   <nav id="app-bottom-nav" class="shrink-0 z-40 bg-dark-surface border-t border-dark-border flex items-center justify-around px-1 py-1.5 safe-bottom-nav shadow-2xl w-full">
@@ -1171,7 +1188,7 @@
   <!-- ============================================== -->
   <!-- MODAL: STANDALONE QUICK FOCUS LAUNCHER         -->
   <!-- ============================================== -->
-  <div id="standalone-focus-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
+  <div id="standalone-focus-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
     <div class="bg-dark-surface border border-pastel-mint/30 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl space-y-0">
       <div class="p-5 border-b border-dark-border flex items-center justify-between bg-dark-elevated">
         <div class="flex items-center gap-3">
@@ -1268,7 +1285,7 @@
   <!-- ============================================== -->
   <!-- MODAL: EVENT TOOLS HUB (MAGIC, ESTIMATOR, CHEF) -->
   <!-- ============================================== -->
-  <div id="event-tools-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
+  <div id="event-tools-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
     <div class="bg-dark-surface border border-dark-border rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
       <div class="p-4 sm:p-5 border-b border-dark-border flex items-center justify-between bg-dark-elevated">
         <div class="flex items-center gap-3 min-w-0 flex-1 pr-2">
@@ -1576,7 +1593,7 @@
   </div>
 
     <!-- MODAL: INSTALL TO PHONE (PWA GUIDE) -->
-  <div id="install-app-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+  <div id="install-app-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-lavender/50 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -1623,7 +1640,7 @@
   </div>
 
   <!-- MODAL: SHARE RECIPE WITH FRIENDS -->
-  <div id="share-recipe-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+  <div id="share-recipe-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-coral/50 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -1675,7 +1692,7 @@
   </div>
 
   <!-- MODAL: INCOMING SHARED RECIPE PROMPT (WHEN FRIEND OPENS LINK) -->
-  <div id="incoming-recipe-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+  <div id="incoming-recipe-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-mint/60 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center gap-3 border-b border-dark-border pb-3">
         <div class="w-10 h-10 rounded-2xl bg-pastel-mint/20 border border-pastel-mint/40 flex items-center justify-center text-pastel-mint">
@@ -1706,7 +1723,7 @@
   </div>
 
   <!-- MODAL: ADD / EDIT RECIPE IN CODEX -->
-  <div id="recipe-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
+  <div id="recipe-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-coral/40 rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -1798,7 +1815,7 @@
   </div>
 
   <!-- MODAL: DETAILED FOOD ITEM NUTRITION VIEWER (TAPPED LOGGED FOOD) -->
-  <div id="food-detail-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+  <div id="food-detail-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-mint/40 rounded-3xl w-full max-w-xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div>
@@ -1848,7 +1865,7 @@
   </div>
 
   <!-- MODAL: APPLE HEALTH AUTOMATIC SYNC INTEGRATION -->
-  <div id="apple-health-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
+  <div id="apple-health-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-coral/50 rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl my-6">
       
       <!-- Modal Header -->
@@ -2051,7 +2068,7 @@
   </div>
 
   <!-- MODAL: OCD COGNITIVE BALANCE & URGE SURFER -->
-  <div id="ocd-support-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-start justify-center p-3 sm:p-4 py-6 sm:py-10 overflow-y-auto overflow-x-hidden select-none">
+  <div id="ocd-support-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-3 sm:p-4 py-6 sm:py-10 overflow-y-auto overflow-x-hidden select-none">
     <div class="bg-dark-elevated border border-purple-500/50 rounded-3xl w-full max-w-xl p-4 sm:p-6 space-y-4 shadow-2xl my-2 sm:my-6 overflow-hidden box-border">
       
       <!-- Header -->
@@ -2251,7 +2268,7 @@
   </div>
 
   <!-- MODAL: ADD / SORT EISENHOWER TASK -->
-  <div id="matrix-add-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="matrix-add-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
     <div class="bg-dark-elevated border border-pastel-lavender/40 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -2298,7 +2315,7 @@
   </div>
 
   <!-- MODAL: ADD PANTRY ITEM -->
-  <div id="pantry-item-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="pantry-item-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
     <div class="bg-dark-elevated border border-pastel-mint/40 rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <h3 class="text-base font-bold text-white">Add Kitchen Item</h3>
@@ -2331,7 +2348,7 @@
   </div>
 
   <!-- MODAL: NEW CALENDAR EVENT -->
-  <div id="new-event-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="new-event-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
     <div class="bg-dark-elevated border border-pastel-mint/40 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <h3 class="text-base font-bold text-white">Schedule Calendar Block</h3>
@@ -2382,7 +2399,7 @@
   </div>
 
     <!-- MODAL: SECTIONAL SCAFFOLDING HUB -->
-  <div id="scaffold-hub-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
+  <div id="scaffold-hub-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-mint/50 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -2468,9 +2485,95 @@
       </div>
     </div>
   </div>
+  
+  <!-- MODAL: PHONE DEMO & MOBILE TESTING -->
+  <div id="phone-demo-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 overflow-y-auto" onclick="if (event.target === this) closePhoneDemoModal()">
+    <div class="bg-dark-elevated border border-pastel-sky/50 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl my-6">
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-pastel-sky/20 border border-pastel-sky/40 flex items-center justify-center text-pastel-sky">
+            <i data-lucide="smartphone" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Test on Your Phone</h3>
+            <p class="text-xs text-slate-400">Scan QR code or use the local Wi-Fi / GitHub link</p>
+          </div>
+        </div>
+        <button onclick="closePhoneDemoModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs text-slate-300">
+        <!-- 1. Direct Wi-Fi Access with QR Code -->
+        <div class="p-4 rounded-2xl bg-dark-base border border-dark-border space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-pastel-mint"></span>
+              Live Local Server (Same Wi-Fi)
+            </span>
+            <span class="text-[10px] text-pastel-sky font-mono font-bold">Fastest</span>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="w-24 h-24 bg-white rounded-xl p-1 shrink-0 flex items-center justify-center shadow-md">
+              <img id="phone-demo-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http%3A%2F%2F192.168.1.182%3A8080" alt="Phone QR Code" class="w-full h-full object-contain">
+            </div>
+            <div class="space-y-1.5 flex-1 min-w-0">
+              <p class="text-[11px] text-slate-300 leading-snug">Open camera on your phone and scan, or enter this URL in Safari/Chrome:</p>
+              <div id="phone-demo-url-text" class="p-2 rounded-xl bg-dark-elevated border border-pastel-sky/30 font-mono text-pastel-sky font-bold text-[11px] truncate select-all">
+                http://192.168.1.182:8080
+              </div>
+              <p class="text-[10px] text-slate-400">Your phone and laptop must be on the same Wi-Fi network.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. GitHub Pages Hosted Version -->
+        <div class="p-3 rounded-2xl bg-dark-base border border-dark-border space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-200">GitHub Pages (Cloud Hosted - Google OAuth Ready):</span>
+            <span class="text-[10px] text-pastel-mint font-semibold">Authorized Domain</span>
+          </div>
+          <div class="p-2 rounded-xl bg-dark-elevated border border-dark-border font-mono text-pastel-mint text-[11px] truncate select-all">
+            https://lilaruss-a11y.github.io/focusflow/
+          </div>
+          <p class="text-[10px] text-slate-400">Google Calendar OAuth requires a registered web domain (like GitHub Pages). Raw IP addresses cannot be authorized in Firebase Auth.</p>
+        </div>
+        </div>
+
+        <!-- 3. Demo Schedule Tester (For Phone Previewing) -->
+        <div class="p-4 rounded-2xl bg-dark-base border border-pastel-butter/40 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-pastel-butter flex items-center gap-1.5">
+              <span>🎯</span>
+              <span>Test Demo Schedule</span>
+            </span>
+            <span class="text-[10px] text-slate-400">Zero Risk</span>
+          </div>
+          <p class="text-[11px] text-slate-300 leading-snug">
+            Populate a realistic, multi-category demo day to test how the timeline, height levels (Ht 1–5), and coach notes look on your phone.
+          </p>
+          <div class="flex items-center gap-2 pt-1">
+            <button type="button" onclick="loadDemoSchedule()" class="flex-1 py-2 px-3 rounded-xl bg-pastel-butter hover:bg-amber-300 text-dark-base font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition active:scale-95">
+              <span>Load Demo Day</span>
+            </button>
+            <button type="button" onclick="clearDemoSchedule()" class="py-2 px-3 rounded-xl bg-dark-elevated hover:bg-rose-950/40 text-slate-300 hover:text-rose-300 text-xs border border-dark-border transition">
+              <span>Clear Demo</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end border-t border-dark-border">
+          <button type="button" onclick="closePhoneDemoModal()" class="px-5 py-2 rounded-xl bg-dark-base border border-dark-border hover:border-slate-500 text-slate-300 text-xs font-semibold">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: GCAL SYNC & CALENDAR CONNECT -->
     <!-- MODAL: GOOGLE CALENDAR SYNC -->
-  <div id="gcal-sync-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
+  <div id="gcal-sync-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-sky/50 rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl my-6">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -2544,6 +2647,10 @@
           <div class="flex items-center gap-2.5 flex-wrap">
             <button type="button" onclick="clearAllCalendarEvents()" class="text-[11px] text-rose-400/80 hover:text-rose-300 underline">
               Clear Schedule
+            </button>
+            <button type="button" onclick="closeGCalSyncModal(); openPhoneDemoModal();" class="text-[11px] text-pastel-sky hover:underline flex items-center gap-1 font-medium">
+              <i data-lucide="smartphone" class="w-3 h-3"></i>
+              <span>Phone Link &amp; QR Code</span>
             </button>
           </div>
           <div class="flex gap-2">
@@ -2667,7 +2774,7 @@
   </div>
 
   <!-- MODAL: GEMINI API KEY -->
-  <div id="apikey-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+  <div id="apikey-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-lavender/50 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -2736,7 +2843,7 @@
   </div>
 
   <!-- MODAL: BODY PROFILE & TARGET WEIGHT -->
-  <div id="body-profile-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-start justify-center p-3 sm:p-4 py-6 sm:py-10 overflow-y-auto overflow-x-hidden overscroll-contain w-full max-w-full select-none">
+  <div id="body-profile-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-3 sm:p-4 py-6 sm:py-10 overflow-y-auto overflow-x-hidden overscroll-contain w-full max-w-full select-none">
     <div class="bg-dark-elevated border border-pastel-lavender/50 rounded-3xl w-full max-w-lg p-4 sm:p-6 space-y-3.5 shadow-2xl my-2 sm:my-6 overflow-hidden box-border">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5 min-w-0">
@@ -3295,7 +3402,7 @@
   </div>
 
   <!-- MODAL: FOOD LOGGING -->
-  <div id="food-log-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
+  <div id="food-log-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-mint/50 rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl my-6">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -3417,7 +3524,7 @@
   </div>
 
   <!-- MODAL: NUTRIENT DRILL-DOWN & FULL DAY CALORIE SUMMARY -->
-  <div id="nutrient-breakdown-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-start justify-center p-3 sm:p-4 py-6 sm:py-10 overflow-y-auto">
+  <div id="nutrient-breakdown-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-3 sm:p-4 py-6 sm:py-10 overflow-y-auto">
     <div id="nutrient-breakdown-card" class="bg-dark-elevated border border-dark-border rounded-3xl w-full max-w-2xl p-4 sm:p-6 space-y-4 shadow-2xl transition-all my-2">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2">
@@ -3645,7 +3752,7 @@
   </div>
 
     <!-- MODAL: DEDICATED REVERSE CHEF (DIRECT FROM KITCHEN) -->
-  <div id="reverse-chef-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
+  <div id="reverse-chef-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-coral/50 rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl my-4">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -3724,7 +3831,7 @@
   </div>
 
   <!-- MODAL: BARCODE SCANNER (CHROME CAMERA + LIVE OPEN FOOD FACTS) -->
-  <div id="barcode-scanner-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
+  <div id="barcode-scanner-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-lavender/50 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -3779,7 +3886,7 @@
   </div>
 
   <!-- MODAL: WELLBEING & SKILL CORRELATION HUB (TRENDS, AVERAGES, & PROGRESSION) -->
-  <div id="insights-hub-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-start justify-center p-3 sm:p-4 py-6 sm:py-10 overflow-y-auto overflow-x-hidden select-none">
+  <div id="insights-hub-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-3 sm:p-4 py-6 sm:py-10 overflow-y-auto overflow-x-hidden select-none">
     <div class="bg-dark-elevated border border-pastel-sky/50 rounded-3xl w-full max-w-3xl sm:max-w-4xl p-4 sm:p-6 space-y-4 shadow-2xl my-2 sm:my-6 overflow-hidden box-border">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5 min-w-0">
@@ -4229,7 +4336,7 @@
       }
       const dayGrid = document.getElementById('timeline-day-grid');
       if (dayGrid) {
-        dayGrid.style.height = `${(CALENDAR_END_HOUR - CALENDAR_START_HOUR) * CALENDAR_HOUR_HEIGHT}px`;
+        dayGrid.style.height = `${((CALENDAR_END_HOUR - CALENDAR_START_HOUR) * CALENDAR_HOUR_HEIGHT) + 20}px`;
       }
     }
 
@@ -4473,6 +4580,7 @@
     function attachEventDragListeners(block, ev) {
       let holdTimer = null;
       let isDragging = false;
+      let startClientX = 0;
       let startClientY = 0;
       let startTopPx = 0;
       let currentTopPx = 0;
@@ -4480,42 +4588,144 @@
 
       const blocksContainer = document.getElementById('timeline-event-blocks');
 
-      function onPointerDown(e) {
-        if (e.target.closest('button') || e.target.closest('input')) return;
+      // -------------------------------------------------------------
+      // TOUCH INTERACTION (Mobile):
+      // - 400ms long-press to engage drag (like Google Calendar app).
+      // - Passive touchmove listener detects normal scrolling (>7px)
+      //   and cancels the hold timer immediately without blocking native scrolling!
+      // -------------------------------------------------------------
+      function onTouchStart(e) {
+        if (e.target.closest('button') || e.target.closest('input') || e.target.closest('a')) return;
+        if (e.touches && e.touches.length > 1) return;
 
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        startClientY = clientY;
+        const touch = e.touches[0];
+        startClientX = touch.clientX;
+        startClientY = touch.clientY;
+        const computedTop = parseFloat(block.style.top) || 0;
+        startTopPx = computedTop;
+        currentTopPx = computedTop;
+
+        holdTimer = setTimeout(() => {
+          startDragging(touch);
+        }, 400);
+
+        // Passive listener to detect scroll intent immediately
+        window.addEventListener('touchmove', onTouchMoveCheck, { passive: true });
+        window.addEventListener('touchend', onTouchEndCheck);
+        window.addEventListener('touchcancel', onTouchEndCheck);
+      }
+
+      function onTouchMoveCheck(e) {
+        if (!holdTimer) return;
+        const touch = e.touches ? e.touches[0] : null;
+        if (!touch) return;
+        const dx = touch.clientX - startClientX;
+        const dy = touch.clientY - startClientY;
+        // If finger moves more than 7px in any direction before 400ms, user is scrolling!
+        if (Math.hypot(dx, dy) > 7) {
+          clearTimeout(holdTimer);
+          holdTimer = null;
+          cleanupTouchCheck();
+        }
+      }
+
+      function onTouchEndCheck() {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+        cleanupTouchCheck();
+      }
+
+      function cleanupTouchCheck() {
+        window.removeEventListener('touchmove', onTouchMoveCheck);
+        window.removeEventListener('touchend', onTouchEndCheck);
+        window.removeEventListener('touchcancel', onTouchEndCheck);
+      }
+
+      // -------------------------------------------------------------
+      // MOUSE INTERACTION (Desktop):
+      // -------------------------------------------------------------
+      function onMouseDown(e) {
+        if (e.button !== 0) return; // Left click only
+        if (e.target.closest('button') || e.target.closest('input') || e.target.closest('a')) return;
+
+        startClientX = e.clientX;
+        startClientY = e.clientY;
         const computedTop = parseFloat(block.style.top) || 0;
         startTopPx = computedTop;
         currentTopPx = computedTop;
 
         holdTimer = setTimeout(() => {
           startDragging(e);
-        }, 220);
+        }, 180);
 
-        window.addEventListener('mousemove', onPointerMove, { passive: false });
-        window.addEventListener('touchmove', onPointerMove, { passive: false });
-        window.addEventListener('mouseup', onPointerUp);
-        window.addEventListener('touchend', onPointerUp);
+        window.addEventListener('mousemove', onMouseMoveCheck);
+        window.addEventListener('mouseup', onMouseUpCheck);
       }
 
-      function onPointerMove(e) {
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        const deltaY = clientY - startClientY;
-
+      function onMouseMoveCheck(e) {
+        const dy = e.clientY - startClientY;
         if (!isDragging) {
-          if (Math.abs(deltaY) > 8) {
+          if (Math.abs(dy) > 6) {
             clearTimeout(holdTimer);
             holdTimer = null;
-            cleanupListeners();
+            cleanupMouseCheck();
           }
           return;
         }
+      }
 
+      function onMouseUpCheck() {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+        cleanupMouseCheck();
+        if (isDragging) finishDragging();
+      }
+
+      function cleanupMouseCheck() {
+        window.removeEventListener('mousemove', onMouseMoveCheck);
+        window.removeEventListener('mouseup', onMouseUpCheck);
+      }
+
+      // -------------------------------------------------------------
+      // ACTIVE DRAGGING:
+      // Engaged only AFTER user has deliberately held down in place
+      // -------------------------------------------------------------
+      function startDragging(point) {
+        isDragging = true;
+        cleanupTouchCheck();
+        cleanupMouseCheck();
+
+        try { if (navigator.vibrate) navigator.vibrate(40); } catch(err) {}
+
+        block.classList.add('z-50', 'shadow-2xl', 'scale-[1.02]', 'ring-2', 'ring-pastel-sky', 'opacity-95');
+        block.style.cursor = 'grabbing';
+        block.dataset.isBeingDragged = "true";
+
+        if (blocksContainer) {
+          ghostEl = document.createElement('div');
+          ghostEl.className = 'absolute left-2 z-50 px-2.5 py-1 rounded-lg bg-pastel-sky text-dark-base font-bold text-xs shadow-xl pointer-events-none transition-all duration-75';
+          ghostEl.style.top = Math.max(0, currentTopPx - 26) + 'px';
+          ghostEl.textContent = `📍 Drag to Reschedule`;
+          blocksContainer.appendChild(ghostEl);
+        }
+
+        // Now attach active drag handlers
+        window.addEventListener('touchmove', onActiveDragMove, { passive: false });
+        window.addEventListener('touchend', onActiveDragEnd);
+        window.addEventListener('touchcancel', onActiveDragEnd);
+        window.addEventListener('mousemove', onActiveDragMove);
+        window.addEventListener('mouseup', onActiveDragEnd);
+      }
+
+      function onActiveDragMove(e) {
+        if (!isDragging) return;
         if (e.cancelable) e.preventDefault();
 
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const deltaY = clientY - startClientY;
+
         const rawTop = startTopPx + deltaY;
-        const stepPx = CALENDAR_HOUR_HEIGHT / 4; // 15-minute snap = 21px
+        const stepPx = CALENDAR_HOUR_HEIGHT / 4; // 15-minute snap
         const snappedTop = Math.max(0, Math.min(((CALENDAR_END_HOUR - CALENDAR_START_HOUR) * CALENDAR_HOUR_HEIGHT) - (block.offsetHeight || 38), Math.round(rawTop / stepPx) * stepPx));
         currentTopPx = snappedTop;
 
@@ -4535,31 +4745,20 @@
         }
       }
 
-      function startDragging(e) {
-        isDragging = true;
-        try { if (navigator.vibrate) navigator.vibrate(40); } catch(err) {}
+      function onActiveDragEnd(e) {
+        window.removeEventListener('touchmove', onActiveDragMove);
+        window.removeEventListener('touchend', onActiveDragEnd);
+        window.removeEventListener('touchcancel', onActiveDragEnd);
+        window.removeEventListener('mousemove', onActiveDragMove);
+        window.removeEventListener('mouseup', onActiveDragEnd);
 
-        block.classList.add('z-50', 'shadow-2xl', 'scale-[1.02]', 'ring-2', 'ring-pastel-sky', 'opacity-95');
-        block.style.cursor = 'grabbing';
-        block.dataset.isBeingDragged = "true";
-
-        if (blocksContainer) {
-          ghostEl = document.createElement('div');
-          ghostEl.className = 'absolute left-2 z-50 px-2.5 py-1 rounded-lg bg-pastel-sky text-dark-base font-bold text-xs shadow-xl pointer-events-none transition-all duration-75';
-          ghostEl.style.top = Math.max(0, currentTopPx - 26) + 'px';
-          ghostEl.textContent = `📍 Drag to Reschedule`;
-          blocksContainer.appendChild(ghostEl);
-        }
+        finishDragging();
       }
 
-      function onPointerUp(e) {
-        clearTimeout(holdTimer);
-        holdTimer = null;
-        cleanupListeners();
-
+      function finishDragging() {
         if (!isDragging) return;
-
         isDragging = false;
+
         block.classList.remove('z-50', 'shadow-2xl', 'scale-[1.02]', 'ring-2', 'ring-pastel-sky', 'opacity-95');
         block.style.cursor = 'pointer';
         setTimeout(() => { delete block.dataset.isBeingDragged; }, 120);
@@ -4589,15 +4788,8 @@
         }
       }
 
-      function cleanupListeners() {
-        window.removeEventListener('mousemove', onPointerMove);
-        window.removeEventListener('touchmove', onPointerMove);
-        window.removeEventListener('mouseup', onPointerUp);
-        window.removeEventListener('touchend', onPointerUp);
-      }
-
-      block.addEventListener('mousedown', onPointerDown);
-      block.addEventListener('touchstart', onPointerDown, { passive: true });
+      block.addEventListener('touchstart', onTouchStart, { passive: true });
+      block.addEventListener('mousedown', onMouseDown);
     }
 
     // ==============================================
@@ -5136,6 +5328,45 @@
       deleteIndividualEvent(id);
     }
 
+    
+    // ==============================================
+    // MINI CATEGORY LEGEND (DYNAMIC & COMPACT)
+    // ==============================================
+    function renderCategoryLegend() {
+      const container = document.getElementById('timeline-category-legend');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const cats = state.calendarCategories || [
+        { id: 'focus', name: 'Focus', color: 'sky' },
+        { id: 'classes', name: 'Study', color: 'lavender' },
+        { id: 'personal', name: 'Habits', color: 'mint' },
+        { id: 'chores', name: 'Chores', color: 'butter' },
+        { id: 'meal', name: 'Meal', color: 'coral' },
+        { id: 'care', name: 'Health', color: 'rose' }
+      ];
+
+      const dotMap = {
+        sky: 'bg-pastel-sky',
+        lavender: 'bg-pastel-lavender',
+        mint: 'bg-pastel-mint',
+        butter: 'bg-pastel-butter',
+        coral: 'bg-pastel-coral',
+        rose: 'bg-rose-400',
+        peach: 'bg-orange-400',
+        teal: 'bg-teal-400'
+      };
+
+      cats.forEach(cat => {
+        const dotCol = dotMap[cat.color] || 'bg-pastel-sky';
+        const shortName = cat.name.split('&')[0].split('/')[0].trim();
+        const item = document.createElement('span');
+        item.className = 'flex items-center gap-1 shrink-0 text-slate-300 font-medium select-none';
+        item.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${dotCol} shrink-0"></span><span>${shortName}</span>`;
+        container.appendChild(item);
+      });
+    }
+
     function renderTimeline() {
       const selDateStr = getSelectedTimelineDateStr();
       const [y, m, d] = selDateStr.split('-').map(Number);
@@ -5152,6 +5383,7 @@
 
       // 1. Render 7-Day Week Selector Strip
       renderWeekStrip();
+      renderCategoryLegend();
 
       // 2. Render ADHD Schedule Suggestions (Approval Required)
       renderScheduleSuggestions();
@@ -5188,8 +5420,18 @@
 
         // Hour Label in Gutter
         const label = document.createElement('div');
-        label.className = "absolute right-2 text-[11px] font-mono font-semibold text-slate-400 -translate-y-1/2";
-        label.style.top = `${topPx}px`;
+        if (h === CALENDAR_START_HOUR) {
+          // At start hour (6 AM), align from top: 2px so '6' is completely visible and never cut off
+          label.className = "absolute right-2 text-[11px] font-mono font-semibold text-slate-400";
+          label.style.top = "2px";
+        } else if (h === CALENDAR_END_HOUR) {
+          // At 2 AM (end of day), centered on the 2 AM line with clean clearance below
+          label.className = "absolute right-2 text-[11px] font-mono font-semibold text-pastel-lavender/90 -translate-y-1/2";
+          label.style.top = `${topPx}px`;
+        } else {
+          label.className = "absolute right-2 text-[11px] font-mono font-semibold text-slate-400 -translate-y-1/2";
+          label.style.top = `${topPx}px`;
+        }
         label.textContent = displayHour;
         gutter.appendChild(label);
 
@@ -5336,7 +5578,7 @@
                       <span class="px-1.5 py-0.5 rounded bg-dark-elevated text-slate-300 font-bold">(${ev.duration}m)</span>
                       ${ev.calendarName ? `<span class="px-1.5 py-0.5 rounded-full bg-pastel-sky/20 text-pastel-sky border border-pastel-sky/30 font-bold text-[9px]">${ev.calendarName}</span>` : ''}
                     </div>
-                    <span class="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded ${catMeta.text} bg-dark-elevated">${catMeta.tag}</span>
+                    
                   </div>
 
                   <!-- Event Title: Bold, white, prominent -->
@@ -5473,7 +5715,7 @@
         card.innerHTML = `
           <div class="space-y-1.5 flex-1">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded ${catMeta.tagCol}">${catMeta.tag}</span>
+              
               <span class="text-xs font-mono text-slate-300 font-bold">${formatTimeAmPm(ev.startTime)} (${ev.duration}m)</span>
               ${ev.calendarName ? `<span class="text-[10px] px-2 py-0.5 rounded-full bg-pastel-sky/15 text-pastel-sky border border-pastel-sky/30 font-bold font-mono">${ev.calendarName}</span>` : ''}
               ${ev.goodEnough ? `<span class="hidden sm:inline text-[10px] text-pastel-butter bg-pastel-butter/10 px-2 py-0.5 rounded border border-pastel-butter/20 truncate max-w-xs">Boundary: ${ev.goodEnough}</span>` : ''}
@@ -6157,20 +6399,7 @@
         { text: 'Plate meal, rinse pan, sit down to eat', minutes: 10, done: false }
       ];
 
-      // Auto-schedule dishes reset right after
-      state.events.push({
-        id: `ev-${Date.now()}-dish`,
-        title: 'Relaxed Dish Washing & Kitchen Reset',
-        startTime: '19:30',
-        duration: 20,
-        category: 'chores',
-        goodEnough: 'Wash eating dishes and wipe island; ignore inside of microwave',
-        subtasks: [
-          { text: 'Put on favorite podcast or audio track', minutes: 2, done: false },
-          { text: 'Wash dinner plates & silverware', minutes: 10, done: false },
-          { text: 'Wipe kitchen counter and dry sink', minutes: 8, done: false }
-        ]
-      });
+      // Subtasks applied cleanly to the active event without pushing unrequested schedule events
 
       closeToolsModal();
       renderTimeline();
@@ -6561,6 +6790,15 @@
           }
         }
       });
+      const secWrapper = document.getElementById('secondary-tabs-scroll');
+      if (secWrapper) {
+        if (tabId === 'timeline') {
+          secWrapper.classList.add('hidden');
+        } else {
+          secWrapper.classList.remove('hidden');
+          secWrapper.scrollTop = 0;
+        }
+      }
       if (tabId === 'timeline') renderTimeline();
       if (tabId === 'matrix') renderMatrix();
       if (tabId === 'taskmaster') renderTaskmasterCalendarEvents();
@@ -9173,11 +9411,24 @@
 
     function checkAppInstallState() {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      const isInstalled = isStandalone || localStorage.getItem('focusflow_app_installed') === 'true';
       const btn = document.getElementById('btn-install-app');
-      if (isStandalone && btn) {
-        // App is already installed and running as full screen app: hide button completely!
+      if (btn && isInstalled) {
         btn.classList.add('hidden');
+        btn.style.setProperty('display', 'none', 'important');
       }
+    }
+
+    window.addEventListener('appinstalled', () => {
+      localStorage.setItem('focusflow_app_installed', 'true');
+      checkAppInstallState();
+    });
+
+    function closeInstallAppModal() {
+      localStorage.setItem('focusflow_app_installed', 'true');
+      checkAppInstallState();
+      const modal = document.getElementById('install-app-modal');
+      if (modal) modal.classList.add('hidden');
     }
 
 
@@ -10868,6 +11119,156 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       }
     }
 
+    
+    // ==============================================
+    // PURGE UNWANTED / AUTO-GENERATED STARTER EVENTS
+    // ==============================================
+    function isDummyOrUnwantedEvent(e) {
+      if (!e) return false;
+      const t = (e.title || '').toLowerCase().trim();
+      const id = (e.id || '');
+      return (
+        id === 'ev-1' || id === 'ev-2' || id === 'ev-3' || id === 'ev-meal-choreo' ||
+        id.includes('-dish') ||
+        t.includes('cook dinner & reset kitchen') ||
+        t.includes('cook dinner') ||
+        t.includes('reset kitchen') ||
+        t.includes('cook lunch & quick kitchen reset') ||
+        t.includes('project planning') ||
+        t.includes('deep work:') ||
+        t.includes('admin, emails & task prioritization') ||
+        t.includes('admin & email sorting') ||
+        t.includes('relaxed dish washing & kitchen reset') ||
+        t.includes('fork-ready! sit down and enjoy dinner')
+      );
+    }
+
+    
+    // ==============================================
+    // PHONE DEMO & MOBILE TESTING ENGINE
+    // ==============================================
+    function openPhoneDemoModal() {
+      const modal = document.getElementById('phone-demo-modal');
+      const qrImg = document.getElementById('phone-demo-qr-img');
+      const urlText = document.getElementById('phone-demo-url-text');
+      const currentHost = (window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') ? `${window.location.hostname}:8080` : '192.168.1.182:8080';
+      const targetUrl = `http://${currentHost}`;
+      if (urlText) urlText.textContent = targetUrl;
+      if (qrImg) qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(targetUrl)}`;
+      if (modal) modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closePhoneDemoModal() {
+      const modal = document.getElementById('phone-demo-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function loadDemoSchedule() {
+      calendarHistory.recordState();
+      const dateStr = getSelectedTimelineDateStr() || getTodayDateString();
+
+      const demoEvents = [
+        {
+          id: `ev-demo-1-${Date.now()}`,
+          isDemo: true,
+          title: 'Deep Focus: Strategic Project Sprint',
+          startTime: '09:00',
+          duration: 75,
+          category: 'focus',
+          location: 'Quiet Study Library',
+          description: 'Draft the core requirements and review architecture with zero distractions.',
+          date: dateStr,
+          subtasks: [
+            { text: 'Set up workspace and silence phone', minutes: 5, done: true },
+            { text: 'Complete primary implementation milestone', minutes: 55, done: false },
+            { text: 'Review progress and write 3-bullet recap', minutes: 15, done: false }
+          ]
+        },
+        {
+          id: `ev-demo-2-${Date.now()}`,
+          isDemo: true,
+          title: 'Interactive Seminar: Cognitive Systems',
+          startTime: '10:45',
+          duration: 60,
+          category: 'classes',
+          location: 'Hall B, Room 204',
+          description: 'Weekly seminar lecture and collaborative group discussions.',
+          date: dateStr,
+          subtasks: [
+            { text: 'Review lecture slides and key concepts', minutes: 10, done: false },
+            { text: 'Active participation and note taking', minutes: 40, done: false },
+            { text: 'Confirm next assignment deliverables', minutes: 10, done: false }
+          ]
+        },
+        {
+          id: `ev-demo-3-${Date.now()}`,
+          isDemo: true,
+          title: 'Mediterranean Protein Bowl & Walk',
+          startTime: '12:30',
+          duration: 45,
+          category: 'meal',
+          location: 'Campus Cafe Patio',
+          description: 'Nourishing lunch break away from screens to reset afternoon focus.',
+          date: dateStr,
+          subtasks: [
+            { text: 'Fresh wholesome lunch & hydration', minutes: 25, done: false },
+            { text: 'Mindful 15-minute outdoor walk in the sun', minutes: 15, done: false },
+            { text: 'Quick water refill before afternoon tasks', minutes: 5, done: false }
+          ]
+        },
+        {
+          id: `ev-demo-4-${Date.now()}`,
+          isDemo: true,
+          title: 'Admin Inbox Sweep & Scheduling',
+          startTime: '14:00',
+          duration: 30,
+          category: 'chores',
+          location: '',
+          description: 'Batch process email replies, confirm calendar invites, and file notes.',
+          date: dateStr,
+          subtasks: [
+            { text: 'Clear top priority unread emails', minutes: 15, done: false },
+            { text: 'Review weekly schedule and confirm meetings', minutes: 15, done: false }
+          ]
+        },
+        {
+          id: `ev-demo-5-${Date.now()}`,
+          isDemo: true,
+          title: 'Strength Training & Mobility Circuit',
+          startTime: '16:30',
+          duration: 60,
+          category: 'care',
+          location: 'Fitness Center',
+          description: 'Full-body workout with emphasis on mobility and core stability.',
+          date: dateStr,
+          subtasks: [
+            { text: 'Dynamic warmup & mobility drills', minutes: 10, done: false },
+            { text: 'Main strength sets', minutes: 40, done: false },
+            { text: 'Post-workout stretch & hydration', minutes: 10, done: false }
+          ]
+        }
+      ];
+
+      const nonDemo = (state.events || []).filter(e => !e.isDemo);
+      state.events = [...nonDemo, ...demoEvents];
+      saveAppState();
+      renderTimeline();
+      closePhoneDemoModal();
+      playChime('bell');
+      alertBox("Loaded Demo Schedule for mobile testing! Tap 'Clear Demo' anytime to remove.", "Demo Schedule Active");
+    }
+
+    function clearDemoSchedule() {
+      calendarHistory.recordState();
+      state.events = (state.events || []).filter(e => !e.isDemo);
+      saveAppState();
+      renderTimeline();
+      closePhoneDemoModal();
+      playChime('bell');
+      alertBox("Removed demo events from your schedule.", "Demo Cleared");
+    }
+
     function loadAppState() {
       // 1. Scaffolding
       try {
@@ -10977,13 +11378,14 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         }
       } catch (e) {}
 
-      // 11. Calendar Events
+      // 11. Calendar Events (Purge any dummy or phantom events)
       try {
         const savedEvents = localStorage.getItem('focusflow_events');
         if (savedEvents !== null) {
           const parsed = JSON.parse(savedEvents);
           if (Array.isArray(parsed)) {
-            state.events = parsed.filter(e => e.id !== 'ev-1' && !e.title.toLowerCase().includes('project planning & review'));
+            state.events = parsed.filter(e => !isDummyOrUnwantedEvent(e));
+            try { localStorage.setItem('focusflow_events', JSON.stringify(state.events)); } catch (err) {}
           }
         }
       } catch (e) {}
@@ -11592,7 +11994,13 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
           }
         });
         ffSync.lastAppliedMs = Math.max(ffSync.lastAppliedMs, Number(versionMs) || 0);
-        try { loadAppState(); } catch (e) { if (typeof console !== 'undefined' && console.warn) console.warn('Cloud data load warning', e); }
+        try { 
+          loadAppState(); 
+          if (Array.isArray(state.events)) {
+            state.events = state.events.filter(e => !isDummyOrUnwantedEvent(e));
+            localStorage.setItem('focusflow_events', JSON.stringify(state.events));
+          }
+        } catch (e) { if (typeof console !== 'undefined' && console.warn) console.warn('Cloud data load warning', e); }
         try { rerenderAllFromState(); } catch (e) {}
         // Anything saved during the redraw is still "the cloud copy" — remember it so it isn't re-uploaded
         ffSync.lastUploadedJson = ffStableStringify(ffCollectLocalData());
@@ -11797,6 +12205,7 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         try {
           const res = await ffSync.auth.signInWithPopup(provider);
           if (res && res.credential && res.credential.accessToken) {
+            window._gcalSessionExpired = false;
             localStorage.setItem('focusflow_gcal_oauth_token', res.credential.accessToken);
             localStorage.setItem('focusflow_gcal_user_email', (res.user && res.user.email) || '');
             try {
@@ -11813,6 +12222,11 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
           }
           if (code === 'auth/popup-blocked') {
             ffSync.lastErrorText = 'Pop-up blocked. Please tap "Allow Pop-ups" in your browser bar to sign in.';
+            ffUpdateSyncUI();
+            return;
+          }
+          if (code === 'auth/unauthorized-domain') {
+            ffSync.lastErrorText = `Domain "${window.location.hostname}" needs authorization in Firebase Console (Authentication → Settings → Authorized domains).`;
             ffUpdateSyncUI();
             return;
           }
@@ -12826,7 +13240,7 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       const syncBtn = document.getElementById('btn-sync-gcal-now');
       const disconnectBtn = document.getElementById('btn-disconnect-gcal');
 
-      if (token) {
+      if (token && !window._gcalSessionExpired) {
         if (statusBox) {
           statusBox.innerHTML = `
             <div class="flex items-center justify-between gap-2">
@@ -12841,9 +13255,39 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         if (connectBtn) connectBtn.classList.add('hidden');
         if (syncBtn) syncBtn.classList.remove('hidden');
         if (disconnectBtn) disconnectBtn.classList.remove('hidden');
-      } else {
+      } else if (email || token) {
+        // Keeps user's account connected even after token expires; enables seamless 1-tap refresh
         if (statusBox) {
-          statusBox.innerHTML = `<span class="text-slate-400">Not connected yet. Connect your Google account once to automatically sync live changes.</span>`;
+          statusBox.innerHTML = `
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-pastel-butter font-semibold flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-pastel-butter animate-pulse"></span>
+                Connected: ${email || 'Google Account'} (Session paused)
+              </span>
+              <span class="text-[10px] text-pastel-butter font-semibold">1-Tap Refresh</span>
+            </div>
+          `;
+        }
+        if (connectBtn) {
+          connectBtn.classList.remove('hidden');
+          const btnText = document.getElementById('btn-connect-gcal-text');
+          if (btnText) btnText.textContent = '🔄 Refresh Google Session';
+        }
+        if (syncBtn) syncBtn.classList.remove('hidden');
+        if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+      } else {
+        const isIp = /^[0-9.]+$/.test(window.location.hostname);
+        const ipNotice = isIp ? `
+          <div class="mt-2 text-[10px] text-pastel-sky/90 bg-pastel-sky/10 border border-pastel-sky/20 rounded-lg p-2 flex items-start gap-1.5 leading-relaxed">
+            <span>💡</span>
+            <div><strong>Testing on Phone IP (${window.location.hostname}):</strong> Google Sign-In requires this IP added in Firebase Console (Authentication → Settings → Authorized domains), or test directly on your live site: <a href="https://lilaruss-a11y.github.io/focusflow/" target="_blank" class="underline font-bold text-white">lilaruss-a11y.github.io</a></div>
+          </div>
+        ` : '';
+        if (statusBox) {
+          statusBox.innerHTML = `
+            <span class="text-slate-400">Not connected yet. Connect your Google account once to automatically sync live changes.</span>
+            ${ipNotice}
+          `;
         }
         if (connectBtn) {
           connectBtn.classList.remove('hidden');
@@ -12881,6 +13325,7 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         }
 
         if (token) {
+          window._gcalSessionExpired = false;
           localStorage.setItem('focusflow_gcal_oauth_token', token);
           localStorage.setItem('focusflow_gcal_user_email', (result.user && result.user.email) || '');
           playChime('bell');
@@ -12892,9 +13337,26 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         }
       } catch (err) {
         console.error("Google Calendar connection error:", err);
-        if (err.code === 'auth/popup-closed-by-user') {
+        const code = (err && err.code) || '';
+        if (code === 'auth/unauthorized-domain') {
+          const currentHost = window.location.hostname;
+          alertBox(
+            `⚠️ Domain Authorization Required:
+
+Your phone is connecting via "${currentHost}". Google OAuth requires this domain in your Firebase Authorized list.
+
+To authorize (10 seconds):
+1. Open Firebase Console (https://console.firebase.google.com)
+2. Project: focusflow-40398 → Authentication → Settings → Authorized domains
+3. Click "Add domain" and enter: ${currentHost}
+
+OR use your live site on your phone:
+https://lilaruss-a11y.github.io/focusflow/`,
+            "Domain Authorization Needed"
+          );
+        } else if (code === 'auth/popup-closed-by-user') {
           alertBox("Google sign-in was cancelled.", "Cancelled");
-        } else if (err.code === 'auth/popup-blocked') {
+        } else if (code === 'auth/popup-blocked') {
           alertBox("Pop-up blocked by your browser. Please tap 'Allow Pop-ups' in your browser address bar to connect.", "Pop-up Blocked");
         } else {
           alertBox(`Could not connect: ${err.message}`, "Connection Notice");
@@ -12906,6 +13368,7 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
 
     function disconnectGoogleCalendarDirect() {
       if (confirm("Disconnect Google Calendar direct sync? Your current events will remain on your device until cleared.")) {
+        window._gcalSessionExpired = false;
         localStorage.removeItem('focusflow_gcal_oauth_token');
         localStorage.removeItem('focusflow_gcal_user_email');
         updateGoogleCalendarDirectUI();
@@ -12916,7 +13379,7 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
 
     async function syncGoogleCalendarDirectNow(isManual = false) {
       let token = localStorage.getItem('focusflow_gcal_oauth_token');
-      if (!token) {
+      if (!token || window._gcalSessionExpired) {
         if (isManual) connectGoogleCalendarDirect();
         return;
       }
@@ -12935,11 +13398,13 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
             headers: { Authorization: `Bearer ${token}` }
           });
           if (calListResp.status === 401) {
-            localStorage.removeItem('focusflow_gcal_oauth_token');
-            if (isManual) {
-              alertBox("Your Google Calendar session expired. Tap 'Connect with Google Calendar' to refresh it.", "Session Expired");
-            }
+            window._gcalSessionExpired = true;
             updateGoogleCalendarDirectUI();
+            if (isManual) {
+              connectGoogleCalendarDirect();
+            } else {
+              console.warn('[FocusFlow] Google Calendar token expired; session kept, ready for 1-tap refresh.');
+            }
             return;
           }
           if (calListResp.ok) {
@@ -13063,7 +13528,7 @@ Once enabled, tap 'Sync Live Events Now'!`,
             !e.id.startsWith('ev-ical-') && 
             !e.id.startsWith('ev-buf-') && 
             e.id !== 'ev-meal-choreo' &&
-            !e.title.includes('Focus & Task Execution')
+            !e.title.includes('Focus & Task Execution') && !isDummyOrUnwantedEvent(e)
           );
 
           // Merge fetched Google events while PRESERVING local user edits made in FocusFlow
@@ -13276,7 +13741,7 @@ Once enabled, tap 'Sync Live Events Now'!`,
         !e.id.startsWith('ev-ical-') && 
         !e.id.startsWith('ev-buf-') && 
         e.id !== 'ev-meal-choreo' &&
-        !e.title.includes('Focus & Task Execution')
+        !e.title.includes('Focus & Task Execution') && !isDummyOrUnwantedEvent(e)
       );
 
       state.events = [...manualEvents, ...mergedEvents];

@@ -351,6 +351,16 @@
 
       <!-- VIEW A: STRUCTURED CALENDAR DAY GRID -->
       <div id="timeline-calendar-wrapper" class="flex-1 min-h-0 flex flex-col h-full bg-dark-surface border border-dark-border rounded-2xl shadow-xl overflow-hidden">
+        <!-- ALL-DAY EVENTS SECTION (Visible when there are all-day events like Election Day or holidays) -->
+        <div id="timeline-all-day-row" class="hidden shrink-0 border-b border-dark-border/80 bg-dark-base/70 px-3 py-2 flex items-center gap-2">
+          <div class="w-16 sm:w-20 shrink-0 text-right pr-2">
+            <span class="text-[10px] font-mono font-semibold uppercase tracking-wider text-slate-400">All Day</span>
+          </div>
+          <div id="timeline-all-day-items" class="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
+            <!-- All-day event pills rendered dynamically -->
+          </div>
+        </div>
+
         <!-- Scrollable Hourly Grid Canvas (THE ONLY SCROLLBAR ON SCREEN) -->
         <div id="timeline-calendar-scroll-canvas" class="flex-1 min-h-0 h-full overflow-y-auto overscroll-y-contain" style="-webkit-overflow-scrolling: touch; touch-action: pan-y;">
           <!-- Calendar Day Grid (Left Time Gutter + Main Event Column) -->
@@ -5507,8 +5517,49 @@
       // Get events for selected day
       const dayEvents = getEventsForSelectedDay();
 
-      // Sort day events by start time
-      dayEvents.sort((a, b) => {
+      // Check for All-Day Events (e.g. Election Day, holidays, multi-day milestones)
+      const isAllDayEv = (ev) => Boolean(ev.isAllDay || ev.duration >= 1440 || (ev.title && /election\s*day|all\s*-?\s*day|holiday/i.test(ev.title)));
+      const allDayEvents = dayEvents.filter(isAllDayEv);
+      const timedEvents = dayEvents.filter(ev => !isAllDayEv(ev));
+
+      // Render All-Day Events Row above grid
+      const allDayRow = document.getElementById('timeline-all-day-row');
+      const allDayItems = document.getElementById('timeline-all-day-items');
+      if (allDayRow && allDayItems) {
+        if (allDayEvents.length > 0) {
+          allDayRow.classList.remove('hidden');
+          allDayItems.innerHTML = '';
+          allDayEvents.forEach(ev => {
+            const pill = document.createElement('div');
+            const col = ev.calendarColor || 'sky';
+            pill.className = `inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-pastel-${col}/20 text-pastel-${col} border border-pastel-${col}/40 shadow-sm cursor-pointer hover:brightness-110 active:scale-95 transition`;
+            pill.title = `${ev.title} (All Day)`;
+
+            const dot = document.createElement('span');
+            dot.className = `w-2 h-2 rounded-full bg-pastel-${col}`;
+
+            const titleSpan = document.createElement('span');
+            titleSpan.className = 'font-semibold truncate max-w-[220px]';
+            titleSpan.textContent = ev.title;
+
+            const badge = document.createElement('span');
+            badge.className = 'text-[9px] font-mono px-1.5 py-0.5 rounded bg-dark-base/70 text-slate-300 font-normal';
+            badge.textContent = 'All Day';
+
+            pill.appendChild(dot);
+            pill.appendChild(titleSpan);
+            pill.appendChild(badge);
+            pill.onclick = () => openEventDetailsModal(ev.id);
+            allDayItems.appendChild(pill);
+          });
+        } else {
+          allDayRow.classList.add('hidden');
+          allDayItems.innerHTML = '';
+        }
+      }
+
+      // Sort timed events by start time
+      timedEvents.sort((a, b) => {
         const [aH, aM] = (a.startTime || '09:00').split(':').map(Number);
         const [bH, bM] = (b.startTime || '09:00').split(':').map(Number);
         return (aH * 60 + aM) - (bH * 60 + bM);
@@ -5519,7 +5570,7 @@
       let currentCluster = [];
       let currentClusterEnd = -1;
 
-      dayEvents.forEach(ev => {
+      timedEvents.forEach(ev => {
         const [hh, mm] = (ev.startTime || '09:00').split(':').map(n => parseInt(n) || 0);
         const start = hh * 60 + mm;
         const dur = Math.max(15, ev.duration || 30);
@@ -5751,6 +5802,7 @@
       }
 
       dayEvents.forEach(ev => {
+        const isAllDay = Boolean(ev.isAllDay || ev.duration >= 1440 || (ev.title && /election\s*day|all\s*-?\s*day|holiday/i.test(ev.title)));
         const catInfo = getCategoryInfo(ev.category);
         const catMeta = {
           color: catInfo.colorMeta.border,
@@ -5766,8 +5818,7 @@
         card.innerHTML = `
           <div class="space-y-1.5 flex-1">
             <div class="flex items-center gap-2 flex-wrap">
-              
-              <span class="text-xs font-mono text-slate-300 font-bold">${formatTimeAmPm(ev.startTime)} (${ev.duration}m)</span>
+              ${isAllDay ? '<span class="text-xs font-mono text-pastel-sky font-bold px-2 py-0.5 rounded bg-pastel-sky/15 border border-pastel-sky/30">All Day</span>' : `<span class="text-xs font-mono text-slate-300 font-bold">${formatTimeAmPm(ev.startTime)} (${ev.duration}m)</span>`}
               ${ev.calendarName ? `<span class="text-[10px] px-2 py-0.5 rounded-full bg-pastel-sky/15 text-pastel-sky border border-pastel-sky/30 font-bold font-mono">${ev.calendarName}</span>` : ''}
               ${ev.goodEnough ? `<span class="hidden sm:inline text-[10px] text-pastel-butter bg-pastel-butter/10 px-2 py-0.5 rounded border border-pastel-butter/20 truncate max-w-xs">Boundary: ${ev.goodEnough}</span>` : ''}
             </div>
@@ -13521,6 +13572,7 @@ Once enabled, tap 'Sync Live Events Now'!`,
                 let startMM = 0;
                 let durationMins = 60;
                 let eventDateStr = '';
+                let isAllDayEvent = false;
 
                 if (item.start && item.start.dateTime) {
                   const startDate = new Date(item.start.dateTime);
@@ -13538,9 +13590,10 @@ Once enabled, tap 'Sync Live Events Now'!`,
                   }
                 } else if (item.start && item.start.date) {
                   eventDateStr = item.start.date;
-                  startHH = 9;
+                  startHH = 0;
                   startMM = 0;
-                  durationMins = 60;
+                  durationMins = 1440;
+                  isAllDayEvent = true;
                 }
 
                 if (!eventDateStr) return;
@@ -13556,7 +13609,8 @@ Once enabled, tap 'Sync Live Events Now'!`,
                   calendarColor: calColor,
                   category: 'focus',
                   date: eventDateStr,
-                  startTime: timeFormatted,
+                  isAllDay: isAllDayEvent,
+                  startTime: isAllDayEvent ? '00:00' : timeFormatted,
                   duration: durationMins,
                   location: item.location || '',
                   description: item.description || '',

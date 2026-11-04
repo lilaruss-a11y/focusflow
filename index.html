@@ -355,7 +355,7 @@
             <button type="button" onclick="openNewEventModal()" class="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs shadow-md shadow-pastel-mint/20 hover:bg-emerald-300 transition shrink-0" title="Create New Event">
               <i data-lucide="plus" class="w-3.5 h-3.5"></i>
               <span class="hidden sm:inline">Add Event</span>
-              <span class="sm:hidden">+ Event</span>
+              <span class="sm:hidden">Event</span>
             </button>
           </div>
         </div>
@@ -368,11 +368,8 @@
         </div>
       </div>
 
-      <!-- ADHD Schedule Suggestions (Compressed note becomes transparent during touch/scroll on mobile) -->
-      <div id="timeline-schedule-suggestions" class="hidden shrink-0 transition-opacity duration-200" data-is-expanded="false"></div>
-
       <!-- VIEW A: STRUCTURED CALENDAR DAY GRID -->
-      <div id="timeline-calendar-wrapper" class="flex-1 min-h-0 flex flex-col h-full bg-dark-surface border border-dark-border rounded-2xl shadow-xl overflow-hidden">
+      <div id="timeline-calendar-wrapper" class="flex-1 min-h-0 flex flex-col h-full bg-dark-surface border border-dark-border rounded-2xl shadow-xl overflow-hidden relative">
         <!-- ALL-DAY EVENTS SECTION (Visible when there are all-day events like Election Day or holidays) -->
         <div id="timeline-all-day-row" class="hidden shrink-0 border-b border-dark-border/80 bg-dark-base/70 px-3 py-2 flex items-center gap-2">
           <div class="w-16 sm:w-20 shrink-0 text-right pr-2">
@@ -382,6 +379,9 @@
             <!-- All-day event pills rendered dynamically -->
           </div>
         </div>
+
+        <!-- ADHD Schedule Suggestions (Embedded strictly inside the calendar grid view) -->
+        <div id="timeline-schedule-suggestions" class="hidden shrink-0 transition-opacity duration-200 border-b border-dark-border/60 bg-dark-base/70 p-2" data-is-expanded="false"></div>
 
         <!-- Scrollable Hourly Grid Canvas (THE ONLY SCROLLBAR ON SCREEN) -->
         <div id="timeline-calendar-scroll-canvas" class="flex-1 min-h-0 h-full overflow-y-auto overscroll-y-contain" style="-webkit-overflow-scrolling: touch; touch-action: pan-y;">
@@ -5820,9 +5820,12 @@
             <span class="font-bold text-pastel-sky">ADHD Suggestion:</span>
             <span class="text-slate-200 truncate">${sug.title} (${formatTimeAmPm(sug.startTime)})</span>
           </div>
-          <button type="button" class="text-xs text-pastel-sky font-bold flex items-center gap-1 shrink-0">
-            <span>Expand ▾</span>
-          </button>
+          <div class="flex items-center gap-2 shrink-0">
+            <button type="button" class="text-xs text-pastel-sky font-bold flex items-center gap-1">
+              <span>Expand ▾</span>
+            </button>
+            <button type="button" onclick="event.stopPropagation(); dismissScheduleSuggestion()" class="w-5 h-5 rounded-full hover:bg-pastel-sky/30 text-slate-400 hover:text-white flex items-center justify-center text-[10px]" title="Dismiss suggestion">✕</button>
+          </div>
         `;
         container.appendChild(pill);
       } else {
@@ -5844,6 +5847,9 @@
             <button type="button" onclick="toggleScheduleSuggestions(false)" class="px-2.5 py-1.5 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-300 text-xs flex items-center gap-1">
               <span>Minimize ▴</span>
             </button>
+            <button type="button" onclick="dismissScheduleSuggestion()" class="px-2.5 py-1.5 rounded-xl bg-dark-elevated hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 text-xs transition">
+              ✕ Dismiss
+            </button>
             <button type="button" onclick="approveScheduleSuggestion('${sug.type}', '${sug.startTime}', ${sug.duration}, '${encodeURIComponent(sug.afterTitle || '')}')" class="px-3.5 py-1.5 rounded-xl bg-pastel-sky hover:bg-sky-300 text-dark-base font-bold text-xs flex items-center gap-1 shadow-md transition">
               <i data-lucide="plus" class="w-3.5 h-3.5"></i>
               <span>+ Approve &amp; Add</span>
@@ -5856,6 +5862,8 @@
     }
 
     function dismissScheduleSuggestion(sugId) {
+      activeScheduleSuggestions = [];
+      suggestionsUserMinimized = true;
       const container = document.getElementById('timeline-schedule-suggestions');
       if (container) container.classList.add('hidden');
     }

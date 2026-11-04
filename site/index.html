@@ -69,15 +69,15 @@
 
     /* Header standard mode */
     .safe-top-header {
-      padding-top: 12px !important;
+      padding-top: 10px !important;
       background-color: #151b28 !important;
       -webkit-backdrop-filter: none !important;
       backdrop-filter: none !important;
     }
     @media (max-width: 767px) {
       .safe-top-header {
-        padding-top: 56px !important;
-        padding-top: max(56px, calc(env(safe-area-inset-top, 0px) + 10px)) !important;
+        padding-top: 14px !important;
+        padding-top: max(14px, calc(env(safe-area-inset-top, 0px) + 20px)) !important;
       }
     }
     @media (min-width: 768px) {
@@ -86,21 +86,21 @@
       }
     }
 
-    /* Standalone PWA Home-Screen Mode - STRICTLY MOBILE ONLY */
-    @media all and (display-mode: standalone) and (max-width: 767px) {
+    /* Standalone PWA Home-Screen Mode - STRICTLY MOBILE TOUCH PHONES */
+    @media all and (display-mode: standalone) and (pointer: coarse) {
       .safe-top-header {
-        padding-top: 56px !important;
-        padding-top: max(56px, calc(env(safe-area-inset-top, 0px) + 10px)) !important;
+        padding-top: 68px !important;
+        padding-top: max(68px, calc(env(safe-area-inset-top, 0px) + 20px)) !important;
       }
     }
 
     .ff-standalone-mode .safe-top-header {
-      padding-top: 12px !important;
+      padding-top: 68px !important;
+      padding-top: max(68px, calc(env(safe-area-inset-top, 0px) + 20px)) !important;
     }
-    @media (max-width: 767px) {
+    @media (min-width: 768px) {
       .ff-standalone-mode .safe-top-header {
-        padding-top: 56px !important;
-        padding-top: max(56px, calc(env(safe-area-inset-top, 0px) + 10px)) !important;
+        padding-top: 12px !important;
       }
     }
 
@@ -162,10 +162,11 @@
       } catch(e) {}
     }
     try {
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || localStorage.getItem('focusflow_app_installed') === 'true';
-      if (isStandalone) {
+      const isTouchPhone = ('ontouchstart' in window || navigator.maxTouchPoints > 0) && window.innerWidth <= 768;
+      const isStandalone = (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || localStorage.getItem('focusflow_app_installed') === 'true');
+      if (isStandalone && isTouchPhone) {
         document.documentElement.classList.add('ff-standalone-mode');
-        document.write('<style>@media (max-width: 767px) { .safe-top-header { padding-top: 56px !important; padding-top: max(56px, calc(env(safe-area-inset-top, 0px) + 10px)) !important; } } @media (min-width: 768px) { .safe-top-header { padding-top: 12px !important; } }</style>');
+        document.write('<style>.safe-top-header { padding-top: 68px !important; padding-top: max(68px, calc(env(safe-area-inset-top, 0px) + 20px)) !important; }</style>');
       }
     } catch(e) {}
     window.addEventListener('focus', () => { setTimeout(resetViewportZoom, 150); });
@@ -217,7 +218,7 @@
       </nav>
 
       <!-- Global Controls -->
-      <div class="w-full sm:w-auto grid grid-cols-6 sm:flex sm:items-center gap-2 sm:gap-1.5">
+      <div class="flex items-center gap-1.5">
         <!-- Quick Focus Button (Instant Standalone Session) -->
         <button type="button" onclick="openStandaloneFocusModal()" class="header-ctrl-btn px-2 rounded-xl bg-pastel-mint/15 border border-pastel-mint/30 hover:bg-pastel-mint/25 text-pastel-mint font-semibold text-[11px] active:scale-95 transition shadow-sm" title="Start an unlinked Focus Session instantly">
           <i data-lucide="play" class="w-3.5 h-3.5 fill-pastel-mint text-pastel-mint"></i>
@@ -5535,19 +5536,9 @@
           allDayItems.innerHTML = '';
           allDayEvents.forEach(ev => {
             const pill = document.createElement('div');
-            const col = ev.calendarColor || 'sky';
-            pill.className = `inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-pastel-${col}/20 text-pastel-${col} border border-pastel-${col}/40 shadow-sm cursor-pointer hover:brightness-110 active:scale-95 transition`;
+            pill.className = 'inline-flex items-center px-3 py-1 rounded-xl text-xs font-semibold bg-sky-500/20 text-sky-300 border border-sky-400/30 shadow-sm cursor-pointer hover:brightness-110 active:scale-95 transition';
             pill.title = `${ev.title} (All Day)`;
-
-            const dot = document.createElement('span');
-            dot.className = `w-2 h-2 rounded-full bg-pastel-${col}`;
-
-            const titleSpan = document.createElement('span');
-            titleSpan.className = 'font-semibold truncate max-w-[260px]';
-            titleSpan.textContent = ev.title;
-
-            pill.appendChild(dot);
-            pill.appendChild(titleSpan);
+            pill.textContent = ev.title;
             pill.onclick = () => openEventDetailsModal(ev.id);
             allDayItems.appendChild(pill);
           });

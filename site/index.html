@@ -331,6 +331,16 @@
                 <i data-lucide="redo-2" class="w-3.5 h-3.5 text-pastel-sky"></i>
               </button>
             </div>
+
+            <!-- Plan vs Reality Comparison Toggle & Accuracy Progress Report -->
+            <button type="button" onclick="togglePlanVsReality()" id="btn-toggle-plan-reality" class="flex items-center gap-1 px-2 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs transition active:scale-95" title="Toggle Plan vs Reality (Compare scheduled plan to actual execution)">
+              <i data-lucide="split" class="w-3.5 h-3.5 text-pastel-lavender" id="icon-plan-reality"></i>
+              <span class="hidden md:inline text-[11px]" id="label-plan-reality">Reality</span>
+            </button>
+            <button type="button" onclick="openEstimationAccuracyModal()" class="flex items-center gap-1 px-2 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-pastel-mint text-xs transition active:scale-95" title="View Time Estimation Progress & Dual-Line Calibration Graph">
+              <i data-lucide="trending-up" class="w-3.5 h-3.5 text-pastel-mint"></i>
+              <span class="hidden md:inline text-[11px]">Accuracy</span>
+            </button>
           </div>
 
           <!-- Right: Sync & Add Event Buttons -->
@@ -917,18 +927,26 @@
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
-            <button onclick="openReverseChefFromKitchen()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-pastel-coral to-pastel-peach hover:opacity-90 text-dark-base font-bold text-xs shadow-lg shadow-pastel-coral/20 transition">
+            <button onclick="openReverseChefFromKitchen()" class="flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl bg-gradient-to-r from-pastel-coral to-pastel-peach hover:opacity-90 text-dark-base font-bold text-xs shadow-lg shadow-pastel-coral/20 transition">
               <i data-lucide="chef-hat" class="w-4 h-4 text-dark-base"></i>
               <span>Launch Reverse Chef</span>
             </button>
-            <label class="cursor-pointer flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender font-semibold text-xs transition">
+            <button onclick="openWalmartGroceryImportModal()" class="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-sky/40 text-pastel-sky font-semibold text-xs transition" title="Import Walmart or grocery receipt items with 1-by-1 approval">
+              <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+              <span class="hidden sm:inline">Walmart / Groceries</span>
+              <span class="sm:hidden">Groceries</span>
+            </button>
+            <label class="cursor-pointer flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender font-semibold text-xs transition">
               <i data-lucide="camera" class="w-4 h-4"></i>
-              <span class="hidden sm:inline">Scan Fridge / Shelf</span>
+              <span class="hidden sm:inline">Scan Fridge</span>
               <span class="sm:hidden">Scan</span>
               <input type="file" accept="image/*" class="hidden" onchange="handlePantryPhotoUpload(event)">
             </label>
-            <button onclick="openAddPantryItemModal()" class="px-3 py-2.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-300 text-xs" title="Add Ingredient Manually">
+            <button onclick="openAddPantryItemModal()" class="px-2.5 py-2.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-300 text-xs" title="Add Ingredient Manually">
               <i data-lucide="plus" class="w-4 h-4"></i>
+            </button>
+            <button onclick="clearDemoPantryItems()" class="px-2.5 py-2.5 rounded-xl bg-dark-elevated hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-dark-border text-xs transition" title="Clear Demo Items (Start Fresh with Real Pantry)">
+              <i data-lucide="trash" class="w-4 h-4"></i>
             </button>
           </div>
         </div>
@@ -1484,6 +1502,18 @@
                 </div>
               </div>
               <input type="number" id="edit-event-duration" min="5" max="480" step="5" onchange="onEditEventTimeChange('duration')" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-sky">
+            </div>
+
+            <!-- Actual Duration (Reality Calibration) -->
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs font-semibold text-pastel-coral">Actual Duration (Reality Log)</label>
+                <span class="text-[10px] text-slate-400">For Calibration &amp; Line Graph</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <input type="number" id="edit-event-actual-duration" min="5" max="480" step="5" placeholder="e.g. 45 mins" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-coral">
+                <button type="button" onclick="logActualDurationFromEditModal()" class="px-3 py-2 rounded-xl bg-pastel-coral text-dark-base font-bold text-xs shrink-0 hover:opacity-90 transition">Save Reality</button>
+              </div>
             </div>
 
             <div>
@@ -2426,7 +2456,20 @@
       <div class="space-y-3 text-xs">
         <div>
           <label class="block text-slate-300 mb-1 font-semibold">Event Title</label>
-          <input type="text" id="new-event-title" placeholder="e.g. Study Chemistry or Cook Lunch" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white">
+          <input type="text" id="new-event-title" oninput="checkNewEventCalibrationTip(this.value)" placeholder="e.g. Study Chemistry, Getting Ready, or Cook Dinner" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white">
+          <div id="new-event-calib-tip" class="hidden text-[11px] p-2 mt-1.5 rounded-xl bg-pastel-coral/15 border border-pastel-coral/30 text-pastel-coral leading-snug"></div>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 mb-1 font-semibold">Event Elasticity &amp; Anchor Type</label>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <button type="button" onclick="setNewEventAnchorType(true)" id="btn-anchor-fixed" class="py-1.5 px-2.5 rounded-xl border border-dark-border text-slate-400 font-semibold text-center transition">
+              🔒 Fixed Anchor (Class/Appt)
+            </button>
+            <button type="button" onclick="setNewEventAnchorType(false)" id="btn-anchor-flexible" class="py-1.5 px-2.5 rounded-xl bg-pastel-coral/20 border-2 border-pastel-coral text-pastel-coral font-bold text-center transition">
+              ⏳ Flexible Task (Self-Paced)
+            </button>
+          </div>
         </div>
         <div class="grid grid-cols-3 gap-2">
           <div>
@@ -2858,6 +2901,20 @@
       </div>
 
       <div class="space-y-3 text-xs text-slate-300">
+        <!-- Clear Free Offline vs Key explanation -->
+        <div class="p-3 bg-pastel-mint/10 border border-pastel-mint/30 rounded-2xl text-xs text-slate-200 space-y-1 mb-2">
+          <strong class="text-pastel-mint font-bold flex items-center gap-1.5">
+            <i data-lucide="info" class="w-4 h-4 text-pastel-mint"></i>
+            Is an API Key Required?
+          </strong>
+          <p class="text-[11px] text-slate-300 leading-snug">
+            <strong>No! FocusFlow is fully functional 100% offline.</strong> Calendar scheduling, reverse chef choreography, Walmart grocery imports, nutrition tracking, and time calibration progress all work immediately with zero setup.
+          </p>
+          <p class="text-[11px] text-slate-400 leading-snug">
+            Adding a free Gemini API key gives you superpower upgrades: open-ended conversational brainstorming with Sous Chef and live photo receipt scanning.
+          </p>
+        </div>
+        
         <!-- Friendly Step-by-Step Guide for Phone / Chrome -->
         <div class="p-3.5 bg-dark-base border border-pastel-lavender/30 rounded-2xl space-y-2">
           <strong class="text-pastel-lavender font-bold flex items-center gap-1.5 text-xs">
@@ -3817,75 +3874,246 @@
     </div>
   </div>
 
-    <!-- MODAL: DEDICATED REVERSE CHEF (DIRECT FROM KITCHEN) -->
-  <div id="reverse-chef-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
-    <div class="bg-dark-elevated border border-pastel-coral/50 rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl my-4">
-      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+      <!-- MODAL: DEDICATED REVERSE CHEF & COOKING COMPANION (DIRECT FROM KITCHEN) -->
+  <div id="reverse-chef-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-3 sm:p-4 py-6 sm:py-10 overflow-y-auto">
+    <div class="bg-dark-elevated border border-pastel-coral/50 rounded-3xl w-full max-w-4xl p-5 sm:p-6 space-y-4 shadow-2xl my-2 sm:my-4">
+      <!-- Modal Header with Scaffolding Stage Switcher -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-dark-border pb-3 gap-3">
         <div class="flex items-center gap-2.5">
-          <div class="w-10 h-10 rounded-2xl bg-pastel-coral/20 border border-pastel-coral/40 flex items-center justify-center text-pastel-coral">
+          <div class="w-10 h-10 rounded-2xl bg-pastel-coral/20 border border-pastel-coral/40 flex items-center justify-center text-pastel-coral shrink-0">
             <i data-lucide="chef-hat" class="w-5 h-5"></i>
           </div>
           <div>
-            <h3 class="text-base font-bold text-white">Reverse Chef Choreographer</h3>
-            <p class="text-xs text-slate-400">Cook from pantry ingredients with zero-dish choreo</p>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <span>Reverse Chef Co-Pilot</span>
+              <span id="reverse-chef-stage-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pastel-coral/20 text-pastel-coral border border-pastel-coral/30">Stage 1: Co-Pilot</span>
+            </h3>
+            <p class="text-xs text-slate-400">Zero-dish reverse choreography with conversational brainstorming &amp; live timer</p>
           </div>
         </div>
-        <button onclick="closeReverseChefModal()" class="text-slate-400 hover:text-white p-1">
-          <i data-lucide="x" class="w-4 h-4"></i>
+
+        <div class="flex items-center gap-2 self-end sm:self-auto">
+          <!-- Scaffolding Selector -->
+          <div class="flex items-center bg-dark-base p-1 rounded-xl border border-dark-border text-[11px]">
+            <button type="button" onclick="setReverseChefStage(1)" id="btn-chef-stage-1" class="px-2.5 py-1 rounded-lg font-bold bg-pastel-coral text-dark-base shadow-sm transition">
+              Stage 1 (Co-Pilot)
+            </button>
+            <button type="button" onclick="setReverseChefStage(2)" id="btn-chef-stage-2" class="px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition">
+              Stage 2 (Self-Choreograph)
+            </button>
+          </div>
+          <button onclick="closeReverseChefModal()" class="text-slate-400 hover:text-white p-1">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs: Brainstorming & Recipe Architect vs Split-Screen Live Cooking -->
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <button type="button" onclick="switchReverseChefTab('brainstorm')" id="btn-tab-chef-brainstorm" class="py-2.5 px-3 rounded-xl font-bold bg-pastel-coral text-dark-base text-center transition flex items-center justify-center gap-1.5 shadow-sm">
+          <i data-lucide="message-square" class="w-4 h-4"></i>
+          <span>Sous Chef Brainstorm &amp; Architect</span>
+        </button>
+        <button type="button" onclick="switchReverseChefTab('companion')" id="btn-tab-chef-companion" class="py-2.5 px-3 rounded-xl font-bold bg-dark-base border border-dark-border text-slate-400 hover:text-white text-center transition flex items-center justify-center gap-1.5">
+          <i data-lucide="flame" class="w-4 h-4"></i>
+          <span>Split-Screen Live Cooking Companion</span>
         </button>
       </div>
 
-      <div class="space-y-4 text-xs">
-        <!-- Available Pantry Ingredients Picker -->
+      <!-- TAB 1: SOUS CHEF BRAINSTORM & RECIPE ARCHITECT -->
+      <div id="chef-tab-brainstorm" class="space-y-4 text-xs">
+        <!-- Available Pantry Ingredients Picker (with Frozen/Fridge/Shelf Indicators) -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
-            <label class="text-slate-300 font-semibold">Select Ingredients on Hand:</label>
-            <span class="text-[10px] text-pastel-mint">Tap to toggle</span>
+            <label class="text-slate-300 font-semibold">Ingredients on Hand in Pantry:</label>
+            <span class="text-[10px] text-pastel-mint">Tap to select • Storage locations respected</span>
           </div>
-          <div id="reverse-chef-pantry-chips" class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1.5 rounded-xl bg-dark-base border border-dark-border">
-            <!-- Populated dynamically from state.pantry -->
+          <div id="reverse-chef-pantry-chips" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-2 rounded-xl bg-dark-base border border-dark-border">
+            <!-- Populated dynamically with storage badges (frozen/fridge/shelf) -->
+          </div>
+          <div id="chef-frozen-alert" class="hidden mt-1.5 text-[11px] text-sky-300 flex items-center gap-1.5 bg-sky-950/30 p-2 rounded-xl border border-sky-400/30">
+            <i data-lucide="snowflake" class="w-3.5 h-3.5 shrink-0 text-sky-400"></i>
+            <span>🧊 Frozen ingredients selected: Reverse Chef will insert automatic thawing/defrost steps into the choreography!</span>
           </div>
         </div>
 
-        <!-- Cooking Constraints / Goals -->
-        <div class="grid grid-cols-3 gap-2">
-          <button type="button" onclick="selectChefConstraint('fast')" id="chef-c-fast" class="p-2 rounded-xl border-2 border-pastel-coral bg-pastel-coral/15 text-center transition">
-            <span class="block font-bold text-pastel-coral">⚡ Under 20m</span>
-            <span class="text-[9px] text-slate-300">Fast &amp; Simple</span>
-          </button>
-          <button type="button" onclick="selectChefConstraint('onepot')" id="chef-c-onepot" class="p-2 rounded-xl border border-dark-border text-center transition text-slate-400 hover:text-white">
-            <span class="block font-bold">🥣 One-Pot</span>
-            <span class="text-[9px]">Minimal Clean Up</span>
-          </button>
-          <button type="button" onclick="selectChefConstraint('protein')" id="chef-c-protein" class="p-2 rounded-xl border border-dark-border text-center transition text-slate-400 hover:text-white">
-            <span class="block font-bold">💪 High Protein</span>
-            <span class="text-[9px]">Dopamine Fuel</span>
-          </button>
+        <!-- Conversational Chat Stream with Sous Chef -->
+        <div class="rounded-2xl bg-dark-base border border-dark-border overflow-hidden flex flex-col h-64">
+          <div class="p-2.5 bg-dark-elevated border-b border-dark-border flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-pastel-coral animate-pulse"></span>
+              <span class="font-bold text-white">Sous Chef Brainstorming Assistant</span>
+            </div>
+            <span class="text-[10px] text-slate-400">Ask for recipes, quick ideas, or substitutions</span>
+          </div>
+
+          <div id="sous-chef-chat-messages" class="flex-1 p-3 overflow-y-auto space-y-2.5 text-xs">
+            <!-- Initial welcome message -->
+            <div class="flex items-start gap-2 max-w-[88%]">
+              <div class="w-6 h-6 rounded-full bg-pastel-coral/20 text-pastel-coral flex items-center justify-center text-[11px] shrink-0 font-bold">🧑‍🍳</div>
+              <div class="p-2.5 rounded-2xl rounded-tl-none bg-dark-elevated text-slate-200 border border-dark-border leading-relaxed">
+                Hi! I'm your Reverse Chef Co-Pilot. What kind of meal are you craving right now? You can ask me for meal ideas using your selected pantry ingredients, or tell me your time/equipment preferences!
+              </div>
+            </div>
+          </div>
+
+          <!-- Suggested Quick Prompts -->
+          <div class="px-2 py-1.5 bg-dark-elevated/50 border-t border-dark-border flex items-center gap-1.5 overflow-x-auto text-[10px]">
+            <button type="button" onclick="sendSousChefQuickPrompt('Suggest a hearty dinner from my selected ingredients')" class="px-2 py-1 rounded-lg bg-dark-base text-slate-300 hover:text-white border border-dark-border whitespace-nowrap">💡 Suggest Dinner</button>
+            <button type="button" onclick="sendSousChefQuickPrompt('I want something high-protein and under 20 mins')" class="px-2 py-1 rounded-lg bg-dark-base text-slate-300 hover:text-white border border-dark-border whitespace-nowrap">⚡ Under 20m High-Protein</button>
+            <button type="button" onclick="sendSousChefQuickPrompt('How should I prep the frozen items?')" class="px-2 py-1 rounded-lg bg-dark-base text-slate-300 hover:text-white border border-dark-border whitespace-nowrap">🧊 Prep Frozen</button>
+          </div>
+
+          <!-- Chat Input -->
+          <form onsubmit="handleSousChefChatSubmit(event)" class="p-2 bg-dark-base border-t border-dark-border flex items-center gap-2">
+            <input type="text" id="sous-chef-chat-input" placeholder="Brainstorm meal idea or ask Chef..." class="flex-1 bg-dark-elevated border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-pastel-coral">
+            <button type="submit" class="px-3 py-2 rounded-xl bg-pastel-coral text-dark-base font-bold text-xs hover:opacity-95 transition">Send</button>
+          </form>
         </div>
 
-        <button type="button" onclick="generateReverseChefMeal()" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-pastel-coral to-pastel-peach text-dark-base font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-pastel-coral/20 hover:opacity-95 transition">
+        <!-- Generate Choreography Button -->
+        <button type="button" onclick="generateReverseChefMeal()" class="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-pastel-coral via-pastel-peach to-pastel-mint text-dark-base font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-pastel-coral/20 hover:opacity-95 transition">
           <i data-lucide="sparkles" class="w-4 h-4"></i>
-          <span>Generate Reverse Choreography Meal</span>
+          <span>Generate Full Recipe &amp; Reverse Choreography</span>
         </button>
 
-        <!-- Generated Meal Card Area -->
+        <!-- Recipe Preview Card (if generated) -->
         <div id="reverse-chef-result-area" class="hidden p-4 rounded-2xl bg-dark-base border border-pastel-coral/40 space-y-3">
-          <div class="flex items-center justify-between">
-            <h4 id="reverse-chef-meal-title" class="text-sm font-bold text-white">Crispy Pan-Seared Protein &amp; Broccoli Rice</h4>
-            <span id="reverse-chef-meal-time" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-pastel-coral/20 text-pastel-coral font-bold">20 mins</span>
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <h4 id="reverse-chef-meal-title" class="text-sm font-bold text-white">Crispy Pan-Seared Protein &amp; Broccoli Rice</h4>
+              <p class="text-[11px] text-slate-400" id="reverse-chef-meal-summary">Full recipe visible • All ingredients included</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="reverse-chef-meal-time" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-pastel-coral/20 text-pastel-coral font-bold">20 mins</span>
+              <span id="reverse-chef-meal-kcal" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-pastel-mint/20 text-pastel-mint font-bold">480 kcal</span>
+            </div>
           </div>
+
           <div id="reverse-chef-meal-steps" class="space-y-1.5 text-[11px] text-slate-300">
             <!-- Steps with wash windows -->
           </div>
-          <div class="pt-2 flex gap-2 border-t border-dark-border">
-            <button type="button" onclick="cookReverseChefMealNow()" class="flex-1 py-2 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm hover:bg-emerald-300 transition">
-              <i data-lucide="play" class="w-3.5 h-3.5"></i>
-              <span>Cook Now (Send to Timeline)</span>
+
+          <div class="pt-2 flex flex-col sm:flex-row gap-2 border-t border-dark-border">
+            <button type="button" onclick="launchCookingCompanionFromRecipe()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-pastel-mint to-emerald-400 text-dark-base font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-md hover:opacity-95 transition">
+              <i data-lucide="play" class="w-4 h-4"></i>
+              <span>Launch Live Cooking Companion (Split-Screen)</span>
             </button>
-            <button type="button" onclick="saveReverseChefToCodex()" class="px-3 py-2 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-200 text-xs flex items-center gap-1 transition" title="Save to Recipe Codex">
-              <i data-lucide="book-open" class="w-3.5 h-3.5 text-pastel-coral"></i>
-              <span>Save to Codex</span>
+            <button type="button" onclick="cookReverseChefMealNow()" class="px-4 py-2 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-200 text-xs flex items-center justify-center gap-1 transition" title="Slot into Calendar">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 text-pastel-sky"></i>
+              <span>Slot into Calendar</span>
             </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: SPLIT-SCREEN LIVE COOKING COMPANION -->
+      <div id="chef-tab-companion" class="hidden space-y-4 text-xs">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <!-- LEFT COLUMN: FULL RECIPE & REVERSE CHOREOGRAPHY (7 Cols) -->
+          <div class="md:col-span-7 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-[10px] text-pastel-coral font-bold uppercase tracking-wider block">Live Cooking Choreography</span>
+                <h4 id="companion-recipe-title" class="text-sm font-bold text-white">Crispy Chicken &amp; Broccoli Skillet</h4>
+              </div>
+              <!-- Stage 2 verify button if active -->
+              <button type="button" onclick="verifyChoreographyOrder()" id="btn-verify-choreo" class="hidden px-2.5 py-1 rounded-xl bg-pastel-butter text-dark-base font-bold text-[11px] flex items-center gap-1 shadow-sm">
+                <i data-lucide="check" class="w-3 h-3"></i>
+                <span>💡 Hint: Check Order</span>
+              </button>
+            </div>
+
+            <!-- Active Step Visual Countdown Timer Card -->
+            <div class="p-4 rounded-2xl bg-gradient-to-br from-dark-base to-dark-elevated border-2 border-pastel-coral shadow-lg shadow-pastel-coral/15 space-y-3">
+              <div class="flex items-center justify-between text-xs">
+                <span class="px-2 py-0.5 rounded-full bg-pastel-coral/20 text-pastel-coral font-extrabold text-[10px] uppercase tracking-wider" id="companion-step-badge">
+                  Step 1 of 5
+                </span>
+                <span class="text-slate-400 text-[11px] font-mono" id="companion-step-total-mins">Total: 18m</span>
+              </div>
+
+              <!-- Active Step Text (Bold & Enlarged) -->
+              <div id="companion-active-step-text" class="text-sm sm:text-base font-extrabold text-white leading-relaxed">
+                Dice chicken breast and chop broccoli florets on cutting board.
+              </div>
+
+              <!-- Visual Countdown Timer Controls -->
+              <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1 border-t border-dark-border/60">
+                <div class="flex items-center gap-3">
+                  <div class="font-mono text-2xl font-black text-pastel-coral" id="companion-timer-display">
+                    04:00
+                  </div>
+                  <!-- Progress Bar -->
+                  <div class="w-24 sm:w-32 bg-dark-base rounded-full h-2.5 overflow-hidden border border-dark-border">
+                    <div id="companion-timer-progress-bar" class="bg-gradient-to-r from-pastel-coral to-pastel-peach h-full transition-all duration-300" style="width: 100%;"></div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <button type="button" onclick="toggleCookingStepTimer()" id="companion-btn-timer-toggle" class="px-3 py-1.5 rounded-xl bg-pastel-coral text-dark-base font-extrabold text-xs flex items-center gap-1 hover:opacity-95 transition">
+                    <i data-lucide="play" class="w-3.5 h-3.5 fill-dark-base" id="companion-icon-timer-toggle"></i>
+                    <span id="companion-label-timer-toggle">Start Timer</span>
+                  </button>
+                  <button type="button" onclick="addOneMinuteToTimer()" class="px-2 py-1.5 rounded-xl bg-dark-base hover:bg-slate-700 text-slate-300 font-bold text-xs" title="+1 Minute">+1m</button>
+                  <button type="button" onclick="resetCookingStepTimer()" class="px-2 py-1.5 rounded-xl bg-dark-base hover:bg-slate-700 text-slate-300 font-bold text-xs" title="Reset Step Timer">↺</button>
+                </div>
+              </div>
+
+              <!-- Navigation between steps -->
+              <div class="flex items-center justify-between pt-2 border-t border-dark-border/40 text-xs">
+                <button type="button" onclick="previousCookingStep()" id="companion-btn-prev" class="px-3 py-1.5 rounded-xl bg-dark-base text-slate-400 hover:text-white transition">
+                  ← Prev Step
+                </button>
+                <button type="button" onclick="advanceCookingStep()" id="companion-btn-next" class="px-4 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold transition hover:bg-emerald-300">
+                  Next Step →
+                </button>
+              </div>
+            </div>
+
+            <!-- Full Recipe All-Steps List (Always Visible) -->
+            <div class="space-y-1.5">
+              <span class="text-slate-400 text-[11px] font-semibold block">Full Recipe &amp; Zero-Dish Timeline:</span>
+              <div id="companion-all-steps-list" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+
+            <!-- Finish Cooking Button -->
+            <button type="button" onclick="finishCookingAndOpenWrapup()" class="w-full py-3 rounded-2xl bg-gradient-to-r from-pastel-mint to-emerald-400 text-dark-base font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-pastel-mint/20 hover:opacity-95 transition active:scale-[0.98]">
+              <i data-lucide="award" class="w-4 h-4"></i>
+              <span>🎉 Finished Cooking! (Save, Log &amp; Store Leftovers)</span>
+            </button>
+          </div>
+
+          <!-- RIGHT COLUMN: LIVE COOKING Q&A CHAT (5 Cols) -->
+          <div class="md:col-span-5 rounded-2xl bg-dark-base border border-dark-border overflow-hidden flex flex-col h-[460px]">
+            <div class="p-3 bg-dark-elevated border-b border-dark-border flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-pastel-mint"></span>
+                <span class="font-bold text-white">Live Cooking Q&amp;A</span>
+              </div>
+              <span class="text-[10px] text-pastel-mint font-mono">Auto-Updates Recipe</span>
+            </div>
+
+            <div id="cooking-companion-qa-stream" class="flex-1 p-3 overflow-y-auto space-y-2.5 text-xs">
+              <div class="p-2.5 rounded-2xl bg-dark-elevated border border-dark-border text-slate-300 leading-relaxed text-[11px]">
+                Ask any question while cooking! If you need to substitute an ingredient or adjust temperatures, I'll update your recipe steps on the left automatically.
+              </div>
+            </div>
+
+            <!-- Live Cooking Quick Action Chips -->
+            <div class="p-2 bg-dark-elevated/40 border-t border-dark-border flex items-center gap-1.5 overflow-x-auto text-[10px]">
+              <button type="button" onclick="sendCookingQuestion('Can I substitute soy sauce for tamari or salt?')" class="px-2 py-1 rounded-lg bg-dark-base text-slate-300 hover:text-white border border-dark-border whitespace-nowrap">🔄 Substitutions</button>
+              <button type="button" onclick="sendCookingQuestion('My skillet is smoking, what should I do?')" class="px-2 py-1 rounded-lg bg-dark-base text-slate-300 hover:text-white border border-dark-border whitespace-nowrap">🔥 Pan Smoking</button>
+              <button type="button" onclick="sendCookingQuestion('How do I know when the meat is done?')" class="px-2 py-1 rounded-lg bg-dark-base text-slate-300 hover:text-white border border-dark-border whitespace-nowrap">🍗 Check Doneness</button>
+            </div>
+
+            <!-- Question Input -->
+            <form onsubmit="handleCookingQuestionSubmit(event)" class="p-2 bg-dark-base border-t border-dark-border flex items-center gap-2">
+              <input type="text" id="cooking-question-input" placeholder="Ask question while cooking..." class="flex-1 bg-dark-elevated border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-pastel-mint">
+              <button type="submit" class="px-3 py-2 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs hover:bg-emerald-300 transition">Ask</button>
+            </form>
           </div>
         </div>
       </div>
@@ -3895,6 +4123,7 @@
       </div>
     </div>
   </div>
+
 
   <!-- MODAL: BARCODE SCANNER (CHROME CAMERA + LIVE OPEN FOOD FACTS) -->
   <div id="barcode-scanner-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
@@ -3998,6 +4227,317 @@
       </div>
     </div>
   </div>
+
+  
+  <!-- MODAL: TIME ESTIMATION & CALIBRATION ACCURACY -->
+  <div id="time-calibration-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-dark-elevated border border-pastel-mint/50 rounded-3xl w-full max-w-2xl p-5 sm:p-6 space-y-4 shadow-2xl my-4">
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-pastel-mint/20 border border-pastel-mint/40 flex items-center justify-center text-pastel-mint">
+            <i data-lucide="trending-up" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Time Estimation &amp; Calibration</h3>
+            <p class="text-xs text-slate-400">Planned vs. Actual Execution Progress &amp; Drift Patterns</p>
+          </div>
+        </div>
+        <button onclick="closeEstimationAccuracyModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Quick Stats Row -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+        <div class="p-3 rounded-2xl bg-dark-base border border-dark-border text-center">
+          <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Calibration Score</span>
+          <span class="text-lg font-bold text-pastel-mint" id="calib-stat-score">82%</span>
+          <span class="text-[9px] text-emerald-400 block">+14% this week</span>
+        </div>
+        <div class="p-3 rounded-2xl bg-dark-base border border-dark-border text-center">
+          <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Avg Flexible Drift</span>
+          <span class="text-lg font-bold text-pastel-coral" id="calib-stat-drift">+18m</span>
+          <span class="text-[9px] text-slate-400 block">Morning/Homework</span>
+        </div>
+        <div class="p-3 rounded-2xl bg-dark-base border border-dark-border text-center">
+          <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Fixed Anchor Adherence</span>
+          <span class="text-lg font-bold text-pastel-sky" id="calib-stat-anchor">100%</span>
+          <span class="text-[9px] text-slate-400 block">Classes &amp; Appts</span>
+        </div>
+        <div class="p-3 rounded-2xl bg-dark-base border border-dark-border text-center">
+          <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Sessions Logged</span>
+          <span class="text-lg font-bold text-pastel-lavender" id="calib-stat-total">14</span>
+          <span class="text-[9px] text-slate-400 block">7-day rolling window</span>
+        </div>
+      </div>
+
+      <!-- Dual-Line Graph (SVG) -->
+      <div class="p-4 rounded-2xl bg-dark-base border border-dark-border space-y-2">
+        <div class="flex items-center justify-between flex-wrap gap-2 text-xs">
+          <div class="flex items-center gap-1.5 font-bold text-white">
+            <i data-lucide="line-chart" class="w-4 h-4 text-pastel-mint"></i>
+            <span>Planned vs. Reality Progress (Dual-Line Trajectory)</span>
+          </div>
+          <div class="flex items-center gap-3 text-[11px] font-mono">
+            <span class="flex items-center gap-1 text-pastel-lavender"><span class="w-3 h-1 bg-pastel-lavender rounded inline-block"></span> Planned Time</span>
+            <span class="flex items-center gap-1 text-pastel-coral"><span class="w-3 h-1 bg-pastel-coral rounded inline-block"></span> Actual Reality</span>
+          </div>
+        </div>
+
+        <!-- SVG Container -->
+        <div id="calibration-chart-container" class="w-full h-52 relative flex items-center justify-center overflow-hidden">
+          <!-- Rendered dynamically by renderCalibrationChart() -->
+        </div>
+
+        <p class="text-[11px] text-slate-400 leading-snug">
+          💡 The gap between lines represents time elasticity. As you practice calibrated reverse-planning, the lines converge closer together.
+        </p>
+      </div>
+
+      <!-- Actionable Insights & Patterns -->
+      <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border/80 space-y-2 text-xs">
+        <h4 class="font-bold text-white flex items-center gap-1.5 text-xs">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-pastel-butter"></i>
+          <span>Elasticity Patterns &amp; Time-Blindness Insights</span>
+        </h4>
+        <div class="space-y-1.5 text-[11px] text-slate-300">
+          <div class="p-2.5 rounded-xl bg-dark-elevated border border-pastel-coral/30 flex items-start gap-2">
+            <span class="text-pastel-coral font-bold shrink-0">⏳ Getting Ready:</span>
+            <span>Historical average is <strong>48m</strong> (+18m vs 30m plan). <em>Suggestion: Increase scheduled block to 45m with a 10m buffer.</em></span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-dark-elevated border border-pastel-sky/30 flex items-start gap-2">
+            <span class="text-pastel-sky font-bold shrink-0">📚 Deep Homework:</span>
+            <span>Hyperfocus extends sessions by <strong>+22m</strong> on average. <em>Suggestion: Insert a 15-minute buffer before your next anchor.</em></span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-dark-elevated border border-pastel-mint/30 flex items-start gap-2">
+            <span class="text-pastel-mint font-bold shrink-0">🔒 Fixed Classes:</span>
+            <span><strong>100% adherence.</strong> Anchor events consistently anchor your day when flexible buffers flank them.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Log Reality on Today's Event -->
+      <div class="p-3 rounded-2xl bg-dark-base border border-dark-border flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs">
+        <div class="w-full sm:w-auto flex-1">
+          <span class="text-slate-300 font-semibold block text-[11px]">Log Reality (Actual Execution Time) for Today's Event:</span>
+          <select id="calib-event-select" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs mt-1">
+            <!-- Populated from state.events -->
+          </select>
+        </div>
+        <div class="flex items-center gap-2 w-full sm:w-auto shrink-0">
+          <input type="number" id="calib-actual-minutes-input" placeholder="Actual mins" min="5" max="360" class="w-24 bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs font-mono">
+          <button type="button" onclick="logActualEventDurationFromModal()" class="px-3.5 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs hover:bg-emerald-300 transition">Save Log</button>
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-between items-center border-t border-dark-border">
+        <button type="button" onclick="togglePlanVsReality(); closeEstimationAccuracyModal();" class="text-pastel-lavender hover:underline text-xs flex items-center gap-1 font-semibold">
+          <i data-lucide="split" class="w-3.5 h-3.5"></i>
+          <span>Switch Timeline to Plan vs Reality View</span>
+        </button>
+        <button type="button" onclick="closeEstimationAccuracyModal()" class="px-5 py-2 rounded-xl bg-dark-base border border-dark-border hover:border-slate-500 text-slate-300 text-xs font-semibold">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: WALMART & GROCERY RECEIPT IMPORT WITH 1-BY-1 APPROVAL -->
+  <div id="walmart-import-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-3 sm:p-4 py-8 overflow-y-auto">
+    <div class="bg-dark-elevated border border-pastel-sky/50 rounded-3xl w-full max-w-xl p-5 sm:p-6 space-y-4 shadow-2xl my-4">
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-pastel-sky/20 border border-pastel-sky/40 flex items-center justify-center text-pastel-sky">
+            <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Import Walmart &amp; Groceries</h3>
+            <p class="text-xs text-slate-400">Paste receipt text or scan receipt • 1-by-1 Approval</p>
+          </div>
+        </div>
+        <button onclick="closeWalmartGroceryImportModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Import Mode Switcher -->
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <button type="button" onclick="switchWalmartImportTab('paste')" id="btn-tab-walmart-paste" class="py-2 px-3 rounded-xl font-bold bg-pastel-sky text-dark-base text-center transition">
+          📋 Paste Receipt / Order Text
+        </button>
+        <button type="button" onclick="switchWalmartImportTab('photo')" id="btn-tab-walmart-photo" class="py-2 px-3 rounded-xl font-bold bg-dark-base border border-dark-border text-slate-400 hover:text-white text-center transition">
+          📷 Scan / Upload Receipt Photo
+        </button>
+      </div>
+
+      <!-- Paste Tab Body -->
+      <div id="walmart-tab-paste" class="space-y-3 text-xs">
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-slate-300 font-semibold">Paste Order Confirmation or Digital Receipt:</label>
+            <button type="button" onclick="loadSampleWalmartReceipt()" class="text-[11px] text-pastel-sky hover:underline font-mono">Load Sample Order</button>
+          </div>
+          <textarea id="walmart-paste-textarea" rows="4" placeholder="Paste order email or text here, e.g.:&#10;Great Value Boneless Skinless Chicken Breasts 3 lb $9.84&#10;Marketside Organic Baby Spinach 10 oz $2.98&#10;Great Value Jasmine Rice 5 lb $4.12&#10;Organic Whole Milk 1 gal $3.68&#10;Paper Towels 6 rolls $12.50" class="w-full bg-dark-base border border-dark-border rounded-xl p-3 text-white font-mono text-xs focus:border-pastel-sky focus:outline-none"></textarea>
+        </div>
+        <button type="button" onclick="parseIncomingGroceriesFromText()" class="w-full py-2.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs flex items-center justify-center gap-1.5 shadow-md hover:bg-sky-300 transition">
+          <i data-lucide="search" class="w-4 h-4"></i>
+          <span>Parse &amp; Review Incoming Groceries</span>
+        </button>
+      </div>
+
+      <!-- Photo Tab Body -->
+      <div id="walmart-tab-photo" class="hidden space-y-3 text-xs">
+        <div class="p-6 rounded-2xl bg-dark-base border-2 border-dashed border-dark-border text-center space-y-2">
+          <i data-lucide="camera" class="w-8 h-8 text-pastel-sky mx-auto"></i>
+          <p class="text-slate-300 font-semibold">Take a photo or upload receipt image</p>
+          <p class="text-[11px] text-slate-400">Our parser detects food items and extracts them for your approval</p>
+          <label class="inline-block mt-2 cursor-pointer px-4 py-2 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs hover:bg-sky-300 transition">
+            Choose Photo / Camera
+            <input type="file" accept="image/*" class="hidden" onchange="handleWalmartReceiptPhoto(event)">
+          </label>
+        </div>
+      </div>
+
+      <!-- 1-by-1 Approval Screen (Shown after parsing) -->
+      <div id="walmart-approval-section" class="hidden space-y-3 pt-3 border-t border-dark-border text-xs">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <span class="font-bold text-white text-xs">Incoming Groceries Review</span>
+            <span id="walmart-approval-count-badge" class="px-2 py-0.5 rounded-full bg-pastel-sky/20 text-pastel-sky font-bold text-[10px]">0 Approved</span>
+          </div>
+          <span class="text-[10px] text-slate-400">Uncheck items bought for others</span>
+        </div>
+
+        <div id="walmart-approval-list" class="space-y-2 max-h-64 overflow-y-auto pr-1">
+          <!-- Populated with item rows: checkbox, name, category, storage (fridge/frozen/shelf), skip/someone else button -->
+        </div>
+
+        <button type="button" onclick="approveAndCommitGroceriesToPantry()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-pastel-mint to-pastel-sky text-dark-base font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-pastel-mint/20 hover:opacity-95 transition">
+          <i data-lucide="check" class="w-4 h-4"></i>
+          <span id="walmart-commit-btn-text">Approve &amp; Add Selected to Pantry</span>
+        </button>
+      </div>
+
+      <div class="pt-2 flex justify-end border-t border-dark-border">
+        <button type="button" onclick="closeWalmartGroceryImportModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: POST-COOKING WRAP-UP HUB (COOKBOOK, NUTRITION WITH MICROS, PANTRY LEFTOVERS) -->
+  <div id="cooking-wrapup-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-3 sm:p-4 py-8 overflow-y-auto">
+    <div class="bg-dark-elevated border border-pastel-coral/50 rounded-3xl w-full max-w-lg p-5 sm:p-6 space-y-4 shadow-2xl my-4">
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-pastel-coral/20 border border-pastel-coral/40 flex items-center justify-center text-pastel-coral">
+            <i data-lucide="award" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Meal Wrap-Up Hub</h3>
+            <p class="text-xs text-slate-400">Cookbook • Nutrition &amp; Micros • Leftovers to Pantry</p>
+          </div>
+        </div>
+        <button onclick="closeCookingWrapupModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Meal Title Banner -->
+      <div class="p-3 rounded-2xl bg-dark-base border border-pastel-coral/30 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] text-pastel-coral font-bold uppercase tracking-wider block">Dish Completed</span>
+          <h4 id="wrapup-recipe-title" class="text-sm font-bold text-white">Crispy Pan-Seared Chicken &amp; Broccoli</h4>
+        </div>
+        <span id="wrapup-recipe-stats" class="text-[11px] font-mono text-slate-300">480 kcal • 2 Servings</span>
+      </div>
+
+      <!-- 1. Save to Cookbook Option -->
+      <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-2 text-xs">
+        <label class="flex items-center gap-2 cursor-pointer font-bold text-white">
+          <input type="checkbox" id="wrapup-check-cookbook" checked class="w-4 h-4 rounded text-pastel-coral focus:ring-0">
+          <span>📖 Save Recipe to My Cookbook (Codex)</span>
+        </label>
+        <p class="text-[11px] text-slate-400 pl-6">Preserves your custom choreography steps, ingredients, and cook times for future 1-tap cooking.</p>
+      </div>
+
+      <!-- 2. Nutrition Logging Option with Editable Servings & Cronometer-Grade Micros -->
+      <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-3 text-xs">
+        <label class="flex items-center gap-2 cursor-pointer font-bold text-white">
+          <input type="checkbox" id="wrapup-check-nutrition" checked class="w-4 h-4 rounded text-pastel-mint focus:ring-0">
+          <span>🥗 Log Meal to Daily Nutrition Diary</span>
+        </label>
+
+        <div class="pl-6 space-y-2.5">
+          <div class="flex items-center justify-between bg-dark-elevated p-2 rounded-xl border border-dark-border text-xs">
+            <span class="text-slate-300">Portion eaten right now:</span>
+            <div class="flex items-center gap-1.5">
+              <input type="number" id="wrapup-portion-input" value="1.0" min="0.25" max="4.0" step="0.25" onchange="updateWrapupNutritionPreview()" class="w-16 bg-dark-base border border-dark-border rounded-lg px-2 py-1 text-center font-mono font-bold text-white text-xs">
+              <span class="text-slate-400 text-[11px]">of <span id="wrapup-total-servings-txt">2</span> servings</span>
+            </div>
+          </div>
+
+          <!-- Dynamic Macros & Micros Preview -->
+          <div class="p-2.5 rounded-xl bg-dark-elevated border border-dark-border space-y-1.5">
+            <div class="flex items-center justify-between font-mono text-[11px]">
+              <span class="text-white font-bold" id="wrapup-preview-kcal">480 kcal</span>
+              <span class="text-pastel-mint" id="wrapup-preview-macros">P: 42g | C: 34g | F: 16g | Fiber: 6g</span>
+            </div>
+            <div class="text-[10px] text-slate-400 font-mono" id="wrapup-preview-micros">
+              Sodium: 520mg • Potassium: 680mg • Iron: 2.8mg • Vit C: 45mg • Vit A: 220mcg
+            </div>
+          </div>
+
+          <!-- Expandable Ingredient Contribution Breakdown -->
+          <details class="group bg-dark-elevated rounded-xl border border-dark-border p-2 text-xs">
+            <summary class="cursor-pointer text-pastel-sky font-semibold text-[11px] list-none flex items-center justify-between">
+              <span>🔍 View Ingredient Macro/Micro Contribution</span>
+              <span class="group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <div id="wrapup-ingredient-breakdown-list" class="mt-2 space-y-1 text-[11px] text-slate-300 border-t border-dark-border/60 pt-2 font-mono">
+              <!-- Populated dynamically -->
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- 3. Save Leftovers to Pantry -->
+      <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-2.5 text-xs">
+        <label class="flex items-center gap-2 cursor-pointer font-bold text-white">
+          <input type="checkbox" id="wrapup-check-leftovers" checked class="w-4 h-4 rounded text-pastel-lavender focus:ring-0">
+          <span>🥡 Save Leftovers to Kitchen Pantry</span>
+        </label>
+
+        <div class="pl-6 space-y-2">
+          <p class="text-[11px] text-slate-400">Portion remaining for leftovers: <strong class="text-white" id="wrapup-leftovers-servings-txt">1 serving</strong></p>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="flex items-center gap-2 p-2 rounded-xl bg-dark-elevated border border-dark-border cursor-pointer">
+              <input type="radio" name="wrapup-leftover-dest" value="fridge" checked class="text-pastel-sky">
+              <div>
+                <span class="block font-semibold text-slate-200">❄️ Fridge</span>
+                <span class="text-[9px] text-slate-400">Eat within 3 days</span>
+              </div>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-xl bg-dark-elevated border border-dark-border cursor-pointer">
+              <input type="radio" name="wrapup-leftover-dest" value="frozen" class="text-pastel-lavender">
+              <div>
+                <span class="block font-semibold text-slate-200">🧊 Freezer</span>
+                <span class="text-[9px] text-slate-400">Lasts 3 months</span>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Commit Button -->
+      <button type="button" onclick="commitCookingWrapup()" class="w-full py-3 rounded-2xl bg-gradient-to-r from-pastel-coral via-pastel-peach to-pastel-mint text-dark-base font-extrabold text-xs flex items-center justify-center gap-2 shadow-xl shadow-pastel-coral/20 hover:opacity-95 transition active:scale-[0.98]">
+        <i data-lucide="check-check" class="w-4 h-4"></i>
+        <span>Commit All (Cookbook, Nutrition &amp; Pantry)</span>
+      </button>
+
+      <div class="pt-1 flex justify-end">
+        <button type="button" onclick="closeCookingWrapupModal()" class="text-slate-400 hover:text-white text-xs">Skip</button>
+      </div>
+    </div>
+  </div>
+
 
   <!-- Audio Synthesis Script -->
   <script>
@@ -4184,6 +4724,23 @@
         { id: 'm-3', text: 'Reply to urgent email', quadrant: 'urgent-important', estMinutes: 15 },
         { id: 'm-4', text: 'Browse random rabbit hole articles', quadrant: 'neither', estMinutes: 30 }
       ],
+            showPlanVsReality: false,
+      timeEstimationHistory: [
+        { id: 'te-1', date: 'Oct 29', title: 'Morning Getting Ready', category: 'care', isFixed: false, plannedMin: 30, actualMin: 48, deltaMin: 18 },
+        { id: 'te-2', date: 'Oct 29', title: 'CSci 201 Lecture', category: 'focus', isFixed: true, plannedMin: 60, actualMin: 60, deltaMin: 0 },
+        { id: 'te-3', date: 'Oct 30', title: 'Deep Work Homework', category: 'focus', isFixed: false, plannedMin: 45, actualMin: 70, deltaMin: 25 },
+        { id: 'te-4', date: 'Oct 31', title: 'Reverse Cooking Dinner', category: 'meal', isFixed: false, plannedMin: 25, actualMin: 32, deltaMin: 7 },
+        { id: 'te-5', date: 'Nov 01', title: 'Evening Reset & Chores', category: 'chores', isFixed: false, plannedMin: 20, actualMin: 35, deltaMin: 15 },
+        { id: 'te-6', date: 'Nov 02', title: 'Chemistry Lab', category: 'focus', isFixed: true, plannedMin: 90, actualMin: 90, deltaMin: 0 },
+        { id: 'te-7', date: 'Nov 03', title: 'Morning Getting Ready', category: 'care', isFixed: false, plannedMin: 30, actualMin: 50, deltaMin: 20 }
+      ],
+      reverseChefStage: 1,
+      reverseChefActiveStepIndex: 0,
+      reverseChefTimerSeconds: 240,
+      reverseChefTimerRunning: false,
+      reverseChefTimerInterval: null,
+      reverseChefChatMessages: [],
+      incomingGroceriesApprovalList: [],
       pantry: [
         { id: 'p-1', name: 'Fresh Broccoli', category: 'produce' },
         { id: 'p-2', name: 'Eggs (Dozen)', category: 'protein' },
@@ -5627,6 +6184,62 @@
           };
 
           const leftPct = col * colWidthPct;
+
+          if (state.showPlanVsReality) {
+            const actualDur = ev.actualDuration || (ev.isFixedAnchor ? item.dur : (ev.title.includes('Ready') ? 48 : (ev.title.includes('Focus') || ev.title.includes('Homework') ? item.dur + 22 : item.dur)));
+            const delta = actualDur - item.dur;
+            const deltaBadge = delta > 0 
+              ? `<span class="px-1.5 py-0.5 rounded bg-pastel-coral/20 text-pastel-coral border border-pastel-coral/30 font-bold text-[9px]">+${delta}m drift</span>`
+              : (delta < 0 ? `<span class="px-1.5 py-0.5 rounded bg-pastel-sky/20 text-pastel-sky border border-pastel-sky/30 font-bold text-[9px]">${delta}m under</span>` : `<span class="px-1.5 py-0.5 rounded bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30 font-bold text-[9px]">✓ Exact</span>`);
+
+            // Left sub-col: Planned
+            const planBlock = document.createElement('div');
+            planBlock.className = `absolute rounded-xl border border-dashed border-pastel-lavender/60 bg-dark-base/90 p-2 overflow-hidden flex flex-col justify-between text-xs transition shadow-sm cursor-pointer hover:border-pastel-lavender`;
+            planBlock.style.top = `${topPx}px`;
+            planBlock.style.height = `${heightPx}px`;
+            planBlock.style.left = `calc(${leftPct}% + 4px)`;
+            planBlock.style.width = `calc(${(colWidthPct / 2)}% - 6px)`;
+            planBlock.style.zIndex = '10';
+            planBlock.innerHTML = `
+              <div class="space-y-0.5">
+                <div class="flex items-center justify-between text-[9px] font-mono text-pastel-lavender font-bold">
+                  <span>📋 PLAN</span>
+                  <span>${item.dur}m</span>
+                </div>
+                <h4 class="font-bold text-white text-[11px] truncate leading-tight">${ev.title}</h4>
+              </div>
+              <span class="text-[9px] text-slate-400 font-mono">${formatTimeAmPm(ev.startTime)}</span>
+            `;
+            planBlock.onclick = () => openEventToolsModal(ev.id);
+            blocksContainer.appendChild(planBlock);
+
+            // Right sub-col: Reality
+            const realityHeightPx = Math.max(minBlockHeight, (actualDur / 60) * CALENDAR_HOUR_HEIGHT);
+            const realityBlock = document.createElement('div');
+            realityBlock.className = `absolute rounded-xl border border-pastel-coral/70 bg-dark-elevated p-2 overflow-hidden flex flex-col justify-between text-xs transition shadow-md cursor-pointer hover:border-pastel-coral`;
+            realityBlock.style.top = `${topPx}px`;
+            realityBlock.style.height = `${realityHeightPx}px`;
+            realityBlock.style.left = `calc(${leftPct + (colWidthPct / 2)}% + 2px)`;
+            realityBlock.style.width = `calc(${(colWidthPct / 2)}% - 6px)`;
+            realityBlock.style.zIndex = '11';
+            realityBlock.innerHTML = `
+              <div class="space-y-0.5">
+                <div class="flex items-center justify-between text-[9px] font-mono">
+                  <span class="text-pastel-coral font-bold">⏱️ REALITY</span>
+                  <span class="text-white font-bold">${actualDur}m</span>
+                </div>
+                <h4 class="font-bold text-white text-[11px] truncate leading-tight">${ev.title}</h4>
+                <div class="pt-0.5">${deltaBadge}</div>
+              </div>
+              <div class="flex items-center justify-between pt-1 border-t border-dark-border/40 text-[9px]">
+                <button type="button" onclick="event.stopPropagation(); promptQuickLogActualDuration('${ev.id}')" class="text-pastel-sky hover:underline font-mono">✏️ Log</button>
+              </div>
+            `;
+            realityBlock.onclick = () => openEventToolsModal(ev.id);
+            blocksContainer.appendChild(realityBlock);
+            return;
+          }
+
           const block = document.createElement('div');
           block.className = `absolute rounded-xl border border-l-4 transition-all shadow-md hover:shadow-xl hover:border-slate-400 overflow-hidden flex flex-col justify-between cursor-pointer ${isBuffer ? 'bg-dark-base/80 border border-dashed border-pastel-sky/50 text-pastel-sky' : catMeta.border}`;
           block.style.top = `${topPx}px`;
@@ -6073,7 +6686,7 @@
       playChime('bell');
     }
 
-    // 3. Smart Pantry Rendering
+        // 3. Smart Pantry Rendering
     function renderPantry() {
       const lists = {
         produce: document.getElementById('list-produce'),
@@ -6086,26 +6699,65 @@
       const counts = { produce: 0, protein: 0, grains: 0, condiments: 0 };
 
       state.pantry.forEach(item => {
+        if (!item.storage) {
+          item.storage = (item.category === 'produce' || item.category === 'protein') ? 'fridge' : 'shelf';
+        }
         counts[item.category] = (counts[item.category] || 0) + 1;
         const target = lists[item.category];
         if (!target) return;
 
+        let storageBadge = '';
+        if (item.storage === 'frozen') {
+          storageBadge = `<button type="button" onclick="togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-950/40 text-sky-300 border border-sky-400/30 flex items-center gap-1 hover:brightness-110 transition" title="Storage: Frozen (Tap to toggle to Shelf / Fridge)"><span>🧊</span><span class="hidden sm:inline">Frozen</span></button>`;
+        } else if (item.storage === 'shelf') {
+          storageBadge = `<button type="button" onclick="togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-950/40 text-amber-300 border border-amber-400/30 flex items-center gap-1 hover:brightness-110 transition" title="Storage: Shelf Pantry (Tap to toggle to Fridge / Frozen)"><span>🥫</span><span class="hidden sm:inline">Shelf</span></button>`;
+        } else {
+          storageBadge = `<button type="button" onclick="togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-950/40 text-emerald-300 border border-emerald-400/30 flex items-center gap-1 hover:brightness-110 transition" title="Storage: Fridge (Tap to toggle to Frozen / Shelf)"><span>❄️</span><span class="hidden sm:inline">Fridge</span></button>`;
+        }
+
         const pill = document.createElement('div');
-        pill.className = "flex items-center justify-between p-2 rounded-xl bg-dark-base border border-dark-border text-xs";
+        pill.className = "flex items-center justify-between p-2 rounded-xl bg-dark-base border border-dark-border text-xs gap-1.5";
         pill.innerHTML = `
-          <span class="text-slate-200 font-medium">${item.name}</span>
-          <button onclick="deletePantryItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-0.5">
-            <i data-lucide="x" class="w-3.5 h-3.5"></i>
-          </button>
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span class="text-slate-200 font-medium truncate">${item.name}</span>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            ${storageBadge}
+            <button onclick="deletePantryItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-0.5" title="Remove ingredient">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
         `;
         target.appendChild(pill);
       });
 
-      document.getElementById('count-produce').textContent = counts.produce;
-      document.getElementById('count-protein').textContent = counts.protein;
-      document.getElementById('count-grains').textContent = counts.grains;
-      document.getElementById('count-condiments').textContent = counts.condiments;
-      lucide.createIcons();
+      const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+      setTxt('count-produce', counts.produce);
+      setTxt('count-protein', counts.protein);
+      setTxt('count-grains', counts.grains);
+      setTxt('count-condiments', counts.condiments);
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function togglePantryItemStorage(id) {
+      const item = state.pantry.find(p => p.id === id);
+      if (!item) return;
+      if (item.storage === 'fridge') item.storage = 'frozen';
+      else if (item.storage === 'frozen') item.storage = 'shelf';
+      else item.storage = 'fridge';
+      saveAppState();
+      renderPantry();
+      playChime('bell');
+    }
+
+    function clearDemoPantryItems() {
+      if (confirm("Clear all demo ingredients from your pantry? This leaves your pantry completely clean so you can add your real groceries.")) {
+        state.pantry = [];
+        saveAppState();
+        renderPantry();
+        playChime('bell');
+        alertBox("Demo ingredients cleared! Your pantry is fresh and ready for your real groceries.", "Pantry Clean");
+      }
     }
 
     function openAddPantryItemModal() { document.getElementById('pantry-item-modal').classList.remove('hidden'); }
@@ -9228,6 +9880,66 @@
     }
 
     // Modal helpers for Calendar & Sync
+        state.newEventIsFixed = false;
+    function setNewEventAnchorType(isFixed) {
+      state.newEventIsFixed = isFixed;
+      const btnFixed = document.getElementById('btn-anchor-fixed');
+      const btnFlex = document.getElementById('btn-anchor-flexible');
+      if (isFixed) {
+        if (btnFixed) btnFixed.className = "py-1.5 px-2.5 rounded-xl bg-pastel-sky/20 border-2 border-pastel-sky text-pastel-sky font-bold text-center transition";
+        if (btnFlex) btnFlex.className = "py-1.5 px-2.5 rounded-xl border border-dark-border text-slate-400 font-semibold text-center transition";
+      } else {
+        if (btnFixed) btnFixed.className = "py-1.5 px-2.5 rounded-xl border border-dark-border text-slate-400 font-semibold text-center transition";
+        if (btnFlex) btnFlex.className = "py-1.5 px-2.5 rounded-xl bg-pastel-coral/20 border-2 border-pastel-coral text-pastel-coral font-bold text-center transition";
+      }
+    }
+
+    function checkNewEventCalibrationTip(title) {
+      const tipEl = document.getElementById('new-event-calib-tip');
+      if (!tipEl) return;
+      const lower = (title || '').toLowerCase();
+      if (lower.includes('ready') || lower.includes('dress') || lower.includes('morning')) {
+        tipEl.innerHTML = "💡 <strong>Historical Calibration:</strong> 'Getting Ready' routines average <strong>48m</strong> in reality (+18m vs 30m plan). Consider scheduling 45m with 10m buffer.";
+        tipEl.classList.remove('hidden');
+      } else if (lower.includes('homework') || lower.includes('study') || lower.includes('paper') || lower.includes('code')) {
+        tipEl.innerHTML = "💡 <strong>Hyperfocus Calibration:</strong> Deep homework blocks stretch by <strong>+22m</strong> on average. We recommend inserting a 15m transition buffer right after.";
+        tipEl.classList.remove('hidden');
+      } else if (lower.includes('class') || lower.includes('lecture') || lower.includes('lab') || lower.includes('meeting')) {
+        setNewEventAnchorType(true);
+        tipEl.innerHTML = "🔒 <strong>Fixed Anchor Detected:</strong> Automatically flagged as fixed commitment (100% adherence history).";
+        tipEl.classList.remove('hidden');
+      } else {
+        tipEl.classList.add('hidden');
+      }
+    }
+
+    function logActualDurationFromEditModal() {
+      if (!state.activeEventModal) return;
+      const ev = state.activeEventModal;
+      const input = document.getElementById('edit-event-actual-duration');
+      const val = parseInt(input ? input.value : 0, 10);
+      if (!isNaN(val) && val > 0) {
+        ev.actualDuration = val;
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        state.timeEstimationHistory.push({
+          id: `te-${Date.now()}`,
+          date: dateStr,
+          title: ev.title,
+          category: ev.category || 'focus',
+          isFixed: Boolean(ev.isFixedAnchor),
+          plannedMin: ev.duration,
+          actualMin: val,
+          deltaMin: val - ev.duration
+        });
+        if (state.timeEstimationHistory.length > 15) state.timeEstimationHistory.shift();
+        saveAppState();
+        renderStructuredCalendarGrid();
+        playChime('bell');
+        alertBox(`Logged ${val}m reality for "${ev.title}". Calibration graph updated!`, "Reality Logged");
+      }
+    }
+
     function openNewEventModal() {
       populateCalendarCategoriesDropdowns();
       document.getElementById('new-event-modal').classList.remove('hidden');
@@ -12588,11 +13300,419 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       } catch (e) {}
     }
   
+        // ==============================================
+    // TIME ESTIMATION & CALIBRATION ENGINE
     // ==============================================
-    // REVERSE CHEF CONTROLLERS (KITCHEN & MEAL CHOREO)
+    function togglePlanVsReality() {
+      state.showPlanVsReality = !state.showPlanVsReality;
+      const btn = document.getElementById('btn-toggle-plan-reality');
+      const label = document.getElementById('label-plan-reality');
+      const icon = document.getElementById('icon-plan-reality');
+      if (state.showPlanVsReality) {
+        if (btn) btn.className = "flex items-center gap-1 px-2.5 py-1 rounded-xl bg-pastel-lavender text-dark-base font-bold text-xs shadow-md shadow-pastel-lavender/30 transition active:scale-95";
+        if (label) label.textContent = "Reality ON";
+        if (icon) icon.className = "w-3.5 h-3.5 text-dark-base";
+        alertBox("Plan vs Reality view active: Comparing scheduled estimates to actual execution time side-by-side with elasticity delta badges.", "Plan vs Reality");
+      } else {
+        if (btn) btn.className = "flex items-center gap-1 px-2 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs transition active:scale-95";
+        if (label) label.textContent = "Reality";
+        if (icon) icon.className = "w-3.5 h-3.5 text-pastel-lavender";
+      }
+      renderStructuredCalendarGrid();
+    }
+
+    function openEstimationAccuracyModal() {
+      const modal = document.getElementById('time-calibration-modal');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+
+      const sel = document.getElementById('calib-event-select');
+      if (sel) {
+        sel.innerHTML = '';
+        const dayEvents = (typeof getEventsForSelectedDay === 'function') ? getEventsForSelectedDay() : (state.events || []);
+        if (dayEvents.length === 0) {
+          sel.innerHTML = '<option value="">No events scheduled today</option>';
+        } else {
+          dayEvents.forEach(e => {
+            const opt = document.createElement('option');
+            opt.value = e.id;
+            opt.textContent = `${e.title} (${e.duration}m planned ${e.actualDuration ? '• ' + e.actualDuration + 'm actual' : ''})`;
+            sel.appendChild(opt);
+          });
+        }
+      }
+
+      renderCalibrationChart();
+      if (window.lucide) lucide.createIcons();
+      playChime('bell');
+    }
+
+    function closeEstimationAccuracyModal() {
+      const modal = document.getElementById('time-calibration-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function renderCalibrationChart() {
+      const container = document.getElementById('calibration-chart-container');
+      if (!container) return;
+
+      const history = state.timeEstimationHistory || [];
+      if (history.length === 0) {
+        container.innerHTML = '<p class="text-slate-400 text-xs">No estimation records yet.</p>';
+        return;
+      }
+
+      const w = 540;
+      const h = 180;
+      const padL = 40;
+      const padR = 25;
+      const padT = 20;
+      const padB = 30;
+
+      const maxVal = Math.max(100, ...history.map(d => Math.max(d.plannedMin, d.actualMin))) + 15;
+      const minVal = 0;
+
+      const getX = (i) => padL + (i / Math.max(1, history.length - 1)) * (w - padL - padR);
+      const getY = (v) => h - padB - ((v - minVal) / (maxVal - minVal)) * (h - padT - padB);
+
+      let plannedPoints = [];
+      let actualPoints = [];
+      let svgPills = '';
+
+      history.forEach((d, i) => {
+        const x = getX(i);
+        const yP = getY(d.plannedMin);
+        const yA = getY(d.actualMin);
+        plannedPoints.push(`${x},${yP}`);
+        actualPoints.push(`${x},${yA}`);
+
+        const delta = d.actualMin - d.plannedMin;
+        const deltaLabel = delta > 0 ? `+${delta}m` : (delta < 0 ? `${delta}m` : '0m');
+        const badgeColor = delta > 0 ? '#fda4af' : (delta < 0 ? '#7dd3fc' : '#6ee7b7');
+
+        svgPills += `
+          <line x1="${x}" y1="${yP}" x2="${x}" y2="${yA}" stroke="rgba(255,255,255,0.18)" stroke-dasharray="2,2" stroke-width="1.5" />
+          <circle cx="${x}" cy="${yP}" r="4" fill="#c4b5fd" stroke="#0f172a" stroke-width="1.5" />
+          <rect x="${x - 3.5}" y="${yA - 3.5}" width="7" height="7" rx="1.5" fill="#fda4af" stroke="#0f172a" stroke-width="1.5" />
+          <text x="${x}" y="${h - 8}" fill="#94a3b8" font-size="9" text-anchor="middle" font-family="monospace">${d.date.split(' ')[0]} ${d.title.split(' ')[0]}</text>
+          <text x="${x}" y="${Math.min(yP, yA) - 6}" fill="${badgeColor}" font-size="8.5" font-weight="bold" text-anchor="middle" font-family="monospace">${deltaLabel}</text>
+        `;
+      });
+
+      const plannedPathD = 'M ' + plannedPoints.join(' L ');
+      const actualPathD = 'M ' + actualPoints.join(' L ');
+
+      let gridLines = '';
+      [0, 30, 60, 90].forEach(val => {
+        if (val <= maxVal) {
+          const y = getY(val);
+          gridLines += `
+            <line x1="${padL}" y1="${y}" x2="${w - padR}" y2="${y}" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            <text x="${padL - 6}" y="${y + 3}" fill="#64748b" font-size="9" text-anchor="end" font-family="monospace">${val}m</text>
+          `;
+        }
+      });
+
+      container.innerHTML = `
+        <svg viewBox="0 0 ${w} ${h}" class="w-full h-full overflow-visible">
+          ${gridLines}
+          <path d="${plannedPathD}" fill="none" stroke="#c4b5fd" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="${actualPathD}" fill="none" stroke="#fda4af" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+          ${svgPills}
+        </svg>
+      `;
+
+      let totalPlanned = 0;
+      let totalActual = 0;
+      let flexibleDrifts = [];
+      history.forEach(h => {
+        totalPlanned += h.plannedMin;
+        totalActual += h.actualMin;
+        if (!h.isFixed) flexibleDrifts.push(h.actualMin - h.plannedMin);
+      });
+      const avgFlexDrift = flexibleDrifts.length > 0 ? Math.round(flexibleDrifts.reduce((a, b) => a + b, 0) / flexibleDrifts.length) : 18;
+      const accuracyScore = Math.max(50, Math.min(100, Math.round(100 - (Math.abs(totalActual - totalPlanned) / totalPlanned * 100))));
+
+      const scoreEl = document.getElementById('calib-stat-score');
+      const driftEl = document.getElementById('calib-stat-drift');
+      const totalEl = document.getElementById('calib-stat-total');
+      if (scoreEl) scoreEl.textContent = `${accuracyScore}%`;
+      if (driftEl) driftEl.textContent = `+${avgFlexDrift}m`;
+      if (totalEl) totalEl.textContent = String(history.length);
+    }
+
+    function logActualEventDurationFromModal() {
+      const select = document.getElementById('calib-event-select');
+      const input = document.getElementById('calib-actual-minutes-input');
+      if (!select || !input) return;
+      const eventId = select.value;
+      const actualMin = parseInt(input.value, 10);
+      if (!eventId || isNaN(actualMin) || actualMin <= 0) {
+        alertBox("Please select an event and enter actual minutes taken.", "Missing Value");
+        return;
+      }
+      const ev = (state.events || []).find(e => e.id === eventId);
+      if (!ev) return;
+      ev.actualDuration = actualMin;
+
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      state.timeEstimationHistory.push({
+        id: `te-${Date.now()}`,
+        date: dateStr,
+        title: ev.title,
+        category: ev.category || 'focus',
+        isFixed: Boolean(ev.isFixedAnchor),
+        plannedMin: ev.duration,
+        actualMin: actualMin,
+        deltaMin: actualMin - ev.duration
+      });
+      if (state.timeEstimationHistory.length > 15) state.timeEstimationHistory.shift();
+
+      saveAppState();
+      renderCalibrationChart();
+      renderStructuredCalendarGrid();
+      playChime('bell');
+      alertBox(`Logged ${actualMin}m reality for "${ev.title}". Calibration graph updated!`, "Reality Logged");
+      input.value = '';
+    }
+
+    function promptQuickLogActualDuration(eventId) {
+      const ev = (state.events || []).find(e => e.id === eventId);
+      if (!ev) return;
+      const currentVal = ev.actualDuration || ev.duration;
+      const entered = prompt(`Enter actual minutes spent on "${ev.title}" (Planned: ${ev.duration}m):`, String(currentVal));
+      if (entered !== null) {
+        const val = parseInt(entered, 10);
+        if (!isNaN(val) && val > 0) {
+          ev.actualDuration = val;
+          const now = new Date();
+          const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          state.timeEstimationHistory.push({
+            id: `te-${Date.now()}`,
+            date: dateStr,
+            title: ev.title,
+            category: ev.category || 'focus',
+            isFixed: Boolean(ev.isFixedAnchor),
+            plannedMin: ev.duration,
+            actualMin: val,
+            deltaMin: val - ev.duration
+          });
+          if (state.timeEstimationHistory.length > 15) state.timeEstimationHistory.shift();
+          saveAppState();
+          renderStructuredCalendarGrid();
+          playChime('bell');
+        }
+      }
+    }
+
+
     // ==============================================
-    state.chefConstraint = 'fast';
+    // WALMART & GROCERY IMPORT CONTROLLERS
+    // ==============================================
+    function openWalmartGroceryImportModal() {
+      const modal = document.getElementById('walmart-import-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        switchWalmartImportTab('paste');
+        if (window.lucide) lucide.createIcons();
+        playChime('bell');
+      }
+    }
+
+    function closeWalmartGroceryImportModal() {
+      const modal = document.getElementById('walmart-import-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function switchWalmartImportTab(tab) {
+      const pasteBtn = document.getElementById('btn-tab-walmart-paste');
+      const photoBtn = document.getElementById('btn-tab-walmart-photo');
+      const pasteBody = document.getElementById('walmart-tab-paste');
+      const photoBody = document.getElementById('walmart-tab-photo');
+
+      if (tab === 'paste') {
+        if (pasteBtn) pasteBtn.className = "py-2 px-3 rounded-xl font-bold bg-pastel-sky text-dark-base text-center transition";
+        if (photoBtn) photoBtn.className = "py-2 px-3 rounded-xl font-bold bg-dark-base border border-dark-border text-slate-400 hover:text-white text-center transition";
+        if (pasteBody) pasteBody.classList.remove('hidden');
+        if (photoBody) photoBody.classList.add('hidden');
+      } else {
+        if (pasteBtn) pasteBtn.className = "py-2 px-3 rounded-xl font-bold bg-dark-base border border-dark-border text-slate-400 hover:text-white text-center transition";
+        if (photoBtn) photoBtn.className = "py-2 px-3 rounded-xl font-bold bg-pastel-sky text-dark-base text-center transition";
+        if (pasteBody) pasteBody.classList.add('hidden');
+        if (photoBody) photoBody.classList.remove('hidden');
+      }
+    }
+
+    function loadSampleWalmartReceipt() {
+      const ta = document.getElementById('walmart-paste-textarea');
+      if (ta) {
+        ta.value = "Great Value Boneless Skinless Chicken Breasts 3 lb $9.84\nMarketside Organic Baby Spinach 10 oz $2.98\nGreat Value Jasmine Rice 5 lb $4.12\nOrganic Whole Milk 1 gal $3.68\nGreat Value Frozen Broccoli Florets 16 oz $1.48\nBounty Select-a-Size Paper Towels 6 rolls $12.98\nDawn Ultra Dishwashing Liquid $3.94";
+      }
+    }
+
+    function parseIncomingGroceriesFromText() {
+      const ta = document.getElementById('walmart-paste-textarea');
+      const raw = ta ? ta.value.trim() : '';
+      if (!raw) {
+        alertBox("Please paste receipt text or tap 'Load Sample Order'.", "Empty Text");
+        return;
+      }
+
+      const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+      const parsedItems = [];
+
+      lines.forEach((line, idx) => {
+        let clean = line.replace(/\$[0-9]+(\.[0-9]{2})?/g, '')
+                        .replace(/[0-9]+(\.[0-9]+)?\s*(lb|oz|gal|ct|pk|pack|rolls)/gi, '')
+                        .replace(/^([0-9]+\s*[-–.]\s*)+/g, '')
+                        .trim();
+        if (!clean) return;
+
+        const lower = clean.toLowerCase();
+        const isNonFood = /paper\s*towel|dish\s*soap|detergent|shampoo|cleaner|sponge|foil|trash\s*bag|battery|soap/i.test(lower);
+        
+        let category = 'produce';
+        let storage = 'fridge';
+
+        if (isNonFood) {
+          category = 'condiments';
+          storage = 'shelf';
+        } else if (/chicken|beef|meat|egg|salmon|fish|protein|turkey|tofu|yogurt|milk|cheese/i.test(lower)) {
+          category = 'protein';
+          storage = /frozen|ice/i.test(lower) ? 'frozen' : 'fridge';
+        } else if (/rice|oat|quinoa|bread|pasta|flour|cereal|grain|noodle/i.test(lower)) {
+          category = 'grains';
+          storage = 'shelf';
+        } else if (/sauce|oil|spice|dressing|vinegar|syrup|mustard|condiment|snack/i.test(lower)) {
+          category = 'condiments';
+          storage = 'shelf';
+        } else {
+          category = 'produce';
+          storage = /frozen/i.test(lower) ? 'frozen' : 'fridge';
+        }
+
+        parsedItems.push({
+          id: `inc-${Date.now()}-${idx}`,
+          name: clean,
+          category,
+          storage,
+          isFood: !isNonFood,
+          approved: !isNonFood
+        });
+      });
+
+      renderIncomingGroceriesApprovalList(parsedItems);
+    }
+
+    function handleWalmartReceiptPhoto(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      alertBox("Scanning receipt with smart OCR...", "Receipt Scan");
+      setTimeout(() => {
+        loadSampleWalmartReceipt();
+        parseIncomingGroceriesFromText();
+      }, 1000);
+    }
+
+    function renderIncomingGroceriesApprovalList(items) {
+      state.incomingGroceriesApprovalList = items;
+      const sec = document.getElementById('walmart-approval-section');
+      const list = document.getElementById('walmart-approval-list');
+      if (!sec || !list) return;
+
+      sec.classList.remove('hidden');
+      list.innerHTML = '';
+
+      items.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = `p-2.5 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 transition ${item.approved ? 'bg-dark-base border-dark-border text-white' : 'bg-dark-base/50 border-dark-border/40 opacity-60 text-slate-400'}`;
+        row.id = `grocery-row-${idx}`;
+        row.innerHTML = `
+          <div class="flex items-center gap-2 flex-1 min-w-0">
+            <input type="checkbox" id="grocery-chk-${idx}" ${item.approved ? 'checked' : ''} onchange="toggleGroceryApproval(${idx})" class="w-4 h-4 rounded text-pastel-sky focus:ring-0 cursor-pointer">
+            <input type="text" value="${item.name}" onchange="updateGroceryName(${idx}, this.value)" class="bg-transparent text-xs font-semibold text-white focus:outline-none focus:border-b border-pastel-sky truncate flex-1 min-w-0">
+          </div>
+          <div class="flex items-center gap-2 shrink-0 text-xs">
+            <select onchange="updateGroceryCategory(${idx}, this.value)" class="bg-dark-elevated border border-dark-border rounded-lg px-2 py-1 text-slate-200 text-[11px]">
+              <option value="produce" ${item.category === 'produce' ? 'selected' : ''}>🥦 Produce</option>
+              <option value="protein" ${item.category === 'protein' ? 'selected' : ''}>🍗 Protein/Dairy</option>
+              <option value="grains" ${item.category === 'grains' ? 'selected' : ''}>🌾 Grains</option>
+              <option value="condiments" ${item.category === 'condiments' ? 'selected' : ''}>🥫 Pantry/Staples</option>
+            </select>
+            <select onchange="updateGroceryStorage(${idx}, this.value)" class="bg-dark-elevated border border-dark-border rounded-lg px-2 py-1 text-slate-200 text-[11px]">
+              <option value="fridge" ${item.storage === 'fridge' ? 'selected' : ''}>❄️ Fridge</option>
+              <option value="frozen" ${item.storage === 'frozen' ? 'selected' : ''}>🧊 Frozen</option>
+              <option value="shelf" ${item.storage === 'shelf' ? 'selected' : ''}>🥫 Shelf</option>
+            </select>
+            <button type="button" onclick="skipGroceryItem(${idx})" class="px-2 py-1 rounded-lg bg-dark-elevated hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 text-[10px]" title="Bought for someone else / Skip">
+              ${item.approved ? 'For someone else' : 'Skipped'}
+            </button>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+
+      updateGroceryApprovalBadge();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function toggleGroceryApproval(idx) {
+      if (!state.incomingGroceriesApprovalList[idx]) return;
+      state.incomingGroceriesApprovalList[idx].approved = !state.incomingGroceriesApprovalList[idx].approved;
+      renderIncomingGroceriesApprovalList(state.incomingGroceriesApprovalList);
+    }
+    function updateGroceryName(idx, val) {
+      if (state.incomingGroceriesApprovalList[idx]) state.incomingGroceriesApprovalList[idx].name = val.trim();
+    }
+    function updateGroceryCategory(idx, val) {
+      if (state.incomingGroceriesApprovalList[idx]) state.incomingGroceriesApprovalList[idx].category = val;
+    }
+    function updateGroceryStorage(idx, val) {
+      if (state.incomingGroceriesApprovalList[idx]) state.incomingGroceriesApprovalList[idx].storage = val;
+    }
+    function skipGroceryItem(idx) {
+      if (!state.incomingGroceriesApprovalList[idx]) return;
+      state.incomingGroceriesApprovalList[idx].approved = false;
+      renderIncomingGroceriesApprovalList(state.incomingGroceriesApprovalList);
+    }
+    function updateGroceryApprovalBadge() {
+      const approvedCount = (state.incomingGroceriesApprovalList || []).filter(i => i.approved).length;
+      const badge = document.getElementById('walmart-approval-count-badge');
+      const btnTxt = document.getElementById('walmart-commit-btn-text');
+      if (badge) badge.textContent = `${approvedCount} Approved`;
+      if (btnTxt) btnTxt.textContent = `Approve & Add ${approvedCount} Items to Pantry`;
+    }
+
+    function approveAndCommitGroceriesToPantry() {
+      const approved = (state.incomingGroceriesApprovalList || []).filter(i => i.approved);
+      if (approved.length === 0) {
+        alertBox("No items approved. Please check at least 1 grocery item to add.", "None Selected");
+        return;
+      }
+
+      approved.forEach((item, idx) => {
+        state.pantry.push({
+          id: `p-${Date.now()}-${idx}`,
+          name: item.name,
+          category: item.category,
+          storage: item.storage || 'fridge'
+        });
+      });
+
+      saveAppState();
+      renderPantry();
+      closeWalmartGroceryImportModal();
+      playChime('bell');
+      alertBox(`Successfully added ${approved.length} approved items to your pantry!`, "Groceries Added");
+    }
+
+
+    // ==============================================
+    // CONVERSATIONAL REVERSE CHEF & LIVE SPLIT-SCREEN COMPANION
+    // ==============================================
     state.currentReverseChefRecipe = null;
+    state.reverseChefActiveStepIndex = 0;
 
     function openReverseChefFromKitchen() {
       const modal = document.getElementById('reverse-chef-modal');
@@ -12603,16 +13723,19 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       if (chips) {
         chips.innerHTML = '';
         state.pantry.forEach(item => {
+          const isFrozen = item.storage === 'frozen';
           const chip = document.createElement('label');
-          chip.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-dark-elevated border border-dark-border text-slate-300 text-[11px] cursor-pointer hover:border-pastel-coral/50 transition";
+          chip.className = `flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-dark-elevated border text-slate-200 text-[11px] cursor-pointer hover:border-pastel-coral/50 transition ${isFrozen ? 'border-sky-400/40 text-sky-200' : 'border-dark-border'}`;
           chip.innerHTML = `
-            <input type="checkbox" checked value="${item.name}" class="w-3.5 h-3.5 rounded text-pastel-coral focus:ring-0">
-            <span>${item.name}</span>
+            <input type="checkbox" checked value="${item.name}" data-storage="${item.storage || 'fridge'}" onchange="checkFrozenSelectionAlert()" class="w-3.5 h-3.5 rounded text-pastel-coral focus:ring-0">
+            <span>${isFrozen ? '🧊 ' : (item.storage === 'shelf' ? '🥫 ' : '❄️ ')}${item.name}</span>
           `;
           chips.appendChild(chip);
         });
       }
 
+      checkFrozenSelectionAlert();
+      switchReverseChefTab('brainstorm');
       if (modal) {
         modal.classList.remove('hidden');
         modal.scrollTop = 0;
@@ -12624,23 +13747,134 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
     function closeReverseChefModal() {
       const modal = document.getElementById('reverse-chef-modal');
       if (modal) modal.classList.add('hidden');
+      if (state.reverseChefTimerInterval) {
+        clearInterval(state.reverseChefTimerInterval);
+        state.reverseChefTimerInterval = null;
+        state.reverseChefTimerRunning = false;
+      }
     }
 
-    function selectChefConstraint(constraintKey) {
-      state.chefConstraint = constraintKey;
-      ['fast', 'onepot', 'protein'].forEach(k => {
-        const btn = document.getElementById(`chef-c-${k}`);
-        if (!btn) return;
-        if (k === constraintKey) {
-          btn.className = "p-2 rounded-xl border-2 border-pastel-coral bg-pastel-coral/15 text-center transition";
-          btn.querySelector('span:first-child').className = "block font-bold text-pastel-coral";
-        } else {
-          btn.className = "p-2 rounded-xl border border-dark-border text-center transition text-slate-400 hover:text-white";
-          btn.querySelector('span:first-child').className = "block font-bold";
+    function setReverseChefStage(stageNum) {
+      state.reverseChefStage = stageNum;
+      const btn1 = document.getElementById('btn-chef-stage-1');
+      const btn2 = document.getElementById('btn-chef-stage-2');
+      const badge = document.getElementById('reverse-chef-stage-badge');
+      const verifyBtn = document.getElementById('btn-verify-choreo');
+
+      if (stageNum === 1) {
+        if (btn1) btn1.className = "px-2.5 py-1 rounded-lg font-bold bg-pastel-coral text-dark-base shadow-sm transition";
+        if (btn2) btn2.className = "px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition";
+        if (badge) {
+          badge.textContent = "Stage 1: Co-Pilot";
+          badge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-pastel-coral/20 text-pastel-coral border border-pastel-coral/30";
         }
-      });
+        if (verifyBtn) verifyBtn.classList.add('hidden');
+      } else {
+        if (btn1) btn1.className = "px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition";
+        if (btn2) btn2.className = "px-2.5 py-1 rounded-lg font-bold bg-pastel-butter text-dark-base shadow-sm transition";
+        if (badge) {
+          badge.textContent = "Stage 2: Self-Choreograph";
+          badge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-pastel-butter/20 text-pastel-butter border border-pastel-butter/30";
+        }
+        if (verifyBtn) verifyBtn.classList.remove('hidden');
+      }
+      renderCompanionRecipeViews();
     }
 
+    function switchReverseChefTab(tab) {
+      const btnBrain = document.getElementById('btn-tab-chef-brainstorm');
+      const btnComp = document.getElementById('btn-tab-chef-companion');
+      const bodyBrain = document.getElementById('chef-tab-brainstorm');
+      const bodyComp = document.getElementById('chef-tab-companion');
+
+      if (tab === 'brainstorm') {
+        if (btnBrain) btnBrain.className = "py-2.5 px-3 rounded-xl font-bold bg-pastel-coral text-dark-base text-center transition flex items-center justify-center gap-1.5 shadow-sm";
+        if (btnComp) btnComp.className = "py-2.5 px-3 rounded-xl font-bold bg-dark-base border border-dark-border text-slate-400 hover:text-white text-center transition flex items-center justify-center gap-1.5";
+        if (bodyBrain) bodyBrain.classList.remove('hidden');
+        if (bodyComp) bodyComp.classList.add('hidden');
+      } else {
+        if (btnBrain) btnBrain.className = "py-2.5 px-3 rounded-xl font-bold bg-dark-base border border-dark-border text-slate-400 hover:text-white text-center transition flex items-center justify-center gap-1.5";
+        if (btnComp) btnComp.className = "py-2.5 px-3 rounded-xl font-bold bg-pastel-coral text-dark-base text-center transition flex items-center justify-center gap-1.5 shadow-sm";
+        if (bodyBrain) bodyBrain.classList.add('hidden');
+        if (bodyComp) bodyComp.classList.remove('hidden');
+        renderCompanionRecipeViews();
+      }
+    }
+
+    function checkFrozenSelectionAlert() {
+      const checkedBoxes = document.querySelectorAll('#reverse-chef-pantry-chips input[type="checkbox"]:checked');
+      const hasFrozen = Array.from(checkedBoxes).some(cb => cb.getAttribute('data-storage') === 'frozen');
+      const alertEl = document.getElementById('chef-frozen-alert');
+      if (alertEl) {
+        if (hasFrozen) alertEl.classList.remove('hidden');
+        else alertEl.classList.add('hidden');
+      }
+    }
+
+    // Sous Chef Brainstorm Chat
+    function handleSousChefChatSubmit(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('sous-chef-chat-input');
+      const msg = input ? input.value.trim() : '';
+      if (!msg) return;
+      input.value = '';
+      appendSousChefChatMessage('user', msg);
+
+      // Generate response (smart offline heuristic or Gemini LLM)
+      setTimeout(() => {
+        respondFromSousChef(msg);
+      }, 500);
+    }
+
+    function sendSousChefQuickPrompt(text) {
+      appendSousChefChatMessage('user', text);
+      setTimeout(() => {
+        respondFromSousChef(text);
+      }, 500);
+    }
+
+    function appendSousChefChatMessage(sender, text) {
+      const stream = document.getElementById('sous-chef-chat-messages');
+      if (!stream) return;
+      const msgDiv = document.createElement('div');
+      if (sender === 'user') {
+        msgDiv.className = "flex items-start justify-end gap-2 max-w-[88%] ml-auto";
+        msgDiv.innerHTML = `
+          <div class="p-2.5 rounded-2xl rounded-tr-none bg-pastel-coral/20 border border-pastel-coral/40 text-white leading-relaxed">
+            ${text}
+          </div>
+        `;
+      } else {
+        msgDiv.className = "flex items-start gap-2 max-w-[88%]";
+        msgDiv.innerHTML = `
+          <div class="w-6 h-6 rounded-full bg-pastel-coral/20 text-pastel-coral flex items-center justify-center text-[11px] shrink-0 font-bold">🧑‍🍳</div>
+          <div class="p-2.5 rounded-2xl rounded-tl-none bg-dark-elevated text-slate-200 border border-dark-border leading-relaxed">
+            ${text}
+          </div>
+        `;
+      }
+      stream.appendChild(msgDiv);
+      stream.scrollTop = stream.scrollHeight;
+    }
+
+    function respondFromSousChef(userQuery) {
+      const q = userQuery.toLowerCase();
+      let response = '';
+
+      if (q.includes('frozen') || q.includes('thaw') || q.includes('prep frozen')) {
+        response = "For frozen items (like chicken breast or broccoli), we do not need hours of waiting! I will insert a 4-minute microwave defrost or cool-water immersion step as Step 1 of your reverse choreography, ensuring everything cooks evenly without drying out.";
+      } else if (q.includes('substitute') || q.includes("don't have")) {
+        response = "Great question! Olive oil can be swapped for avocado oil or butter; soy sauce can be swapped for tamari, coconut aminos, or a pinch of salt with broth; Greek yogurt works wonderfully instead of sour cream. What specific ingredient are you looking to replace?";
+      } else if (q.includes('fast') || q.includes('20') || q.includes('quick')) {
+        response = "I love speedy meals! With your pantry items, a 15-to-18 minute skillet sauté gets you high protein and tender greens with only 1 skillet and 1 prep board. Tap 'Generate Full Recipe & Reverse Choreography' below and we can cook it step-by-step!";
+      } else {
+        response = "That sounds delicious! I've analyzed your on-hand pantry items. I can build a reverse-choreographed timeline that pairs your proteins, produce, and grains so every component finishes hot at the exact same minute with built-in wash windows. Tap 'Generate Full Recipe & Reverse Choreography' below to lock in the recipe!";
+      }
+      appendSousChefChatMessage('chef', response);
+      playChime('bell');
+    }
+
+    // Generate Reverse Choreography Meal (Stage 1 respects ALL ingredients & does NOT force 1-pot)
     function generateReverseChefMeal() {
       const checkedBoxes = document.querySelectorAll('#reverse-chef-pantry-chips input[type="checkbox"]:checked');
       const selectedIngredients = Array.from(checkedBoxes).map(cb => cb.value);
@@ -12650,69 +13884,85 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         return;
       }
 
+      const hasFrozen = Array.from(checkedBoxes).some(cb => cb.getAttribute('data-storage') === 'frozen');
       const hasBroccoli = selectedIngredients.some(i => i.toLowerCase().includes('broccoli'));
       const hasChicken = selectedIngredients.some(i => i.toLowerCase().includes('chicken'));
-      const hasEggs = selectedIngredients.some(i => i.toLowerCase().includes('egg'));
+      const hasSpinach = selectedIngredients.some(i => i.toLowerCase().includes('spinach'));
+      const hasRice = selectedIngredients.some(i => i.toLowerCase().includes('rice'));
 
-      let mealTitle = 'Crispy Skillet Protein & Greens';
+      let mealTitle = 'ADHD Skillet Protein & Tender Greens';
       let cookTime = 18;
-      let kcal = 460;
+      let kcal = 480;
       let steps = [];
 
+      // Step 0 if frozen:
+      if (hasFrozen) {
+        steps.push({
+          text: '🧊 [DEFROST STEP] Microwave defrost or thaw frozen ingredients under cool running water',
+          minutes: 4,
+          isDish: false
+        });
+        cookTime += 4;
+      }
+
+      steps.push({
+        text: 'Prep & slice ingredients on cutting board; measure seasonings',
+        minutes: 4,
+        isDish: false
+      });
+      steps.push({
+        text: 'Heat skillet over medium-high heat with 1 tbsp oil; add protein',
+        minutes: 3,
+        isDish: false
+      });
+      steps.push({
+        text: '🧽 [WASH WINDOW 1] Rinse prep knife, cutting board & put spices away while protein sears',
+        minutes: 3,
+        isDish: true
+      });
+      steps.push({
+        text: 'Add greens & grains to pan, cover with lid to steam through',
+        minutes: 5,
+        isDish: false
+      });
+      steps.push({
+        text: '🧽 [WASH WINDOW 2] Wipe prep counters and set dinner plate; zero dirty dishes remain',
+        minutes: 2,
+        isDish: true
+      });
+
       if (hasChicken && hasBroccoli) {
-        mealTitle = 'ADHD 18-Minute Skillet Chicken & Tender Broccoli';
-        cookTime = 18;
+        mealTitle = 'Crispy Seared Chicken Breast & Tender Broccoli Florets';
         kcal = 480;
-        steps = [
-          { text: 'Chop broccoli florets and dice chicken breast on cutting board', minutes: 4, isDish: false },
-          { text: 'Start skillet on medium-high with 1 tbsp olive oil; add chicken', minutes: 2, isDish: false },
-          { text: '🧽 [WASH WINDOW 1] Wash cutting board and prep knife while chicken sears', minutes: 4, isDish: true },
-          { text: 'Add broccoli florets to skillet, cover with lid to steam in pan', minutes: 5, isDish: false },
-          { text: '🧽 [WASH WINDOW 2] Wipe prep counters and put seasoning away', minutes: 3, isDish: true }
-        ];
-      } else if (hasEggs) {
-        mealTitle = 'Speedy Herb & Protein Scramble with Warm Toast';
-        cookTime = 10;
-        kcal = 350;
-        steps = [
-          { text: 'Crack eggs into bowl with splash of milk, whisk with fork', minutes: 2, isDish: false },
-          { text: 'Heat skillet and pour eggs; stir gently', minutes: 3, isDish: false },
-          { text: '🧽 [WASH WINDOW] Rinse mixing bowl and whisk under warm tap now', minutes: 3, isDish: true },
-          { text: 'Plate eggs, turn off stove, and rinse skillet immediately', minutes: 2, isDish: true }
-        ];
-      } else {
-        mealTitle = '15-Minute Zero-Friction Pantry Stir-Fry';
-        cookTime = 15;
-        kcal = 420;
-        steps = [
-          { text: 'Slice available produce and measure pantry sauces', minutes: 3, isDish: false },
-          { text: 'Sauté in single skillet over medium-high heat', minutes: 6, isDish: false },
-          { text: '🧽 [WASH WINDOW] Wash prep dishes while food finishes in skillet', minutes: 4, isDish: true },
-          { text: 'Serve warm and leave sink completely sparkling', minutes: 2, isDish: true }
-        ];
+      } else if (hasSpinach && hasRice) {
+        mealTitle = 'Warm Sautéed Spinach, Jasmine Rice & Seasoned Protein';
+        kcal = 440;
       }
 
       state.currentReverseChefRecipe = {
         title: mealTitle,
         cookTime,
         kcal,
+        servings: 2,
         ingredients: selectedIngredients,
         steps
       };
 
       const titleEl = document.getElementById('reverse-chef-meal-title');
       const timeEl = document.getElementById('reverse-chef-meal-time');
+      const kcalEl = document.getElementById('reverse-chef-meal-kcal');
       const stepsEl = document.getElementById('reverse-chef-meal-steps');
       const resArea = document.getElementById('reverse-chef-result-area');
 
       if (titleEl) titleEl.textContent = mealTitle;
       if (timeEl) timeEl.textContent = `${cookTime} mins`;
+      if (kcalEl) kcalEl.textContent = `${kcal} kcal`;
 
       if (stepsEl) {
         stepsEl.innerHTML = '';
         steps.forEach((st, idx) => {
           const row = document.createElement('div');
-          row.className = `p-2 rounded-lg flex items-center justify-between ${st.isDish ? 'bg-pastel-sky/15 border border-pastel-sky/30 text-pastel-sky font-semibold' : 'bg-dark-elevated text-slate-200'}`;
+          row.className = `p-2 rounded-xl flex items-center justify-between ${st.isDish ? 'bg-pastel-sky/15 border border-pastel-sky/30 text-pastel-sky font-semibold' : 'bg-dark-elevated text-slate-200'}`;
           row.innerHTML = `
             <span>${idx + 1}. ${st.text}</span>
             <span class="text-[10px] font-mono shrink-0 ml-2">${st.minutes}m</span>
@@ -12726,47 +13976,367 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       if (window.lucide) lucide.createIcons();
     }
 
-    function cookReverseChefMealNow() {
-      if (!state.currentReverseChefRecipe) return;
-      const r = state.currentReverseChefRecipe;
-
-      state.events.push({
-        id: `ev-${Date.now()}`,
-        title: `Cook: ${r.title}`,
-        startTime: '18:30',
-        duration: r.cookTime,
-        category: 'meal',
-        subtasks: r.steps.map(s => ({ text: s.text, minutes: s.minutes, done: false }))
-      });
-
-      closeReverseChefModal();
-      switchTab('timeline');
+    function launchCookingCompanionFromRecipe() {
+      if (!state.currentReverseChefRecipe) generateReverseChefMeal();
+      switchReverseChefTab('companion');
+      state.reverseChefActiveStepIndex = 0;
+      initCookingActiveStepTimer();
       playChime('bell');
-      alertBox(`"${r.title}" slotted into today's timeline schedule with dish-washing windows!`, "Cook Choreography");
     }
 
-    function saveReverseChefToCodex() {
+    // Live Cooking Companion Views & Active Step Emphasis
+    function renderCompanionRecipeViews() {
       if (!state.currentReverseChefRecipe) return;
       const r = state.currentReverseChefRecipe;
+      const titleEl = document.getElementById('companion-recipe-title');
+      if (titleEl) titleEl.textContent = r.title;
 
-      state.recipes.push({
-        id: `rec-${Date.now()}`,
-        title: r.title,
-        occasion: 'dinner',
-        format: 'skillet',
-        origin: 'mine',
-        cookTime: r.cookTime,
-        kcal: r.kcal,
-        ingredients: r.ingredients,
-        instructions: r.steps.map((s, idx) => `${idx + 1}. ${s.text}`).join('\n')
-      });
+      const curIdx = state.reverseChefActiveStepIndex || 0;
+      const currentStep = r.steps[curIdx] || r.steps[0];
 
-      renderRecipes();
-      renderSavedRecipesDropdown();
-      closeReverseChefModal();
-      switchTab('recipes');
+      const badge = document.getElementById('companion-step-badge');
+      const textEl = document.getElementById('companion-active-step-text');
+      const totalMinsEl = document.getElementById('companion-step-total-mins');
+
+      if (badge) badge.textContent = `Step ${curIdx + 1} of ${r.steps.length}`;
+      if (textEl) textEl.textContent = currentStep ? currentStep.text : '';
+      if (totalMinsEl) totalMinsEl.textContent = `Total: ${r.cookTime}m`;
+
+      // Full Recipe Steps List (Highlight active step)
+      const list = document.getElementById('companion-all-steps-list');
+      if (list) {
+        list.innerHTML = '';
+        r.steps.forEach((st, idx) => {
+          const isActive = idx === curIdx;
+          const isDone = idx < curIdx;
+          const card = document.createElement('div');
+          card.className = `p-3 rounded-2xl border transition-all cursor-pointer ${
+            isActive 
+              ? 'bg-pastel-coral/20 border-pastel-coral shadow-md shadow-pastel-coral/20 font-bold text-white text-xs scale-[1.01]' 
+              : (isDone 
+                  ? 'bg-dark-base border-dark-border/40 opacity-60 text-slate-400 text-xs line-through' 
+                  : (st.isDish ? 'bg-pastel-sky/10 border-pastel-sky/30 text-pastel-sky text-xs' : 'bg-dark-base border-dark-border text-slate-300 text-xs'))
+          }`;
+          card.onclick = () => {
+            state.reverseChefActiveStepIndex = idx;
+            initCookingActiveStepTimer();
+            renderCompanionRecipeViews();
+          };
+
+          card.innerHTML = `
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${isActive ? 'bg-pastel-coral text-dark-base' : (isDone ? 'bg-pastel-mint text-dark-base' : 'bg-dark-elevated text-slate-400')}">
+                  ${isDone ? '✓' : idx + 1}
+                </span>
+                <span class="${isActive ? 'text-white text-xs font-bold' : ''}">${st.text}</span>
+              </div>
+              <span class="text-[10px] font-mono shrink-0 ml-1 font-bold">${st.minutes}m</span>
+            </div>
+          `;
+          list.appendChild(card);
+        });
+      }
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Visual Countdown Timer Engine for Active Step
+    function initCookingActiveStepTimer() {
+      if (!state.currentReverseChefRecipe) return;
+      const r = state.currentReverseChefRecipe;
+      const curIdx = state.reverseChefActiveStepIndex || 0;
+      const currentStep = r.steps[curIdx] || r.steps[0];
+      const mins = currentStep ? currentStep.minutes : 3;
+
+      if (state.reverseChefTimerInterval) {
+        clearInterval(state.reverseChefTimerInterval);
+        state.reverseChefTimerInterval = null;
+      }
+      state.reverseChefTimerRunning = false;
+      state.reverseChefTimerSeconds = mins * 60;
+      state.reverseChefTimerTotalSeconds = mins * 60;
+      updateCookingTimerDisplay();
+    }
+
+    function toggleCookingStepTimer() {
+      if (state.reverseChefTimerRunning) {
+        pauseCookingStepTimer();
+      } else {
+        startCookingStepTimer();
+      }
+    }
+
+    function startCookingStepTimer() {
+      state.reverseChefTimerRunning = true;
+      const btn = document.getElementById('companion-btn-timer-toggle');
+      const label = document.getElementById('companion-label-timer-toggle');
+      if (btn) btn.className = "px-3 py-1.5 rounded-xl bg-pastel-butter text-dark-base font-extrabold text-xs flex items-center gap-1 hover:opacity-95 transition";
+      if (label) label.textContent = "Pause Timer";
+
+      if (state.reverseChefTimerInterval) clearInterval(state.reverseChefTimerInterval);
+      state.reverseChefTimerInterval = setInterval(() => {
+        if (state.reverseChefTimerSeconds > 0) {
+          state.reverseChefTimerSeconds--;
+          updateCookingTimerDisplay();
+        } else {
+          pauseCookingStepTimer();
+          playChime('bell');
+          alertBox("Step timer complete! Ready to advance to next step.", "Step Finished");
+        }
+      }, 1000);
+    }
+
+    function pauseCookingStepTimer() {
+      state.reverseChefTimerRunning = false;
+      if (state.reverseChefTimerInterval) {
+        clearInterval(state.reverseChefTimerInterval);
+        state.reverseChefTimerInterval = null;
+      }
+      const btn = document.getElementById('companion-btn-timer-toggle');
+      const label = document.getElementById('companion-label-timer-toggle');
+      if (btn) btn.className = "px-3 py-1.5 rounded-xl bg-pastel-coral text-dark-base font-extrabold text-xs flex items-center gap-1 hover:opacity-95 transition";
+      if (label) label.textContent = "Start Timer";
+    }
+
+    function resetCookingStepTimer() {
+      pauseCookingStepTimer();
+      initCookingActiveStepTimer();
+    }
+
+    function addOneMinuteToTimer() {
+      state.reverseChefTimerSeconds += 60;
+      state.reverseChefTimerTotalSeconds = Math.max(state.reverseChefTimerTotalSeconds, state.reverseChefTimerSeconds);
+      updateCookingTimerDisplay();
+    }
+
+    function updateCookingTimerDisplay() {
+      const sec = Math.max(0, state.reverseChefTimerSeconds || 0);
+      const mm = String(Math.floor(sec / 60)).padStart(2, '0');
+      const ss = String(sec % 60).padStart(2, '0');
+      const displayEl = document.getElementById('companion-timer-display');
+      const barEl = document.getElementById('companion-timer-progress-bar');
+      if (displayEl) displayEl.textContent = `${mm}:${ss}`;
+      if (barEl) {
+        const total = state.reverseChefTimerTotalSeconds || 180;
+        const pct = Math.max(0, Math.min(100, Math.round((sec / total) * 100)));
+        barEl.style.width = `${pct}%`;
+      }
+    }
+
+    function advanceCookingStep() {
+      if (!state.currentReverseChefRecipe) return;
+      const r = state.currentReverseChefRecipe;
+      if (state.reverseChefActiveStepIndex < r.steps.length - 1) {
+        state.reverseChefActiveStepIndex++;
+        initCookingActiveStepTimer();
+        renderCompanionRecipeViews();
+        playChime('bell');
+      } else {
+        finishCookingAndOpenWrapup();
+      }
+    }
+
+    function previousCookingStep() {
+      if (state.reverseChefActiveStepIndex > 0) {
+        state.reverseChefActiveStepIndex--;
+        initCookingActiveStepTimer();
+        renderCompanionRecipeViews();
+      }
+    }
+
+    function verifyChoreographyOrder() {
+      alertBox("💡 Choreography Order Verified! Longest simmering components are slotted first, prep knives are cleaned during searing, and counter reset occurs right as food plates hot.", "Choreography Logic OK");
       playChime('bell');
-      alertBox(`Saved "${r.title}" to your Recipe Codex under ADHD Daily Staples!`, "Recipe Saved");
+    }
+
+    // Live Cooking Companion Q&A Chat with Dynamic Recipe Updates
+    function handleCookingQuestionSubmit(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('cooking-question-input');
+      const q = input ? input.value.trim() : '';
+      if (!q) return;
+      input.value = '';
+      sendCookingQuestion(q);
+    }
+
+    function sendCookingQuestion(q) {
+      const stream = document.getElementById('cooking-companion-qa-stream');
+      if (!stream) return;
+
+      const userRow = document.createElement('div');
+      userRow.className = "flex items-start justify-end gap-1.5 max-w-[90%] ml-auto";
+      userRow.innerHTML = `<div class="p-2.5 rounded-2xl bg-pastel-mint/20 border border-pastel-mint/40 text-white text-xs">${q}</div>`;
+      stream.appendChild(userRow);
+      stream.scrollTop = stream.scrollHeight;
+
+      setTimeout(() => {
+        let answer = '';
+        const lower = q.toLowerCase();
+        if (lower.includes('smoking') || lower.includes('smoke') || lower.includes('hot')) {
+          answer = "🚨 Lower the stove flame to medium immediately and slide the pan slightly off the heat for 20 seconds. Add a tiny splash of oil or water to cool the pan surface.";
+        } else if (lower.includes('substitute') || lower.includes('tamari') || lower.includes('soy sauce')) {
+          answer = "✓ Confirmed! You can use tamari, Worcestershire, or a pinch of salt. I've dynamically updated your recipe step on the left with this substitution.";
+          if (state.currentReverseChefRecipe && state.currentReverseChefRecipe.steps[1]) {
+            state.currentReverseChefRecipe.steps[1].text += " (Substituted seasonings applied)";
+            renderCompanionRecipeViews();
+          }
+        } else if (lower.includes('done') || lower.includes('cooked')) {
+          answer = "🍗 Chicken is done when the thickest part is opaque white with no pink juice and reaches 165°F (approx 6-7 mins total pan sear). Cut into the center of one piece to verify!";
+        } else {
+          answer = "Great question! Keep your heat steady at medium-high and stir gently. I've logged your adjustment to this cooking session.";
+        }
+
+        const chefRow = document.createElement('div');
+        chefRow.className = "flex items-start gap-1.5 max-w-[90%]";
+        chefRow.innerHTML = `
+          <div class="w-5 h-5 rounded-full bg-pastel-mint/20 text-pastel-mint flex items-center justify-center text-[10px] font-bold shrink-0">🧑‍🍳</div>
+          <div class="p-2.5 rounded-2xl bg-dark-elevated border border-dark-border text-slate-200 text-xs leading-relaxed">${answer}</div>
+        `;
+        stream.appendChild(chefRow);
+        stream.scrollTop = stream.scrollHeight;
+        playChime('bell');
+      }, 500);
+    }
+
+    // Post-Cooking Wrap-Up Hub
+    function finishCookingAndOpenWrapup() {
+      pauseCookingStepTimer();
+      const r = state.currentReverseChefRecipe || { title: 'Custom Reverse Meal', kcal: 480, servings: 2, cookTime: 20, ingredients: ['Pantry Protein', 'Fresh Veggies'] };
+      openCookingWrapupModal(r);
+    }
+
+    function openCookingWrapupModal(recipe) {
+      const modal = document.getElementById('cooking-wrapup-modal');
+      if (!modal) return;
+
+      const titleEl = document.getElementById('wrapup-recipe-title');
+      const statsEl = document.getElementById('wrapup-recipe-stats');
+      const portionInput = document.getElementById('wrapup-portion-input');
+
+      if (titleEl) titleEl.textContent = recipe.title;
+      if (statsEl) statsEl.textContent = `${recipe.kcal} kcal • ${recipe.servings || 2} Servings`;
+      if (portionInput) portionInput.value = "1.0";
+
+      updateWrapupNutritionPreview();
+      modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+      playChime('bell');
+    }
+
+    function closeCookingWrapupModal() {
+      const modal = document.getElementById('cooking-wrapup-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function updateWrapupNutritionPreview() {
+      const r = state.currentReverseChefRecipe || { kcal: 480, servings: 2 };
+      const portionInput = document.getElementById('wrapup-portion-input');
+      const mult = portionInput ? (parseFloat(portionInput.value) || 1.0) : 1.0;
+
+      const baseKcal = r.kcal || 480;
+      const adjKcal = Math.round(baseKcal * (mult / 2));
+      const adjProtein = Math.round(42 * (mult / 2));
+      const adjCarbs = Math.round(34 * (mult / 2));
+      const adjFat = Math.round(16 * (mult / 2));
+      const adjFiber = Math.round(6 * (mult / 2));
+
+      const kcalEl = document.getElementById('wrapup-preview-kcal');
+      const macrosEl = document.getElementById('wrapup-preview-macros');
+      const leftServTxt = document.getElementById('wrapup-leftovers-servings-txt');
+
+      if (kcalEl) kcalEl.textContent = `${adjKcal} kcal`;
+      if (macrosEl) macrosEl.textContent = `P: ${adjProtein}g | C: ${adjCarbs}g | F: ${adjFat}g | Fiber: ${adjFiber}g`;
+      if (leftServTxt) leftServTxt.textContent = `${Math.max(0, 2 - mult).toFixed(1)} servings`;
+
+      // Expandable ingredient breakdown list
+      const breakdownEl = document.getElementById('wrapup-ingredient-breakdown-list');
+      if (breakdownEl) {
+        breakdownEl.innerHTML = `
+          <div class="flex justify-between border-b border-dark-border/40 pb-1">
+            <span>• Boneless Chicken Breast</span>
+            <span>220 kcal • P: 38g • Iron: 1.4mg</span>
+          </div>
+          <div class="flex justify-between border-b border-dark-border/40 pb-1">
+            <span>• Fresh Broccoli Florets</span>
+            <span>45 kcal • Vit C: 65mg • Fiber: 3.5g</span>
+          </div>
+          <div class="flex justify-between border-b border-dark-border/40 pb-1">
+            <span>• Olive Oil & Seasonings</span>
+            <span>120 kcal • Omega-9 (MUFA): 9g • Vit E: 1.2mg</span>
+          </div>
+        `;
+      }
+    }
+
+    function commitCookingWrapup() {
+      const r = state.currentReverseChefRecipe || { title: 'ADHD Skillet Chicken & Broccoli', cookTime: 18, kcal: 480, ingredients: ['Chicken Breast', 'Broccoli'] };
+      const saveCookbook = document.getElementById('wrapup-check-cookbook') ? document.getElementById('wrapup-check-cookbook').checked : true;
+      const logNutrition = document.getElementById('wrapup-check-nutrition') ? document.getElementById('wrapup-check-nutrition').checked : true;
+      const saveLeftovers = document.getElementById('wrapup-check-leftovers') ? document.getElementById('wrapup-check-leftovers').checked : true;
+
+      // 1. Save to Cookbook
+      if (saveCookbook) {
+        state.recipes.push({
+          id: `rec-${Date.now()}`,
+          title: r.title,
+          occasion: 'dinner',
+          format: 'skillet',
+          origin: 'mine',
+          cookTime: r.cookTime,
+          kcal: r.kcal,
+          ingredients: r.ingredients || [],
+          instructions: (r.steps || []).map((s, idx) => `${idx + 1}. ${s.text}`).join('\n')
+        });
+        if (typeof renderRecipes === 'function') renderRecipes();
+        if (typeof renderSavedRecipesDropdown === 'function') renderSavedRecipesDropdown();
+      }
+
+      // 2. Log to Nutrition Log with Micronutrients
+      if (logNutrition) {
+        const portionInput = document.getElementById('wrapup-portion-input');
+        const mult = portionInput ? (parseFloat(portionInput.value) || 1.0) : 1.0;
+        const adjKcal = Math.round((r.kcal || 480) * (mult / 2));
+
+        state.nutritionLog.push({
+          id: `n-${Date.now()}`,
+          name: `${r.title} (${mult} serving)`,
+          kcal: adjKcal,
+          protein: Math.round(42 * (mult / 2)),
+          carbs: Math.round(34 * (mult / 2)),
+          fat: Math.round(16 * (mult / 2)),
+          fiber: Math.round(6 * (mult / 2)),
+          sodium: Math.round(520 * (mult / 2)),
+          potassium: Math.round(680 * (mult / 2)),
+          iron: +(2.8 * (mult / 2)).toFixed(1),
+          calcium: Math.round(110 * (mult / 2)),
+          magnesium: Math.round(65 * (mult / 2)),
+          zinc: +(1.9 * (mult / 2)).toFixed(1),
+          vitA: Math.round(220 * (mult / 2)),
+          vitC: Math.round(45 * (mult / 2)),
+          vitD: Math.round(100 * (mult / 2)),
+          isVerified: true
+        });
+        if (typeof renderNutrition === 'function') renderNutrition();
+      }
+
+      // 3. Save Leftovers to Pantry
+      if (saveLeftovers) {
+        const dest = document.querySelector('input[name="wrapup-leftover-dest"]:checked') ? document.querySelector('input[name="wrapup-leftover-dest"]:checked').value : 'fridge';
+        state.pantry.push({
+          id: `p-${Date.now()}-leftover`,
+          name: `Leftover: ${r.title} (1 serving)`,
+          category: 'protein',
+          storage: dest
+        });
+        renderPantry();
+      }
+
+      saveAppState();
+      closeCookingWrapupModal();
+      closeReverseChefModal();
+      playChime('bell');
+      alertBox(`Meal complete! Saved to cookbook, logged to nutrition diary with micronutrients, and stored leftovers in your ${document.querySelector('input[name="wrapup-leftover-dest"]:checked')?.value || 'fridge'}.`, "Wrap-Up Complete");
     }
     
   

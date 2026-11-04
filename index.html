@@ -7,7 +7,7 @@
   <!-- Antigravity App Descriptor -->
     <!-- iOS & Mobile Web App Config (PWA) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="FocusFlow">
   <meta name="theme-color" content="#151b28">
   <meta name="mobile-web-app-capable" content="yes">
@@ -67,16 +67,30 @@
       position: relative;
     }
 
+    /* Header standard mode */
     .safe-top-header {
-      padding-top: max(10px, calc(env(safe-area-inset-top, 0px) + 8px)) !important;
+      padding-top: 10px !important;
       background-color: #151b28 !important;
       -webkit-backdrop-filter: none !important;
       backdrop-filter: none !important;
     }
     @media (min-width: 768px) {
       .safe-top-header {
-        padding-top: 10px !important;
+        padding-top: 12px !important;
       }
+    }
+
+    /* Standalone PWA Home-Screen Mode (iOS & Android) */
+    @media all and (display-mode: standalone) {
+      .safe-top-header {
+        padding-top: 54px !important;
+        padding-top: calc(env(safe-area-inset-top) + 8px) !important;
+      }
+    }
+
+    .ff-standalone-mode .safe-top-header {
+      padding-top: 54px !important;
+      padding-top: calc(env(safe-area-inset-top) + 8px) !important;
     }
 
     .safe-bottom-nav {
@@ -103,8 +117,10 @@
   </style>
   <script>
     try {
-      if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || localStorage.getItem('focusflow_app_installed') === 'true') {
-        document.write('<style>#btn-install-app { display: none !important; }</style>');
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || localStorage.getItem('focusflow_app_installed') === 'true';
+      if (isStandalone) {
+        document.documentElement.classList.add('ff-standalone-mode');
+        document.write('<style>#btn-install-app { display: none !important; } .safe-top-header { padding-top: 54px !important; padding-top: calc(env(safe-area-inset-top) + 8px) !important; }</style>');
       }
     } catch(e) {}
   </script>

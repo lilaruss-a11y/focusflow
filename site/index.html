@@ -5543,16 +5543,11 @@
             dot.className = `w-2 h-2 rounded-full bg-pastel-${col}`;
 
             const titleSpan = document.createElement('span');
-            titleSpan.className = 'font-semibold truncate max-w-[220px]';
+            titleSpan.className = 'font-semibold truncate max-w-[260px]';
             titleSpan.textContent = ev.title;
-
-            const badge = document.createElement('span');
-            badge.className = 'text-[9px] font-mono px-1.5 py-0.5 rounded bg-dark-base/70 text-slate-300 font-normal';
-            badge.textContent = 'All Day';
 
             pill.appendChild(dot);
             pill.appendChild(titleSpan);
-            pill.appendChild(badge);
             pill.onclick = () => openEventDetailsModal(ev.id);
             allDayItems.appendChild(pill);
           });

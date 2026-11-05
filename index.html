@@ -214,9 +214,13 @@
           <i data-lucide="utensils" class="w-4 h-4"></i>
           <span>Kitchen</span>
         </button>
-        <button onclick="switchTab('nutrition')" id="nav-nutrition" class="touch-nav-item flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-pastel-peach transition-all">
+        <button onclick="switchTab('nutrition')" id="nav-nutrition" class="touch-nav-item flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-pastel-peach transition-all">
           <i data-lucide="activity" class="w-4 h-4"></i>
           <span>Nutrition</span>
+        </button>
+        <button onclick="switchTab('health')" id="nav-health" class="touch-nav-item flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-rose-400 transition-all" title="Activity & Heart Rate Correlation, ADHD Medication Tracker & Biometrics">
+          <i data-lucide="heart-pulse" class="w-4 h-4 text-rose-400"></i>
+          <span>Health &amp; Vitals</span>
         </button>
       </nav>
 
@@ -277,18 +281,18 @@
     <!-- TAB 1: GOOGLE CALENDAR TIMELINE (THE ONLY SCROLLBAR IS INSIDE) -->
     <!-- ============================================== -->
     <div id="view-timeline" class="flex-1 min-h-0 flex flex-col h-full w-full max-w-6xl mx-auto px-2 sm:px-4 pt-1.5 pb-1 gap-1.5 overflow-hidden">
-      <!-- CONSOLIDATED HEADER (2 ROWS + CALENDAR KEY BELOW) -->
+      <!-- CONSOLIDATED HEADER (2 COMPRESSED ROWS + CALENDAR KEY BELOW) -->
       <div class="shrink-0 bg-dark-surface border border-dark-border rounded-2xl p-2 sm:p-2.5 shadow-xl space-y-1.5">
-        <!-- ROW 1: DATE, 7-DAY WEEK STRIP, AND VIEW SWITCHER (GRID/LIST) -->
-        <div class="flex items-center justify-between gap-1.5 w-full">
-          <!-- Left: Date Jump (Unified Today & Time Marker) & 7-Day Week Selector Strip -->
-          <div class="flex items-center gap-1 sm:gap-2 flex-nowrap shrink-0 overflow-x-auto">
-            <button type="button" onclick="jumpTimelineToToday()" class="px-2 py-1.5 sm:px-2.5 rounded-xl bg-dark-base hover:bg-dark-elevated border border-dark-border text-slate-200 font-semibold text-xs flex items-center gap-1 transition shadow-sm shrink-0" title="Jump to Today & Current Time">
+        <!-- ROW 1: DATE, 7-DAY WEEK STRIP, SYNC & ADD EVENT -->
+        <div class="flex items-center justify-between gap-1.5 w-full flex-wrap sm:flex-nowrap">
+          <!-- Left: Date Jump & 7-Day Week Selector Strip -->
+          <div class="flex items-center gap-1 sm:gap-2 flex-nowrap shrink-0 overflow-x-auto scrollbar-none">
+            <button type="button" onclick="jumpTimelineToToday()" class="px-2 py-1 sm:px-2.5 rounded-xl bg-dark-base hover:bg-dark-elevated border border-dark-border text-slate-200 font-semibold text-xs flex items-center gap-1 transition shadow-sm shrink-0" title="Jump to Today & Current Time">
               <span class="w-1.5 h-1.5 rounded-full bg-pastel-mint animate-pulse"></span>
               <span id="timeline-today-date" class="font-bold text-xs">Today</span>
             </button>
 
-            <!-- Ultra-compact 7-Day Week Strip (Directly next to Date) -->
+            <!-- Ultra-compact 7-Day Week Strip -->
             <div class="flex items-center p-0.5 rounded-xl bg-dark-base/80 border border-dark-border gap-0.5 shadow-inner shrink-0">
               <button type="button" onclick="changeTimelineWeek(-1)" class="w-4 sm:w-5 h-6 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0" title="Previous Week">
                 <i data-lucide="chevron-left" class="w-2.5 sm:w-3 h-2.5 sm:h-3"></i>
@@ -302,67 +306,64 @@
             </div>
           </div>
 
-          <!-- Right: Consolidated View Mode Switcher: Icons Only -->
-          <div class="flex items-center p-0.5 rounded-xl bg-dark-base border border-dark-border gap-0.5 shadow-sm shrink-0">
-            <button type="button" onclick="switchTimelineView('calendar')" id="btn-view-calendar" class="p-1.5 rounded-lg font-bold bg-pastel-mint text-dark-base text-xs transition flex items-center justify-center shadow-sm" title="Calendar Grid View">
-              <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-            </button>
-            <button type="button" onclick="switchTimelineView('list')" id="btn-view-list" class="p-1.5 rounded-lg font-medium text-slate-400 hover:text-white text-xs transition flex items-center justify-center" title="Schedule List View">
-              <i data-lucide="list" class="w-3.5 h-3.5"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- ROW 2: HEIGHT (HT 1-5), UNDO/REDO, SYNC, AND + ADD EVENT -->
-        <div class="flex items-center justify-between gap-1.5 w-full pt-1.5 border-t border-dark-border/50">
-          <!-- Left: Height Stepper (Ht 1 - Ht 5) and Undo/Redo -->
-          <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
-            <!-- Consolidated Height Indicator: Ht 1 to Ht 5 -->
-            <div class="flex items-center p-0.5 rounded-xl bg-dark-base border border-dark-border gap-0.5 shadow-sm text-xs" title="Adjust hour block height (Ht 1: whole day, Ht 5: deep detail for 10m events)">
-              <button type="button" onclick="changeCalendarZoomLevel(-1)" class="w-5 h-5 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-xs transition" title="Smaller height">-</button>
-              <span id="calendar-zoom-label" class="px-1.5 font-mono text-[11px] text-pastel-mint font-bold select-none min-w-[34px] text-center">Ht 3</span>
-              <button type="button" onclick="changeCalendarZoomLevel(1)" class="w-5 h-5 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-xs transition" title="Taller height">+</button>
-            </div>
-
-            <!-- Calendar Undo / Redo controls -->
-            <div class="flex items-center p-0.5 rounded-xl bg-dark-base border border-dark-border gap-0.5 shadow-sm">
-              <button type="button" id="calendar-undo-btn" onclick="calendarHistory.undo()" class="p-1.5 rounded-lg text-slate-300 hover:text-white transition opacity-30 cursor-not-allowed flex items-center gap-0.5 text-xs" title="Undo calendar edit (⌘Z)" disabled>
-                <i data-lucide="undo-2" class="w-3.5 h-3.5 text-pastel-sky"></i>
-              </button>
-              <div class="w-px h-3 bg-dark-border"></div>
-              <button type="button" id="calendar-redo-btn" onclick="calendarHistory.redo()" class="p-1.5 rounded-lg text-slate-300 hover:text-white transition opacity-30 cursor-not-allowed flex items-center gap-0.5 text-xs" title="Redo calendar edit (⌘⇧Z)" disabled>
-                <i data-lucide="redo-2" class="w-3.5 h-3.5 text-pastel-sky"></i>
-              </button>
-            </div>
-
-            <!-- Plan vs Reality Comparison Toggle & Accuracy Progress Report -->
-            <button type="button" onclick="togglePlanVsReality()" id="btn-toggle-plan-reality" class="flex items-center gap-1 px-2 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs transition active:scale-95" title="Toggle Plan vs Reality (Compare scheduled plan to actual execution)">
-              <i data-lucide="split" class="w-3.5 h-3.5 text-pastel-lavender" id="icon-plan-reality"></i>
-              <span class="hidden md:inline text-[11px]" id="label-plan-reality">Reality</span>
-            </button>
-            <button type="button" onclick="openEstimationAccuracyModal()" class="flex items-center gap-1 px-2 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-pastel-mint text-xs transition active:scale-95" title="View Time Estimation Progress & Dual-Line Calibration Graph">
-              <i data-lucide="trending-up" class="w-3.5 h-3.5 text-pastel-mint"></i>
-              <span class="hidden md:inline text-[11px]">Accuracy</span>
-            </button>
-          </div>
-
           <!-- Right: Sync & Add Event Buttons -->
-          <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+          <div class="flex items-center gap-1 shrink-0 ml-auto">
             <button type="button" onclick="openGCalSyncModal()" class="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs shadow-md shadow-pastel-sky/20 hover:bg-sky-300 transition shrink-0" title="Google Calendar Sync">
               <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-              <span>Sync</span>
+              <span class="hidden sm:inline">Sync</span>
             </button>
-            <button type="button" onclick="openNewEventModal()" class="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs shadow-md shadow-pastel-mint/20 hover:bg-emerald-300 transition shrink-0" title="Create New Event">
+            <button type="button" onclick="openNewEventModal()" class="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs shadow-md shadow-pastel-mint/20 hover:bg-emerald-300 transition shrink-0" title="Create New Event">
               <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-              <span class="hidden sm:inline">Add Event</span>
-              <span class="sm:hidden">Event</span>
+              <span>Event</span>
             </button>
           </div>
         </div>
 
-        <!-- ROW 3: CALENDAR KEY / CATEGORY LEGEND (BELOW THE TWO HEADER ROWS) -->
-        <div class="pt-1.5 border-t border-dark-border/40 flex items-center justify-center sm:justify-start gap-2.5 overflow-x-auto text-[9px] font-mono text-slate-300 w-full select-none py-0.5">
-          <div id="timeline-category-legend" class="flex items-center gap-2.5 overflow-x-auto shrink-0">
+        <!-- ROW 2: VIEW SWITCHER, HEIGHT (HT 1-5), UNDO/REDO, REALITY & ACCURACY -->
+        <div class="flex items-center justify-between gap-1.5 w-full pt-1.5 border-t border-dark-border/50">
+          <!-- Left: View Mode (Grid/List), Height Stepper, Undo/Redo -->
+          <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            <div class="flex items-center p-0.5 rounded-xl bg-dark-base border border-dark-border gap-0.5 shadow-sm shrink-0">
+              <button type="button" onclick="switchTimelineView('calendar')" id="btn-view-calendar" class="p-1.5 rounded-lg font-bold bg-pastel-mint text-dark-base text-xs transition flex items-center justify-center shadow-sm" title="Calendar Grid View">
+                <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+              </button>
+              <button type="button" onclick="switchTimelineView('list')" id="btn-view-list" class="p-1.5 rounded-lg font-medium text-slate-400 hover:text-white text-xs transition flex items-center justify-center" title="Schedule List View">
+                <i data-lucide="list" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+            <div class="flex items-center p-0.5 rounded-xl bg-dark-base border border-dark-border gap-0.5 shadow-sm text-xs" title="Adjust hour block height">
+              <button type="button" onclick="changeCalendarZoomLevel(-1)" class="w-5 h-5 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-xs transition">-</button>
+              <span id="calendar-zoom-label" class="px-1 font-mono text-[10px] sm:text-[11px] text-pastel-mint font-bold select-none min-w-[28px] sm:min-w-[34px] text-center">Ht 3</span>
+              <button type="button" onclick="changeCalendarZoomLevel(1)" class="w-5 h-5 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-xs transition">+</button>
+            </div>
+
+            <div class="flex items-center p-0.5 rounded-xl bg-dark-base border border-dark-border gap-0.5 shadow-sm">
+              <button type="button" id="calendar-undo-btn" onclick="calendarHistory.undo()" class="p-1 rounded text-slate-300 hover:text-white transition opacity-30 cursor-not-allowed flex items-center text-xs" title="Undo (⌘Z)" disabled>
+                <i data-lucide="undo-2" class="w-3 h-3 text-pastel-sky"></i>
+              </button>
+              <button type="button" id="calendar-redo-btn" onclick="calendarHistory.redo()" class="p-1 rounded text-slate-300 hover:text-white transition opacity-30 cursor-not-allowed flex items-center text-xs" title="Redo (⌘⇧Z)" disabled>
+                <i data-lucide="redo-2" class="w-3 h-3 text-pastel-sky"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: Plan vs Reality Toggle & Accuracy Progress Report -->
+          <div class="flex items-center gap-1 shrink-0">
+            <button type="button" onclick="togglePlanVsReality()" id="btn-toggle-plan-reality" class="flex items-center gap-1 px-2 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs transition active:scale-95" title="Toggle Plan vs Reality">
+              <i data-lucide="split" class="w-3.5 h-3.5 text-pastel-lavender" id="icon-plan-reality"></i>
+              <span class="text-[10px] sm:text-[11px] font-semibold" id="label-plan-reality">Reality</span>
+            </button>
+            <button type="button" onclick="openEstimationAccuracyModal()" class="flex items-center gap-1 px-2 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-pastel-mint text-xs transition active:scale-95" title="Estimation Progress Report">
+              <i data-lucide="trending-up" class="w-3.5 h-3.5 text-pastel-mint"></i>
+              <span class="hidden sm:inline text-[11px] font-semibold">Accuracy</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ROW 3: CATEGORY KEY -->
+        <div class="pt-1 border-t border-dark-border/40 flex items-center justify-center sm:justify-start gap-2 overflow-x-auto text-[9px] font-mono text-slate-300 w-full select-none py-0.5 scrollbar-none">
+          <div id="timeline-category-legend" class="flex items-center gap-2 overflow-x-auto shrink-0">
             <!-- Dynamically populated from state.calendarCategories -->
           </div>
         </div>
@@ -1259,6 +1260,201 @@
     </div>
       </div>
     </div>
+  
+    <!-- ============================================== -->
+    <!-- TAB 7: HEALTH & BIOMETRICS (APPLE HEALTH + ACTIVITY CORRELATION & ADHD MEDICATION TIMELINE) -->
+    <!-- ============================================== -->
+    <div id="view-health" class="hidden flex-1 min-h-0 flex flex-col h-full w-full max-w-6xl mx-auto px-3 sm:px-4 pt-2 pb-10 space-y-4 overflow-y-auto">
+      <!-- Health Header Banner -->
+      <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shrink-0">
+              <i data-lucide="heart-pulse" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 class="text-lg sm:text-xl font-bold text-white">Health &amp; Biometrics</h2>
+                <span id="health-apple-sync-status" class="px-2.5 py-0.5 rounded-full bg-pastel-mint/15 text-pastel-mint border border-pastel-mint/30 font-bold text-[10px] flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-pastel-mint animate-pulse"></span>
+                  <span>Apple Health Connected</span>
+                </span>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">Correlating real-time heart rate with calendar activities &amp; anticipating ADHD medication wear-off curves.</p>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <button type="button" onclick="openLogMedicationModal()" class="px-3.5 py-2 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-md hover:bg-sky-300 transition">
+              <i data-lucide="pill" class="w-3.5 h-3.5"></i>
+              <span>Log Med Dose</span>
+            </button>
+            <button type="button" onclick="openLogHeartRateModal()" class="px-3.5 py-2 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition">
+              <i data-lucide="heart" class="w-3.5 h-3.5 fill-white"></i>
+              <span>Log Heart Rate</span>
+            </button>
+            <button type="button" onclick="openLogSymptomModal()" class="px-3.5 py-2 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-200 font-bold text-xs flex items-center gap-1.5 transition">
+              <i data-lucide="activity" class="w-3.5 h-3.5 text-pastel-butter"></i>
+              <span>Log Symptom</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Real-Time Vitals Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
+          <div class="p-3 rounded-2xl bg-dark-base border border-dark-border space-y-1">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Current Heart Rate</span>
+            <div class="flex items-baseline gap-1.5">
+              <span class="text-xl sm:text-2xl font-black text-rose-400" id="health-stat-current-hr">78</span>
+              <span class="text-xs text-slate-400 font-mono">BPM</span>
+            </div>
+            <span class="text-[10px] text-emerald-400 block" id="health-stat-hr-context">✓ Normal for resting</span>
+          </div>
+
+          <div class="p-3 rounded-2xl bg-dark-base border border-dark-border space-y-1">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Active Medication</span>
+            <span class="text-sm font-bold text-pastel-sky truncate block" id="health-stat-active-med">Adderall XR 20mg</span>
+            <span class="text-[10px] text-slate-400 block" id="health-stat-med-dose-time">Dose: 8:00 AM (4h ago)</span>
+          </div>
+
+          <div class="p-3 rounded-2xl bg-dark-base border border-dark-border space-y-1">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Anticipated Wear-Off</span>
+            <span class="text-base font-bold text-pastel-butter block" id="health-stat-wearoff-time">~3:30 PM</span>
+            <span class="text-[9.5px] text-amber-400 font-mono block" id="health-stat-wearoff-countdown">In approx 3h 15m</span>
+          </div>
+
+          <div class="p-3 rounded-2xl bg-dark-base border border-dark-border space-y-1">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Activity State</span>
+            <span class="text-sm font-bold text-white truncate block" id="health-stat-current-activity">Sitting in Class</span>
+            <span class="text-[10px] text-slate-400 block" id="health-stat-activity-duration">10:00 AM - 11:30 AM</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLINICAL ALERT: Sedentary Heart Rate Spike Detection -->
+      <div id="health-sedentary-tachycardia-alert" class="p-4 rounded-2xl bg-gradient-to-r from-amber-950/40 via-dark-surface to-dark-surface border-2 border-amber-500/50 space-y-2.5 shadow-lg">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-start gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 font-bold">⚠️</div>
+            <div class="space-y-0.5">
+              <h4 class="font-bold text-amber-300 text-xs sm:text-sm">Elevated Heart Rate Detected During Inactive Class/Sitting</h4>
+              <p class="text-xs text-slate-300 leading-relaxed" id="health-tachycardia-alert-desc">
+                Heart rate reached <strong>108 BPM</strong> while seated in <em>Chemistry Class</em> (10:00 AM – 11:30 AM). While resting norm is 60–75 BPM, stimulant medication increases cardiac beta-adrenergic output even during motionless tasks.
+              </p>
+            </div>
+          </div>
+          <button type="button" onclick="dismissHealthAlert()" class="text-slate-400 hover:text-white p-1 text-xs">✕</button>
+        </div>
+        <div class="p-2.5 rounded-xl bg-dark-base/80 border border-dark-border text-[11px] text-slate-300 grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div>💧 <strong>Hydration:</strong> Drink 12-16 oz cool water with electrolytes.</div>
+          <div>🧘 <strong>Vagal Nerve Reset:</strong> 2 minutes of 4-7-8 breathing.</div>
+          <div>🦵 <strong>Venous Return:</strong> Subtle ankle rotations &amp; toe flexes under desk.</div>
+        </div>
+      </div>
+
+      <!-- 2-COLUMN SECTION: Medication Wear-Off Forecaster & Activity Correlation Timeline -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Card 1: ADHD Medication Wear-Off Forecaster -->
+        <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-lg flex flex-col justify-between">
+          <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="text-base">💊</span>
+              <div>
+                <h3 class="font-bold text-white text-xs sm:text-sm">Medication Wear-Off Forecaster</h3>
+                <p class="text-[11px] text-slate-400">Anticipate focus decline and rebound symptoms before they occur</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-pastel-sky/15 text-pastel-sky border border-pastel-sky/30" id="health-med-release-type">XR Formulation</span>
+          </div>
+
+          <!-- Visual Progression Bar -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-300">
+              <span id="health-med-progress-label">Active Therapeutic Phase (60% Elapsed)</span>
+              <span class="font-bold text-pastel-butter" id="health-med-time-left">~3h 15m remaining</span>
+            </div>
+            <div class="w-full bg-dark-base rounded-full h-3 overflow-hidden border border-dark-border relative">
+              <div id="health-med-progress-fill" class="h-full bg-gradient-to-r from-pastel-mint via-pastel-sky to-pastel-butter transition-all duration-500 rounded-full" style="width: 60%;"></div>
+            </div>
+            <div class="grid grid-cols-3 text-[9.5px] font-mono text-slate-400 pt-0.5">
+              <span>8:00 AM (Dose)</span>
+              <span class="text-center text-pastel-sky">Peak Window</span>
+              <span class="text-right text-rose-400">3:30 PM (Wear-off)</span>
+            </div>
+          </div>
+
+          <!-- Forecaster Intelligence Card -->
+          <div class="p-3 rounded-xl bg-dark-base border border-dark-border space-y-1.5 text-xs">
+            <span class="font-bold text-pastel-butter flex items-center gap-1.5 text-[11px]">
+              <i data-lucide="clock" class="w-3.5 h-3.5 text-pastel-butter"></i>
+              <span>Anticipated Wear-Off Dynamics:</span>
+            </span>
+            <p class="text-[11px] text-slate-300 leading-relaxed" id="health-wearoff-guidance">
+              Based on your logged history, medication effects typically taper around <strong>7.5 hours post-dose</strong>. Plan your challenging analytical homework before 2:30 PM. From 3:30 PM onwards, schedule gentle routine tasks, meal prep, or light exercise.
+            </p>
+          </div>
+
+          <!-- Quick Log Symptom Grid -->
+          <div class="space-y-1.5 pt-1">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Log Symptoms Experienced During Transition:</span>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-xs">
+              <button type="button" onclick="quickLogHealthSymptom('Hyperactivity / Restlessness')" class="p-2 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-200 text-center font-medium transition active:scale-95">⚡ Restlessness</button>
+              <button type="button" onclick="quickLogHealthSymptom('Low Mood / Irritability')" class="p-2 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-200 text-center font-medium transition active:scale-95">📉 Low Mood</button>
+              <button type="button" onclick="quickLogHealthSymptom('Brain Fog / Distractibility')" class="p-2 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-200 text-center font-medium transition active:scale-95">🌫️ Brain Fog</button>
+              <button type="button" onclick="quickLogHealthSymptom('Tachycardia / Fast Heart Rate')" class="p-2 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-200 text-center font-medium transition active:scale-95">💓 Heart Racing</button>
+              <button type="button" onclick="quickLogHealthSymptom('Fatigue / Energy Crash')" class="p-2 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-200 text-center font-medium transition active:scale-95">🥱 Energy Crash</button>
+              <button type="button" onclick="quickLogHealthSymptom('Headache / Tension')" class="p-2 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-200 text-center font-medium transition active:scale-95">🤕 Tension</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Activity vs. Heart Rate Real-Time Correlation -->
+        <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-lg flex flex-col justify-between">
+          <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="text-base">📈</span>
+              <div>
+                <h3 class="font-bold text-white text-xs sm:text-sm">Activity vs. Heart Rate Readings</h3>
+                <p class="text-[11px] text-slate-400">Comparing cardiac exertion to physical activity level</p>
+              </div>
+            </div>
+            <button type="button" onclick="openLogHeartRateModal()" class="text-xs text-rose-400 hover:underline font-mono">+ Log Reading</button>
+          </div>
+
+          <!-- Activity & HR Correlation Stream -->
+          <div id="health-activity-hr-stream" class="space-y-2 max-h-72 overflow-y-auto pr-1">
+            <!-- Dynamically populated correlation items -->
+          </div>
+
+          <!-- Clinical Insight Summary -->
+          <div class="p-3 rounded-xl bg-dark-base border border-dark-border text-xs space-y-1">
+            <span class="font-bold text-rose-400 flex items-center gap-1.5 text-[11px]">
+              <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-rose-400"></i>
+              <span>Physiological Baseline Awareness:</span>
+            </span>
+            <p class="text-[11px] text-slate-300 leading-relaxed">
+              Standard Apple Health displays 1-hour rolling averages which disguise acute classroom spikes. FocusFlow isolates real-time readings during sedentary calendar intervals so you can distinguish medication-induced cardiovascular stimulation from anxiety.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logged Symptoms History -->
+      <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 sm:p-5 space-y-3 shadow-lg">
+        <div class="flex items-center justify-between border-b border-dark-border pb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-base">📋</span>
+            <h3 class="font-bold text-white text-xs sm:text-sm">Logged Symptoms &amp; Rebound History</h3>
+          </div>
+          <span class="text-[11px] text-slate-400 font-mono" id="health-symptoms-count">0 logged today</span>
+        </div>
+        <div id="health-symptoms-list" class="space-y-1.5 max-h-48 overflow-y-auto">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+
   </main>
   <!-- Stationary Bottom Navigation Tab Bar -->
   <nav id="app-bottom-nav" class="shrink-0 z-40 bg-dark-surface border-t border-dark-border flex items-center justify-around px-1 py-1.5 safe-bottom-nav shadow-2xl w-full">
@@ -1283,17 +1479,360 @@
       <i data-lucide="utensils" class="w-4 h-4"></i>
       <span>Kitchen</span>
     </button>
-    <button onclick="switchTab('nutrition')" id="mobile-nav-nutrition" class="flex flex-col items-center justify-center p-1.5 rounded-xl text-slate-400 font-medium text-[10px] gap-0.5 flex-1 touch-nav-item">
+    <button onclick="switchTab('nutrition')" id="mobile-nav-nutrition" class="flex flex-col items-center justify-center p-1 rounded-xl text-slate-400 font-medium text-[9px] gap-0.5 flex-1 touch-nav-item">
       <i data-lucide="activity" class="w-4 h-4"></i>
       <span>Nutrition</span>
+    </button>
+    <button onclick="switchTab('health')" id="mobile-nav-health" class="flex flex-col items-center justify-center p-1 rounded-xl text-slate-400 font-medium text-[9px] gap-0.5 flex-1 touch-nav-item" title="Health & Biometrics">
+      <i data-lucide="heart-pulse" class="w-4 h-4 text-rose-400"></i>
+      <span>Health</span>
     </button>
   </nav>
 
 
+  
+  <!-- ============================================== -->
+  <!-- MODAL: LOG MEDICATION DOSE                     -->
+  <!-- ============================================== -->
+  <div id="log-medication-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
+    <div class="bg-dark-surface border border-pastel-sky/50 rounded-3xl w-full max-w-md p-5 sm:p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-pastel-sky/20 border border-pastel-sky/40 flex items-center justify-center text-pastel-sky">
+            <i data-lucide="pill" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Log Medication Dose</h3>
+            <p class="text-xs text-slate-400">Track ADHD stimulant timing &amp; wear-off forecaster</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeLogMedicationModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="font-semibold text-slate-300 block mb-1">Medication Name:</label>
+          <select id="health-input-med-name" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs">
+            <option value="Adderall XR">Adderall XR (Mixed Amphetamine Salts ER)</option>
+            <option value="Adderall IR">Adderall IR (Immediate Release)</option>
+            <option value="Vyvanse">Vyvanse (Lisdexamfetamine Dimesylate)</option>
+            <option value="Concerta">Concerta (Methylphenidate ER)</option>
+            <option value="Ritalin IR">Ritalin (Methylphenidate IR)</option>
+            <option value="Dexedrine Spansule">Dexedrine Spansule (Dextroamphetamine ER)</option>
+            <option value="Wellbutrin XL">Wellbutrin XL (Bupropion XL)</option>
+            <option value="Strattera">Strattera (Atomoxetine)</option>
+            <option value="Guanfacine ER">Guanfacine ER (Intuniv)</option>
+            <option value="Custom">Custom Medication...</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="font-semibold text-slate-300 block mb-1">Dose / Strength:</label>
+            <input type="text" id="health-input-med-dose" value="20mg" placeholder="e.g. 20mg, 30mg" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs">
+          </div>
+          <div>
+            <label class="font-semibold text-slate-300 block mb-1">Time Taken:</label>
+            <input type="time" id="health-input-med-time" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="font-semibold text-slate-300 block mb-1">Formulation:</label>
+            <select id="health-input-med-type" onchange="updateMedDurationDefault()" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs">
+              <option value="XR">XR / Extended Release (8-12h)</option>
+              <option value="IR">IR / Immediate Release (4-5h)</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-semibold text-slate-300 block mb-1">Duration (Hours):</label>
+            <input type="number" id="health-input-med-duration" value="8" min="1" max="16" step="0.5" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs">
+          </div>
+        </div>
+
+        <div class="p-2.5 rounded-xl bg-dark-base border border-dark-border text-[11px] text-slate-400">
+          💡 The wear-off forecaster uses this dose time to dynamically project when executive function will begin tapering so you can avoid late afternoon crash surprise.
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-end gap-2 border-t border-dark-border">
+        <button type="button" onclick="closeLogMedicationModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs">Cancel</button>
+        <button type="button" onclick="saveMedicationDose()" class="px-5 py-2 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs hover:bg-sky-300 transition">Save Dose</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: LOG HEART RATE READING                  -->
+  <!-- ============================================== -->
+  <div id="log-heart-rate-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
+    <div class="bg-dark-surface border border-rose-500/50 rounded-3xl w-full max-w-md p-5 sm:p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400">
+            <i data-lucide="heart" class="w-5 h-5 fill-rose-500"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Log Heart Rate Reading</h3>
+            <p class="text-xs text-slate-400">Correlate cardiac response with calendar activity</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeLogHeartRateModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="font-semibold text-slate-300 block mb-1">Heart Rate (BPM):</label>
+            <input type="number" id="health-input-hr-bpm" placeholder="e.g. 108" min="40" max="220" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-base font-bold">
+          </div>
+          <div>
+            <label class="font-semibold text-slate-300 block mb-1">Time of Reading:</label>
+            <input type="time" id="health-input-hr-time" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs">
+          </div>
+        </div>
+
+        <div>
+          <label class="font-semibold text-slate-300 block mb-1">Current Calendar Activity / Context:</label>
+          <input type="text" id="health-input-hr-activity" placeholder="e.g. Chemistry Lecture, Seated Desk Work" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs">
+        </div>
+
+        <div>
+          <label class="font-semibold text-slate-300 block mb-1">Physical Activity Level:</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="flex items-center gap-2 p-2.5 rounded-xl bg-dark-base border border-dark-border cursor-pointer hover:border-pastel-sky/50">
+              <input type="radio" name="health-hr-sedentary" id="health-hr-sedentary-yes" value="true" checked class="text-rose-500 focus:ring-0">
+              <div>
+                <span class="font-bold text-white block text-xs">🧘 Inactive / Seated</span>
+                <span class="text-[10px] text-slate-400">Classroom, study, desk</span>
+              </div>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 rounded-xl bg-dark-base border border-dark-border cursor-pointer hover:border-pastel-sky/50">
+              <input type="radio" name="health-hr-sedentary" id="health-hr-sedentary-no" value="false" class="text-pastel-mint focus:ring-0">
+              <div>
+                <span class="font-bold text-white block text-xs">🏃 Active / Moving</span>
+                <span class="text-[10px] text-slate-400">Walking, workout, stairs</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="font-semibold text-slate-300 block mb-1">Subjective Feeling / Notes (Optional):</label>
+          <input type="text" id="health-input-hr-notes" placeholder="e.g. Sitting motionless, felt jittery / fluttering" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs">
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-end gap-2 border-t border-dark-border">
+        <button type="button" onclick="closeLogHeartRateModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs">Cancel</button>
+        <button type="button" onclick="saveHeartRateReading()" class="px-5 py-2 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-bold text-xs transition">Save Reading</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: LOG SYMPTOM / REBOUND                   -->
+  <!-- ============================================== -->
+  <div id="log-symptom-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
+    <div class="bg-dark-surface border border-pastel-butter/50 rounded-3xl w-full max-w-md p-5 sm:p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-pastel-butter/20 border border-pastel-butter/40 flex items-center justify-center text-pastel-butter">
+            <i data-lucide="activity" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Log Symptom or Rebound</h3>
+            <p class="text-xs text-slate-400">Record transitions, mood shifts &amp; rebound effects</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeLogSymptomModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="font-semibold text-slate-300 block mb-1">Symptom Type:</label>
+          <select id="health-input-symptom-name" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs">
+            <option value="Restlessness / Hyperactivity">Restlessness / Hyperactivity</option>
+            <option value="Low Mood / Irritability">Low Mood / Irritability (Rebound)</option>
+            <option value="Brain Fog / Distractibility">Brain Fog / Distractibility</option>
+            <option value="Tachycardia / Fast Heart Rate">Tachycardia / Fast Heart Rate</option>
+            <option value="Fatigue / Energy Crash">Fatigue / Energy Crash</option>
+            <option value="Headache / Muscle Tension">Headache / Muscle Tension</option>
+            <option value="Anxiety / Overstimulation">Anxiety / Overstimulation</option>
+            <option value="Appetite Suppression">Appetite Suppression</option>
+            <option value="Jaw Clenching">Jaw Clenching</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="font-semibold text-slate-300 block mb-1">Severity:</label>
+            <select id="health-input-symptom-severity" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs">
+              <option value="Mild">Mild</option>
+              <option value="Moderate" selected>Moderate</option>
+              <option value="Severe">Severe</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-semibold text-slate-300 block mb-1">Time:</label>
+            <input type="time" id="health-input-symptom-time" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs">
+          </div>
+        </div>
+
+        <div>
+          <label class="font-semibold text-slate-300 block mb-1">Notes / Context (Optional):</label>
+          <input type="text" id="health-input-symptom-notes" placeholder="e.g. Occurred 7 hours post-dose during math study" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs">
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-end gap-2 border-t border-dark-border">
+        <button type="button" onclick="closeLogSymptomModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs">Cancel</button>
+        <button type="button" onclick="saveCustomSymptom()" class="px-5 py-2 rounded-xl bg-pastel-butter text-dark-base font-bold text-xs hover:opacity-95 transition">Save Symptom</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: RECIPE DETAILS & INGREDIENT INSPECT     -->
+  <!-- ============================================== -->
+  <div id="recipe-inspect-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
+    <div class="bg-dark-surface border border-pastel-coral/50 rounded-3xl w-full max-w-lg p-5 sm:p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-pastel-coral/20 border border-pastel-coral/40 flex items-center justify-center text-pastel-coral">
+            <i data-lucide="book-open" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white" id="inspect-recipe-title">Recipe Details</h3>
+            <span class="text-xs text-pastel-coral font-mono" id="inspect-recipe-meta">18m • 480 kcal • 2 Servings</span>
+          </div>
+        </div>
+        <button type="button" onclick="closeRecipeInspectModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Overview & Demo Visual -->
+      <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border flex items-center gap-3">
+        <div class="w-14 h-14 rounded-2xl bg-pastel-coral/15 border border-pastel-coral/30 flex items-center justify-center text-2xl shrink-0" id="inspect-recipe-emoji">
+          🥘
+        </div>
+        <div>
+          <p class="text-xs text-slate-200 leading-snug" id="inspect-recipe-desc">Pan-seared protein with tender broccoli florets steamed directly in the pan.</p>
+          <span class="text-[10px] text-pastel-mint font-semibold mt-1 block">⚖️ Kitchen-scale ready: All items include gram weights &amp; volume.</span>
+        </div>
+      </div>
+
+      <!-- Complete Ingredients Breakdown -->
+      <div class="space-y-2">
+        <span class="text-xs font-bold text-white uppercase tracking-wider block">Required Ingredients &amp; Amounts:</span>
+        <div id="inspect-recipe-ingredients" class="space-y-1.5 max-h-44 overflow-y-auto pr-1 text-xs">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Choreography Steps Preview -->
+      <div class="space-y-2">
+        <span class="text-xs font-bold text-white uppercase tracking-wider block">Reverse Choreography Sequence:</span>
+        <div id="inspect-recipe-steps" class="space-y-1.5 max-h-44 overflow-y-auto pr-1 text-xs">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-between items-center border-t border-dark-border">
+        <button type="button" onclick="closeRecipeInspectModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs">Close</button>
+        <button type="button" id="inspect-recipe-cook-btn" class="px-5 py-2 rounded-xl bg-pastel-coral text-dark-base font-bold text-xs hover:opacity-95 transition shadow-md">🚀 Cook This Recipe</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: ADD CUSTOM FOOD INGREDIENT              -->
+  <!-- ============================================== -->
+  <div id="custom-food-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
+    <div class="bg-dark-surface border border-pastel-mint/50 rounded-3xl w-full max-w-md p-5 sm:p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-pastel-mint/20 border border-pastel-mint/40 flex items-center justify-center text-pastel-mint">
+            <i data-lucide="apple" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Create &amp; Save Custom Food</h3>
+            <p class="text-xs text-slate-400">Saves permanently for future instant pantry search</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeCustomFoodModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="font-semibold text-slate-300 block mb-1">Food / Brand Name:</label>
+          <input type="text" id="custom-food-input-name" placeholder="e.g. Great Value Organic Black Beans" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="font-semibold text-slate-300 block mb-1">Category:</label>
+            <select id="custom-food-input-cat" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs">
+              <option value="protein">Protein</option>
+              <option value="produce">Produce / Veggie</option>
+              <option value="grains">Grains &amp; Starches</option>
+              <option value="condiments">Condiments &amp; Sauces</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-semibold text-slate-300 block mb-1">Storage Location:</label>
+            <select id="custom-food-input-storage" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs">
+              <option value="fridge">❄️ Fridge</option>
+              <option value="frozen">🧊 Frozen</option>
+              <option value="shelf">🥫 Shelf / Pantry</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-2xl bg-dark-base border border-dark-border space-y-2">
+          <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Nutrition per Serving:</span>
+          <div class="grid grid-cols-4 gap-1.5 font-mono">
+            <div>
+              <span class="text-[9.5px] text-slate-400 block">Kcal</span>
+              <input type="number" id="custom-food-input-kcal" value="120" min="0" class="w-full bg-dark-elevated border border-dark-border rounded-lg px-2 py-1 text-white text-xs">
+            </div>
+            <div>
+              <span class="text-[9.5px] text-pastel-mint block">Protein (g)</span>
+              <input type="number" id="custom-food-input-protein" value="8" min="0" step="0.5" class="w-full bg-dark-elevated border border-dark-border rounded-lg px-2 py-1 text-white text-xs">
+            </div>
+            <div>
+              <span class="text-[9.5px] text-pastel-sky block">Carbs (g)</span>
+              <input type="number" id="custom-food-input-carbs" value="20" min="0" step="0.5" class="w-full bg-dark-elevated border border-dark-border rounded-lg px-2 py-1 text-white text-xs">
+            </div>
+            <div>
+              <span class="text-[9.5px] text-pastel-coral block">Fat (g)</span>
+              <input type="number" id="custom-food-input-fat" value="1" min="0" step="0.5" class="w-full bg-dark-elevated border border-dark-border rounded-lg px-2 py-1 text-white text-xs">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-end gap-2 border-t border-dark-border">
+        <button type="button" onclick="closeCustomFoodModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs">Cancel</button>
+        <button type="button" onclick="saveCustomFoodToDatabase()" class="px-5 py-2 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs hover:bg-emerald-300 transition">Save &amp; Add to Pantry</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ============================================== -->
   <!-- MODAL: STANDALONE QUICK FOCUS LAUNCHER         -->
   <!-- ============================================== -->
-  <div id="standalone-focus-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
+  <div id="standalone-focus-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-surface border border-pastel-mint/30 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl space-y-0">
       <div class="p-5 border-b border-dark-border flex items-center justify-between bg-dark-elevated">
         <div class="flex items-center gap-3">
@@ -1390,7 +1929,7 @@
   <!-- ============================================== -->
   <!-- MODAL: EVENT TOOLS HUB (MAGIC, ESTIMATOR, CHEF) -->
   <!-- ============================================== -->
-  <div id="event-tools-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
+  <div id="event-tools-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-surface border border-dark-border rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
       <div class="p-4 sm:p-5 border-b border-dark-border flex items-center justify-between bg-dark-elevated">
         <div class="flex items-center gap-3 min-w-0 flex-1 pr-2">
@@ -1541,15 +2080,24 @@
               </div>
             </div>
 
-            <!-- Actual Duration (Reality Calibration) -->
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <label class="block text-xs font-semibold text-pastel-coral">Actual Duration (Reality Log)</label>
-                <span class="text-[10px] text-slate-400">For Calibration &amp; Line Graph</span>
+            <!-- Reality Execution Times (Actual Execution Without Altering Planned Version) -->
+            <div class="sm:col-span-2 p-3 rounded-2xl bg-dark-base/80 border border-pastel-coral/40 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <label class="text-xs font-bold text-pastel-coral flex items-center gap-1.5">
+                  <i data-lucide="zap" class="w-3.5 h-3.5 text-pastel-coral"></i>
+                  <span>Reality Execution (Actual Times)</span>
+                </label>
+                <span class="text-[10px] text-slate-400">Edit without altering planned version</span>
               </div>
-              <div class="flex items-center gap-2">
-                <input type="number" id="edit-event-actual-duration" min="5" max="480" step="5" placeholder="e.g. 45 mins" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-coral">
-                <button type="button" onclick="logActualDurationFromEditModal()" class="px-3 py-2 rounded-xl bg-pastel-coral text-dark-base font-bold text-xs shrink-0 hover:opacity-90 transition">Save Reality</button>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div>
+                  <label class="block text-slate-300 mb-1 font-medium text-[11px]">Actual Start Time</label>
+                  <input type="time" id="edit-event-actual-start" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-coral">
+                </div>
+                <div>
+                  <label class="block text-slate-300 mb-1 font-medium text-[11px]">Actual Duration (Minutes)</label>
+                  <input type="number" id="edit-event-actual-duration" min="5" max="480" step="5" placeholder="e.g. 45 mins" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-coral">
+                </div>
               </div>
             </div>
 
@@ -1726,7 +2274,7 @@
   </div>
 
     <!-- MODAL: INSTALL TO PHONE (PWA GUIDE) -->
-  <div id="install-app-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 overflow-y-auto">
+  <div id="install-app-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-lavender/50 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -1773,7 +2321,7 @@
   </div>
 
   <!-- MODAL: SHARE RECIPE WITH FRIENDS -->
-  <div id="share-recipe-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 overflow-y-auto">
+  <div id="share-recipe-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-coral/50 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -1825,7 +2373,7 @@
   </div>
 
   <!-- MODAL: INCOMING SHARED RECIPE PROMPT (WHEN FRIEND OPENS LINK) -->
-  <div id="incoming-recipe-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 overflow-y-auto">
+  <div id="incoming-recipe-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-mint/60 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center gap-3 border-b border-dark-border pb-3">
         <div class="w-10 h-10 rounded-2xl bg-pastel-mint/20 border border-pastel-mint/40 flex items-center justify-center text-pastel-mint">
@@ -1856,7 +2404,7 @@
   </div>
 
   <!-- MODAL: ADD / EDIT RECIPE IN CODEX -->
-  <div id="recipe-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
+  <div id="recipe-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-coral/40 rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -1948,7 +2496,7 @@
   </div>
 
   <!-- MODAL: DETAILED FOOD ITEM NUTRITION VIEWER (TAPPED LOGGED FOOD) -->
-  <div id="food-detail-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
+  <div id="food-detail-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-mint/40 rounded-3xl w-full max-w-xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div>
@@ -1998,7 +2546,7 @@
   </div>
 
   <!-- MODAL: APPLE HEALTH AUTOMATIC SYNC INTEGRATION -->
-  <div id="apple-health-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
+  <div id="apple-health-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-coral/50 rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl my-6">
       
       <!-- Modal Header -->
@@ -2201,7 +2749,7 @@
   </div>
 
   <!-- MODAL: OCD COGNITIVE BALANCE & URGE SURFER -->
-  <div id="ocd-support-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-3 sm:p-4 py-6 sm:py-10 overflow-y-auto overflow-x-hidden select-none">
+  <div id="ocd-support-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-purple-500/50 rounded-3xl w-full max-w-xl p-4 sm:p-6 space-y-4 shadow-2xl my-2 sm:my-6 overflow-hidden box-border">
       
       <!-- Header -->
@@ -2401,7 +2949,7 @@
   </div>
 
   <!-- MODAL: ADD / SORT EISENHOWER TASK -->
-  <div id="matrix-add-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+  <div id="matrix-add-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-lavender/40 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -2448,7 +2996,7 @@
   </div>
 
   <!-- MODAL: ADD PANTRY ITEM -->
-  <div id="pantry-item-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+  <div id="pantry-item-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-mint/40 rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <h3 class="text-base font-bold text-white">Add Kitchen Item</h3>
@@ -2481,7 +3029,7 @@
   </div>
 
   <!-- MODAL: NEW CALENDAR EVENT -->
-  <div id="new-event-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+  <div id="new-event-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-mint/40 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <h3 class="text-base font-bold text-white">Schedule Calendar Block</h3>
@@ -2524,18 +3072,38 @@
             </button>
           </div>
         </div>
-        <div class="grid grid-cols-3 gap-2">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           <div>
-            <label class="block text-slate-300 mb-1 font-semibold">Start Time</label>
-            <input type="time" id="new-event-start" value="09:00" onchange="onNewEventTimeChange('start')" class="w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-2 text-white font-mono text-xs">
+            <label class="block text-slate-300 mb-1 font-semibold text-xs">Planned Start</label>
+            <input type="time" id="new-event-start" value="09:00" onchange="onNewEventTimeChange('start')" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-mint">
           </div>
           <div>
-            <label class="block text-slate-300 mb-1 font-semibold">End Time</label>
-            <input type="time" id="new-event-end" value="10:00" onchange="onNewEventTimeChange('end')" class="w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-2 text-white font-mono text-xs">
+            <label class="block text-slate-300 mb-1 font-semibold text-xs">Planned End</label>
+            <input type="time" id="new-event-end" value="10:00" onchange="onNewEventTimeChange('end')" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-mint">
           </div>
           <div>
-            <label class="block text-slate-300 mb-1 font-semibold">Duration</label>
-            <input type="number" id="new-event-duration" value="60" min="5" max="480" step="5" onchange="onNewEventTimeChange('duration')" class="w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-2 text-white font-mono text-xs">
+            <label class="block text-slate-300 mb-1 font-semibold text-xs">Duration (mins)</label>
+            <input type="number" id="new-event-duration" value="60" min="5" max="480" step="5" onchange="onNewEventTimeChange('duration')" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-mint">
+          </div>
+        </div>
+        <!-- Reality Execution Times (If event was an unplanned execution or started at a different time) -->
+        <div id="new-event-reality-times-block" class="hidden p-3 rounded-2xl bg-dark-base/80 border border-pastel-coral/30 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-pastel-coral flex items-center gap-1.5">
+              <i data-lucide="zap" class="w-3.5 h-3.5 text-pastel-coral"></i>
+              <span>Reality Execution Times (Actual)</span>
+            </span>
+            <span class="text-[10px] text-slate-400">Independent from planned schedule</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <div>
+              <label class="block text-slate-300 mb-1 font-medium text-[11px]">Actual Start Time</label>
+              <input type="time" id="new-event-actual-start" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-coral">
+            </div>
+            <div>
+              <label class="block text-slate-300 mb-1 font-medium text-[11px]">Actual Duration (mins)</label>
+              <input type="number" id="new-event-actual-duration" min="5" max="480" step="5" placeholder="e.g. 75" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-coral">
+            </div>
           </div>
         </div>
         <div>
@@ -2561,7 +3129,7 @@
   </div>
 
     <!-- MODAL: SECTIONAL SCAFFOLDING HUB -->
-  <div id="scaffold-hub-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
+  <div id="scaffold-hub-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-mint/50 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -2649,7 +3217,7 @@
   </div>
   
   <!-- MODAL: PHONE DEMO & MOBILE TESTING -->
-  <div id="phone-demo-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 overflow-y-auto" onclick="if (event.target === this) closePhoneDemoModal()">
+  <div id="phone-demo-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto" onclick="if (event.target === this) closePhoneDemoModal()">
     <div class="bg-dark-elevated border border-pastel-sky/50 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl my-6">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -2735,7 +3303,7 @@
 
   <!-- MODAL: GCAL SYNC & CALENDAR CONNECT -->
     <!-- MODAL: GOOGLE CALENDAR SYNC -->
-  <div id="gcal-sync-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
+  <div id="gcal-sync-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-sky/50 rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl my-6">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -2828,7 +3396,7 @@
   </div>
 
     <!-- MODAL: CLOUD SYNC (Google sign-in + backup across devices) -->
-  <div id="ff-sync-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto" onclick="if (event.target === this) closeSyncModal()">
+  <div id="ff-sync-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto" onclick="if (event.target === this) closeSyncModal()">
     <div class="bg-dark-elevated border border-pastel-sky/50 rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -2936,7 +3504,7 @@
   </div>
 
   <!-- MODAL: GEMINI API KEY -->
-  <div id="apikey-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
+  <div id="apikey-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-lavender/50 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -3019,7 +3587,7 @@
   </div>
 
   <!-- MODAL: BODY PROFILE & TARGET WEIGHT -->
-  <div id="body-profile-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-3 sm:p-4 py-6 sm:py-10 overflow-y-auto overflow-x-hidden overscroll-contain w-full max-w-full select-none">
+  <div id="body-profile-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-lavender/50 rounded-3xl w-full max-w-lg p-4 sm:p-6 space-y-3.5 shadow-2xl my-2 sm:my-6 overflow-hidden box-border">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5 min-w-0">
@@ -3578,7 +4146,7 @@
   </div>
 
   <!-- MODAL: FOOD LOGGING -->
-  <div id="food-log-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
+  <div id="food-log-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-mint/50 rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl my-6">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -3700,7 +4268,7 @@
   </div>
 
   <!-- MODAL: NUTRIENT DRILL-DOWN & FULL DAY CALORIE SUMMARY -->
-  <div id="nutrient-breakdown-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-3 sm:p-4 py-6 sm:py-10 overflow-y-auto">
+  <div id="nutrient-breakdown-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div id="nutrient-breakdown-card" class="bg-dark-elevated border border-dark-border rounded-3xl w-full max-w-2xl p-4 sm:p-6 space-y-4 shadow-2xl transition-all my-2">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2">
@@ -3928,7 +4496,7 @@
   </div>
 
         <!-- MODAL: DEDICATED REVERSE CHEF & COOKING COMPANION (DIRECT FROM KITCHEN) -->
-  <div id="reverse-chef-modal" class="hidden fixed inset-0 z-50 bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
+  <div id="reverse-chef-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-coral/50 rounded-3xl w-full max-w-4xl p-4 sm:p-6 space-y-4 shadow-2xl my-2 sm:my-4">
       <!-- Modal Header -->
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
@@ -4078,6 +4646,15 @@
             <span class="text-[10px] text-pastel-coral font-bold uppercase tracking-wider block">Full Recipe &amp; Reverse Timeline</span>
             <h4 id="companion-recipe-title" class="text-base font-bold text-white">Crispy Chicken &amp; Broccoli Skillet</h4>
             <p class="text-[11px] text-slate-400" id="companion-recipe-summary">2 Servings • 480 kcal • Gram weights active</p>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="text-[10px] text-slate-400 font-semibold">Portions:</span>
+              <select id="companion-serving-selector" onchange="changeRecipeServings(this.value)" class="bg-dark-base border border-dark-border rounded-lg px-2 py-0.5 text-white font-mono text-[10px]">
+                <option value="1">1 Serving (≈ 340g / 1.5 cups)</option>
+                <option value="2" selected>2 Servings (≈ 680g / 3 cups)</option>
+                <option value="3">3 Servings (≈ 1020g / 4.5 cups)</option>
+                <option value="4">4 Servings (≈ 1360g / 6 cups)</option>
+              </select>
+            </div>
           </div>
           <!-- Stage 2 verify button if active -->
           <button type="button" onclick="verifyChoreographyOrder()" id="btn-verify-choreo" class="hidden px-3 py-1.5 rounded-xl bg-pastel-butter text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-sm">
@@ -4177,7 +4754,7 @@
   </div>
 
   <!-- MODAL: COOKING QUESTIONS FLOATING DRAWER -->
-  <div id="cooking-questions-drawer-modal" class="hidden fixed inset-0 z-50 bg-black/75 flex items-end sm:items-center justify-center p-3">
+  <div id="cooking-questions-drawer-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-mint/50 rounded-3xl w-full max-w-lg p-4 sm:p-5 space-y-3 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
         <div class="flex items-center gap-2">
@@ -4209,7 +4786,7 @@
   </div>
 
   <!-- MODAL: PANTRY ITEM NUTRITION & FRESHNESS SUMMARY -->
-  <div id="pantry-item-detail-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
+  <div id="pantry-item-detail-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-mint/50 rounded-3xl w-full max-w-md p-5 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2">
@@ -4247,6 +4824,31 @@
         </div>
         <div class="text-[10px] text-slate-400 font-mono pt-1" id="pantry-detail-micros">
           Fiber: 3.2g • Vit C: 89mg • Iron: 0.8mg • Calcium: 47mg
+        </div>
+      </div>
+
+      <!-- Quantity / Amount & Unit -->
+      <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-2 text-xs">
+        <span class="font-bold text-white block">Quantity, Weight or Volume:</span>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[11px] text-slate-400 block mb-0.5">Amount:</label>
+            <input type="number" id="pantry-detail-amount" step="any" min="0" placeholder="e.g. 1, 16, 500" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs">
+          </div>
+          <div>
+            <label class="text-[11px] text-slate-400 block mb-0.5">Unit:</label>
+            <select id="pantry-detail-unit" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs">
+              <option value="item">item(s) / count</option>
+              <option value="oz">oz (ounces)</option>
+              <option value="lb">lb (pounds)</option>
+              <option value="g">g (grams)</option>
+              <option value="cup">cup(s)</option>
+              <option value="tbsp">tbsp</option>
+              <option value="pack">pack / box</option>
+              <option value="can">can</option>
+              <option value="bottle">bottle</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -4293,7 +4895,7 @@
   </div>
 
   <!-- MODAL: BARCODE SCANNER (CHROME CAMERA + LIVE OPEN FOOD FACTS) -->
-  <div id="barcode-scanner-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-4 py-8 sm:py-12 overflow-y-auto">
+  <div id="barcode-scanner-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-lavender/50 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -4348,7 +4950,7 @@
   </div>
 
   <!-- MODAL: WELLBEING & SKILL CORRELATION HUB (TRENDS, AVERAGES, & PROGRESSION) -->
-  <div id="insights-hub-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-3 sm:p-4 py-6 sm:py-10 overflow-y-auto overflow-x-hidden select-none">
+  <div id="insights-hub-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-sky/50 rounded-3xl w-full max-w-3xl sm:max-w-4xl p-4 sm:p-6 space-y-4 shadow-2xl my-2 sm:my-6 overflow-hidden box-border">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5 min-w-0">
@@ -4397,7 +4999,7 @@
 
   
   <!-- MODAL: TIME ESTIMATION & CALIBRATION ACCURACY -->
-  <div id="time-calibration-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
+  <div id="time-calibration-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-mint/50 rounded-3xl w-full max-w-2xl p-5 sm:p-6 space-y-4 shadow-2xl my-4">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -4527,7 +5129,7 @@
   </div>
 
   <!-- MODAL: WALMART & GROCERY RECEIPT IMPORT WITH 1-BY-1 APPROVAL -->
-  <div id="walmart-import-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-3 sm:p-4 py-8 overflow-y-auto">
+  <div id="walmart-import-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-sky/50 rounded-3xl w-full max-w-xl p-5 sm:p-6 space-y-4 shadow-2xl my-4">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -4609,7 +5211,7 @@
   </div>
 
   <!-- MODAL: POST-COOKING WRAP-UP HUB (COOKBOOK, NUTRITION WITH MICROS, PANTRY LEFTOVERS) -->
-  <div id="cooking-wrapup-modal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-start justify-center p-3 sm:p-4 py-8 overflow-y-auto">
+  <div id="cooking-wrapup-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-coral/50 rounded-3xl w-full max-w-lg p-5 sm:p-6 space-y-4 shadow-2xl my-4">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -4642,6 +5244,16 @@
           <span>📖 Save Recipe to My Cookbook (Codex)</span>
         </label>
         <p class="text-[11px] text-slate-400 pl-6">Preserves your custom choreography steps, ingredients, and cook times for future 1-tap cooking.</p>
+        <div class="pl-6 pt-1">
+          <label class="text-[10px] text-slate-400 block mb-1">Codex Category:</label>
+          <select id="wrapup-cookbook-category" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs">
+            <option value="Quick Weeknight">⚡ Quick Weeknight (&lt; 20m)</option>
+            <option value="High Protein">💪 High Protein Power Meal</option>
+            <option value="Low Prep / 1-Pan">🍳 Low Prep / 1-Pan Minimal Dishes</option>
+            <option value="Batch Prep">📦 Batch Prep &amp; Freezable</option>
+            <option value="Comfort Food">🍲 Nourishing Comfort Food</option>
+          </select>
+        </div>
       </div>
 
       <!-- 2. Nutrition Logging Option with Editable Servings & Cronometer-Grade Micros -->
@@ -5231,7 +5843,14 @@
     function jumpTimelineToToday() {
       state.selectedTimelineDate = getTodayDateString();
       renderTimeline();
-      scrollToCurrentTimeMarker();
+      if (state.timelineViewMode === 'list') {
+        setTimeout(() => {
+          const divider = document.getElementById('timeline-now-divider-list');
+          if (divider) divider.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 60);
+      } else {
+        scrollToCurrentTimeMarker();
+      }
     }
 
     function renderWeekStrip() {
@@ -5756,8 +6375,7 @@
       }
 
       activeScheduleSuggestions = suggestions;
-      container.classList.remove('hidden');
-      renderScheduleSuggestionsUI(!suggestionsUserMinimized);
+      container.classList.add('hidden'); // Ensure banner never shows under the heading
 
       // Attach scroll listener to auto-expand on approaching target time slot
       const canvas = document.getElementById('timeline-calendar-scroll-canvas');
@@ -6749,6 +7367,7 @@
         // Render Red Line NOW marker in list view when time arrives
         if (isViewingToday && !nowLineRendered && currentNowMins < evStartMin) {
           const nowDivider = document.createElement('div');
+          nowDivider.id = "timeline-now-divider-list";
           nowDivider.className = "flex items-center gap-2 py-1 select-none";
           nowDivider.innerHTML = `
             <span class="w-3 h-3 rounded-full bg-rose-500 shadow-md shadow-rose-500/50 shrink-0 animate-pulse"></span>
@@ -6774,7 +7393,11 @@
         const entryType = ev.entryType || 'both';
 
         const card = document.createElement('div');
-        card.className = `bg-dark-surface border border-dark-border border-l-4 ${catMeta.color} hover:border-slate-600 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 transition shadow-md`;
+        if (entryType === 'reality') {
+          card.className = `bg-pastel-coral/10 border-2 border-dashed border-pastel-coral/80 hover:border-pastel-coral rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 transition shadow-md shadow-pastel-coral/5`;
+        } else {
+          card.className = `bg-dark-surface border border-dark-border border-l-4 ${catMeta.color} hover:border-slate-600 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 transition shadow-md`;
+        }
         card.innerHTML = `
           <div class="space-y-1.5 flex-1">
             <div class="flex items-center gap-2 flex-wrap">
@@ -7116,6 +7739,7 @@
         pill.innerHTML = `
           <div class="flex items-center gap-1.5 min-w-0">
             <span class="text-slate-200 font-semibold truncate hover:text-pastel-mint transition">${item.name}</span>
+            ${(item.amount != null && item.amount > 0) ? `<span class="px-1.5 py-0.5 rounded bg-dark-elevated text-pastel-mint font-mono text-[9.5px] font-bold shrink-0">${item.amount} ${item.unit || ''}</span>` : ''}
             ${expiryBadge}
           </div>
           <div class="flex items-center gap-1.5 shrink-0" onclick="event.stopPropagation()">
@@ -7183,6 +7807,10 @@
       const dateExpInput = document.getElementById('pantry-detail-date-exp');
 
       if (nameEl) nameEl.textContent = item.name;
+      const amtInput = document.getElementById('pantry-detail-amount');
+      const unitInput = document.getElementById('pantry-detail-unit');
+      if (amtInput) amtInput.value = item.amount != null ? item.amount : 1;
+      if (unitInput) unitInput.value = item.unit || 'item';
 
       // Find match in whole foods database
       const match = (typeof commonFoodsDatabase !== 'undefined') ? commonFoodsDatabase.find(cf => item.name.toLowerCase().includes(cf.name.toLowerCase().split(' ')[0])) : null;
@@ -7266,6 +7894,13 @@
       if (dateAddedInput) item.dateAdded = dateAddedInput.value;
       if (dateOpenedInput) item.dateOpened = dateOpenedInput.value;
       if (dateExpInput) item.expirationDate = dateExpInput.value;
+      const amtInput = document.getElementById('pantry-detail-amount');
+      const unitInput = document.getElementById('pantry-detail-unit');
+      if (amtInput) {
+        const val = parseFloat(amtInput.value);
+        item.amount = !isNaN(val) ? val : 1;
+      }
+      if (unitInput) item.unit = unitInput.value || 'item';
 
       saveAppState();
       renderPantry();
@@ -7292,12 +7927,25 @@
         return;
       }
 
-      const matches = (typeof commonFoodsDatabase !== 'undefined') ? commonFoodsDatabase.filter(cf => cf.name.toLowerCase().includes(q)).slice(0, 5) : [];
+      // Load custom foods from localStorage
+      let customFoods = [];
+      try {
+        const savedCustom = localStorage.getItem('focusflow_custom_foods');
+        if (savedCustom) customFoods = JSON.parse(savedCustom);
+      } catch(e) {}
+
+      const pool = [
+        ...(typeof commonFoodsDatabase !== 'undefined' ? commonFoodsDatabase : []),
+        ...(typeof brandedGroceriesDatabase !== 'undefined' ? brandedGroceriesDatabase : []),
+        ...customFoods
+      ];
+
+      const matches = pool.filter(cf => cf.name.toLowerCase().includes(q)).slice(0, 6);
       if (matches.length === 0) {
         box.innerHTML = `
-          <div class="p-2 text-xs text-slate-400 flex items-center justify-between">
-            <span>No exact match. Add as custom ingredient:</span>
-            <button type="button" onclick="addCustomPantryItemFromSearch('${query.replace(/'/g, "\\'")}')" class="px-2 py-1 rounded bg-pastel-mint text-dark-base font-bold text-[11px]">+ Add "${query}"</button>
+          <div class="p-2.5 text-xs text-slate-300 flex items-center justify-between gap-2">
+            <span>No match found for "${query}".</span>
+            <button type="button" onclick="openCustomFoodModal('${query.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs shrink-0">+ Create &amp; Save Food</button>
           </div>
         `;
         box.classList.remove('hidden');
@@ -7588,6 +8236,8 @@
       if (editNotes) editNotes.value = ev.description || '';
       const editActual = document.getElementById('edit-event-actual-duration');
       if (editActual) editActual.value = ev.actualDuration || '';
+      const editActualStart = document.getElementById('edit-event-actual-start');
+      if (editActualStart) editActualStart.value = ev.actualStartTime || ev.startTime || '09:00';
       setEditEventEntryType(ev.entryType || 'both');
 
       renderModalSubtasks();
@@ -7652,6 +8302,10 @@
       if (editActual && editActual.value) {
         const parsedAct = parseInt(editActual.value, 10);
         if (!isNaN(parsedAct) && parsedAct > 0) ev.actualDuration = parsedAct;
+      }
+      const editActualStart = document.getElementById('edit-event-actual-start');
+      if (editActualStart && editActualStart.value) {
+        ev.actualStartTime = editActualStart.value;
       }
 
       ev.lastLocalEdit = Date.now();
@@ -8152,7 +8806,7 @@
     // Tab Navigation with Recipe Book support
     function switchTab(tabId) {
       state.activeTab = tabId;
-      ['timeline', 'matrix', 'taskmaster', 'recipes', 'kitchen', 'nutrition'].forEach(t => {
+      ['timeline', 'matrix', 'taskmaster', 'recipes', 'kitchen', 'nutrition', 'health'].forEach(t => {
         const view = document.getElementById(`view-${t}`);
         const nav = document.getElementById(`nav-${t}`);
         const mobileNav = document.getElementById(`mobile-nav-${t}`);
@@ -8191,6 +8845,7 @@
       if (tabId === 'recipes') renderRecipes();
       if (tabId === 'kitchen') renderPantry();
       if (tabId === 'nutrition') renderNutrition();
+      if (tabId === 'health') renderHealthTabUI();
       const scrollEl = document.getElementById('main-content-scroll');
       if (scrollEl) scrollEl.scrollTop = 0;
       lucide.createIcons();
@@ -14067,12 +14722,12 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         return;
       }
 
-      const w = 540;
-      const h = 180;
-      const padL = 40;
+      const w = 560;
+      const h = 240;
+      const padL = 55;
       const padR = 25;
-      const padT = 20;
-      const padB = 30;
+      const padT = 25;
+      const padB = 40;
 
       const maxVal = Math.max(100, ...history.map(d => Math.max(d.plannedMin, d.actualMin))) + 15;
       const minVal = 0;
@@ -14108,12 +14763,12 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       const actualPathD = 'M ' + actualPoints.join(' L ');
 
       let gridLines = '';
-      [0, 30, 60, 90].forEach(val => {
+      [0, 30, 60, 90, 120, 150].forEach(val => {
         if (val <= maxVal) {
           const y = getY(val);
           gridLines += `
-            <line x1="${padL}" y1="${y}" x2="${w - padR}" y2="${y}" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-            <text x="${padL - 6}" y="${y + 3}" fill="#64748b" font-size="9" text-anchor="end" font-family="monospace">${val}m</text>
+            <line x1="${padL}" y1="${y}" x2="${w - padR}" y2="${y}" stroke="rgba(255,255,255,0.12)" stroke-width="1" />
+            <text x="${padL - 8}" y="${y + 4}" fill="#94a3b8" font-size="11" font-weight="bold" text-anchor="end" font-family="monospace">${val}m</text>
           `;
         }
       });
@@ -14661,9 +15316,14 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
             </div>
             <div class="flex items-center justify-between pt-1 border-t border-dark-border/40">
               <span class="text-[10px] text-slate-400 truncate max-w-xs">${opt.ingredients.slice(0, 3).join(', ')}</span>
-              <button type="button" onclick="launchRecipeOption(${idx})" class="px-3 py-1.5 rounded-xl bg-pastel-coral text-dark-base font-bold text-xs flex items-center gap-1 shadow-sm hover:opacity-95 transition">
-                <span>🚀 Cook This Recipe</span>
-              </button>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="inspectRecipeDetails(${idx})" class="px-2.5 py-1.5 rounded-xl bg-dark-elevated border border-dark-border text-slate-200 hover:text-white font-bold text-xs flex items-center gap-1 transition">
+                  <span>🔍 Details</span>
+                </button>
+                <button type="button" onclick="launchRecipeOption(${idx})" class="px-3 py-1.5 rounded-xl bg-pastel-coral text-dark-base font-bold text-xs flex items-center gap-1 shadow-sm hover:opacity-95 transition">
+                  <span>🚀 Cook</span>
+                </button>
+              </div>
             </div>
           </div>
         `;
@@ -14721,6 +15381,11 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
     }
 
     // Step 3: Full Recipe & Reverse Timeline View with Active Step Emphasis
+    function changeRecipeServings(val) {
+      state.currentRecipeServings = parseInt(val, 10) || 2;
+      renderCompanionRecipeViews();
+    }
+
     function renderCompanionRecipeViews() {
       if (!state.currentReverseChefRecipe) {
         launchRecipeOption(0);
@@ -14728,19 +15393,31 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       }
 
       const r = state.currentReverseChefRecipe;
+      const servings = state.currentRecipeServings || 2;
+      const multiplier = servings / 2;
+      const scaledKcal = Math.round((r.kcal || 480) * multiplier);
+
       const titleEl = document.getElementById('companion-recipe-title');
       const summaryEl = document.getElementById('companion-recipe-summary');
-      if (titleEl) titleEl.textContent = r.title;
-      if (summaryEl) summaryEl.textContent = `2 Servings • ${r.kcal} kcal • ${state.useKitchenScale ? '⚖️ Measured by Gram Weights' : 'Standard Portions'}`;
+      const servSelect = document.getElementById('companion-serving-selector');
+      if (servSelect && String(servSelect.value) !== String(servings)) servSelect.value = String(servings);
 
-      // Ingredients with Scale Weights
+      if (titleEl) titleEl.textContent = r.title;
+      if (summaryEl) summaryEl.textContent = `${servings} Servings (≈ ${servings * 340}g) • ${scaledKcal} kcal • ${state.useKitchenScale ? '⚖️ Measured by Gram Weights' : 'Standard Portions'}`;
+
+      // Ingredients with Scale Weights adjusted for serving size
       const ingListEl = document.getElementById('companion-ingredients-list');
       if (ingListEl) {
         ingListEl.innerHTML = '';
         (r.ingredients || []).forEach(ing => {
+          let scaledIng = ing;
+          if (multiplier !== 1) {
+            scaledIng = ing.replace(/(\d+)(g\b)/g, (m, num, unit) => `${Math.round(Number(num) * multiplier)}${unit}`)
+                           .replace(/(\d+)\s*(tbsp|cup|can|pack)/gi, (m, num, unit) => `${(Number(num) * multiplier).toFixed(1).replace(/\.0$/, '')} ${unit}`);
+          }
           const pill = document.createElement('span');
           pill.className = "px-2.5 py-1 rounded-xl bg-dark-elevated border border-dark-border text-slate-200 text-xs font-medium";
-          pill.textContent = state.useKitchenScale ? ing : ing.replace(/[0-9]+g\s*/g, '');
+          pill.textContent = state.useKitchenScale ? scaledIng : scaledIng.replace(/[0-9]+g\s*/g, '');
           ingListEl.appendChild(pill);
         });
       }
@@ -14941,7 +15618,7 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       sendCookingQuestion(q);
     }
 
-    function sendCookingQuestion(q) {
+    async function sendCookingQuestion(q) {
       const stream = document.getElementById('cooking-companion-qa-stream');
       if (!stream) return;
 
@@ -14951,33 +15628,66 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       stream.appendChild(userRow);
       stream.scrollTop = stream.scrollHeight;
 
-      setTimeout(() => {
-        let answer = '';
-        const lower = q.toLowerCase();
-        if (lower.includes('smoking') || lower.includes('smoke') || lower.includes('hot')) {
-          answer = "🚨 Lower the stove flame to medium immediately and slide the pan slightly off the heat for 20 seconds. Add a tiny splash of oil or water to cool the pan surface.";
-        } else if (lower.includes('substitute') || lower.includes('tamari') || lower.includes('soy sauce')) {
-          answer = "✓ Confirmed! You can use tamari, Worcestershire, or a pinch of salt. I've dynamically updated your recipe step with this substitution.";
-          if (state.currentReverseChefRecipe && state.currentReverseChefRecipe.steps[1]) {
-            state.currentReverseChefRecipe.steps[1].text += " (Substituted seasonings applied)";
-            renderCompanionRecipeViews();
-          }
-        } else if (lower.includes('done') || lower.includes('cooked')) {
-          answer = "🍗 Chicken is done when the thickest part is opaque white with no pink juice and reaches 165°F (approx 6-7 mins total pan sear). Cut into the center of one piece to verify!";
-        } else {
-          answer = "Great question! Keep your heat steady at medium-high and stir gently. I've logged your adjustment to this cooking session.";
-        }
+      const key = state.geminiApiKey || localStorage.getItem('gemini_api_key');
+      const r = state.currentReverseChefRecipe;
+      const curStep = (r && r.steps && r.steps[state.reverseChefActiveStepIndex || 0]) ? r.steps[state.reverseChefActiveStepIndex || 0].text : 'Cooking active';
 
-        const chefRow = document.createElement('div');
-        chefRow.className = "flex items-start gap-1.5 max-w-[90%]";
-        chefRow.innerHTML = `
-          <div class="w-5 h-5 rounded-full bg-pastel-mint/20 text-pastel-mint flex items-center justify-center text-[10px] font-bold shrink-0">🧑‍🍳</div>
-          <div class="p-2.5 rounded-2xl bg-dark-elevated border border-dark-border text-slate-200 text-xs leading-relaxed">${answer}</div>
-        `;
-        stream.appendChild(chefRow);
-        stream.scrollTop = stream.scrollHeight;
-        playChime('bell');
-      }, 500);
+      if (key) {
+        try {
+          const prompt = `You are Sous Chef, an expert real-time culinary companion. The user is actively cooking "${r ? r.title : 'Meal'}". Current active step: "${curStep}". User question: "${q}". Answer directly and practically in 2-3 reassuring sentences. If they ask about a substitute, confirm if it works, how much to substitute, and adjust for salt/heat.`;
+          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+          const resp = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (aiText) {
+              const chefRow = document.createElement('div');
+              chefRow.className = "flex items-start gap-1.5 max-w-[90%]";
+              chefRow.innerHTML = `
+                <div class="w-5 h-5 rounded-full bg-pastel-mint/20 text-pastel-mint flex items-center justify-center text-[10px] font-bold shrink-0">🧑‍🍳</div>
+                <div class="p-2.5 rounded-2xl bg-dark-elevated border border-dark-border text-slate-200 text-xs leading-relaxed">${aiText}</div>
+              `;
+              stream.appendChild(chefRow);
+              stream.scrollTop = stream.scrollHeight;
+              playChime('bell');
+              return;
+            }
+          }
+        } catch(e) {
+          console.warn("Cooking AI question call error, falling back to culinary rules:", e);
+        }
+      }
+
+      // Contextual culinary fallback answers
+      let answer = '';
+      const lower = q.toLowerCase();
+      if (lower.includes('smoking') || lower.includes('smoke') || lower.includes('hot') || lower.includes('burn')) {
+        answer = "🚨 Lower the stove flame to medium immediately and slide the pan slightly off the heat for 20 seconds. Add a tiny splash of oil or water to cool the pan surface.";
+      } else if (lower.includes('substitute') || lower.includes('tamari') || lower.includes('soy sauce')) {
+        answer = "✓ Confirmed! You can use tamari, Worcestershire, or a pinch of salt. I've dynamically updated your recipe step with this substitution.";
+        if (state.currentReverseChefRecipe && state.currentReverseChefRecipe.steps[1]) {
+          state.currentReverseChefRecipe.steps[1].text += " (Substituted seasonings applied)";
+          renderCompanionRecipeViews();
+        }
+      } else if (lower.includes('done') || lower.includes('cooked') || lower.includes('165')) {
+        answer = "🍗 Chicken is done when the thickest part is opaque white with no pink juice and reaches 165°F (approx 6-7 mins total pan sear). Cut into the center of one piece to verify!";
+      } else {
+        answer = "Great question! Keep your heat steady at medium-high and stir gently. I've logged your adjustment to this cooking session.";
+      }
+
+      const chefRow = document.createElement('div');
+      chefRow.className = "flex items-start gap-1.5 max-w-[90%]";
+      chefRow.innerHTML = `
+        <div class="w-5 h-5 rounded-full bg-pastel-mint/20 text-pastel-mint flex items-center justify-center text-[10px] font-bold shrink-0">🧑‍🍳</div>
+        <div class="p-2.5 rounded-2xl bg-dark-elevated border border-dark-border text-slate-200 text-xs leading-relaxed">${answer}</div>
+      `;
+      stream.appendChild(chefRow);
+      stream.scrollTop = stream.scrollHeight;
+      playChime('bell');
     }
 
     // Real Gemini Vision Receipt Scanner
@@ -16061,14 +16771,23 @@ Once enabled, tap 'Sync Live Events Now'!`,
           const nowMs = Date.now();
           const currentEvents = state.events || [];
 
-          // Separate manual events
-          const manualEvents = currentEvents.filter(e => 
-            !e.id.startsWith('ev-gapi-') && 
-            !e.id.startsWith('ev-ical-') && 
-            !e.id.startsWith('ev-buf-') && 
-            e.id !== 'ev-meal-choreo' &&
-            !e.title.includes('Focus & Task Execution') && !isDummyOrUnwantedEvent(e)
-          );
+          // Deduplicate manual events against fetched Google events by ID, or title + date + start time
+          const manualEvents = currentEvents.filter(e => {
+            if (e.id.startsWith('ev-gapi-') || e.id.startsWith('ev-ical-') || e.id.startsWith('ev-buf-') || e.id === 'ev-meal-choreo' || isDummyOrUnwantedEvent(e)) {
+              return false;
+            }
+            // Check if this manual event already corresponds to a fetched Google event
+            const isDup = fetchedEvents.some(f => {
+              if (e.gcalEventId && f.gcalEventId && e.gcalEventId === f.gcalEventId) return true;
+              if (e.title && f.title && e.title.trim().toLowerCase() === f.title.trim().toLowerCase() && e.date === f.date) {
+                const [eH, eM] = (e.startTime || '00:00').split(':').map(Number);
+                const [fH, fM] = (f.startTime || '00:00').split(':').map(Number);
+                if (Math.abs((eH * 60 + eM) - (fH * 60 + fM)) <= 15) return true;
+              }
+              return false;
+            });
+            return !isDup;
+          });
 
           // Merge fetched Google events while PRESERVING local user edits made in FocusFlow
           const mergedGcalEvents = fetchedEvents.map(fetched => {
@@ -16307,3 +17026,571 @@ Once enabled, tap 'Sync Live Events Now'!`,
   </script>
 </body>
 </html>
+
+
+    // ==============================================
+    // TAB 7: HEALTH & BIOMETRICS (CARDIAC & MEDICATION)
+    // ==============================================
+    function initHealthData() {
+      if (!state.healthData) {
+        const saved = localStorage.getItem('focusflow_health_data');
+        if (saved) {
+          try { state.healthData = JSON.parse(saved); } catch(e) {}
+        }
+        if (!state.healthData) {
+          state.healthData = {
+            medications: [
+              { id: 'm-1', name: 'Adderall XR', dose: '20mg', time: '08:00', type: 'XR', durationHours: 8, date: getTodayDateString() }
+            ],
+            heartRateReadings: [
+              { id: 'hr-1', time: '10:45', bpm: 108, activityTitle: 'Chemistry Lecture', isSedentary: true, notes: 'Classroom lecture, felt rapid pulse', date: getTodayDateString() },
+              { id: 'hr-2', time: '09:15', bpm: 74, activityTitle: 'Morning Routine & Breakfast', isSedentary: false, notes: 'Walking / prep', date: getTodayDateString() }
+            ],
+            symptoms: [
+              { id: 's-1', name: 'Restlessness / Hyperactivity', severity: 'Moderate', time: '11:15', notes: 'Leg tapping during chemistry lecture', date: getTodayDateString() }
+            ],
+            alertDismissed: false
+          };
+        }
+      }
+    }
+
+    function saveHealthData() {
+      if (state.healthData) {
+        localStorage.setItem('focusflow_health_data', JSON.stringify(state.healthData));
+      }
+    }
+
+    function renderHealthTabUI() {
+      initHealthData();
+      const hd = state.healthData;
+      const todayStr = getTodayDateString();
+
+      // Filter today's readings and medications
+      const todayMeds = (hd.medications || []).filter(m => (m.date || todayStr) === todayStr);
+      const activeMed = todayMeds.length > 0 ? todayMeds[todayMeds.length - 1] : (hd.medications && hd.medications[0]);
+
+      const hrReadings = hd.heartRateReadings || [];
+      const latestHr = hrReadings.length > 0 ? hrReadings[0] : null;
+
+      // Current HR Stat
+      const currentHrEl = document.getElementById('health-stat-current-hr');
+      const hrContextEl = document.getElementById('health-stat-hr-context');
+      if (currentHrEl) currentHrEl.textContent = latestHr ? latestHr.bpm : '78';
+      if (hrContextEl) {
+        if (latestHr && latestHr.bpm > 100 && latestHr.isSedentary) {
+          hrContextEl.textContent = '⚠️ Elevated while seated';
+          hrContextEl.className = 'text-[10px] text-amber-400 font-bold block';
+        } else if (latestHr && latestHr.bpm > 100) {
+          hrContextEl.textContent = '⚡ Elevated (Active)';
+          hrContextEl.className = 'text-[10px] text-pastel-sky block';
+        } else {
+          hrContextEl.textContent = '✓ Normal resting range';
+          hrContextEl.className = 'text-[10px] text-emerald-400 block';
+        }
+      }
+
+      // Active Medication Stat
+      const activeMedEl = document.getElementById('health-stat-active-med');
+      const medDoseTimeEl = document.getElementById('health-stat-med-dose-time');
+      const medTypeBadge = document.getElementById('health-med-release-type');
+
+      if (activeMed) {
+        if (activeMedEl) activeMedEl.textContent = `${activeMed.name} ${activeMed.dose}`;
+        if (medTypeBadge) medTypeBadge.textContent = `${activeMed.type || 'XR'} Formulation`;
+
+        // Calculate time elapsed since dose
+        const now = new Date();
+        const [dH, dM] = (activeMed.time || '08:00').split(':').map(Number);
+        const doseTotalMin = dH * 60 + dM;
+        const nowTotalMin = now.getHours() * 60 + now.getMinutes();
+        const diffMin = nowTotalMin - doseTotalMin;
+
+        if (medDoseTimeEl) {
+          if (diffMin >= 0) {
+            const hAgo = Math.floor(diffMin / 60);
+            const mAgo = diffMin % 60;
+            medDoseTimeEl.textContent = `Dose: ${formatTimeAmPm(activeMed.time)} (${hAgo > 0 ? hAgo + 'h ' : ''}${mAgo}m ago)`;
+          } else {
+            medDoseTimeEl.textContent = `Scheduled: ${formatTimeAmPm(activeMed.time)}`;
+          }
+        }
+
+        // Forecaster Progress Bar & Wear-off Time
+        const durHours = parseFloat(activeMed.durationHours) || (activeMed.type === 'IR' ? 4 : 8);
+        const totalDurMins = Math.round(durHours * 60);
+        const wearOffMin = doseTotalMin + totalDurMins;
+        const wearOffHH = String(Math.floor((wearOffMin % 1440) / 60)).padStart(2, '0');
+        const wearOffMM = String((wearOffMin % 1440) % 60).padStart(2, '0');
+        const wearOffTimeStr = `${wearOffHH}:${wearOffMM}`;
+
+        const wearoffTimeEl = document.getElementById('health-stat-wearoff-time');
+        const wearoffCountEl = document.getElementById('health-stat-wearoff-countdown');
+        if (wearoffTimeEl) wearoffTimeEl.textContent = `~${formatTimeAmPm(wearOffTimeStr)}`;
+
+        const remainingMin = wearOffMin - nowTotalMin;
+        if (wearoffCountEl) {
+          if (remainingMin > 0) {
+            const rH = Math.floor(remainingMin / 60);
+            const rM = remainingMin % 60;
+            wearoffCountEl.textContent = `In approx ${rH > 0 ? rH + 'h ' : ''}${rM}m`;
+            wearoffCountEl.className = 'text-[9.5px] text-amber-400 font-mono block';
+          } else {
+            wearoffCountEl.textContent = `Worn off (${Math.abs(Math.floor(remainingMin/60))}h ago)`;
+            wearoffCountEl.className = 'text-[9.5px] text-slate-400 font-mono block';
+          }
+        }
+
+        const pctElapsed = Math.min(100, Math.max(0, Math.round((diffMin / totalDurMins) * 100)));
+        const progFill = document.getElementById('health-med-progress-fill');
+        const progLabel = document.getElementById('health-med-progress-label');
+        const timeLeftEl = document.getElementById('health-med-time-left');
+
+        if (progFill) progFill.style.width = `${pctElapsed}%`;
+        if (progLabel) progLabel.textContent = pctElapsed >= 100 ? 'Post-Therapeutic / Transition Phase' : `Active Therapeutic Phase (${pctElapsed}% Elapsed)`;
+        if (timeLeftEl) timeLeftEl.textContent = remainingMin > 0 ? `~${Math.floor(remainingMin/60)}h ${remainingMin%60}m remaining` : 'Tapered / Baseline';
+      }
+
+      // Current Activity context from today's calendar events
+      const now = new Date();
+      const curMins = now.getHours() * 60 + now.getMinutes();
+      const todayEvents = getEventsForSelectedDay();
+      const curEvent = todayEvents.find(e => {
+        const [eH, eM] = (e.startTime || '09:00').split(':').map(Number);
+        const s = eH * 60 + eM;
+        const end = s + (e.duration || 30);
+        return curMins >= s && curMins < end;
+      });
+
+      const actEl = document.getElementById('health-stat-current-activity');
+      const actDurEl = document.getElementById('health-stat-activity-duration');
+      if (actEl) actEl.textContent = curEvent ? curEvent.title : (latestHr ? latestHr.activityTitle : 'Open Focus / Desk');
+      if (actDurEl && curEvent) {
+        actDurEl.textContent = `${formatTimeAmPm(curEvent.startTime)} – ${formatTimeAmPm(getEndTimeFromStartAndDuration(curEvent.startTime, curEvent.duration))}`;
+      }
+
+      // Check Sedentary Tachycardia Alert
+      const alertCard = document.getElementById('health-sedentary-tachycardia-alert');
+      const alertDesc = document.getElementById('health-tachycardia-alert-desc');
+      const spikeReading = hrReadings.find(r => r.isSedentary && r.bpm >= 100);
+
+      if (alertCard) {
+        if (spikeReading && !hd.alertDismissed) {
+          alertCard.classList.remove('hidden');
+          if (alertDesc) {
+            alertDesc.innerHTML = `Heart rate reached <strong>${spikeReading.bpm} BPM</strong> while seated in <em>${spikeReading.activityTitle}</em> (${formatTimeAmPm(spikeReading.time)}). While resting norm is 60–75 BPM, ADHD stimulant medication elevates adrenergic cardiac output even during motionless tasks.`;
+          }
+        } else {
+          alertCard.classList.add('hidden');
+        }
+      }
+
+      // Render Heart Rate Activity Correlation Stream
+      const streamEl = document.getElementById('health-activity-hr-stream');
+      if (streamEl) {
+        streamEl.innerHTML = '';
+        if (hrReadings.length === 0) {
+          streamEl.innerHTML = '<div class="p-3 text-center text-xs text-slate-500">No heart rate readings logged yet today. Tap "+ Log Reading" above.</div>';
+        } else {
+          hrReadings.forEach(r => {
+            const isSpike = r.isSedentary && r.bpm >= 100;
+            const item = document.createElement('div');
+            item.className = `p-2.5 rounded-xl border flex items-center justify-between gap-3 text-xs ${
+              isSpike 
+                ? 'bg-rose-950/20 border-rose-500/50' 
+                : (r.isSedentary ? 'bg-dark-base border-dark-border' : 'bg-dark-base border-sky-500/30')
+            }`;
+            item.innerHTML = `
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-8 h-8 rounded-xl ${isSpike ? 'bg-rose-500/20 text-rose-400' : (r.isSedentary ? 'bg-dark-elevated text-slate-400' : 'bg-pastel-sky/20 text-pastel-sky')} flex items-center justify-center font-bold text-xs shrink-0">
+                  ${r.bpm}
+                </div>
+                <div class="truncate">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="font-bold text-white truncate">${r.activityTitle || 'Activity'}</span>
+                    <span class="text-[9.5px] px-1.5 py-0.5 rounded ${r.isSedentary ? 'bg-dark-elevated text-slate-300' : 'bg-pastel-sky/15 text-pastel-sky'} font-mono">${r.isSedentary ? '🧘 Inactive' : '🏃 Active'}</span>
+                    ${isSpike ? '<span class="text-[9.5px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold font-mono">⚠️ Spike</span>' : ''}
+                  </div>
+                  <span class="text-[10px] text-slate-400 font-mono">${formatTimeAmPm(r.time)}${r.notes ? ' • ' + r.notes : ''}</span>
+                </div>
+              </div>
+              <button type="button" onclick="deleteHealthReading('${r.id}')" class="p-1 rounded text-slate-500 hover:text-rose-400 text-xs shrink-0" title="Delete reading">✕</button>
+            `;
+            streamEl.appendChild(item);
+          });
+        }
+      }
+
+      // Render Symptoms History List
+      const symptomsListEl = document.getElementById('health-symptoms-list');
+      const symptomsCountEl = document.getElementById('health-symptoms-count');
+      const symptoms = hd.symptoms || [];
+
+      if (symptomsCountEl) symptomsCountEl.textContent = `${symptoms.length} logged today`;
+      if (symptomsListEl) {
+        symptomsListEl.innerHTML = '';
+        if (symptoms.length === 0) {
+          symptomsListEl.innerHTML = '<div class="p-3 text-center text-xs text-slate-500">No transition symptoms logged. Tap any button above if experiencing wear-off effects.</div>';
+        } else {
+          symptoms.forEach(s => {
+            const row = document.createElement('div');
+            row.className = "p-2 rounded-xl bg-dark-base border border-dark-border flex items-center justify-between text-xs";
+            row.innerHTML = `
+              <div class="flex items-center gap-2">
+                <span class="text-pastel-butter">⚡</span>
+                <div>
+                  <span class="font-bold text-white">${s.name}</span>
+                  <span class="text-[10px] text-slate-400 font-mono ml-1.5">(${formatTimeAmPm(s.time)})</span>
+                  ${s.severity ? `<span class="text-[9.5px] px-1.5 py-0.2 rounded ml-1 font-mono ${s.severity === 'Severe' ? 'bg-rose-500/20 text-rose-300' : 'bg-pastel-butter/20 text-pastel-butter'}">${s.severity}</span>` : ''}
+                </div>
+              </div>
+              <button type="button" onclick="deleteHealthSymptom('${s.id}')" class="text-slate-500 hover:text-rose-400 text-xs p-1">✕</button>
+            `;
+            symptomsListEl.appendChild(row);
+          });
+        }
+      }
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function dismissHealthAlert() {
+      if (state.healthData) state.healthData.alertDismissed = true;
+      const el = document.getElementById('health-sedentary-tachycardia-alert');
+      if (el) el.classList.add('hidden');
+    }
+
+    function openLogMedicationModal() {
+      const now = new Date();
+      const curH = String(now.getHours()).padStart(2, '0');
+      const curM = String(now.getMinutes()).padStart(2, '0');
+      const timeIn = document.getElementById('health-input-med-time');
+      if (timeIn && !timeIn.value) timeIn.value = `${curH}:${curM}`;
+      const modal = document.getElementById('log-medication-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+    function closeLogMedicationModal() {
+      const modal = document.getElementById('log-medication-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+    function updateMedDurationDefault() {
+      const type = document.getElementById('health-input-med-type').value;
+      const durInput = document.getElementById('health-input-med-duration');
+      if (durInput) durInput.value = type === 'IR' ? '4' : '8';
+    }
+    function saveMedicationDose() {
+      const name = document.getElementById('health-input-med-name').value;
+      const dose = document.getElementById('health-input-med-dose').value.trim() || '20mg';
+      const time = document.getElementById('health-input-med-time').value || '08:00';
+      const type = document.getElementById('health-input-med-type').value || 'XR';
+      const durationHours = parseFloat(document.getElementById('health-input-med-duration').value) || 8;
+
+      initHealthData();
+      state.healthData.medications.push({
+        id: `med-${Date.now()}`,
+        name,
+        dose,
+        time,
+        type,
+        durationHours,
+        date: getTodayDateString()
+      });
+      saveHealthData();
+      closeLogMedicationModal();
+      renderHealthTabUI();
+      playChime('bell');
+      alertBox(`Logged dose: ${name} ${dose} at ${formatTimeAmPm(time)}. Wear-off forecaster calibrated!`, "Medication Dose Saved");
+    }
+
+    function openLogHeartRateModal() {
+      const now = new Date();
+      const curH = String(now.getHours()).padStart(2, '0');
+      const curM = String(now.getMinutes()).padStart(2, '0');
+      const timeIn = document.getElementById('health-input-hr-time');
+      if (timeIn) timeIn.value = `${curH}:${curM}`;
+
+      // Suggest current calendar event
+      const curMins = now.getHours() * 60 + now.getMinutes();
+      const todayEvents = getEventsForSelectedDay();
+      const curEvent = todayEvents.find(e => {
+        const [eH, eM] = (e.startTime || '09:00').split(':').map(Number);
+        const s = eH * 60 + eM;
+        const end = s + (e.duration || 30);
+        return curMins >= s && curMins < end;
+      });
+      const actIn = document.getElementById('health-input-hr-activity');
+      if (actIn) actIn.value = curEvent ? curEvent.title : 'Chemistry Lecture / Sitting';
+
+      const modal = document.getElementById('log-heart-rate-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+    function closeLogHeartRateModal() {
+      const modal = document.getElementById('log-heart-rate-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+    function saveHeartRateReading() {
+      const bpm = parseInt(document.getElementById('health-input-hr-bpm').value, 10);
+      if (isNaN(bpm) || bpm < 30 || bpm > 250) {
+        alertBox("Please enter a valid heart rate (BPM).", "Invalid Heart Rate");
+        return;
+      }
+      const time = document.getElementById('health-input-hr-time').value || '10:00';
+      const activityTitle = document.getElementById('health-input-hr-activity').value.trim() || 'Classroom / Seated';
+      const isSedentary = document.getElementById('health-hr-sedentary-yes').checked;
+      const notes = document.getElementById('health-input-hr-notes').value.trim();
+
+      initHealthData();
+      state.healthData.heartRateReadings.unshift({
+        id: `hr-${Date.now()}`,
+        time,
+        bpm,
+        activityTitle,
+        isSedentary,
+        notes,
+        date: getTodayDateString()
+      });
+      state.healthData.alertDismissed = false; // re-evaluate alert
+      saveHealthData();
+      closeLogHeartRateModal();
+      renderHealthTabUI();
+      playChime('bell');
+      if (isSedentary && bpm >= 100) {
+        alertBox(`Logged ${bpm} BPM while seated in ${activityTitle}. Elevated sedentary heart rate detected!`, "Sedentary Spike Alert");
+      } else {
+        alertBox(`Logged ${bpm} BPM for ${activityTitle}.`, "Heart Rate Saved");
+      }
+    }
+    function deleteHealthReading(id) {
+      if (state.healthData && state.healthData.heartRateReadings) {
+        state.healthData.heartRateReadings = state.healthData.heartRateReadings.filter(r => r.id !== id);
+        saveHealthData();
+        renderHealthTabUI();
+      }
+    }
+
+    function openLogSymptomModal() {
+      const now = new Date();
+      const curH = String(now.getHours()).padStart(2, '0');
+      const curM = String(now.getMinutes()).padStart(2, '0');
+      const timeIn = document.getElementById('health-input-symptom-time');
+      if (timeIn) timeIn.value = `${curH}:${curM}`;
+      const modal = document.getElementById('log-symptom-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+    function closeLogSymptomModal() {
+      const modal = document.getElementById('log-symptom-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+    function quickLogHealthSymptom(name) {
+      const now = new Date();
+      const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      initHealthData();
+      state.healthData.symptoms.unshift({
+        id: `sym-${Date.now()}`,
+        name,
+        severity: 'Moderate',
+        time,
+        notes: '',
+        date: getTodayDateString()
+      });
+      saveHealthData();
+      renderHealthTabUI();
+      playChime('bell');
+      alertBox(`Logged symptom: ${name} at ${formatTimeAmPm(time)}.`, "Symptom Recorded");
+    }
+    function saveCustomSymptom() {
+      const name = document.getElementById('health-input-symptom-name').value;
+      const severity = document.getElementById('health-input-symptom-severity').value;
+      const time = document.getElementById('health-input-symptom-time').value || '12:00';
+      const notes = document.getElementById('health-input-symptom-notes').value.trim();
+
+      initHealthData();
+      state.healthData.symptoms.unshift({
+        id: `sym-${Date.now()}`,
+        name,
+        severity,
+        time,
+        notes,
+        date: getTodayDateString()
+      });
+      saveHealthData();
+      closeLogSymptomModal();
+      renderHealthTabUI();
+      playChime('bell');
+      alertBox(`Logged ${severity} symptom: ${name}.`, "Symptom Saved");
+    }
+    function deleteHealthSymptom(id) {
+      if (state.healthData && state.healthData.symptoms) {
+        state.healthData.symptoms = state.healthData.symptoms.filter(s => s.id !== id);
+        saveHealthData();
+        renderHealthTabUI();
+      }
+    }
+
+
+    function resetElasticityPatterns() {
+      state.timeEstimationHistory = [];
+      saveAppState();
+      renderCalibrationChart();
+      const listEl = document.getElementById('elasticity-insights-list');
+      if (listEl) {
+        listEl.innerHTML = `
+          <div class="p-2.5 rounded-xl bg-dark-elevated border border-pastel-mint/30 flex items-start gap-2">
+            <span class="text-pastel-mint font-bold shrink-0">🌱 Clean Baseline:</span>
+            <span>All demo records cleared! As you log reality times for your events, FocusFlow will automatically calculate real elasticity drift and boundary recommendations.</span>
+          </div>
+        `;
+      }
+      playChime('bell');
+      alertBox("Elasticity patterns and demo history have been reset. Calibration will now reflect your real event completions!", "Patterns Reset");
+    }
+
+
+    // Expanded Database of Common Whole Foods & Major Brand Groceries (Walmart, Kroger, Kirkland, etc.)
+    const brandedGroceriesDatabase = [
+      { name: 'Great Value Boneless Skinless Chicken Breast', kcal: 120, protein: 26, carbs: 0, fat: 1.5, fiber: 0, sodium: 70, potassium: 330, iron: 0.9, calcium: 15, brand: 'Great Value' },
+      { name: 'Great Value Whole Vitamin D Milk', kcal: 150, protein: 8, carbs: 12, fat: 8, fiber: 0, sodium: 120, potassium: 350, iron: 0, calcium: 300, brand: 'Great Value' },
+      { name: 'Great Value Organic Baby Spinach', kcal: 20, protein: 2, carbs: 3, fat: 0, fiber: 2, sodium: 65, potassium: 470, iron: 2.7, calcium: 99, brand: 'Great Value' },
+      { name: 'Great Value Black Beans (Can)', kcal: 110, protein: 7, carbs: 20, fat: 0.5, fiber: 6, sodium: 130, potassium: 360, iron: 1.8, calcium: 40, brand: 'Great Value' },
+      { name: 'Great Value Long Grain Jasmine Rice', kcal: 160, protein: 3, carbs: 36, fat: 0, fiber: 1, sodium: 0, potassium: 55, iron: 1.4, calcium: 0, brand: 'Great Value' },
+      { name: 'Kirkland Signature Organic Pasture Raised Eggs', kcal: 70, protein: 6, carbs: 0, fat: 5, fiber: 0, sodium: 70, potassium: 70, iron: 0.9, calcium: 28, brand: 'Kirkland' },
+      { name: 'Chobani Non-Fat Plain Greek Yogurt', kcal: 90, protein: 16, carbs: 6, fat: 0, fiber: 0, sodium: 65, potassium: 250, iron: 0, calcium: 190, brand: 'Chobani' },
+      { name: 'Tyson Grilled & Ready Chicken Breast Strips', kcal: 110, protein: 21, carbs: 0, fat: 2.5, fiber: 0, sodium: 480, potassium: 310, iron: 0.7, calcium: 10, brand: 'Tyson' },
+      { name: 'Barilla Whole Grain Penne Pasta', kcal: 200, protein: 8, carbs: 39, fat: 1.5, fiber: 6, sodium: 0, potassium: 220, iron: 2.5, calcium: 20, brand: 'Barilla' },
+      { name: 'Quaker Old Fashioned Rolled Oats', kcal: 150, protein: 5, carbs: 27, fat: 2.5, fiber: 4, sodium: 0, potassium: 150, iron: 1.8, calcium: 20, brand: 'Quaker' },
+      { name: 'Fairlife 2% Ultra-Filtered Milk', kcal: 120, protein: 13, carbs: 6, fat: 4.5, fiber: 0, sodium: 120, potassium: 400, iron: 0, calcium: 380, brand: 'Fairlife' },
+      { name: 'Dave\'s Killer Bread 21 Whole Grains', kcal: 110, protein: 5, carbs: 22, fat: 1.5, fiber: 5, sodium: 170, potassium: 120, iron: 1.1, calcium: 40, brand: 'Dave\'s Killer Bread' }
+    ];
+
+
+    function openCustomFoodModal(query) {
+      const nameIn = document.getElementById('custom-food-input-name');
+      if (nameIn && query) nameIn.value = query;
+      const modal = document.getElementById('custom-food-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+    function closeCustomFoodModal() {
+      const modal = document.getElementById('custom-food-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+    function saveCustomFoodToDatabase() {
+      const name = (document.getElementById('custom-food-input-name').value || '').trim();
+      if (!name) {
+        alertBox("Please enter a food name.", "Missing Name");
+        return;
+      }
+      const category = document.getElementById('custom-food-input-cat').value || 'produce';
+      const storage = document.getElementById('custom-food-input-storage').value || 'fridge';
+      const kcal = parseInt(document.getElementById('custom-food-input-kcal').value, 10) || 100;
+      const protein = parseFloat(document.getElementById('custom-food-input-protein').value) || 0;
+      const carbs = parseFloat(document.getElementById('custom-food-input-carbs').value) || 0;
+      const fat = parseFloat(document.getElementById('custom-food-input-fat').value) || 0;
+
+      const newFood = {
+        name,
+        category,
+        storage,
+        kcal,
+        protein,
+        carbs,
+        fat,
+        brand: 'Custom / My Pantry'
+      };
+
+      // Save to localStorage
+      let customFoods = [];
+      try {
+        const savedCustom = localStorage.getItem('focusflow_custom_foods');
+        if (savedCustom) customFoods = JSON.parse(savedCustom);
+      } catch(e) {}
+      customFoods.push(newFood);
+      localStorage.setItem('focusflow_custom_foods', JSON.stringify(customFoods));
+
+      // Add to state.pantry
+      state.pantry.push({
+        id: `p-${Date.now()}`,
+        name,
+        category,
+        storage,
+        amount: 1,
+        unit: 'item',
+        dateAdded: new Date().toISOString().split('T')[0],
+        kcal,
+        protein,
+        carbs,
+        fat
+      });
+
+      saveAppState();
+      renderPantry();
+      closeCustomFoodModal();
+
+      const searchInput = document.getElementById('kitchen-food-search-input');
+      const searchBox = document.getElementById('kitchen-search-suggestions');
+      if (searchInput) searchInput.value = '';
+      if (searchBox) { searchBox.innerHTML = ''; searchBox.classList.add('hidden'); }
+
+      playChime('bell');
+      alertBox(`Saved "${name}" to custom database and added to pantry!`, "Food Created");
+    }
+
+
+    function inspectRecipeDetails(idx) {
+      const opt = (state.currentMealOptions && state.currentMealOptions[idx]) || (state.currentMealOptions && state.currentMealOptions[0]);
+      if (!opt) return;
+
+      const titleEl = document.getElementById('inspect-recipe-title');
+      const metaEl = document.getElementById('inspect-recipe-meta');
+      const descEl = document.getElementById('inspect-recipe-desc');
+      const ingListEl = document.getElementById('inspect-recipe-ingredients');
+      const stepsListEl = document.getElementById('inspect-recipe-steps');
+      const cookBtn = document.getElementById('inspect-recipe-cook-btn');
+
+      if (titleEl) titleEl.textContent = opt.title;
+      if (metaEl) metaEl.textContent = `${opt.cookTime}m • ${opt.kcal} kcal • 2 Servings`;
+      if (descEl) descEl.textContent = opt.description;
+
+      if (ingListEl) {
+        ingListEl.innerHTML = '';
+        (opt.ingredients || []).forEach(ing => {
+          const item = document.createElement('div');
+          item.className = "p-2 rounded-xl bg-dark-base border border-dark-border flex items-center justify-between text-xs";
+          item.innerHTML = `
+            <span class="text-white font-medium">${ing}</span>
+            <span class="text-[10px] text-pastel-mint font-mono font-bold">✓ Verified</span>
+          `;
+          ingListEl.appendChild(item);
+        });
+      }
+
+      if (stepsListEl) {
+        stepsListEl.innerHTML = '';
+        (opt.steps || []).forEach((st, sIdx) => {
+          const item = document.createElement('div');
+          item.className = `p-2 rounded-xl border flex items-center justify-between text-xs ${st.isDish ? 'bg-pastel-sky/10 border-pastel-sky/30 text-pastel-sky' : 'bg-dark-base border-dark-border text-slate-300'}`;
+          item.innerHTML = `
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded-full bg-dark-elevated text-slate-400 flex items-center justify-center text-[10px] font-bold">${sIdx + 1}</span>
+              <span>${st.text}</span>
+            </div>
+            <span class="font-mono text-[10px] text-slate-400 shrink-0 ml-2 font-bold">${st.minutes}m</span>
+          `;
+          stepsListEl.appendChild(item);
+        });
+      }
+
+      if (cookBtn) {
+        cookBtn.onclick = () => {
+          closeRecipeInspectModal();
+          launchRecipeOption(idx);
+        };
+      }
+
+      const modal = document.getElementById('recipe-inspect-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeRecipeInspectModal() {
+      const modal = document.getElementById('recipe-inspect-modal');
+      if (modal) modal.classList.add('hidden');
+    }

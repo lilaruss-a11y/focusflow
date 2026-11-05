@@ -5817,7 +5817,7 @@
     function getEventsForSelectedDay() {
       const selDate = getSelectedTimelineDateStr();
       const selDateNormalized = selDate.replace(/-/g, '');
-      const allEvents = state.events || [];
+      const allEvents = deduplicateEvents(state.events || []);
 
       return allEvents.filter(ev => {
         if (ev.date) {
@@ -13238,7 +13238,8 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         localStorage.setItem('focusflow_scaffold_stages', JSON.stringify(state.scaffoldStages));
         localStorage.setItem('focusflow_connected_calendars', JSON.stringify(state.connectedCalendars || []));
         localStorage.setItem('focusflow_calendar_categories', JSON.stringify(state.calendarCategories || []));
-        localStorage.setItem('focusflow_events', JSON.stringify(state.events || []));
+        state.events = deduplicateEvents(state.events || []);
+        localStorage.setItem('focusflow_events', JSON.stringify(state.events));
         localStorage.setItem('focusflow_water_logged_ml', JSON.stringify(state.waterLoggedMl || 0));
         localStorage.setItem('focusflow_water_unit', (state.userProfile && state.userProfile.waterUnit) || 'fl_oz');
         if (typeof ffOnLocalChange === 'function') {
@@ -13250,6 +13251,74 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
     }
 
     
+    // ==============================================
+    // EVENT DEDUPLICATION & CONSOLIDATION ENGINE
+    // ==============================================
+    function deduplicateEvents(eventsList) {
+      if (!Array.isArray(eventsList)) return [];
+      const deduped = [];
+
+      for (const ev of eventsList) {
+        if (!ev || !ev.title) continue;
+        if (typeof isDummyOrUnwantedEvent === 'function' && isDummyOrUnwantedEvent(ev)) continue;
+
+        const normTitle = ev.title.trim().toLowerCase();
+        const date = ev.date || getTodayDateString();
+        const [h, m] = (ev.startTime || '09:00').split(':').map(Number);
+        const startMins = (h || 0) * 60 + (m || 0);
+
+        // Treat "develop app" specifically as a reality event so it never splits into duplicate plan/reality blocks
+        if (normTitle === 'develop app' || normTitle.includes('develop app')) {
+          ev.entryType = 'reality';
+          if (!ev.actualDuration && ev.duration) ev.actualDuration = ev.duration;
+        }
+
+        let matchIdx = -1;
+        for (let i = 0; i < deduped.length; i++) {
+          const d = deduped[i];
+          const dDate = d.date || getTodayDateString();
+
+          // Match by gcalEventId
+          if (ev.gcalEventId && d.gcalEventId && ev.gcalEventId === d.gcalEventId) {
+            matchIdx = i;
+            break;
+          }
+          // Match by identical title on same date within 45 minutes
+          if (dDate === date && d.title.trim().toLowerCase() === normTitle) {
+            const [dH, dM] = (d.startTime || '09:00').split(':').map(Number);
+            const dMins = (dH || 0) * 60 + (dM || 0);
+            if (Math.abs(dMins - startMins) <= 45) {
+              matchIdx = i;
+              break;
+            }
+          }
+        }
+
+        if (matchIdx === -1) {
+          deduped.push(ev);
+        } else {
+          // Merge properties into the existing event so no reality tracking or notes are lost
+          const existing = deduped[matchIdx];
+          if (ev.gcalEventId && !existing.gcalEventId) {
+            existing.gcalEventId = ev.gcalEventId;
+            existing.gcalCalendarId = ev.gcalCalendarId;
+            existing.calendarName = ev.calendarName;
+          }
+          if (ev.entryType === 'reality' || existing.entryType === 'reality') {
+            existing.entryType = 'reality';
+          }
+          if (ev.actualStartTime && !existing.actualStartTime) existing.actualStartTime = ev.actualStartTime;
+          if (ev.actualDuration && !existing.actualDuration) existing.actualDuration = ev.actualDuration;
+          if (ev.description && !existing.description) existing.description = ev.description;
+          if (ev.goodEnough && !existing.goodEnough) existing.goodEnough = ev.goodEnough;
+          if (ev.subtasks && ev.subtasks.length > (existing.subtasks ? existing.subtasks.length : 0)) {
+            existing.subtasks = ev.subtasks;
+          }
+        }
+      }
+      return deduped;
+    }
+
     // ==============================================
     // PURGE UNWANTED / AUTO-GENERATED STARTER EVENTS
     // ==============================================
@@ -13508,13 +13577,13 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         }
       } catch (e) {}
 
-      // 11. Calendar Events (Purge any dummy or phantom events)
+      // 11. Calendar Events (Purge any dummy/phantom events and deduplicate immediately)
       try {
         const savedEvents = localStorage.getItem('focusflow_events');
         if (savedEvents !== null) {
           const parsed = JSON.parse(savedEvents);
           if (Array.isArray(parsed)) {
-            state.events = parsed.filter(e => !isDummyOrUnwantedEvent(e));
+            state.events = deduplicateEvents(parsed);
             try { localStorage.setItem('focusflow_events', JSON.stringify(state.events)); } catch (err) {}
           }
         }

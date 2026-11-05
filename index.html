@@ -232,9 +232,9 @@
           <span class="hidden md:inline ml-1">Quick Focus</span>
         </button>
 
-        <button onclick="togglePacingMetronome()" id="pacing-toggle-btn" class="header-ctrl-btn px-2 rounded-xl bg-dark-elevated border border-dark-border text-slate-400 hover:text-pastel-butter text-xs active:scale-95 transition" title="Toggle 5-minute anti-distraction pacing check-in">
-          <i data-lucide="bell-ring" class="w-3.5 h-3.5" id="pacing-icon"></i>
-          <span class="hidden lg:inline ml-1 text-[10px]" id="pacing-label">Pacing: Off</span>
+        <button type="button" onclick="togglePacingMetronome()" id="pacing-toggle-btn" class="header-ctrl-btn px-2 rounded-xl bg-dark-elevated border border-dark-border text-pastel-butter hover:text-yellow-300 text-xs active:scale-95 transition flex items-center justify-center shrink-0" title="Toggle 5-minute anti-distraction pacing check-in">
+          <i data-lucide="bell-ring" class="w-3.5 h-3.5 text-pastel-butter" id="pacing-icon"></i>
+          <span class="hidden lg:inline ml-1 text-[10px] text-pastel-butter" id="pacing-label">Pacing: Off</span>
         </button>
         
         <!-- Sectional Scaffolding Stage Hub -->
@@ -1978,7 +1978,7 @@
         </button>
       </div>
 
-      <div class="p-6 overflow-y-auto flex-1 space-y-4">
+      <div class="p-4 sm:p-6 overflow-y-auto overflow-x-hidden flex-1 space-y-4 w-full box-border" style="scrollbar-gutter: stable;">
         <!-- TAB 0: READ-ONLY DETAILS VIEW (Opened by default without editing) -->
         <div id="toolview-details" class="space-y-4">
           <div class="p-4 rounded-2xl bg-dark-base border border-dark-border space-y-3">
@@ -2017,10 +2017,15 @@
 
           <!-- Quick Action Buttons -->
           <div class="flex items-center justify-between pt-2 border-t border-dark-border gap-2">
-            <button type="button" onclick="switchToolTab('edit')" class="px-4 py-2 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-md hover:bg-sky-300 transition">
-              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-              <span>Edit Details</span>
-            </button>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="switchToolTab('edit')" class="px-3.5 py-2 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-md hover:bg-sky-300 transition">
+                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                <span>Edit</span>
+              </button>
+              <button type="button" id="btn-details-toggle-skipped" onclick="toggleActiveEventSkipped()" class="px-3 py-2 rounded-xl bg-dark-elevated border border-rose-500/40 text-rose-300 hover:bg-rose-950/40 font-bold text-xs flex items-center gap-1 transition">
+                <span>❌ Didn’t Do</span>
+              </button>
+            </div>
             <div class="flex items-center gap-2">
               <button type="button" onclick="launchEventIntoTaskmaster()" class="px-4 py-2 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-md hover:bg-emerald-300 transition">
                 <i data-lucide="play" class="w-3.5 h-3.5 fill-dark-base"></i>
@@ -2089,14 +2094,18 @@
                 </label>
                 <span class="text-[10px] text-slate-400">Edit without altering planned version</span>
               </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <div class="grid grid-cols-3 gap-2 text-xs">
                 <div>
-                  <label class="block text-slate-300 mb-1 font-medium text-[11px]">Actual Start Time</label>
-                  <input type="time" id="edit-event-actual-start" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-coral">
+                  <label class="block text-slate-300 mb-1 font-medium text-[10px] sm:text-[11px]">Actual Start</label>
+                  <input type="time" id="edit-event-actual-start" onchange="onEditActualTimeChange('start')" class="w-full min-w-0 max-w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-coral">
                 </div>
                 <div>
-                  <label class="block text-slate-300 mb-1 font-medium text-[11px]">Actual Duration (Minutes)</label>
-                  <input type="number" id="edit-event-actual-duration" min="5" max="480" step="5" placeholder="e.g. 45 mins" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-coral">
+                  <label class="block text-slate-300 mb-1 font-medium text-[10px] sm:text-[11px]">Actual End</label>
+                  <input type="time" id="edit-event-actual-end" onchange="onEditActualTimeChange('end')" class="w-full min-w-0 max-w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-coral">
+                </div>
+                <div>
+                  <label class="block text-slate-300 mb-1 font-medium text-[10px] sm:text-[11px]">Duration (m)</label>
+                  <input type="number" id="edit-event-actual-duration" min="5" max="480" step="5" placeholder="45" onchange="onEditActualTimeChange('duration')" class="w-full min-w-0 max-w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-coral">
                 </div>
               </div>
             </div>
@@ -3072,18 +3081,18 @@
             </button>
           </div>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        <div class="grid grid-cols-3 gap-2">
           <div>
-            <label class="block text-slate-300 mb-1 font-semibold text-xs">Planned Start</label>
-            <input type="time" id="new-event-start" value="09:00" onchange="onNewEventTimeChange('start')" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-mint">
+            <label class="block text-slate-300 mb-1 font-semibold text-[10px] sm:text-xs">Planned Start</label>
+            <input type="time" id="new-event-start" value="09:00" onchange="onNewEventTimeChange('start')" class="w-full min-w-0 max-w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-mint">
           </div>
           <div>
-            <label class="block text-slate-300 mb-1 font-semibold text-xs">Planned End</label>
-            <input type="time" id="new-event-end" value="10:00" onchange="onNewEventTimeChange('end')" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-mint">
+            <label class="block text-slate-300 mb-1 font-semibold text-[10px] sm:text-xs">Planned End</label>
+            <input type="time" id="new-event-end" value="10:00" onchange="onNewEventTimeChange('end')" class="w-full min-w-0 max-w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-mint">
           </div>
           <div>
-            <label class="block text-slate-300 mb-1 font-semibold text-xs">Duration (mins)</label>
-            <input type="number" id="new-event-duration" value="60" min="5" max="480" step="5" onchange="onNewEventTimeChange('duration')" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-mint">
+            <label class="block text-slate-300 mb-1 font-semibold text-[10px] sm:text-xs">Duration (m)</label>
+            <input type="number" id="new-event-duration" value="60" min="5" max="480" step="5" onchange="onNewEventTimeChange('duration')" class="w-full min-w-0 max-w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-mint">
           </div>
         </div>
         <!-- Reality Execution Times (If event was an unplanned execution or started at a different time) -->
@@ -3095,14 +3104,18 @@
             </span>
             <span class="text-[10px] text-slate-400">Independent from planned schedule</span>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <div class="grid grid-cols-3 gap-2 text-xs">
             <div>
-              <label class="block text-slate-300 mb-1 font-medium text-[11px]">Actual Start Time</label>
-              <input type="time" id="new-event-actual-start" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-coral">
+              <label class="block text-slate-300 mb-1 font-medium text-[10px] sm:text-[11px]">Actual Start</label>
+              <input type="time" id="new-event-actual-start" onchange="onNewActualTimeChange('start')" class="w-full min-w-0 max-w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-coral">
             </div>
             <div>
-              <label class="block text-slate-300 mb-1 font-medium text-[11px]">Actual Duration (mins)</label>
-              <input type="number" id="new-event-actual-duration" min="5" max="480" step="5" placeholder="e.g. 75" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-coral">
+              <label class="block text-slate-300 mb-1 font-medium text-[10px] sm:text-[11px]">Actual End</label>
+              <input type="time" id="new-event-actual-end" onchange="onNewActualTimeChange('end')" class="w-full min-w-0 max-w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-coral">
+            </div>
+            <div>
+              <label class="block text-slate-300 mb-1 font-medium text-[10px] sm:text-[11px]">Duration (m)</label>
+              <input type="number" id="new-event-actual-duration" min="5" max="480" step="5" placeholder="60" onchange="onNewActualTimeChange('duration')" class="w-full min-w-0 max-w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-coral">
             </div>
           </div>
         </div>
@@ -5378,11 +5391,25 @@
     function toggleAudioChime() {
       soundEnabled = !soundEnabled;
       const btn = document.getElementById('audio-toggle-btn');
+      const icon = document.getElementById('audio-icon');
+
       if (soundEnabled) {
-        btn.classList.add('text-pastel-mint');
+        if (btn) {
+          btn.className = "header-ctrl-btn px-2 rounded-xl bg-pastel-mint/20 border border-pastel-mint/40 text-pastel-mint text-xs active:scale-95 transition flex items-center justify-center shrink-0";
+          btn.title = "App Audio: Sound ON (Tap to Mute)";
+        }
+        if (icon) icon.setAttribute('data-lucide', 'volume-2');
+        if (window.lucide) lucide.createIcons();
         playChime('bell');
+        alertBox("Sound effects & completion chimes enabled.", "Sound ON");
       } else {
-        btn.classList.remove('text-pastel-mint');
+        if (btn) {
+          btn.className = "header-ctrl-btn px-2 rounded-xl bg-dark-elevated border border-dark-border text-slate-500 text-xs active:scale-95 transition flex items-center justify-center shrink-0";
+          btn.title = "App Audio: Sound OFF / Muted (Tap to Unmute)";
+        }
+        if (icon) icon.setAttribute('data-lucide', 'volume-x');
+        if (window.lucide) lucide.createIcons();
+        alertBox("Sound effects & completion chimes muted.", "Sound OFF");
       }
     }
   </script>
@@ -5830,6 +5857,21 @@
     function selectTimelineDay(dateStr) {
       state.selectedTimelineDate = dateStr;
       renderTimeline();
+      if (dateStr === getTodayDateString()) {
+        if (state.timelineViewMode === 'list') scrollListToNow();
+        else scrollToCurrentTimeMarker();
+      }
+    }
+
+    function scrollListToNow() {
+      setTimeout(() => {
+        const divider = document.getElementById('timeline-now-divider-list');
+        const container = document.getElementById('timeline-events-container');
+        if (divider && container) {
+          const divTop = divider.offsetTop;
+          container.scrollTo({ top: Math.max(0, divTop - 60), behavior: 'smooth' });
+        }
+      }, 80);
     }
 
     function changeTimelineWeek(offsetWeeks) {
@@ -5880,7 +5922,13 @@
 
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.onclick = () => selectTimelineDay(dateStr);
+        btn.onclick = () => {
+          selectTimelineDay(dateStr);
+          if (isToday) {
+            if (state.timelineViewMode === 'list') scrollListToNow();
+            else scrollToCurrentTimeMarker();
+          }
+        };
         btn.className = `px-1.5 py-0.5 rounded-lg text-[10px] font-semibold flex flex-col items-center transition ${
           isSelected 
             ? 'bg-pastel-mint text-dark-base font-bold shadow-sm' 
@@ -7029,9 +7077,11 @@
       let currentClusterEnd = -1;
 
       timedEvents.forEach(ev => {
-        const [hh, mm] = (ev.startTime || '09:00').split(':').map(n => parseInt(n) || 0);
+        const isRealityOnly = ev.entryType === 'reality';
+        const effectiveTime = (isRealityOnly && ev.actualStartTime) ? ev.actualStartTime : (ev.startTime || '09:00');
+        const [hh, mm] = effectiveTime.split(':').map(n => parseInt(n) || 0);
         const start = hh * 60 + mm;
-        const dur = Math.max(15, ev.duration || 30);
+        const dur = Math.max(15, (isRealityOnly && ev.actualDuration) ? ev.actualDuration : (ev.duration || 30));
         const end = start + dur;
 
         if (currentCluster.length === 0 || start < currentClusterEnd) {
@@ -7139,8 +7189,13 @@
               const realityLeft = entryType === 'both' ? `calc(${leftPct + (colWidthPct / 2)}% + 2px)` : `calc(${leftPct}% + 4px)`;
               const realityWidth = entryType === 'both' ? `calc(${(colWidthPct / 2)}% - 6px)` : `calc(${colWidthPct}% - 8px)`;
 
+              const actStart = ev.actualStartTime || ev.startTime || '09:00';
+              const [aH, aM] = actStart.split(':').map(Number);
+              const actStartMins = aH * 60 + aM;
+              const realityTopPx = Math.max(0, ((actStartMins - calendarStartMinutes) / 60) * CALENDAR_HOUR_HEIGHT);
+
               realityBlock.className = `absolute rounded-xl border border-pastel-coral/80 bg-dark-elevated p-2 overflow-hidden flex flex-col justify-between text-xs transition shadow-md cursor-pointer hover:border-pastel-coral`;
-              realityBlock.style.top = `${topPx}px`;
+              realityBlock.style.top = `${realityTopPx}px`;
               realityBlock.style.height = `${realityHeightPx}px`;
               realityBlock.style.left = realityLeft;
               realityBlock.style.width = realityWidth;
@@ -7166,8 +7221,13 @@
             return;
           }
 
+          const isSkipped = Boolean(ev.skipped);
           const block = document.createElement('div');
-          block.className = `absolute rounded-xl border border-l-4 transition-all shadow-md hover:shadow-xl hover:border-slate-400 overflow-hidden flex flex-col justify-between cursor-pointer ${isBuffer ? 'bg-dark-base/80 border border-dashed border-pastel-sky/50 text-pastel-sky' : catMeta.border}`;
+          if (isSkipped) {
+            block.className = `absolute rounded-xl border border-dashed border-rose-500/50 bg-slate-900/80 opacity-50 transition-all overflow-hidden flex flex-col justify-between cursor-pointer line-through`;
+          } else {
+            block.className = `absolute rounded-xl border border-l-4 transition-all shadow-md hover:shadow-xl hover:border-slate-400 overflow-hidden flex flex-col justify-between cursor-pointer ${isBuffer ? 'bg-dark-base/80 border border-dashed border-pastel-sky/50 text-pastel-sky' : catMeta.border}`;
+          }
           block.style.top = `${topPx}px`;
           block.style.height = `${heightPx}px`;
           block.style.left = `calc(${leftPct}% + 4px)`;
@@ -7207,7 +7267,7 @@
                     <div class="flex items-center gap-1.5 flex-wrap">
                       <span class="font-bold text-white">${timeRangeStr}</span>
                       <span class="px-1.5 py-0.5 rounded bg-dark-elevated text-slate-300 font-bold">(${ev.duration}m)</span>
-                      ${entryType === 'reality' ? '<span class="px-1.5 py-0.5 rounded-full bg-pastel-coral/20 text-pastel-coral border border-pastel-coral/30 font-bold text-[9px]">⏱️ Reality</span>' : (entryType === 'planned' ? '<span class="px-1.5 py-0.5 rounded-full bg-pastel-lavender/20 text-pastel-lavender border border-pastel-lavender/30 font-bold text-[9px]">📋 Plan</span>' : '')}
+                      ${isSkipped ? '<span class="px-1.5 py-0.5 rounded-full bg-rose-950/80 text-rose-300 border border-rose-500/50 font-bold text-[9px]">❌ Didn’t Do</span>' : (entryType === 'reality' ? '<span class="px-1.5 py-0.5 rounded-full bg-pastel-coral/20 text-pastel-coral border border-pastel-coral/30 font-bold text-[9px]">⏱️ Reality</span>' : (entryType === 'planned' ? '<span class="px-1.5 py-0.5 rounded-full bg-pastel-lavender/20 text-pastel-lavender border border-pastel-lavender/30 font-bold text-[9px]">📋 Plan</span>' : ''))}
                       ${ev.calendarName ? `<span class="px-1.5 py-0.5 rounded-full bg-pastel-sky/20 text-pastel-sky border border-pastel-sky/30 font-bold text-[9px]">${ev.calendarName}</span>` : ''}
                     </div>
                     
@@ -7361,7 +7421,8 @@
       let nowLineRendered = false;
 
       sortedEvents.forEach(ev => {
-        const [evH, evM] = (ev.startTime || '09:00').split(':').map(Number);
+        const effectiveStart = (ev.entryType === 'reality' && ev.actualStartTime) ? ev.actualStartTime : (ev.startTime || '09:00');
+        const [evH, evM] = effectiveStart.split(':').map(Number);
         const evStartMin = (evH * 60) + evM;
 
         // Render Red Line NOW marker in list view when time arrives
@@ -8235,9 +8296,16 @@
       if (editGood) editGood.value = ev.goodEnough || '';
       if (editNotes) editNotes.value = ev.description || '';
       const editActual = document.getElementById('edit-event-actual-duration');
-      if (editActual) editActual.value = ev.actualDuration || '';
+      if (editActual) editActual.value = (ev.actualDuration !== undefined) ? ev.actualDuration : (ev.duration || 60);
       const editActualStart = document.getElementById('edit-event-actual-start');
       if (editActualStart) editActualStart.value = ev.actualStartTime || ev.startTime || '09:00';
+      const editActualEnd = document.getElementById('edit-event-actual-end');
+      if (editActualEnd) {
+        const s = editActualStart ? editActualStart.value : '09:00';
+        const d = editActual ? (parseInt(editActual.value, 10) || 60) : 60;
+        editActualEnd.value = ev.actualEndTime || getEndTimeFromStartAndDuration(s, d);
+      }
+      if (typeof updateEventToolsModalSkippedUI === 'function') updateEventToolsModalSkippedUI(ev);
       setEditEventEntryType(ev.entryType || 'both');
 
       renderModalSubtasks();
@@ -8306,6 +8374,10 @@
       const editActualStart = document.getElementById('edit-event-actual-start');
       if (editActualStart && editActualStart.value) {
         ev.actualStartTime = editActualStart.value;
+      }
+      const editActualEnd = document.getElementById('edit-event-actual-end');
+      if (editActualEnd && editActualEnd.value) {
+        ev.actualEndTime = editActualEnd.value;
       }
 
       ev.lastLocalEdit = Date.now();
@@ -8788,16 +8860,16 @@
       if (state.pacingIntervalId) {
         clearInterval(state.pacingIntervalId);
         state.pacingIntervalId = null;
-        btn.className = "p-2.5 rounded-xl bg-dark-elevated border border-dark-border text-slate-400 hover:text-pastel-butter text-xs flex items-center gap-1.5 touch-nav-item";
-        label.textContent = "Pacing: Off";
+        if (btn) btn.className = "header-ctrl-btn px-2 rounded-xl bg-dark-elevated border border-dark-border text-pastel-butter hover:text-yellow-300 text-xs active:scale-95 transition flex items-center justify-center shrink-0";
+        if (label) label.textContent = "Pacing: Off";
         alertBox("5-minute pacing metronome disabled.", "Pacing");
       } else {
         state.pacingIntervalId = setInterval(() => {
           playChime('alert');
           alertBox("Gentle check-in: Are you still on your primary step, or did you drift into a detour?", "5-Min Pacing Check");
         }, 5 * 60 * 1000);
-        btn.className = "p-2.5 rounded-xl bg-pastel-butter text-dark-base font-bold text-xs flex items-center gap-1.5 touch-nav-item shadow-md shadow-pastel-butter/20";
-        label.textContent = "Pacing: 5m";
+        if (btn) btn.className = "header-ctrl-btn px-2 rounded-xl bg-pastel-butter/25 border-2 border-pastel-butter text-pastel-butter font-bold text-xs active:scale-95 transition flex items-center justify-center shrink-0 shadow-sm";
+        if (label) label.textContent = "Pacing: 5m";
         playChime('bell');
         alertBox("Pacing chime will softly ring every 5 minutes to anchor your focus.", "Pacing Active");
       }
@@ -17659,6 +17731,79 @@ Once enabled, tap 'Sync Live Events Now'!`,
     function closeRecipeInspectModal() {
       const modal = document.getElementById('recipe-inspect-modal');
       if (modal) modal.classList.add('hidden');
+    }
+  
+
+// ==============================================
+    // ACTUAL TIME CALCULATION & SKIPPED EVENT TOGGLE
+    // ==============================================
+    function onEditActualTimeChange(trigger) {
+      const startIn = document.getElementById('edit-event-actual-start');
+      const endIn = document.getElementById('edit-event-actual-end');
+      const durIn = document.getElementById('edit-event-actual-duration');
+      if (!startIn || !endIn || !durIn) return;
+
+      const sVal = startIn.value || '09:00';
+      if (trigger === 'start' || trigger === 'duration') {
+        const dur = parseInt(durIn.value, 10) || 60;
+        endIn.value = getEndTimeFromStartAndDuration(sVal, dur);
+      } else if (trigger === 'end') {
+        const eVal = endIn.value || '10:00';
+        const [sH, sM] = sVal.split(':').map(Number);
+        const [eH, eM] = eVal.split(':').map(Number);
+        let diff = (eH * 60 + eM) - (sH * 60 + sM);
+        if (diff <= 0) diff += 1440;
+        durIn.value = Math.max(5, diff);
+      }
+    }
+
+    function onNewActualTimeChange(trigger) {
+      const startIn = document.getElementById('new-event-actual-start');
+      const endIn = document.getElementById('new-event-actual-end');
+      const durIn = document.getElementById('new-event-actual-duration');
+      if (!startIn || !endIn || !durIn) return;
+
+      const sVal = startIn.value || '09:00';
+      if (trigger === 'start' || trigger === 'duration') {
+        const dur = parseInt(durIn.value, 10) || 60;
+        endIn.value = getEndTimeFromStartAndDuration(sVal, dur);
+      } else if (trigger === 'end') {
+        const eVal = endIn.value || '10:00';
+        const [sH, sM] = sVal.split(':').map(Number);
+        const [eH, eM] = eVal.split(':').map(Number);
+        let diff = (eH * 60 + eM) - (sH * 60 + sM);
+        if (diff <= 0) diff += 1440;
+        durIn.value = Math.max(5, diff);
+      }
+    }
+
+    function toggleActiveEventSkipped() {
+      const ev = state.activeEventModal;
+      if (!ev) return;
+      calendarHistory.recordState();
+      ev.skipped = !ev.skipped;
+      if (ev.skipped) {
+        ev.actualDuration = 0;
+      } else {
+        ev.actualDuration = ev.duration;
+      }
+      saveAppState();
+      renderTimeline();
+      updateEventToolsModalSkippedUI(ev);
+      playChime('bell');
+      alertBox(ev.skipped ? `Marked "${ev.title}" as Didn’t Do / Skipped.` : `Restored "${ev.title}".`, "Event Status");
+    }
+
+    function updateEventToolsModalSkippedUI(ev) {
+      const btnDetails = document.getElementById('btn-details-toggle-skipped');
+      const btnEdit = document.getElementById('btn-edit-toggle-skipped');
+      if (ev.skipped) {
+        if (btnDetails) btnDetails.innerHTML = '<span>↩ Restore (Done)</span>';
+        if (btnEdit) btnEdit.textContent = "↩ Restore (Did Do)";
+      } else {
+        if (btnDetails) btnDetails.innerHTML = "<span>❌ Didn’t Do</span>";
+        if (btnEdit) btnEdit.textContent = "❌ Mark Didn’t Do";
+      }
     }
   </script>
 </body>

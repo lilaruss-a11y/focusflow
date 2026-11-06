@@ -926,116 +926,334 @@
     </div>
 
     <!-- ============================================== -->
-    <!-- TAB 5: SMART KITCHEN & REVERSE CHEF            -->
+    <!-- TAB 5: SMART KITCHEN, MEAL PLANNER & SHOPPING  -->
     <!-- ============================================== -->
     <div id="view-kitchen" class="hidden space-y-6">
-      <div class="bg-dark-surface/90 border border-dark-border rounded-2xl p-6">
+      <!-- Main Kitchen Header & Sub-Navigation -->
+      <div class="bg-dark-surface/90 border border-dark-border rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div class="flex items-center gap-2">
-              <h2 class="text-xl font-bold text-slate-100">Smart Kitchen & Pantry</h2>
-              
+              <h2 class="text-xl font-bold text-slate-100">Smart Kitchen, Meal Planner &amp; Pantry</h2>
+              <span class="text-xs px-2.5 py-0.5 rounded-full bg-pastel-butter/20 text-pastel-butter border border-pastel-butter/30 font-medium">Weekly Prep Suite</span>
             </div>
-            <p class="text-xs text-slate-400 mt-1">Snap a photo of your fridge or shelf, and AI will automatically inventory your ingredients for zero-friction cooking.</p>
+            <p class="text-xs text-slate-400 mt-1">Inventory your pantry, plan balanced meals for the week, and auto-generate your grocery shopping list.</p>
           </div>
 
+          <!-- Global Action Buttons -->
           <div class="flex flex-wrap items-center gap-2">
-            <button onclick="openReverseChefFromKitchen()" class="flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl bg-gradient-to-r from-pastel-coral to-pastel-peach hover:opacity-90 text-dark-base font-bold text-xs shadow-lg shadow-pastel-coral/20 transition">
+            <button type="button" onclick="openReverseChefFromKitchen()" class="flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl bg-gradient-to-r from-pastel-coral to-pastel-peach hover:opacity-90 text-dark-base font-bold text-xs shadow-lg shadow-pastel-coral/20 transition active:scale-95">
               <i data-lucide="chef-hat" class="w-4 h-4 text-dark-base"></i>
               <span>Launch Reverse Chef</span>
             </button>
-            <button onclick="openWalmartGroceryImportModal()" class="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-sky/40 text-pastel-sky font-semibold text-xs transition" title="Import Walmart or grocery receipt items with 1-by-1 approval">
+            <button type="button" onclick="openWalmartGroceryImportModal()" class="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-sky/40 text-pastel-sky font-semibold text-xs transition active:scale-95" title="Import Walmart or grocery receipt items with 1-by-1 approval">
               <i data-lucide="shopping-cart" class="w-4 h-4"></i>
-              <span class="hidden sm:inline">Walmart / Groceries</span>
-              <span class="sm:hidden">Groceries</span>
+              <span class="hidden sm:inline">Receipt Import</span>
+              <span class="sm:hidden">Import</span>
             </button>
             <button type="button" onclick="openBarcodeScannerModal('pantry')" class="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender font-semibold text-xs transition" title="Scan Barcode into Pantry">
               <i data-lucide="scan-barcode" class="w-4 h-4"></i>
-              <span class="hidden sm:inline">Barcode</span>
-              <span class="sm:hidden">Barcode</span>
+              <span>Barcode</span>
             </button>
             <label class="cursor-pointer flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender font-semibold text-xs transition">
               <i data-lucide="camera" class="w-4 h-4"></i>
               <span class="hidden sm:inline">Scan Fridge</span>
-              <span class="sm:hidden">Scan</span>
+              <span class="sm:hidden">Photo</span>
               <input type="file" accept="image/*" class="hidden" onchange="handlePantryPhotoUpload(event)">
             </label>
-            <button onclick="openAddPantryItemModal()" class="px-2.5 py-2.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-300 text-xs" title="Add Ingredient Manually">
+            <button type="button" onclick="openAddPantryItemModal()" class="px-2.5 py-2.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-300 hover:text-white text-xs" title="Add Ingredient Manually">
               <i data-lucide="plus" class="w-4 h-4"></i>
             </button>
-            <button onclick="clearDemoPantryItems()" class="px-2.5 py-2.5 rounded-xl bg-dark-elevated hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-dark-border text-xs transition" title="Clear Demo Items (Start Fresh with Real Pantry)">
+            <button type="button" onclick="clearDemoPantryItems()" class="px-2.5 py-2.5 rounded-xl bg-dark-elevated hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-dark-border text-xs transition" title="Clear Demo Items (Start Fresh with Real Pantry)">
               <i data-lucide="trash" class="w-4 h-4"></i>
             </button>
           </div>
         </div>
 
-        <!-- Instant Ingredient & Whole Food Search Bar -->
-        <div class="relative mt-3">
-          <div class="relative flex items-center">
-            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none"></i>
-            <input type="text" id="kitchen-food-search-input" oninput="searchWholeFoodsForPantry(this.value)" placeholder="Search ingredients to add to pantry (e.g. Eggs, Greek Yogurt, Spinach, Quinoa, Salmon...)" class="w-full bg-dark-base border border-dark-border rounded-xl pl-9 pr-4 py-2 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-pastel-mint">
+        <!-- Section View Switcher: Pantry vs Meal Planner vs Shopping List -->
+        <div class="pt-3 border-t border-dark-border flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center p-1 rounded-2xl bg-dark-base border border-dark-border gap-1 text-xs">
+            <button type="button" onclick="switchKitchenSubTab('pantry')" id="kitchen-subtab-btn-pantry" class="px-3.5 py-2 rounded-xl font-bold bg-pastel-butter text-dark-base transition flex items-center gap-1.5 shadow-sm">
+              <i data-lucide="package" class="w-4 h-4"></i>
+              <span>Pantry Inventory</span>
+              <span id="pantry-total-count-badge" class="px-1.5 py-0.2 rounded-full bg-dark-base/40 text-dark-base text-[10px] font-mono">0</span>
+            </button>
+            <button type="button" onclick="switchKitchenSubTab('planner')" id="kitchen-subtab-btn-planner" class="px-3.5 py-2 rounded-xl font-semibold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+              <i data-lucide="calendar" class="w-4 h-4"></i>
+              <span>Weekly Meal Plan</span>
+            </button>
+            <button type="button" onclick="switchKitchenSubTab('shopping')" id="kitchen-subtab-btn-shopping" class="px-3.5 py-2 rounded-xl font-semibold text-slate-400 hover:text-white transition flex items-center gap-1.5 relative">
+              <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+              <span>Shopping List</span>
+              <span id="shopping-list-pending-badge" class="px-1.5 py-0.2 rounded-full bg-pastel-coral text-dark-base font-bold text-[10px] font-mono">0</span>
+            </button>
           </div>
-          <div id="kitchen-search-suggestions" class="hidden absolute left-0 right-0 top-full mt-1.5 z-30 bg-dark-elevated border border-dark-border rounded-2xl p-2 shadow-2xl space-y-1"></div>
-        </div>
 
-        <div id="pantry-vision-loading" class="hidden mt-6 bg-dark-elevated border border-pastel-sky/40 rounded-xl p-4 flex items-center gap-4 animate-pulse">
-          <div class="w-8 h-8 rounded-full border-2 border-pastel-sky border-t-transparent animate-spin"></div>
-          <div>
-            <div class="text-xs font-semibold text-pastel-sky">Gemini Vision is scanning your photo...</div>
-            <div class="text-xs text-slate-400">Identifying vegetables, proteins, dairy, sauces, and leftovers...</div>
+          <div id="kitchen-subtab-hint" class="text-[11px] text-slate-400 font-mono">
+            🥫 Track on-hand items • 🗓️ Plan what to make • 🛒 Buy what's missing
           </div>
         </div>
       </div>
 
-      <!-- Inventory Categorized Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Produce -->
-        <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3">
-          <div class="flex items-center justify-between border-b border-dark-border pb-2">
-            <span class="text-xs font-bold text-pastel-mint flex items-center gap-1.5">
-              <i data-lucide="apple" class="w-4 h-4"></i> Produce
+      <!-- ============================================== -->
+      <!-- SUB-TAB 1: PANTRY INVENTORY                     -->
+      <!-- ============================================== -->
+      <div id="kitchen-view-pantry" class="space-y-5">
+        <!-- Quick Common Staples Shelf (1-Click Instant Add) -->
+        <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="zap" class="w-3.5 h-3.5 text-pastel-butter"></i>
+              Quick-Stock Common Staples (1-Tap Add)
             </span>
-            <span class="text-xs text-slate-500 font-mono" id="count-produce">0</span>
+            <span class="text-[11px] text-slate-400">Tap to instantly stock or restock items</span>
           </div>
-          <div id="list-produce" class="space-y-1.5 min-h-[100px]"></div>
+          <div class="flex flex-wrap gap-1.5 text-xs">
+            <button type="button" onclick="quickAddStapleToPantry('Eggs (Dozen)', 'protein', 'fridge')" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-peach text-slate-300 hover:text-pastel-peach transition flex items-center gap-1 active:scale-95">🥚 Eggs</button>
+            <button type="button" onclick="quickAddStapleToPantry('Whole Milk', 'protein', 'fridge')" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-peach text-slate-300 hover:text-pastel-peach transition flex items-center gap-1 active:scale-95">🥛 Milk</button>
+            <button type="button" onclick="quickAddStapleToPantry('Greek Yogurt', 'protein', 'fridge')" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-peach text-slate-300 hover:text-pastel-peach transition flex items-center gap-1 active:scale-95">🥣 Greek Yogurt</button>
+            <button type="button" onclick="quickAddStapleToPantry('Chicken Breast', 'protein', 'fridge')" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-peach text-slate-300 hover:text-pastel-peach transition flex items-center gap-1 active:scale-95">🍗 Chicken</button>
+            <button type="button" onclick="quickAddStapleToPantry('Butter', 'protein', 'fridge')" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-peach text-slate-300 hover:text-pastel-peach transition flex items-center gap-1 active:scale-95">🧈 Butter</button>
+            <button type="button" onclick="quickAddStapleToPantry('Extra Virgin Olive Oil', 'condiments', 'shelf')" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-sky text-slate-300 hover:text-pastel-sky transition flex items-center gap-1 active:scale-95">🫒 Olive Oil</button>
+            <button type="button" onclick="quickAddStapleToPantry('Fresh Garlic', 'produce', 'shelf')" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint text-slate-300 hover:text-pastel-mint transition flex items-center gap-1 active:scale-95">🧄 Garlic</button>
+            <button type="button" onclick="quickAddStapleToPantry('Yellow Onions', 'produce', 'shelf')" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint text-slate-300 hover:text-pastel-mint transition flex items-center gap-1 active:scale-95">🧅 Onions</button>
+            <button type="button" onclick="quickAddStapleToPantry('Baby Spinach', 'produce', 'fridge')" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint text-slate-300 hover:text-pastel-mint transition flex items-center gap-1 active:scale-95">🥬 Spinach</button>
+            <button type="button" onclick="quickAddStapleToPantry('Fresh Broccoli', 'produce', 'fridge')" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint text-slate-300 hover:text-pastel-mint transition flex items-center gap-1 active:scale-95">🥦 Broccoli</button>
+            <button type="button" onclick="quickAddStapleToPantry('Bananas', 'produce', 'shelf')" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint text-slate-300 hover:text-pastel-mint transition flex items-center gap-1 active:scale-95">🍌 Bananas</button>
+            <button type="button" onclick="quickAddStapleToPantry('Jasmine Rice', 'grains', 'shelf')" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-butter text-slate-300 hover:text-pastel-butter transition flex items-center gap-1 active:scale-95">🍚 Rice</button>
+            <button type="button" onclick="quickAddStapleToPantry('Rolled Oats', 'grains', 'shelf')" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-butter text-slate-300 hover:text-pastel-butter transition flex items-center gap-1 active:scale-95">🌾 Oats</button>
+            <button type="button" onclick="quickAddStapleToPantry('Whole Grain Bread', 'grains', 'shelf')" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-butter text-slate-300 hover:text-pastel-butter transition flex items-center gap-1 active:scale-95">🍞 Bread</button>
+            <button type="button" onclick="quickAddStapleToPantry('Soy Sauce', 'condiments', 'fridge')" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-sky text-slate-300 hover:text-pastel-sky transition flex items-center gap-1 active:scale-95">🥢 Soy Sauce</button>
+            <button type="button" onclick="quickAddStapleToPantry('Ground Coffee Beans', 'condiments', 'shelf')" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-sky text-slate-300 hover:text-pastel-sky transition flex items-center gap-1 active:scale-95">☕ Coffee</button>
+          </div>
         </div>
 
-        <!-- Protein & Dairy -->
+        <!-- Search Bar & Storage Filters -->
         <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3">
-          <div class="flex items-center justify-between border-b border-dark-border pb-2">
-            <span class="text-xs font-bold text-pastel-peach flex items-center gap-1.5">
-              <i data-lucide="egg" class="w-4 h-4"></i> Protein & Dairy
-            </span>
-            <span class="text-xs text-slate-500 font-mono" id="count-protein">0</span>
+          <div class="relative">
+            <div class="relative flex items-center">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none"></i>
+              <input type="text" id="kitchen-food-search-input" onkeydown="onKitchenSearchKeydown(event)" oninput="searchWholeFoodsForPantry(this.value)" placeholder="Type ingredient name (e.g. Sliced Almonds, Tofu, Honey) and press Enter to add..." class="w-full bg-dark-base border border-dark-border rounded-xl pl-10 pr-24 py-2.5 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-pastel-mint">
+              <button type="button" onclick="addCustomPantryItemFromInput()" class="absolute right-2 px-3 py-1.5 rounded-lg bg-pastel-mint text-dark-base font-bold text-xs hover:bg-emerald-300 transition active:scale-95">
+                + Add
+              </button>
+            </div>
+            <div id="kitchen-search-suggestions" class="hidden absolute left-0 right-0 top-full mt-1.5 z-30 bg-dark-elevated border border-dark-border rounded-2xl p-2 shadow-2xl space-y-1"></div>
           </div>
-          <div id="list-protein" class="space-y-1.5 min-h-[100px]"></div>
+
+          <!-- Storage Location Filter Pills -->
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-dark-border/60 text-xs">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-slate-400 font-semibold text-[11px] mr-1">Filter View:</span>
+              <button type="button" onclick="filterPantryByStorage('all')" id="btn-pantry-filter-all" class="px-3 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition">All Items</button>
+              <button type="button" onclick="filterPantryByStorage('fridge')" id="btn-pantry-filter-fridge" class="px-3 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition">❄️ Fridge</button>
+              <button type="button" onclick="filterPantryByStorage('frozen')" id="btn-pantry-filter-frozen" class="px-3 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition">🧊 Freezer</button>
+              <button type="button" onclick="filterPantryByStorage('shelf')" id="btn-pantry-filter-shelf" class="px-3 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition">🥫 Shelf / Pantry</button>
+              <button type="button" onclick="filterPantryByStorage('expiring')" id="btn-pantry-filter-expiring" class="px-3 py-1 rounded-xl bg-dark-base border border-dark-border text-amber-300 hover:text-white transition">⚠️ Expiring Soon</button>
+            </div>
+            <div class="text-[11px] text-slate-400 font-mono">
+              💡 Tap cards to adjust amount or send to shopping list
+            </div>
+          </div>
         </div>
 
-        <!-- Grains & Staples -->
-        <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3">
-          <div class="flex items-center justify-between border-b border-dark-border pb-2">
-            <span class="text-xs font-bold text-pastel-butter flex items-center gap-1.5">
-              <i data-lucide="wheat" class="w-4 h-4"></i> Grains & Staples
-            </span>
-            <span class="text-xs text-slate-500 font-mono" id="count-grains">0</span>
+        <!-- Expiring Soon Alert Banner -->
+        <div id="chef-expiring-alert" class="hidden p-3.5 rounded-2xl bg-gradient-to-r from-amber-950/40 via-dark-surface to-dark-surface border border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs shadow-lg">
+          <div class="flex items-center gap-2.5">
+            <span class="text-lg">⚠️</span>
+            <span id="chef-expiring-alert-text" class="text-amber-200 font-medium">Ingredients expiring soon. Use them up!</span>
           </div>
-          <div id="list-grains" class="space-y-1.5 min-h-[100px]"></div>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="prioritizeExpiringIngredients()" class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-bold text-xs transition">
+              Use in Reverse Chef
+            </button>
+          </div>
         </div>
 
-        <!-- Condiments & Quick Snacks -->
-        <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3">
-          <div class="flex items-center justify-between border-b border-dark-border pb-2">
-            <span class="text-xs font-bold text-pastel-sky flex items-center gap-1.5">
-              <i data-lucide="cookie" class="w-4 h-4"></i> Condiments & Snacks
-            </span>
-            <span class="text-xs text-slate-500 font-mono" id="count-condiments">0</span>
+        <!-- Vision Loading State -->
+        <div id="pantry-vision-loading" class="hidden bg-dark-elevated border border-pastel-sky/40 rounded-2xl p-4 flex items-center gap-4 animate-pulse">
+          <div class="w-8 h-8 rounded-full border-2 border-pastel-sky border-t-transparent animate-spin"></div>
+          <div>
+            <div class="text-xs font-semibold text-pastel-sky">Scanning photo with vision...</div>
+            <div class="text-xs text-slate-400">Identifying vegetables, proteins, dairy, sauces, and leftovers...</div>
           </div>
-          <div id="list-condiments" class="space-y-1.5 min-h-[100px]"></div>
+        </div>
+
+        <!-- Inventory Categorized Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Produce -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-pastel-mint flex items-center gap-1.5">
+                <i data-lucide="apple" class="w-4 h-4"></i> Produce
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-produce">0</span>
+            </div>
+            <div id="list-produce" class="space-y-2 min-h-[120px]"></div>
+          </div>
+
+          <!-- Protein & Dairy -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-pastel-peach flex items-center gap-1.5">
+                <i data-lucide="egg" class="w-4 h-4"></i> Protein &amp; Dairy
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-protein">0</span>
+            </div>
+            <div id="list-protein" class="space-y-2 min-h-[120px]"></div>
+          </div>
+
+          <!-- Grains & Staples -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-pastel-butter flex items-center gap-1.5">
+                <i data-lucide="wheat" class="w-4 h-4"></i> Grains &amp; Staples
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-grains">0</span>
+            </div>
+            <div id="list-grains" class="space-y-2 min-h-[120px]"></div>
+          </div>
+
+          <!-- Condiments & Quick Snacks -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-pastel-sky flex items-center gap-1.5">
+                <i data-lucide="cookie" class="w-4 h-4"></i> Condiments &amp; Snacks
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-condiments">0</span>
+            </div>
+            <div id="list-condiments" class="space-y-2 min-h-[120px]"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- SUB-TAB 2: WEEKLY MEAL PLANNER ("WHAT TO MAKE") -->
+      <!-- ============================================== -->
+      <div id="kitchen-view-planner" class="hidden space-y-5">
+        <!-- Planner Top Action Bar -->
+        <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <span>Next Week's Menu &amp; Meal Schedule</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-pastel-mint/15 text-pastel-mint border border-pastel-mint/30 font-semibold font-mono">Pantry-Aware</span>
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">Plan your daily breakfasts, lunches, and dinners. FocusFlow cross-references each recipe with your actual pantry to highlight missing items.</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button type="button" onclick="addAllMissingMealPlanIngredientsToShoppingList()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-pastel-mint to-pastel-sky hover:opacity-90 text-dark-base font-bold text-xs flex items-center gap-2 shadow-lg shadow-pastel-mint/20 transition active:scale-95">
+                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                <span>Add All Missing Items to Shopping List</span>
+              </button>
+              <button type="button" onclick="clearWeeklyMealPlan()" class="px-3 py-2.5 rounded-xl bg-dark-base hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-dark-border text-xs transition" title="Clear Week Plan">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Suggestions Banner -->
+          <div class="p-3 bg-dark-base rounded-xl border border-dark-border flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300">
+            <div class="flex items-center gap-2">
+              <span class="text-base">💡</span>
+              <span><strong>Recipe Codex Ready:</strong> Choose from your saved recipes or write your own meals. Missing ingredients automatically link to your shopping list.</span>
+            </div>
+            <button type="button" onclick="switchTab('recipes')" class="text-pastel-coral hover:underline font-semibold flex items-center gap-1">
+              <span>Open Recipe Codex</span>
+              <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 7-Day Interactive Meal Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-3.5" id="weekly-meal-planner-grid">
+          <!-- Populated dynamically via renderWeeklyMealPlan() -->
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- SUB-TAB 3: WEEKLY SHOPPING LIST ("WHAT TO BUY") -->
+      <!-- ============================================== -->
+      <div id="kitchen-view-shopping" class="hidden space-y-5">
+        <!-- Shopping Top Bar & Quick Add -->
+        <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-bold text-white">Weekly Shopping &amp; Grocery List</h3>
+                <span id="shopping-header-count" class="text-xs px-2 py-0.5 rounded-full bg-pastel-coral/20 text-pastel-coral border border-pastel-coral/30 font-bold font-mono">0 to buy</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">Check items off as you shop in-store. Once you're done, 1 tap moves purchased groceries straight into your Pantry!</p>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <button type="button" onclick="moveCheckedGroceriesToPantry()" class="px-4 py-2.5 rounded-xl bg-pastel-mint hover:bg-emerald-300 text-dark-base font-bold text-xs flex items-center gap-2 shadow-lg shadow-pastel-mint/20 transition active:scale-95" title="Move checked off groceries into pantry inventory">
+                <i data-lucide="package-check" class="w-4 h-4"></i>
+                <span>Move Purchased to Pantry</span>
+              </button>
+              <button type="button" onclick="copyShoppingListToClipboard()" class="px-3.5 py-2.5 rounded-xl bg-dark-base hover:bg-dark-elevated border border-pastel-sky/40 text-pastel-sky font-semibold text-xs flex items-center gap-1.5 transition active:scale-95" title="Copy clean checklist to clipboard for texting or Apple Notes">
+                <i data-lucide="copy" class="w-4 h-4"></i>
+                <span>Copy for Phone / Text</span>
+              </button>
+              <button type="button" onclick="clearCheckedShoppingItems()" class="px-3 py-2.5 rounded-xl bg-dark-base hover:bg-slate-700 text-slate-300 text-xs border border-dark-border transition" title="Remove checked items">
+                <span>Clear Done</span>
+              </button>
+              <button type="button" onclick="clearAllShoppingItems()" class="px-3 py-2.5 rounded-xl bg-dark-base hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-dark-border text-xs transition" title="Clear entire shopping list">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Add Item Form -->
+          <div class="p-3 rounded-xl bg-dark-base border border-dark-border space-y-2">
+            <span class="text-[11px] font-bold text-slate-300 uppercase tracking-wider block">Add Item to Shopping List:</span>
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs">
+              <div class="sm:col-span-6 relative">
+                <input type="text" id="shopping-input-name" onkeydown="if(event.key==='Enter') addShoppingItemFromInput()" placeholder="Item name (e.g. Honey, Salmon fillets, Sourdough bread)" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-3 py-2 text-white placeholder:text-slate-500 focus:outline-none focus:border-pastel-sky text-xs">
+              </div>
+              <div class="sm:col-span-3">
+                <input type="text" id="shopping-input-qty" onkeydown="if(event.key==='Enter') addShoppingItemFromInput()" placeholder="Qty / Unit (e.g. 2 lbs, 1 bottle)" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-3 py-2 text-white font-mono placeholder:text-slate-500 focus:outline-none focus:border-pastel-sky text-xs">
+              </div>
+              <div class="sm:col-span-2">
+                <select id="shopping-input-cat" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-2 text-white text-xs">
+                  <option value="produce">🥦 Produce</option>
+                  <option value="protein">🥩 Meat &amp; Protein</option>
+                  <option value="dairy">🧀 Dairy &amp; Eggs</option>
+                  <option value="grains">🍞 Bakery &amp; Grains</option>
+                  <option value="condiments" selected>🥫 Pantry &amp; Staples</option>
+                  <option value="frozen">🧊 Frozen</option>
+                  <option value="other">🛒 Other / Household</option>
+                </select>
+              </div>
+              <div class="sm:col-span-1">
+                <button type="button" onclick="addShoppingItemFromInput()" class="w-full py-2 rounded-xl bg-pastel-sky hover:bg-sky-300 text-dark-base font-bold text-xs transition flex items-center justify-center">
+                  + Add
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Categorized Shopping Checklist -->
+        <div id="shopping-list-categories-container" class="space-y-4">
+          <!-- Populated dynamically via renderShoppingList() -->
+        </div>
+
+        <!-- Completed / In Cart Shelf -->
+        <div id="shopping-completed-shelf" class="hidden bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="check-circle" class="w-4 h-4 text-pastel-mint"></i>
+              In Cart / Purchased
+            </span>
+            <span id="shopping-completed-count" class="text-xs font-mono text-pastel-mint font-bold">0</span>
+          </div>
+          <div id="shopping-list-completed-items" class="space-y-1.5"></div>
         </div>
       </div>
     </div>
 
-    <!-- ============================================== -->
     <!-- TAB 6: CRONOMETER-STYLE NUTRITION TRACKER      -->
     <!-- ============================================== -->
     <div id="view-nutrition" class="hidden space-y-6">
@@ -5607,6 +5825,18 @@
       reverseChefTimerInterval: null,
       reverseChefChatMessages: [],
       incomingGroceriesApprovalList: [],
+      kitchenSubTab: 'pantry',
+      pantryStorageFilter: 'all',
+      shoppingList: [],
+      weeklyMealPlan: {
+        monday: { breakfast: '', lunch: '', dinner: '', snack: '' },
+        tuesday: { breakfast: '', lunch: '', dinner: '', snack: '' },
+        wednesday: { breakfast: '', lunch: '', dinner: '', snack: '' },
+        thursday: { breakfast: '', lunch: '', dinner: '', snack: '' },
+        friday: { breakfast: '', lunch: '', dinner: '', snack: '' },
+        saturday: { breakfast: '', lunch: '', dinner: '', snack: '' },
+        sunday: { breakfast: '', lunch: '', dinner: '', snack: '' }
+      },
       pantry: [
         { id: 'p-1', name: 'Fresh Broccoli', category: 'produce' },
         { id: 'p-2', name: 'Eggs (Dozen)', category: 'protein' },
@@ -7858,8 +8088,9 @@
       const counts = { produce: 0, protein: 0, grains: 0, condiments: 0 };
       const now = new Date();
       const expiringSoonItems = [];
+      const filter = state.pantryStorageFilter || 'all';
 
-      state.pantry.forEach(item => {
+      (state.pantry || []).forEach(item => {
         if (!item.storage) {
           item.storage = (item.category === 'produce' || item.category === 'protein') ? 'fridge' : 'shelf';
         }
@@ -7869,16 +8100,25 @@
 
         // Check expiration
         let expiryBadge = '';
+        let isExpiringSoon = false;
         if (item.expirationDate) {
           const exp = new Date(item.expirationDate);
           const diffDays = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
           if (diffDays <= 7 && diffDays >= 0) {
             expiryBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-950/40 text-amber-300 border border-amber-400/30">Exp: ${diffDays}d</span>`;
             expiringSoonItems.push(item.name);
+            isExpiringSoon = true;
           } else if (diffDays < 0) {
             expiryBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-950/40 text-rose-300 border border-rose-400/30">Expired</span>`;
+            isExpiringSoon = true;
           }
         }
+
+        // Apply storage filter
+        if (filter === 'fridge' && item.storage !== 'fridge') return;
+        if (filter === 'frozen' && item.storage !== 'frozen') return;
+        if (filter === 'shelf' && item.storage !== 'shelf') return;
+        if (filter === 'expiring' && !isExpiringSoon) return;
 
         counts[item.category] = (counts[item.category] || 0) + 1;
         const target = lists[item.category];
@@ -7886,25 +8126,36 @@
 
         let storageBadge = '';
         if (item.storage === 'frozen') {
-          storageBadge = `<button type="button" onclick="event.stopPropagation(); togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-950/40 text-sky-300 border border-sky-400/30 flex items-center gap-1 hover:brightness-110 transition" title="Storage: Frozen (Tap to toggle)"><span>🧊</span><span class="hidden sm:inline">Frozen</span></button>`;
+          storageBadge = `<button type="button" onclick="event.stopPropagation(); togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-950/40 text-sky-300 border border-sky-400/30 flex items-center gap-1 hover:brightness-110 transition shrink-0" title="Storage: Frozen (Tap to cycle)"><span>🧊</span><span class="hidden sm:inline">Freezer</span></button>`;
         } else if (item.storage === 'shelf') {
-          storageBadge = `<button type="button" onclick="event.stopPropagation(); togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-950/40 text-amber-300 border border-amber-400/30 flex items-center gap-1 hover:brightness-110 transition" title="Storage: Shelf Pantry (Tap to toggle)"><span>🥫</span><span class="hidden sm:inline">Shelf</span></button>`;
+          storageBadge = `<button type="button" onclick="event.stopPropagation(); togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-950/40 text-amber-300 border border-amber-400/30 flex items-center gap-1 hover:brightness-110 transition shrink-0" title="Storage: Shelf (Tap to cycle)"><span>🥫</span><span class="hidden sm:inline">Shelf</span></button>`;
         } else {
-          storageBadge = `<button type="button" onclick="event.stopPropagation(); togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-950/40 text-emerald-300 border border-emerald-400/30 flex items-center gap-1 hover:brightness-110 transition" title="Storage: Fridge (Tap to toggle)"><span>❄️</span><span class="hidden sm:inline">Fridge</span></button>`;
+          storageBadge = `<button type="button" onclick="event.stopPropagation(); togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-950/40 text-emerald-300 border border-emerald-400/30 flex items-center gap-1 hover:brightness-110 transition shrink-0" title="Storage: Fridge (Tap to cycle)"><span>❄️</span><span class="hidden sm:inline">Fridge</span></button>`;
         }
 
         const pill = document.createElement('div');
-        pill.className = "flex items-center justify-between p-2.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm";
+        pill.className = "flex items-center justify-between p-2.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm group";
         pill.onclick = () => openPantryItemDetailModal(item.id);
         pill.innerHTML = `
-          <div class="flex items-center gap-1.5 min-w-0">
-            <span class="text-slate-200 font-semibold truncate hover:text-pastel-mint transition">${item.name}</span>
-            ${(item.amount != null && item.amount > 0) ? `<span class="px-1.5 py-0.5 rounded bg-dark-elevated text-pastel-mint font-mono text-[9.5px] font-bold shrink-0">${item.amount} ${item.unit || ''}</span>` : ''}
+          <div class="flex items-center gap-1.5 min-w-0 flex-1">
+            <span class="text-slate-200 font-semibold truncate group-hover:text-pastel-mint transition">${item.name}</span>
             ${expiryBadge}
           </div>
-          <div class="flex items-center gap-1.5 shrink-0" onclick="event.stopPropagation()">
+          <div class="flex items-center gap-1 shrink-0" onclick="event.stopPropagation()">
+            <!-- Amount Stepper -->
+            <div class="flex items-center bg-dark-elevated border border-dark-border rounded-lg px-1 py-0.5 gap-1 font-mono text-[10px]">
+              <button type="button" onclick="event.stopPropagation(); changePantryItemAmount('${item.id}', -1)" class="w-3.5 h-3.5 rounded hover:bg-slate-700 text-slate-300 hover:text-white font-bold flex items-center justify-center">-</button>
+              <span class="text-pastel-mint font-bold px-0.5">${item.amount != null ? item.amount : 1}${item.unit ? ' ' + item.unit : ''}</span>
+              <button type="button" onclick="event.stopPropagation(); changePantryItemAmount('${item.id}', 1)" class="w-3.5 h-3.5 rounded hover:bg-slate-700 text-slate-300 hover:text-white font-bold flex items-center justify-center">+</button>
+            </div>
+            <!-- Storage badge -->
             ${storageBadge}
-            <button onclick="event.stopPropagation(); deletePantryItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-0.5" title="Remove ingredient">
+            <!-- Quick Add to Shopping List Cart Icon -->
+            <button type="button" onclick="event.stopPropagation(); addPantryItemToShoppingList('${item.id}')" class="p-1 rounded-lg bg-dark-elevated hover:bg-pastel-coral/20 text-slate-400 hover:text-pastel-coral border border-dark-border transition" title="Add to Shopping List (Running Low)">
+              <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
+            </button>
+            <!-- Delete -->
+            <button type="button" onclick="event.stopPropagation(); deletePantryItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-0.5" title="Remove ingredient">
               <i data-lucide="x" class="w-3.5 h-3.5"></i>
             </button>
           </div>
@@ -7917,6 +8168,7 @@
       setTxt('count-protein', counts.protein);
       setTxt('count-grains', counts.grains);
       setTxt('count-condiments', counts.condiments);
+      setTxt('pantry-total-count-badge', (state.pantry || []).length);
 
       // Check expiring soon alert in kitchen & reverse chef
       checkExpiringSoonAlerts(expiringSoonItems);
@@ -8152,7 +8404,7 @@
       renderPantry();
       playChime('bell');
       const box = document.getElementById('kitchen-search-suggestions');
-      const input = document.getElementById('kitchen-search-ingredient-input');
+      const input = document.getElementById('kitchen-food-search-input');
       if (box) box.classList.add('hidden');
       if (input) input.value = '';
       alertBox(`Added verified "${cleanName}" to your pantry!`, "Pantry Updated");
@@ -8170,7 +8422,7 @@
       renderPantry();
       playChime('bell');
       const box = document.getElementById('kitchen-search-suggestions');
-      const input = document.getElementById('kitchen-search-ingredient-input');
+      const input = document.getElementById('kitchen-food-search-input');
       if (box) box.classList.add('hidden');
       if (input) input.value = '';
       alertBox(`Added "${name}" to your pantry!`, "Pantry Updated");
@@ -8179,14 +8431,31 @@
     function openAddPantryItemModal() { document.getElementById('pantry-item-modal').classList.remove('hidden'); }
     function closeAddPantryItemModal() { document.getElementById('pantry-item-modal').classList.add('hidden'); }
     function saveManualPantryItem() {
-      const name = document.getElementById('pantry-name-input').value.trim();
-      const category = document.getElementById('pantry-category-input').value;
+      const nameInput = document.getElementById('pantry-name-input');
+      const catInput = document.getElementById('pantry-category-input');
+      if (!nameInput) return;
+      const name = nameInput.value.trim();
+      const category = catInput ? catInput.value : 'produce';
       if (!name) return;
 
-      state.pantry.push({ id: `p-${Date.now()}`, name, category });
+      const storage = (category === 'protein' || category === 'produce') ? 'fridge' : 'shelf';
+      if (!Array.isArray(state.pantry)) state.pantry = [];
+      state.pantry.push({
+        id: `p-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        name,
+        category,
+        storage,
+        amount: 1,
+        unit: 'item',
+        dateAdded: new Date().toISOString().split('T')[0]
+      });
+
+      nameInput.value = '';
+      saveAppState();
       closeAddPantryItemModal();
       renderPantry();
       playChime('bell');
+      alertBox(`Added "${name}" to your pantry!`, "Pantry Updated");
     }
 
     function deletePantryItem(id) {
@@ -8226,6 +8495,715 @@
     }
 
 
+
+
+    // ==============================================
+    // KITCHEN SUITE: SUB-TABS, MEAL PLANNER & SHOPPING
+    // ==============================================
+    function switchKitchenSubTab(subTab) {
+      state.kitchenSubTab = subTab;
+      ['pantry', 'planner', 'shopping'].forEach(t => {
+        const view = document.getElementById(`kitchen-view-${t}`);
+        const btn = document.getElementById(`kitchen-subtab-btn-${t}`);
+        if (view) view.classList.toggle('hidden', t !== subTab);
+        if (btn) {
+          if (t === subTab) {
+            btn.className = "px-3.5 py-2 rounded-xl font-bold bg-pastel-butter text-dark-base transition flex items-center gap-1.5 shadow-sm";
+          } else {
+            btn.className = "px-3.5 py-2 rounded-xl font-semibold text-slate-400 hover:text-white transition flex items-center gap-1.5";
+          }
+        }
+      });
+
+      const hintEl = document.getElementById('kitchen-subtab-hint');
+      if (hintEl) {
+        if (subTab === 'pantry') hintEl.textContent = "🥫 Keep an accurate stock of food on hand to prevent duplicate purchases";
+        else if (subTab === 'planner') hintEl.textContent = "🗓️ Plan recipes for the week; FocusFlow detects missing ingredients automatically";
+        else hintEl.textContent = "🛒 Interactive in-store checklist; 1 tap moves purchased groceries to Pantry";
+      }
+
+      if (subTab === 'pantry') renderPantry();
+      else if (subTab === 'planner') renderWeeklyMealPlan();
+      else if (subTab === 'shopping') renderShoppingList();
+
+      updateShoppingBadges();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function renderKitchen() {
+      const activeSub = state.kitchenSubTab || 'pantry';
+      renderPantry();
+      renderWeeklyMealPlan();
+      renderShoppingList();
+      switchKitchenSubTab(activeSub);
+    }
+
+    function filterPantryByStorage(filter) {
+      state.pantryStorageFilter = filter;
+      ['all', 'fridge', 'frozen', 'shelf', 'expiring'].forEach(f => {
+        const btn = document.getElementById(`btn-pantry-filter-${f}`);
+        if (!btn) return;
+        if (f === filter) {
+          btn.className = "px-3 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition shadow-sm";
+        } else {
+          btn.className = "px-3 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition";
+        }
+      });
+      renderPantry();
+    }
+
+    // Quick common staple 1-tap adder
+    function quickAddStapleToPantry(name, category, storage) {
+      if (!Array.isArray(state.pantry)) state.pantry = [];
+      const clean = name.trim();
+      const existing = state.pantry.find(p => p.name.toLowerCase() === clean.toLowerCase());
+      if (existing) {
+        existing.amount = (existing.amount || 1) + 1;
+        alertBox(`Incremented "${clean}" quantity to ${existing.amount}.`, "Pantry Restocked");
+      } else {
+        state.pantry.push({
+          id: `p-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          name: clean,
+          category: category || 'produce',
+          storage: storage || 'fridge',
+          amount: 1,
+          unit: clean.includes('Dozen') ? 'carton' : (clean.includes('Oil') ? 'bottle' : 'item'),
+          dateAdded: new Date().toISOString().split('T')[0]
+        });
+        alertBox(`Added "${clean}" to your pantry!`, "Pantry Stocked");
+      }
+      saveAppState();
+      renderPantry();
+      playChime('bell');
+    }
+
+    function onKitchenSearchKeydown(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        addCustomPantryItemFromInput();
+      }
+    }
+
+    function addCustomPantryItemFromInput() {
+      const input = document.getElementById('kitchen-food-search-input');
+      if (!input) return;
+      const val = (input.value || '').trim();
+      if (!val) return;
+
+      let cat = 'produce';
+      if (/chicken|beef|meat|egg|salmon|fish|protein|yogurt|milk|cheese|tofu|turkey|bacon/i.test(val)) cat = 'protein';
+      else if (/rice|oat|quinoa|bread|pasta|cereal|flour|noodle|tortilla|bagel/i.test(val)) cat = 'grains';
+      else if (/oil|sauce|dressing|condiment|nut|seed|spice|salt|pepper|vinegar|honey|syrup|butter/i.test(val)) cat = 'condiments';
+
+      const storage = (cat === 'protein' || cat === 'produce') ? 'fridge' : 'shelf';
+
+      if (!Array.isArray(state.pantry)) state.pantry = [];
+      state.pantry.push({
+        id: `p-${Date.now()}`,
+        name: val,
+        category: cat,
+        storage: storage,
+        amount: 1,
+        unit: 'item',
+        dateAdded: new Date().toISOString().split('T')[0]
+      });
+
+      input.value = '';
+      const box = document.getElementById('kitchen-search-suggestions');
+      if (box) box.classList.add('hidden');
+
+      saveAppState();
+      renderPantry();
+      playChime('bell');
+      alertBox(`Added "${val}" to ${storage === 'fridge' ? 'Fridge' : 'Pantry Shelf'}!`, "Item Added");
+    }
+
+    function changePantryItemAmount(id, delta) {
+      if (!Array.isArray(state.pantry)) return;
+      const item = state.pantry.find(p => p.id === id);
+      if (!item) return;
+
+      const current = parseFloat(item.amount) || 1;
+      const next = Math.max(0, current + delta);
+      item.amount = next;
+
+      if (next === 0) {
+        if (confirm(`You're out of "${item.name}"! Would you like to add it to your Shopping List?`)) {
+          addPantryItemToShoppingList(item.id);
+        }
+      }
+
+      saveAppState();
+      renderPantry();
+    }
+
+    function togglePantryItemStorage(id) {
+      const item = (state.pantry || []).find(p => p.id === id);
+      if (!item) return;
+      const cycle = { fridge: 'frozen', frozen: 'shelf', shelf: 'fridge' };
+      item.storage = cycle[item.storage || 'fridge'] || 'fridge';
+      saveAppState();
+      renderPantry();
+      playChime('bell');
+    }
+
+    function addPantryItemToShoppingList(pantryId) {
+      const item = (state.pantry || []).find(p => p.id === pantryId);
+      if (!item) return;
+
+      if (!Array.isArray(state.shoppingList)) state.shoppingList = [];
+      const exists = state.shoppingList.find(s => s.name.toLowerCase() === item.name.toLowerCase() && !s.checked);
+      if (exists) {
+        alertBox(`"${item.name}" is already on your shopping list!`, "Already on List");
+        return;
+      }
+
+      state.shoppingList.push({
+        id: `shop-${Date.now()}`,
+        name: item.name,
+        quantity: item.unit ? `1 ${item.unit}` : '1 pack',
+        category: item.category || 'condiments',
+        checked: false,
+        source: 'Pantry Low'
+      });
+
+      saveAppState();
+      updateShoppingBadges();
+      playChime('bell');
+      alertBox(`Added "${item.name}" to your Shopping List!`, "Added to Groceries");
+    }
+
+    // ==============================================
+    // WEEKLY MEAL PLANNER ENGINE ("WHAT TO MAKE")
+    // ==============================================
+    const WEEK_DAYS = [
+      { key: 'monday', label: 'Monday', short: 'Mon' },
+      { key: 'tuesday', label: 'Tuesday', short: 'Tue' },
+      { key: 'wednesday', label: 'Wednesday', short: 'Wed' },
+      { key: 'thursday', label: 'Thursday', short: 'Thu' },
+      { key: 'friday', label: 'Friday', short: 'Fri' },
+      { key: 'saturday', label: 'Saturday', short: 'Sat' },
+      { key: 'sunday', label: 'Sunday', short: 'Sun' }
+    ];
+
+    const MEAL_SLOTS = [
+      { type: 'breakfast', label: 'Breakfast', icon: '🌅', color: 'text-pastel-butter' },
+      { type: 'lunch', label: 'Lunch', icon: '🥪', color: 'text-pastel-sky' },
+      { type: 'dinner', label: 'Dinner', icon: '🍲', color: 'text-pastel-coral' },
+      { type: 'snack', label: 'Snack / Prep', icon: '🍎', color: 'text-pastel-mint' }
+    ];
+
+    function renderWeeklyMealPlan() {
+      const grid = document.getElementById('weekly-meal-planner-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      if (!state.weeklyMealPlan) {
+        state.weeklyMealPlan = {
+          monday: { breakfast: '', lunch: '', dinner: '', snack: '' },
+          tuesday: { breakfast: '', lunch: '', dinner: '', snack: '' },
+          wednesday: { breakfast: '', lunch: '', dinner: '', snack: '' },
+          thursday: { breakfast: '', lunch: '', dinner: '', snack: '' },
+          friday: { breakfast: '', lunch: '', dinner: '', snack: '' },
+          saturday: { breakfast: '', lunch: '', dinner: '', snack: '' },
+          sunday: { breakfast: '', lunch: '', dinner: '', snack: '' }
+        };
+      }
+
+      const pantryNames = (state.pantry || []).map(p => (p.name || '').toLowerCase());
+      const recipes = state.recipes || [];
+
+      WEEK_DAYS.forEach(day => {
+        const dayPlan = state.weeklyMealPlan[day.key] || {};
+        const col = document.createElement('div');
+        col.className = "bg-dark-surface border border-dark-border rounded-2xl p-3.5 space-y-3 flex flex-col justify-between shadow-md";
+
+        let slotsHtml = '';
+        MEAL_SLOTS.forEach(slot => {
+          const val = dayPlan[slot.type] || '';
+          const recipeObj = recipes.find(r => r.id === val || r.title === val);
+          const mealTitle = recipeObj ? recipeObj.title : val;
+
+          let ingredientCheckHtml = '';
+          let hasMissing = false;
+
+          if (recipeObj && Array.isArray(recipeObj.ingredients)) {
+            const inStock = [];
+            const missing = [];
+
+            recipeObj.ingredients.forEach(rawIng => {
+              const cleanIng = rawIng.toLowerCase()
+                .replace(/^[0-9\/.\s]+(cup|tbsp|tsp|can|clove|slice|handful|scoop|oz|lb|g|ml)s?\s+/i, '')
+                .trim();
+              const found = pantryNames.some(pn => pn.includes(cleanIng) || cleanIng.includes(pn));
+              if (found) inStock.push(cleanIng);
+              else missing.push(cleanIng);
+            });
+
+            if (missing.length > 0) hasMissing = true;
+
+            ingredientCheckHtml = `
+              <div class="pt-1.5 border-t border-dark-border/60 text-[10px] space-y-1">
+                <div class="flex items-center justify-between text-slate-400">
+                  <span class="text-emerald-400 font-semibold">✓ ${inStock.length} in pantry</span>
+                  <span class="${missing.length > 0 ? 'text-rose-400 font-bold' : 'text-slate-500'}">! ${missing.length} missing</span>
+                </div>
+                ${missing.length > 0 ? `
+                  <button type="button" onclick="addMissingIngredientsFromMeal('${day.key}', '${slot.type}')" class="w-full py-1 px-1.5 rounded-lg bg-pastel-coral/20 hover:bg-pastel-coral/30 border border-pastel-coral/40 text-pastel-coral font-bold text-[9.5px] flex items-center justify-center gap-1 transition">
+                    <span>🛒 + Add ${missing.length} to Shopping</span>
+                  </button>
+                ` : '<span class="text-[9px] text-emerald-300 block text-center font-medium">✓ Ready to cook!</span>'}
+              </div>
+            `;
+          }
+
+          slotsHtml += `
+            <div class="p-2.5 rounded-xl bg-dark-base border border-dark-border/70 space-y-1.5 text-xs">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold uppercase tracking-wider ${slot.color} flex items-center gap-1">
+                  <span>${slot.icon}</span>
+                  <span>${slot.label}</span>
+                </span>
+                ${val ? `
+                  <button type="button" onclick="clearMealPlanSlot('${day.key}', '${slot.type}')" class="text-slate-500 hover:text-rose-400 text-xs p-0.5" title="Remove meal">✕</button>
+                ` : ''}
+              </div>
+
+              ${val ? `
+                <div>
+                  <span class="text-slate-200 font-bold block text-[11px] leading-tight">${mealTitle}</span>
+                  ${recipeObj ? `<span class="text-[9.5px] text-pastel-coral font-mono">${recipeObj.cookTime}m • ${recipeObj.kcal} kcal</span>` : ''}
+                </div>
+                ${ingredientCheckHtml}
+              ` : `
+                <div class="pt-1">
+                  <select onchange="setMealPlanSlot('${day.key}', '${slot.type}', this.value)" class="w-full bg-dark-elevated border border-dark-border rounded-lg px-2 py-1 text-[11px] text-slate-300 focus:outline-none focus:border-pastel-sky">
+                    <option value="">+ Choose meal...</option>
+                    <optgroup label="Codex Recipes">
+                      ${recipes.map(r => `<option value="${r.id}">${r.title}</option>`).join('')}
+                    </optgroup>
+                    <optgroup label="Quick Ideas">
+                      <option value="Custom: Scrambled Eggs & Toast">Eggs & Toast</option>
+                      <option value="Custom: Chicken Rice Bowl">Chicken Rice Bowl</option>
+                      <option value="Custom: Protein Oatmeal & Berries">Protein Oatmeal</option>
+                      <option value="Custom: Leftovers / Dining Out">Leftovers</option>
+                    </optgroup>
+                  </select>
+                </div>
+              `}
+            </div>
+          `;
+        });
+
+        col.innerHTML = `
+          <div class="border-b border-dark-border pb-2 flex items-center justify-between">
+            <span class="font-bold text-white text-xs sm:text-sm">${day.label}</span>
+            <span class="text-[10px] uppercase font-bold text-pastel-butter font-mono">${day.short}</span>
+          </div>
+          <div class="space-y-2 flex-1">
+            ${slotsHtml}
+          </div>
+        `;
+        grid.appendChild(col);
+      });
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function setMealPlanSlot(dayKey, mealType, val) {
+      if (!val) return;
+      if (!state.weeklyMealPlan) state.weeklyMealPlan = {};
+      if (!state.weeklyMealPlan[dayKey]) state.weeklyMealPlan[dayKey] = {};
+      state.weeklyMealPlan[dayKey][mealType] = val;
+      saveAppState();
+      renderWeeklyMealPlan();
+      playChime('bell');
+    }
+
+    function clearMealPlanSlot(dayKey, mealType) {
+      if (!state.weeklyMealPlan || !state.weeklyMealPlan[dayKey]) return;
+      state.weeklyMealPlan[dayKey][mealType] = '';
+      saveAppState();
+      renderWeeklyMealPlan();
+    }
+
+    function addMissingIngredientsFromMeal(dayKey, mealType) {
+      const val = state.weeklyMealPlan && state.weeklyMealPlan[dayKey] && state.weeklyMealPlan[dayKey][mealType];
+      if (!val) return;
+      const recipes = state.recipes || [];
+      const recipe = recipes.find(r => r.id === val || r.title === val);
+      if (!recipe || !Array.isArray(recipe.ingredients)) return;
+
+      const pantryNames = (state.pantry || []).map(p => (p.name || '').toLowerCase());
+      if (!Array.isArray(state.shoppingList)) state.shoppingList = [];
+
+      let addedCount = 0;
+      recipe.ingredients.forEach(rawIng => {
+        const cleanIng = rawIng.toLowerCase()
+          .replace(/^[0-9\/.\s]+(cup|tbsp|tsp|can|clove|slice|handful|scoop|oz|lb|g|ml)s?\s+/i, '')
+          .trim();
+        const inPantry = pantryNames.some(pn => pn.includes(cleanIng) || cleanIng.includes(pn));
+        if (!inPantry) {
+          const alreadyInList = state.shoppingList.some(s => s.name.toLowerCase() === cleanIng && !s.checked);
+          if (!alreadyInList) {
+            let cat = 'produce';
+            if (/chicken|beef|meat|egg|salmon|fish|protein|yogurt|milk|cheese|tofu/i.test(cleanIng)) cat = 'protein';
+            else if (/rice|oat|quinoa|bread|pasta|cereal|flour/i.test(cleanIng)) cat = 'grains';
+            else if (/oil|sauce|dressing|condiment|spice|salt|pepper|vinegar|honey/i.test(cleanIng)) cat = 'condiments';
+
+            state.shoppingList.push({
+              id: `shop-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+              name: rawIng,
+              quantity: '1',
+              category: cat,
+              checked: false,
+              source: `Meal Plan (${recipe.title})`
+            });
+            addedCount++;
+          }
+        }
+      });
+
+      saveAppState();
+      renderWeeklyMealPlan();
+      renderShoppingList();
+      updateShoppingBadges();
+      playChime('bell');
+      alertBox(`Added ${addedCount} missing ingredients for "${recipe.title}" to your Shopping List!`, "Added to Groceries");
+    }
+
+    function addAllMissingMealPlanIngredientsToShoppingList() {
+      const plan = state.weeklyMealPlan || {};
+      const recipes = state.recipes || [];
+      const pantryNames = (state.pantry || []).map(p => (p.name || '').toLowerCase());
+      if (!Array.isArray(state.shoppingList)) state.shoppingList = [];
+
+      let addedCount = 0;
+      WEEK_DAYS.forEach(day => {
+        const dayPlan = plan[day.key] || {};
+        MEAL_SLOTS.forEach(slot => {
+          const val = dayPlan[slot.type];
+          if (!val) return;
+          const recipe = recipes.find(r => r.id === val || r.title === val);
+          if (!recipe || !Array.isArray(recipe.ingredients)) return;
+
+          recipe.ingredients.forEach(rawIng => {
+            const cleanIng = rawIng.toLowerCase()
+              .replace(/^[0-9\/.\s]+(cup|tbsp|tsp|can|clove|slice|handful|scoop|oz|lb|g|ml)s?\s+/i, '')
+              .trim();
+            const inPantry = pantryNames.some(pn => pn.includes(cleanIng) || cleanIng.includes(pn));
+            if (!inPantry) {
+              const alreadyInList = state.shoppingList.some(s => s.name.toLowerCase() === cleanIng && !s.checked);
+              if (!alreadyInList) {
+                let cat = 'produce';
+                if (/chicken|beef|meat|egg|salmon|fish|protein|yogurt|milk|cheese|tofu/i.test(cleanIng)) cat = 'protein';
+                else if (/rice|oat|quinoa|bread|pasta|cereal|flour/i.test(cleanIng)) cat = 'grains';
+                else if (/oil|sauce|dressing|condiment|spice|salt|pepper|vinegar|honey/i.test(cleanIng)) cat = 'condiments';
+
+                state.shoppingList.push({
+                  id: `shop-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                  name: rawIng,
+                  quantity: '1',
+                  category: cat,
+                  checked: false,
+                  source: `Weekly Menu`
+                });
+                addedCount++;
+              }
+            }
+          });
+        });
+      });
+
+      saveAppState();
+      renderWeeklyMealPlan();
+      renderShoppingList();
+      updateShoppingBadges();
+      playChime('bell');
+
+      if (addedCount > 0) {
+        alertBox(`Scanned whole week: Added ${addedCount} missing ingredients to your Shopping List!`, "Shopping List Populated");
+        switchKitchenSubTab('shopping');
+      } else {
+        alertBox("All planned meals are fully stocked in your pantry! No missing ingredients found.", "Fully Stocked!");
+      }
+    }
+
+    function clearWeeklyMealPlan() {
+      if (confirm("Reset the whole week's meal schedule to blank?")) {
+        state.weeklyMealPlan = {
+          monday: { breakfast: '', lunch: '', dinner: '', snack: '' },
+          tuesday: { breakfast: '', lunch: '', dinner: '', snack: '' },
+          wednesday: { breakfast: '', lunch: '', dinner: '', snack: '' },
+          thursday: { breakfast: '', lunch: '', dinner: '', snack: '' },
+          friday: { breakfast: '', lunch: '', dinner: '', snack: '' },
+          saturday: { breakfast: '', lunch: '', dinner: '', snack: '' },
+          sunday: { breakfast: '', lunch: '', dinner: '', snack: '' }
+        };
+        saveAppState();
+        renderWeeklyMealPlan();
+        playChime('bell');
+        alertBox("Weekly meal planner reset to blank.", "Menu Cleared");
+      }
+    }
+
+    // ==============================================
+    // SHOPPING & GROCERY LIST ENGINE ("WHAT TO BUY")
+    // ==============================================
+    const SHOPPING_AISLES = [
+      { key: 'produce', label: 'Produce (Fruits & Veggies)', icon: '🥦', color: 'text-pastel-mint' },
+      { key: 'protein', label: 'Meat, Poultry & Seafood', icon: '🥩', color: 'text-pastel-peach' },
+      { key: 'dairy', label: 'Dairy, Eggs & Cheese', icon: '🧀', color: 'text-pastel-butter' },
+      { key: 'grains', label: 'Bakery, Grains & Pasta', icon: '🍞', color: 'text-amber-300' },
+      { key: 'condiments', label: 'Canned, Sauces & Pantry Staples', icon: '🥫', color: 'text-pastel-sky' },
+      { key: 'frozen', label: 'Frozen Foods', icon: '🧊', color: 'text-sky-300' },
+      { key: 'other', label: 'Snacks, Drinks & Household', icon: '🛒', color: 'text-pastel-lavender' }
+    ];
+
+    function renderShoppingList() {
+      const container = document.getElementById('shopping-list-categories-container');
+      const completedShelf = document.getElementById('shopping-completed-shelf');
+      const completedList = document.getElementById('shopping-list-completed-items');
+      if (!container) return;
+      container.innerHTML = '';
+      if (completedList) completedList.innerHTML = '';
+
+      if (!Array.isArray(state.shoppingList)) state.shoppingList = [];
+
+      const activeItems = state.shoppingList.filter(s => !s.checked);
+      const completedItems = state.shoppingList.filter(s => s.checked);
+
+      if (activeItems.length === 0 && completedItems.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center bg-dark-surface border border-dark-border rounded-2xl space-y-2">
+            <span class="text-3xl block">🛒</span>
+            <h4 class="font-bold text-white text-sm">Your shopping list is clear!</h4>
+            <p class="text-xs text-slate-400 max-w-md mx-auto">Add items manually above, tap "Quick-Stock" in your pantry, or plan meals to automatically import missing ingredients.</p>
+          </div>
+        `;
+      } else {
+        SHOPPING_AISLES.forEach(aisle => {
+          const aisleItems = activeItems.filter(item => {
+            const cat = item.category || 'other';
+            if (aisle.key === 'other') return !['produce', 'protein', 'dairy', 'grains', 'condiments', 'frozen'].includes(cat);
+            return cat === aisle.key;
+          });
+
+          if (aisleItems.length === 0) return;
+
+          const section = document.createElement('div');
+          section.className = "bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-2.5 shadow-md";
+
+          let itemsHtml = '';
+          aisleItems.forEach(item => {
+            itemsHtml += `
+              <div class="flex items-center justify-between p-2.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-sky/50 transition text-xs gap-2">
+                <label class="flex items-center gap-3 cursor-pointer min-w-0 flex-1">
+                  <input type="checkbox" onchange="toggleShoppingItemChecked('${item.id}')" class="w-4 h-4 rounded text-pastel-mint bg-dark-elevated border-dark-border focus:ring-0">
+                  <div class="min-w-0">
+                    <span class="text-slate-100 font-semibold block truncate">${item.name}</span>
+                    <div class="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono">
+                      ${item.quantity ? `<span class="text-pastel-sky font-bold">${item.quantity}</span>` : ''}
+                      ${item.source ? `<span>• ${item.source}</span>` : ''}
+                    </div>
+                  </div>
+                </label>
+                <button type="button" onclick="deleteShoppingItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-1" title="Delete">✕</button>
+              </div>
+            `;
+          });
+
+          section.innerHTML = `
+            <div class="flex items-center justify-between border-b border-dark-border pb-2">
+              <span class="text-xs font-bold uppercase tracking-wider ${aisle.color} flex items-center gap-1.5">
+                <span>${aisle.icon}</span>
+                <span>${aisle.label}</span>
+              </span>
+              <span class="text-xs font-mono text-slate-400 font-bold">${aisleItems.length}</span>
+            </div>
+            <div class="space-y-1.5">
+              ${itemsHtml}
+            </div>
+          `;
+          container.appendChild(section);
+        });
+      }
+
+      // Render completed shelf
+      if (completedShelf && completedList) {
+        if (completedItems.length > 0) {
+          completedShelf.classList.remove('hidden');
+          completedItems.forEach(item => {
+            const row = document.createElement('div');
+            row.className = "flex items-center justify-between p-2 rounded-xl bg-dark-base border border-dark-border text-xs text-slate-400 line-through opacity-75";
+            row.innerHTML = `
+              <label class="flex items-center gap-2.5 cursor-pointer min-w-0 flex-1">
+                <input type="checkbox" checked onchange="toggleShoppingItemChecked('${item.id}')" class="w-4 h-4 rounded text-pastel-mint bg-dark-elevated border-dark-border focus:ring-0">
+                <span class="truncate">${item.name} ${item.quantity ? `(${item.quantity})` : ''}</span>
+              </label>
+              <button type="button" onclick="deleteShoppingItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-1">✕</button>
+            `;
+            completedList.appendChild(row);
+          });
+        } else {
+          completedShelf.classList.add('hidden');
+        }
+      }
+
+      updateShoppingBadges();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function updateShoppingBadges() {
+      const activeCount = (state.shoppingList || []).filter(s => !s.checked).length;
+      const doneCount = (state.shoppingList || []).filter(s => s.checked).length;
+
+      const badge1 = document.getElementById('shopping-list-pending-badge');
+      const headerCount = document.getElementById('shopping-header-count');
+      const compCount = document.getElementById('shopping-completed-count');
+
+      if (badge1) badge1.textContent = activeCount;
+      if (headerCount) headerCount.textContent = `${activeCount} to buy`;
+      if (compCount) compCount.textContent = `${doneCount} in cart`;
+    }
+
+    function addShoppingItemFromInput() {
+      const nameInput = document.getElementById('shopping-input-name');
+      const qtyInput = document.getElementById('shopping-input-qty');
+      const catInput = document.getElementById('shopping-input-cat');
+      if (!nameInput) return;
+
+      const name = nameInput.value.trim();
+      if (!name) return;
+      const qty = qtyInput ? qtyInput.value.trim() : '';
+      const cat = catInput ? catInput.value : 'condiments';
+
+      if (!Array.isArray(state.shoppingList)) state.shoppingList = [];
+      state.shoppingList.push({
+        id: `shop-${Date.now()}`,
+        name: name,
+        quantity: qty || '1',
+        category: cat,
+        checked: false,
+        source: 'Manual'
+      });
+
+      nameInput.value = '';
+      if (qtyInput) qtyInput.value = '';
+
+      saveAppState();
+      renderShoppingList();
+      playChime('bell');
+    }
+
+    function toggleShoppingItemChecked(id) {
+      const item = (state.shoppingList || []).find(s => s.id === id);
+      if (!item) return;
+      item.checked = !item.checked;
+      saveAppState();
+      renderShoppingList();
+      playChime('bell');
+    }
+
+    function deleteShoppingItem(id) {
+      state.shoppingList = (state.shoppingList || []).filter(s => s.id !== id);
+      saveAppState();
+      renderShoppingList();
+    }
+
+    function clearCheckedShoppingItems() {
+      state.shoppingList = (state.shoppingList || []).filter(s => !s.checked);
+      saveAppState();
+      renderShoppingList();
+      playChime('bell');
+    }
+
+    function clearAllShoppingItems() {
+      if (confirm("Clear all items from your shopping list?")) {
+        state.shoppingList = [];
+        saveAppState();
+        renderShoppingList();
+        playChime('bell');
+        alertBox("Shopping list cleared.", "List Reset");
+      }
+    }
+
+    function moveCheckedGroceriesToPantry() {
+      if (!Array.isArray(state.shoppingList)) return;
+      const bought = state.shoppingList.filter(s => s.checked);
+      if (bought.length === 0) {
+        alertBox("Check off the groceries you purchased first, then tap to transfer them to your pantry!", "No Items Checked");
+        return;
+      }
+
+      if (!Array.isArray(state.pantry)) state.pantry = [];
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      bought.forEach(item => {
+        let cat = item.category || 'produce';
+        if (cat === 'dairy') cat = 'protein';
+        if (cat === 'other') cat = 'condiments';
+
+        const storage = (cat === 'protein' || cat === 'produce') ? 'fridge' : (item.category === 'frozen' ? 'frozen' : 'shelf');
+
+        state.pantry.push({
+          id: `p-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          name: item.name,
+          category: cat,
+          storage: storage,
+          amount: parseFloat(item.quantity) || 1,
+          unit: item.quantity ? item.quantity.replace(/[0-9.]/g, '').trim() || 'item' : 'item',
+          dateAdded: todayStr
+        });
+      });
+
+      // Remove moved items from shopping list
+      state.shoppingList = state.shoppingList.filter(s => !s.checked);
+
+      saveAppState();
+      renderPantry();
+      renderShoppingList();
+      playChime('bell');
+      alertBox(`Transferred ${bought.length} purchased items into your Pantry!`, "Groceries Put Away 🎉");
+      switchKitchenSubTab('pantry');
+    }
+
+    function copyShoppingListToClipboard() {
+      const active = (state.shoppingList || []).filter(s => !s.checked);
+      if (active.length === 0) {
+        alertBox("Your shopping list is currently empty!", "Nothing to Copy");
+        return;
+      }
+
+      let textOut = "🛒 FOCUSFLOW GROCERY LIST\n";
+      textOut += "========================\n\n";
+
+      SHOPPING_AISLES.forEach(aisle => {
+        const items = active.filter(item => {
+          const cat = item.category || 'other';
+          if (aisle.key === 'other') return !['produce', 'protein', 'dairy', 'grains', 'condiments', 'frozen'].includes(cat);
+          return cat === aisle.key;
+        });
+
+        if (items.length > 0) {
+          textOut += `${aisle.icon} ${aisle.label.toUpperCase()}:\n`;
+          items.forEach(it => {
+            textOut += `  [ ] ${it.name}${it.quantity ? ` (${it.quantity})` : ''}\n`;
+          });
+          textOut += "\n";
+        }
+      });
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textOut).then(() => {
+          alertBox("Shopping list copied to clipboard! Ready to paste into Text / Notes.", "Copied to Clipboard");
+        }).catch(() => {
+          window.prompt("Copy your grocery list below:", textOut);
+        });
+      } else {
+        window.prompt("Copy your grocery list below:", textOut);
+      }
+    }
     // ==============================================
     // TIME & DURATION HELPERS (START / END SYNC)
     // ==============================================
@@ -9028,7 +10006,7 @@
       if (tabId === 'matrix') renderMatrix();
       if (tabId === 'taskmaster') renderTaskmasterCalendarEvents();
       if (tabId === 'recipes') renderRecipes();
-      if (tabId === 'kitchen') renderPantry();
+      if (tabId === 'kitchen') renderKitchen();
       if (tabId === 'nutrition') renderNutrition();
       if (tabId === 'health') renderHealthTabUI();
       const scrollEl = document.getElementById('main-content-scroll');
@@ -13425,6 +14403,8 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         localStorage.setItem('focusflow_tasks', JSON.stringify(state.tasks));
         localStorage.setItem('focusflow_timeline', JSON.stringify(state.timeline));
         localStorage.setItem('focusflow_pantry', JSON.stringify(state.pantry));
+        localStorage.setItem('focusflow_shopping_list', JSON.stringify(state.shoppingList || []));
+        localStorage.setItem('focusflow_weekly_meal_plan', JSON.stringify(state.weeklyMealPlan || {}));
         localStorage.setItem('focusflow_apple_health_data', JSON.stringify(state.appleHealthData));
         localStorage.setItem('focusflow_scaffold_stages', JSON.stringify(state.scaffoldStages));
         localStorage.setItem('focusflow_connected_calendars', JSON.stringify(state.connectedCalendars || []));

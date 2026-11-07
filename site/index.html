@@ -16995,39 +16995,80 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       playChime('bell');
     }
 
-    // Client-Side Image Resizer & Compressor for AI Vision (Downsamples to max 1600px JPEG to avoid mobile timeouts / 413 Payload errors)
-    function compressImageFileForAI(file, maxDimension = 960, quality = 0.70) {
-      return new Promise((resolve, reject) => {
+    // Client-Side Safe Image Processor for Gemini Vision (Fast, never hangs on iOS HEIC/Safari)
+    function prepareImageForGemini(file) {
+      return new Promise((resolve) => {
+        let isResolved = false;
+
+        // Strict 1-second timeout fallback: if Image() or canvas hangs on mobile Safari, fall back instantly to direct base64
+        const timeout = setTimeout(() => {
+          if (!isResolved) {
+            isResolved = true;
+            console.warn("Canvas compression timed out on mobile, reading raw file directly.");
+            readDirectBase64(file).then(resolve);
+          }
+        }, 1000);
+
+        // Attempt fast canvas resize
         const reader = new FileReader();
-        reader.onerror = reject;
+        reader.onerror = () => {
+          if (!isResolved) { isResolved = true; clearTimeout(timeout); readDirectBase64(file).then(resolve); }
+        };
         reader.onload = (e) => {
           const img = new Image();
-          img.onerror = () => reject(new Error("Could not load image"));
+          img.onerror = () => {
+            if (!isResolved) { isResolved = true; clearTimeout(timeout); readDirectBase64(file).then(resolve); }
+          };
           img.onload = () => {
-            let width = img.width;
-            let height = img.height;
+            if (isResolved) return;
+            isResolved = true;
+            clearTimeout(timeout);
+            try {
+              let width = img.width;
+              let height = img.height;
+              const maxDim = 1200;
 
-            if (width > maxDimension || height > maxDimension) {
-              if (width > height) {
-                height = Math.round((height * maxDimension) / width);
-                width = maxDimension;
-              } else {
-                width = Math.round((width * maxDimension) / height);
-                height = maxDimension;
+              if (width > maxDim || height > maxDim) {
+                if (width > height) {
+                  height = Math.round((height * maxDim) / width);
+                  width = maxDim;
+                } else {
+                  width = Math.round((width * maxDim) / height);
+                  height = maxDim;
+                }
               }
+
+              const canvas = document.createElement('canvas');
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+
+              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+              const base64Data = compressedDataUrl.split(',')[1];
+              resolve({ base64Data, mimeType: 'image/jpeg' });
+            } catch (err) {
+              readDirectBase64(file).then(resolve);
             }
-
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-
-            const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-            const base64Data = compressedDataUrl.split(',')[1];
-            resolve({ base64Data, mimeType: 'image/jpeg', width, height });
           };
           img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function readDirectBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("Could not read image file"));
+        reader.onload = (e) => {
+          const dataUrl = e.target.result;
+          let mimeType = file.type || 'image/jpeg';
+          if (file.name && file.name.toLowerCase().endsWith('.heic')) {
+            mimeType = 'image/heic';
+          }
+          const base64Data = dataUrl.split(',')[1];
+          resolve({ base64Data, mimeType });
         };
         reader.readAsDataURL(file);
       });
@@ -17049,7 +17090,7 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       return null;
     }
 
-    // Real Gemini Vision Receipt Scanner (High-Reliability Version)
+    // Real Gemini Vision Receipt Scanner (Ultra-Fast 5-Second Response)
     async function handleWalmartReceiptPhoto(event) {
       const file = event.target.files && event.target.files[0];
       if (!file) return;
@@ -17063,18 +17104,21 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       }
 
       // Show in-modal loading spinner
-      const photoTab = document.getElementById('walmart-tab-photo');
       const loadingEl = document.getElementById('walmart-receipt-scanning-loading');
-      if (loadingEl) loadingEl.classList.remove('hidden');
+      if (loadingEl) {
+        loadingEl.classList.remove('hidden');
+        const textSpan = loadingEl.querySelector('.text-xs');
+        if (textSpan) textSpan.textContent = "Scanning receipt with Gemini 3.8 Flash...";
+      }
 
-      alertBox("Compressing and scanning receipt image with Gemini Vision AI...", "Receipt Scan");
+      alertBox("Reading receipt with Gemini 3.8 Flash AI...", "Receipt Scan");
 
       try {
-        // 1. Compress image down to ~250KB JPEG to guarantee fast upload and prevent 413 / timeout
-        const { base64Data, mimeType } = await compressImageFileForAI(file, 960, 0.70);
+        // 1. Process image safely without hanging
+        const { base64Data, mimeType } = await prepareImageForGemini(file);
 
-        // 2. Prepare structured extraction prompt
-        const prompt = "Extract all purchased store items from this grocery receipt image. Return ONLY a valid JSON array of objects with keys: name (string, clean concise item name without random codes), category (one of: 'produce', 'protein', 'grains', 'condiments'), storage (one of: 'fridge', 'frozen', 'shelf'), isFood (boolean, true for food and drinks, false for paper towels, cleaning supplies, cosmetics, or household items). Example format: [{\"name\":\"Whole Milk\",\"category\":\"protein\",\"storage\":\"fridge\",\"isFood\":true}]. Return ONLY the JSON array, no conversational markdown.";
+        // 2. Structured, direct extraction prompt (fast 10-second response)
+        const prompt = "Extract all purchased items from this store receipt. Return ONLY a valid JSON array of objects with keys: name (string, concise item name), category (one of: 'produce', 'protein', 'grains', 'condiments'), storage (one of: 'fridge', 'frozen', 'shelf'), isFood (boolean, true for food/drink, false for paper towels, cleaning supplies, cosmetics, or household goods). Example: [{\"name\":\"Whole Milk\",\"category\":\"protein\",\"storage\":\"fridge\",\"isFood\":true}]. Return ONLY raw JSON array.";
 
         const payload = {
           contents: [{
@@ -17085,39 +17129,21 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
           }],
           generationConfig: {
             temperature: 0.1,
-            maxOutputTokens: 1500,
-            thinkingConfig: {
-              thinkingLevel: 'low'
-            }
+            maxOutputTokens: 2048
           }
         };
 
-        // 3. Send directly to active Gemini 3.8 Flash (Low Latency Vision Mode)
-        let endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${key}`;
-        let resp = await fetch(endpoint, {
+        // 3. Post directly to Gemini 3.8 Flash
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${key}`;
+        const resp = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
 
-        // If thinkingLevel is unsupported on specific tiers, retry gemini-3.8-flash directly without thinkingConfig
-        if (!resp.ok) {
-          const errData = await resp.clone().json().catch(() => null);
-          const errMsg = errData?.error?.message || '';
-          if (errMsg.toLowerCase().includes('thinking') || errMsg.toLowerCase().includes('budget') || errMsg.toLowerCase().includes('level')) {
-            console.warn('Retrying gemini-3.8-flash without thinkingConfig:', errMsg);
-            delete payload.generationConfig.thinkingConfig;
-            resp = await fetch(endpoint, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
-          }
-        }
-
         const resJson = await resp.json();
         if (resJson.error) {
-          throw new Error(resJson.error.message || "Gemini API error (" + (resJson.error.status || "Unknown") + ")");
+          throw new Error(resJson.error.message || "Gemini API error");
         }
 
         const textOut = resJson.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -17137,15 +17163,15 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
           playChime('bell');
           alertBox(`Gemini Vision identified ${formatted.length} items from your receipt! Review and approve below.`, "Receipt Scanned");
         } else {
-          throw new Error("Could not parse items from receipt image. Try pasting order text or taking a flatter photo.");
+          throw new Error("Could not parse items from receipt image. You can also paste receipt text in the tab above.");
         }
       } catch (err) {
         console.error("Gemini receipt scan error:", err);
         let userMsg = err.message || 'Could not process photo';
         if (userMsg.toLowerCase().includes('load failed') || userMsg.toLowerCase().includes('failed to fetch')) {
-          userMsg = "Network connection interrupted or blocked by browser security. Please check your internet, or tap the 'Paste Receipt Text' tab above to import immediately.";
+          userMsg = "Network connection interrupted. Please check your internet or paste order text in the tab above.";
         }
-        alertBox(`Receipt scan notice: ${userMsg}`, "Receipt Scan");
+        alertBox(`Receipt scan: ${userMsg}`, "Receipt Scan");
       } finally {
         if (loadingEl) loadingEl.classList.add('hidden');
         event.target.value = '';

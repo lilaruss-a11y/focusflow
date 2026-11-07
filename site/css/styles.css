@@ -107,10 +107,3 @@
       opacity: 0.15 !important;
       backdrop-filter: none !important;
     }
-  </style>
-
-/* Safe Area Header Top Offset */
-.safe-top-header {
-  padding-top: 68px !important;
-  padding-top: max(68px, calc(env(safe-area-inset-top, 0px) + 20px)) !important;
-}

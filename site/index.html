@@ -43,7 +43,6 @@
       }
     }
   </script>
-  <style>
   <!-- FocusFlow Custom Stylesheet -->
   <link rel="stylesheet" href="css/styles.css">
   <script>
@@ -61,7 +60,7 @@
       const isStandalone = (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || localStorage.getItem('focusflow_app_installed') === 'true');
       if (isStandalone && isTouchPhone) {
         document.documentElement.classList.add('ff-standalone-mode');
-        document.write('<style>.safe-top-header { padding-top: 68px !important; padding-top: max(68px, calc(env(safe-area-inset-top, 0px) + 20px)) !important; }</style>');
+        /* Standalone mode CSS is handled by .ff-standalone-mode in styles.css */
       }
     } catch(e) {}
     window.addEventListener('focus', () => { setTimeout(resetViewportZoom, 150); });

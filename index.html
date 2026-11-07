@@ -5292,16 +5292,16 @@
   </div>
 
   <!-- MODAL: WALMART & GROCERY RECEIPT IMPORT WITH 1-BY-1 APPROVAL -->
-  <div id="walmart-import-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
-    <div class="bg-dark-elevated border border-pastel-sky/50 rounded-3xl w-full max-w-xl p-5 sm:p-6 space-y-4 shadow-2xl my-4">
+  <div id="walmart-import-modal" onclick="if(event.target === this) closeWalmartGroceryImportModal();" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-8 sm:pt-16 pb-16 overflow-y-auto">
+    <div onclick="event.stopPropagation()" class="bg-dark-elevated border border-pastel-sky/50 rounded-3xl w-full max-w-xl p-4 sm:p-6 space-y-4 shadow-2xl my-4">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
           <div class="w-10 h-10 rounded-2xl bg-pastel-sky/20 border border-pastel-sky/40 flex items-center justify-center text-pastel-sky">
             <i data-lucide="shopping-cart" class="w-5 h-5"></i>
           </div>
           <div>
-            <h3 class="text-base font-bold text-white">Import Walmart &amp; Groceries</h3>
-            <p class="text-xs text-slate-400">Paste receipt text or scan receipt • 1-by-1 Approval</p>
+            <h3 class="text-base font-bold text-white">Import Groceries &amp; Store Receipts</h3>
+            <p class="text-xs text-slate-400">Walmart, Target, Kroger, or any receipt • 1-by-1 Approval</p>
           </div>
         </div>
         <button onclick="closeWalmartGroceryImportModal()" class="text-slate-400 hover:text-white p-1">
@@ -5312,7 +5312,7 @@
       <!-- Import Mode Switcher -->
       <div class="grid grid-cols-2 gap-2 text-xs">
         <button type="button" onclick="switchWalmartImportTab('paste')" id="btn-tab-walmart-paste" class="py-2 px-3 rounded-xl font-bold bg-pastel-sky text-dark-base text-center transition">
-          📋 Paste Receipt / Order Text
+          📋 Paste Receipt / Grocery Text
         </button>
         <button type="button" onclick="switchWalmartImportTab('photo')" id="btn-tab-walmart-photo" class="py-2 px-3 rounded-xl font-bold bg-dark-base border border-dark-border text-slate-400 hover:text-white text-center transition">
           📷 Scan / Upload Receipt Photo
@@ -5322,13 +5322,39 @@
       <!-- Paste Tab Body -->
       <div id="walmart-tab-paste" class="space-y-3 text-xs">
         <div>
-          <div class="flex items-center justify-between mb-1">
-            <label class="text-slate-300 font-semibold">Paste Order Confirmation or Digital Receipt:</label>
-            <button type="button" onclick="loadSampleWalmartReceipt()" class="text-[11px] text-pastel-sky hover:underline font-mono">Load Sample Order</button>
+          <div class="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+            <label class="text-slate-300 font-semibold text-xs">Paste Order Email, Store Receipt, or Grocery List:</label>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="importFromFocusFlowShoppingList()" class="text-[11px] text-pastel-mint hover:underline font-semibold flex items-center gap-1">
+                <i data-lucide="list-checks" class="w-3.5 h-3.5"></i>
+                <span>From Shopping List</span>
+              </button>
+              <button type="button" onclick="clearReceiptPasteText()" class="text-[11px] text-slate-400 hover:text-white">Clear</button>
+            </div>
           </div>
-          <textarea id="walmart-paste-textarea" rows="4" placeholder="Paste order email or text here, e.g.:&#10;Great Value Boneless Skinless Chicken Breasts 3 lb $9.84&#10;Marketside Organic Baby Spinach 10 oz $2.98&#10;Great Value Jasmine Rice 5 lb $4.12&#10;Organic Whole Milk 1 gal $3.68&#10;Paper Towels 6 rolls $12.50" class="w-full bg-dark-base border border-dark-border rounded-xl p-3 text-white font-mono text-xs focus:border-pastel-sky focus:outline-none"></textarea>
+          <textarea id="walmart-paste-textarea" rows="5" placeholder="Paste order confirmation text, receipt lines, or list here:&#10;Great Value Boneless Skinless Chicken Breasts 3 lb $9.84&#10;Marketside Organic Baby Spinach 10 oz $2.98&#10;Great Value Jasmine Rice 5 lb $4.12&#10;Organic Whole Milk 1 gal $3.68&#10;Great Value Frozen Broccoli Florets 16 oz $1.48&#10;Bounty Paper Towels 6 rolls $12.50" class="w-full bg-dark-base border border-dark-border rounded-xl p-3 text-white font-mono text-xs focus:border-pastel-sky focus:outline-none"></textarea>
         </div>
-        <button type="button" onclick="parseIncomingGroceriesFromText()" class="w-full py-2.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs flex items-center justify-center gap-1.5 shadow-md hover:bg-sky-300 transition">
+
+        <!-- Quick Sample Store Presets -->
+        <div class="flex items-center justify-between flex-wrap gap-1.5 pt-0.5">
+          <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Try sample receipt:</span>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <button type="button" onclick="loadSampleWalmartReceipt('walmart')" class="px-2 py-1 rounded-lg bg-dark-base hover:bg-dark-border border border-pastel-sky/30 text-pastel-sky text-[11px] font-semibold transition">
+              🔵 Walmart
+            </button>
+            <button type="button" onclick="loadSampleWalmartReceipt('target')" class="px-2 py-1 rounded-lg bg-dark-base hover:bg-dark-border border border-rose-400/30 text-rose-300 text-[11px] font-semibold transition">
+              🔴 Target
+            </button>
+            <button type="button" onclick="loadSampleWalmartReceipt('kroger')" class="px-2 py-1 rounded-lg bg-dark-base hover:bg-dark-border border border-emerald-400/30 text-emerald-300 text-[11px] font-semibold transition">
+              🟢 Kroger / Grocery
+            </button>
+            <button type="button" onclick="loadSampleWalmartReceipt('generic')" class="px-2 py-1 rounded-lg bg-dark-base hover:bg-dark-border border border-pastel-lavender/30 text-pastel-lavender text-[11px] font-semibold transition">
+              📝 Simple List
+            </button>
+          </div>
+        </div>
+
+        <button type="button" onclick="parseIncomingGroceriesFromText()" class="w-full py-2.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs flex items-center justify-center gap-1.5 shadow-md hover:bg-sky-300 transition active:scale-[0.99]">
           <i data-lucide="search" class="w-4 h-4"></i>
           <span>Parse &amp; Review Incoming Groceries</span>
         </button>
@@ -5373,15 +5399,20 @@
 
       <!-- 1-by-1 Approval Screen (Shown after parsing) -->
       <div id="walmart-approval-section" class="hidden space-y-3 pt-3 border-t border-dark-border text-xs">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-1.5">
-            <span class="font-bold text-white text-xs">Incoming Groceries Review</span>
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-white text-xs">1-by-1 Grocery Approval</span>
             <span id="walmart-approval-count-badge" class="px-2 py-0.5 rounded-full bg-pastel-sky/20 text-pastel-sky font-bold text-[10px]">0 Approved</span>
           </div>
-          <span class="text-[10px] text-slate-400">Uncheck items bought for others</span>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="toggleAllGroceryApproval(true)" class="text-[10px] text-pastel-sky hover:underline font-semibold">Select All</button>
+            <span class="text-slate-600">•</span>
+            <button type="button" onclick="toggleAllGroceryApproval(false)" class="text-[10px] text-slate-400 hover:text-white font-semibold">Deselect All</button>
+          </div>
         </div>
+        <p class="text-[10px] text-slate-400">Review ingredients before adding to pantry. Tap storage to switch between Fridge, Freezer, and Shelf. Uncheck items bought for others.</p>
 
-        <div id="walmart-approval-list" class="space-y-2 max-h-64 overflow-y-auto pr-1">
+        <div id="walmart-approval-list" class="space-y-2 max-h-72 overflow-y-auto pr-1">
           <!-- Populated with item rows: checkbox, name, category, storage (fridge/frozen/shelf), skip/someone else button -->
         </div>
 
@@ -5397,7 +5428,7 @@
             <i data-lucide="refresh-cw" class="w-3 h-3"></i>
             <span>Force Update App (Clear Cache)</span>
           </button>
-          <button type="button" onclick="closeWalmartGroceryImportModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs">Cancel</button>
+          <button type="button" onclick="closeWalmartGroceryImportModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs font-semibold">Cancel</button>
         </div>
       </div>
     </div>

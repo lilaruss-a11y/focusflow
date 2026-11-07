@@ -2881,8 +2881,130 @@ function parseIncomingGroceriesFromText() {
     return;
   }
 
-  renderIncomingGroceriesApprovalList(parsedItems);
+  const translated = applyCustomReceiptAliases(parsedItems);
+  renderIncomingGroceriesApprovalList(translated);
   playChime('bell');
+}
+
+// ==============================================
+// CUSTOM RECEIPT CODE TRANSLATION DICTIONARY
+// ==============================================
+function getCustomReceiptAliases() {
+  try {
+    const raw = localStorage.getItem('focusflow_receipt_aliases');
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return (window.state && window.state.customReceiptAliases) || {};
+}
+
+function saveCustomReceiptAlias(rawPattern, cleanName, category, storage) {
+  if (!rawPattern || !cleanName) return;
+  const rawKey = rawPattern.trim().toLowerCase();
+  const aliases = getCustomReceiptAliases();
+  aliases[rawKey] = {
+    rawKey: rawPattern.trim(),
+    name: cleanName.trim(),
+    category: category || 'produce',
+    storage: storage || 'fridge',
+    updatedAt: new Date().toISOString()
+  };
+  try {
+    localStorage.setItem('focusflow_receipt_aliases', JSON.stringify(aliases));
+  } catch (e) {}
+  if (window.state) window.state.customReceiptAliases = aliases;
+  renderCustomReceiptAliasesList();
+}
+
+function deleteCustomReceiptAlias(rawKey) {
+  const aliases = getCustomReceiptAliases();
+  const lower = (rawKey || '').trim().toLowerCase();
+  if (aliases[lower]) {
+    delete aliases[lower];
+    try {
+      localStorage.setItem('focusflow_receipt_aliases', JSON.stringify(aliases));
+    } catch (e) {}
+    if (window.state) window.state.customReceiptAliases = aliases;
+    renderCustomReceiptAliasesList();
+    playChime('bell');
+  }
+}
+
+function applyCustomReceiptAliases(items) {
+  if (!Array.isArray(items)) return items;
+  const aliases = getCustomReceiptAliases();
+  const aliasKeys = Object.keys(aliases);
+  if (aliasKeys.length === 0) return items;
+
+  return items.map(item => {
+    const origRaw = item.rawName || item.name || '';
+    const lowerRaw = origRaw.trim().toLowerCase();
+
+    // 1. Exact match
+    if (aliases[lowerRaw]) {
+      const match = aliases[lowerRaw];
+      return Object.assign({}, item, {
+        rawName: origRaw,
+        name: match.name,
+        category: match.category || item.category,
+        storage: match.storage || item.storage,
+        wasAutoTranslated: true
+      });
+    }
+
+    // 2. Substring match for store codes with trailing prices or units
+    for (const k of aliasKeys) {
+      if (k.length >= 3 && lowerRaw.includes(k)) {
+        const match = aliases[k];
+        return Object.assign({}, item, {
+          rawName: origRaw,
+          name: match.name,
+          category: match.category || item.category,
+          storage: match.storage || item.storage,
+          wasAutoTranslated: true
+        });
+      }
+    }
+
+    return Object.assign({}, item, { rawName: origRaw });
+  });
+}
+
+function renderCustomReceiptAliasesList() {
+  const container = document.getElementById('custom-aliases-list');
+  const titleBadge = document.getElementById('custom-aliases-header-title');
+  const aliases = getCustomReceiptAliases();
+  const keys = Object.keys(aliases);
+
+  if (titleBadge) {
+    titleBadge.textContent = `Custom Receipt Translations (${keys.length} learned)`;
+  }
+
+  if (!container) return;
+  if (keys.length === 0) {
+    container.innerHTML = `<div class="p-2.5 rounded-xl bg-dark-base/50 text-[10px] text-slate-500 italic text-center">No custom translations yet. When you edit any item name or storage above, FocusFlow will automatically remember it here!</div>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  keys.forEach(k => {
+    const entry = aliases[k];
+    const row = document.createElement('div');
+    row.className = "flex items-center justify-between gap-2 p-2 rounded-xl bg-dark-base border border-dark-border text-[11px]";
+    row.innerHTML = `
+      <div class="min-w-0 flex-1">
+        <span class="font-mono text-slate-400 block truncate text-[10px]">"${entry.rawKey || k}"</span>
+        <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
+          <span class="font-bold text-pastel-mint truncate">${entry.name}</span>
+          <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-dark-elevated text-slate-400 font-mono">${entry.category} • ${entry.storage}</span>
+        </div>
+      </div>
+      <button type="button" onclick="deleteCustomReceiptAlias('${k.replace(/'/g, "\\'")}')" class="text-slate-500 hover:text-rose-400 p-1 rounded-lg hover:bg-white/5 transition" title="Delete translation rule">
+        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+      </button>
+    `;
+    container.appendChild(row);
+  });
+  if (window.lucide) lucide.createIcons();
 }
 
 function renderIncomingGroceriesApprovalList(items) {
@@ -2903,8 +3025,12 @@ function renderIncomingGroceriesApprovalList(items) {
       <div class="flex items-center gap-2.5 flex-1 min-w-0">
         <input type="checkbox" id="grocery-chk-${idx}" ${item.approved ? 'checked' : ''} onchange="toggleGroceryApproval(${idx})" class="w-4 h-4 rounded text-pastel-sky focus:ring-0 cursor-pointer shrink-0">
         <div class="flex-1 min-w-0">
-          <input type="text" value="${item.name}" onchange="updateGroceryName(${idx}, this.value)" class="w-full bg-transparent text-xs font-semibold text-white focus:outline-none focus:border-b border-pastel-sky truncate" title="Edit item name">
-          ${!item.isFood ? '<span class="text-[9px] text-amber-400 font-mono block">Non-food item (excluded by default)</span>' : ''}
+          <input type="text" value="${item.name}" onchange="updateGroceryName(${idx}, this.value)" class="w-full bg-transparent text-xs font-semibold text-white focus:outline-none focus:border-b border-pastel-sky truncate" title="Edit item name (auto-saved for future receipts)">
+          <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
+            ${item.wasAutoTranslated ? '<span class="text-[9px] text-pastel-mint font-mono font-bold">✓ Auto-translated from custom rules</span>' : ''}
+            ${item.rawName && item.rawName !== item.name ? `<span class="text-[9px] text-slate-500 truncate font-mono">Store code: "${item.rawName}"</span>` : ''}
+            ${!item.isFood ? '<span class="text-[9px] text-amber-400 font-mono">Non-food item (excluded by default)</span>' : ''}
+          </div>
         </div>
       </div>
 
@@ -2940,6 +3066,7 @@ function renderIncomingGroceriesApprovalList(items) {
   });
 
   updateGroceryApprovalBadge();
+  renderCustomReceiptAliasesList();
   if (window.lucide) lucide.createIcons();
 
   // Scroll smoothly down to the approval section
@@ -2962,19 +3089,30 @@ function toggleAllGroceryApproval(selectState) {
 
 function updateGroceryName(idx, val) {
   if (state.incomingGroceriesApprovalList && state.incomingGroceriesApprovalList[idx]) {
-    state.incomingGroceriesApprovalList[idx].name = val.trim();
+    const it = state.incomingGroceriesApprovalList[idx];
+    const clean = val.trim();
+    if (!clean) return;
+    it.name = clean;
+    it.wasCustomEdited = true;
+    saveCustomReceiptAlias(it.rawName || clean, clean, it.category, it.storage);
   }
 }
 
 function updateGroceryCategory(idx, val) {
   if (state.incomingGroceriesApprovalList && state.incomingGroceriesApprovalList[idx]) {
-    state.incomingGroceriesApprovalList[idx].category = val;
+    const it = state.incomingGroceriesApprovalList[idx];
+    it.category = val;
+    it.wasCustomEdited = true;
+    saveCustomReceiptAlias(it.rawName || it.name, it.name, val, it.storage);
   }
 }
 
 function updateGroceryStorage(idx, val) {
   if (state.incomingGroceriesApprovalList && state.incomingGroceriesApprovalList[idx]) {
-    state.incomingGroceriesApprovalList[idx].storage = val;
+    const it = state.incomingGroceriesApprovalList[idx];
+    it.storage = val;
+    it.wasCustomEdited = true;
+    saveCustomReceiptAlias(it.rawName || it.name, it.name, it.category, val);
   }
 }
 

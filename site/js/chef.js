@@ -1052,6 +1052,7 @@ Return strictly the raw JSON array.`;
 
             return {
               id: `inc-${Date.now()}-${idx}`,
+              rawName: rawName,
               name: rawName,
               category,
               storage,
@@ -1062,10 +1063,14 @@ Return strictly the raw JSON array.`;
             };
           });
 
-          renderIncomingGroceriesApprovalList(formatted);
+          const translated = (typeof applyCustomReceiptAliases === 'function')
+            ? applyCustomReceiptAliases(formatted)
+            : formatted;
+
+          renderIncomingGroceriesApprovalList(translated);
           playChime('bell');
           const modelTag = result.modelUsed ? ` via ${result.modelUsed}` : '';
-          alertBox(`Gemini Vision${modelTag} identified ${formatted.length} items from your receipt! Review and approve below.`, "Receipt Scanned");
+          alertBox(`Gemini Vision${modelTag} identified ${translated.length} items from your receipt! Review and approve below.`, "Receipt Scanned");
         } else {
           throw new Error("Could not parse items from receipt image. You can also paste receipt text in the tab above.");
         }

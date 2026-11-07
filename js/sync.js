@@ -4,7 +4,11 @@
     // Every Firebase call is wrapped so the app keeps working offline or if Google is blocked.
     // ==============================================
     const FF_SYNC_KEY_PREFIX = 'focusflow_';
-    const FF_SYNC_EXTRA_KEYS = ['focusflow_gemini_api_key']; // Gemini API key (listed explicitly so it is always synced)
+    const FF_SYNC_EXTRA_KEYS = [
+      'focusflow_gemini_api_key',
+      'focusflow_active_vision_model',
+      'focusflow_receipt_aliases'
+    ]; // Always synced across devices
     const FF_SYNC_EXCLUDED_KEYS = ['focusflow_app_version']; // per-device install version, not user data
     const FF_DEVICE_ID_KEY = 'ff_device_id';        // per-device, NOT synced
     const FF_DIRTY_KEY = 'ff_local_dirty_ms';       // time of last local change not yet confirmed by the cloud

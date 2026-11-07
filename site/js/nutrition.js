@@ -2066,6 +2066,440 @@
       return 'shelf';
     }
 
+    // ==============================================
+    // PERSONAL CUSTOM BARCODE & FOOD DATABASE
+    // ==============================================
+    function getCustomBarcodeDb() {
+      try {
+        return JSON.parse(localStorage.getItem('focusflow_custom_barcode_db') || '{}');
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveCustomBarcodeItem(barcode, product) {
+      if (!barcode || !product) return;
+      try {
+        const db = getCustomBarcodeDb();
+        db[barcode] = {
+          name: product.name,
+          brand: product.brand || 'Verified Food',
+          amount: product.amount || 1,
+          unit: product.unit || 'items',
+          category: product.category || inferFoodCategory(product.name, ''),
+          storage: product.storage || inferStorageZone(product.category, product.name),
+          kcal: product.kcal || 0,
+          protein: product.protein || 0,
+          carbs: product.carbs || 0,
+          fat: product.fat || 0,
+          fiber: product.fiber || 0,
+          sodium: product.sodium || 0,
+          sourceBadge: product.sourceBadge || '💾 Your Custom Food Database',
+          barcode: barcode,
+          savedAt: new Date().toISOString()
+        };
+        localStorage.setItem('focusflow_custom_barcode_db', JSON.stringify(db));
+      } catch (e) {}
+    }
+
+    // ==============================================
+    // 5-TIER NUTRITIONAL DATABASE CASCADE QUERIES
+    // ==============================================
+
+    // Tier 2: USDA FoodData Central Branded Foods
+    async function queryUsdaFoodDataCentral(code) {
+      const usdaKey = (localStorage.getItem('focusflow_usda_api_key') || 'DEMO_KEY').trim();
+      const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(code)}&dataType=Branded&pageSize=1&api_key=${encodeURIComponent(usdaKey)}`;
+
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 6000);
+      try {
+        const resp = await fetch(url, { signal: ctrl.signal });
+        clearTimeout(timer);
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        if (data && Array.isArray(data.foods) && data.foods.length > 0) {
+          const f = data.foods[0];
+          let kcal = 0, protein = 0, carbs = 0, fat = 0, fiber = 0, sodium = 0;
+          (f.foodNutrients || []).forEach(n => {
+            const name = (n.nutrientName || '').toLowerCase();
+            const val = Math.round(n.value || 0);
+            if (name.includes('energy') && (n.unitName === 'KCAL' || !kcal)) kcal = val;
+            else if (name.includes('protein')) protein = val;
+            else if (name.includes('carbohydrate')) carbs = val;
+            else if (name.includes('total lipid') || name === 'fat') fat = val;
+            else if (name.includes('fiber')) fiber = val;
+            else if (name.includes('sodium')) sodium = val;
+          });
+
+          const title = (f.description || 'Branded Food Item').toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
+          const cat = inferFoodCategory(title, f.brandedFoodCategory || '');
+          const stor = inferStorageZone(cat, title);
+          const qParsed = parsePackageQuantity(f.packageWeight || f.householdServingFullText || `${f.servingSize || 1} ${f.servingSizeUnit || 'serving'}`);
+
+          return {
+            name: title,
+            brand: f.brandOwner || f.brandName || 'USDA Branded',
+            amount: qParsed.amount,
+            unit: qParsed.unit,
+            category: cat,
+            storage: stor,
+            kcal: kcal || 100,
+            protein: protein,
+            carbs: carbs,
+            fat: fat,
+            fiber: fiber,
+            sodium: sodium,
+            sourceBadge: '🏛️ USDA FoodData Central',
+            barcode: code
+          };
+        }
+      } catch (err) {
+        clearTimeout(timer);
+        console.warn("USDA FDC lookup skipped/timeout:", err);
+      }
+      return null;
+    }
+
+    // Tier 3: Nutritionix API
+    async function queryNutritionix(code) {
+      const appId = (localStorage.getItem('focusflow_nutritionix_app_id') || '').trim();
+      const appKey = (localStorage.getItem('focusflow_nutritionix_app_key') || '').trim();
+      if (!appId || !appKey) return null;
+
+      const url = `https://trackapi.nutritionix.com/v2/search/item?upc=${encodeURIComponent(code)}`;
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 6000);
+      try {
+        const resp = await fetch(url, {
+          headers: {
+            'x-app-id': appId,
+            'x-app-key': appKey
+          },
+          signal: ctrl.signal
+        });
+        clearTimeout(timer);
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        if (data && Array.isArray(data.foods) && data.foods.length > 0) {
+          const f = data.foods[0];
+          const name = f.food_name || f.item_name || 'Nutritionix Food Item';
+          const cat = inferFoodCategory(name, '');
+          const stor = inferStorageZone(cat, name);
+          const qParsed = parsePackageQuantity(`${f.serving_weight_grams ? f.serving_weight_grams + ' g' : (f.serving_qty + ' ' + (f.serving_unit || 'items'))}`);
+
+          return {
+            name: name,
+            brand: f.brand_name || 'Nutritionix Verified',
+            amount: qParsed.amount,
+            unit: qParsed.unit,
+            category: cat,
+            storage: stor,
+            kcal: Math.round(f.nf_calories || 0),
+            protein: Math.round(f.nf_protein || 0),
+            carbs: Math.round(f.nf_total_carbohydrate || 0),
+            fat: Math.round(f.nf_total_fat || 0),
+            fiber: Math.round(f.nf_dietary_fiber || 0),
+            sodium: Math.round(f.nf_sodium || 0),
+            sourceBadge: '🥗 Nutritionix Verified',
+            barcode: code
+          };
+        }
+      } catch (err) {
+        clearTimeout(timer);
+        console.warn("Nutritionix lookup skipped/timeout:", err);
+      }
+      return null;
+    }
+
+    // Tier 4: Open Food Facts API (world & US endpoints)
+    async function queryOpenFoodFacts(code) {
+      const endpoints = [
+        `https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(code)}.json`,
+        `https://us.openfoodfacts.org/api/v0/product/${encodeURIComponent(code)}.json`
+      ];
+
+      for (const endpoint of endpoints) {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 6000);
+        try {
+          const resp = await fetch(endpoint, { signal: ctrl.signal });
+          clearTimeout(timer);
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data && data.status === 1 && data.product) {
+              const p = data.product;
+              const n = p.nutriments || {};
+              const name = p.product_name || p.generic_name || p.product_name_en || 'Packaged Food Item';
+              const cat = inferFoodCategory(name, p.categories || '');
+              const stor = inferStorageZone(cat, name);
+              const qParsed = parsePackageQuantity(p.quantity || p.serving_size || '');
+
+              return {
+                name: name,
+                brand: p.brands || 'Open Food Facts',
+                amount: qParsed.amount,
+                unit: qParsed.unit,
+                category: cat,
+                storage: stor,
+                kcal: Math.round(n['energy-kcal_100g'] || n['energy-kcal_serving'] || n['energy-kcal'] || 120),
+                protein: Math.round(n.proteins_100g || n.proteins_serving || 0),
+                carbs: Math.round(n.carbohydrates_100g || n.carbohydrates_serving || 0),
+                fat: Math.round(n.fat_100g || n.fat_serving || 0),
+                fiber: Math.round(n.fiber_100g || n.fiber_serving || 0),
+                sodium: Math.round((n.sodium_100g || n.sodium_serving || 0) * (n.sodium_100g > 10 ? 1 : 1000)),
+                sourceBadge: '🌐 Open Food Facts',
+                barcode: code
+              };
+            }
+          }
+        } catch (err) {
+          clearTimeout(timer);
+        }
+      }
+      return null;
+    }
+
+    // Tier 5: Gemini AI Vision Scanner for Nutrition Facts Label & Package
+    async function handleNutritionLabelVisionUpload(event, barcode) {
+      const files = event && event.target && event.target.files;
+      if (!files || files.length === 0) return;
+
+      const resBox = document.getElementById('barcode-lookup-result');
+      if (resBox) {
+        resBox.innerHTML = `
+          <div class="p-3.5 rounded-2xl bg-dark-elevated border border-pastel-lavender/50 text-xs space-y-2">
+            <div class="flex items-center gap-2 text-pastel-lavender font-semibold">
+              <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>
+              <span id="barcode-ai-label-status">Analyzing Nutrition Facts label with Gemini AI Vision...</span>
+            </div>
+            <p class="text-[11px] text-slate-300">Reading exact calories, macronutrients, serving sizes, and package net weight...</p>
+          </div>
+        `;
+        resBox.classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+      }
+
+      const key = (typeof getGeminiApiKey === 'function') ? getGeminiApiKey() : '';
+      if (!key) {
+        alertBox("Please connect your free Gemini API key in Settings (the 🔑 icon) to use AI Nutrition Label scanning.", "API Key Needed");
+        if (typeof openApiKeyModal === 'function') openApiKeyModal();
+        return;
+      }
+
+      try {
+        const imagePromises = Array.from(files).slice(0, 2).map(file => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const dataUrl = e.target.result;
+              const mimeType = file.type || 'image/jpeg';
+              const base64Data = dataUrl.split(',')[1];
+              resolve({ base64Data, mimeType });
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+        });
+
+        const inlineImages = await Promise.all(imagePromises);
+
+        const prompt = `You are a clinical dietitian and OCR engine for food packages.
+Analyze the provided photo(s) of the Nutrition Facts label and/or package front.
+Extract the exact information and return ONLY a valid JSON object (no markdown, no backticks, no extra text):
+{
+  "name": "Product Name and Variety (e.g. Organic Creamy Peanut Butter)",
+  "brand": "Brand Name",
+  "amount": 16,
+  "unit": "oz",
+  "serving_size": "2 tbsp (32g)",
+  "category": "produce|protein|dairy|grains|frozen|condiments|snacks|beverages|pantry_staples",
+  "storage": "fridge|frozen|counter|shelf",
+  "nutrition": {
+    "kcal": 190,
+    "protein": 8,
+    "carbs": 7,
+    "fat": 16,
+    "fiber": 2,
+    "sodium": 140
+  }
+}
+Guidelines:
+- If package size is visible (e.g. 16 oz, 500 g, 32 fl oz, 1 gal), extract it as amount (number) and unit (string: "oz", "g", "fl oz", "ml", "L", "gal", "items").
+- If net weight is not visible, set amount to 1 and unit to "items".
+- Extract exact calories, protein (g), carbs (g), fat (g), fiber (g), and sodium (mg) from the Nutrition Facts panel.
+- Category must be one of: "produce", "protein", "dairy", "grains", "frozen", "condiments", "snacks", "beverages", "pantry_staples".
+- Storage must be one of: "fridge", "frozen", "counter", "shelf".`;
+
+        let rawResponse = '';
+        if (typeof callGeminiGenerateContent === 'function') {
+          rawResponse = await callGeminiGenerateContent({
+            prompt: prompt,
+            inlineImages: inlineImages,
+            key: key,
+            expectJson: true,
+            onStatus: (msg) => {
+              const sEl = document.getElementById('barcode-ai-label-status');
+              if (sEl) sEl.textContent = msg;
+            }
+          });
+        } else {
+          throw new Error("Gemini Vision caller not loaded");
+        }
+
+        let parsed = null;
+        try {
+          const cleanJson = rawResponse.replace(/```json/gi, '').replace(/```/g, '').trim();
+          parsed = JSON.parse(cleanJson);
+        } catch (e) {
+          const match = rawResponse.match(/\{[\s\S]*\}/);
+          if (match) parsed = JSON.parse(match[0]);
+        }
+
+        if (parsed && parsed.name) {
+          const nut = parsed.nutrition || {};
+          const product = {
+            name: parsed.name,
+            brand: parsed.brand || 'Verified Food',
+            amount: parseFloat(parsed.amount) || 1,
+            unit: parsed.unit || 'items',
+            category: parsed.category || inferFoodCategory(parsed.name, ''),
+            storage: parsed.storage || inferStorageZone(parsed.category, parsed.name),
+            kcal: Math.round(nut.kcal || 0),
+            protein: Math.round(nut.protein || 0),
+            carbs: Math.round(nut.carbs || 0),
+            fat: Math.round(nut.fat || 0),
+            fiber: Math.round(nut.fiber || 0),
+            sodium: Math.round(nut.sodium || 0),
+            sourceBadge: '✨ AI Nutrition Label Verified',
+            barcode: barcode || ''
+          };
+
+          // Save to personal database immediately
+          if (barcode) {
+            saveCustomBarcodeItem(barcode, product);
+          }
+
+          renderBarcodeProductResult(product);
+          playChime('bell');
+        } else {
+          throw new Error("Unable to parse nutrition data from label photo");
+        }
+      } catch (err) {
+        console.warn("AI label vision error:", err);
+        if (resBox) {
+          resBox.innerHTML = `
+            <div class="p-3.5 rounded-2xl bg-dark-elevated border border-amber-400/50 text-xs space-y-2">
+              <div class="text-amber-300 font-semibold flex items-center gap-1.5">
+                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                <span>Could not extract nutrition facts from photo</span>
+              </div>
+              <p class="text-slate-300 text-[11px]">Make sure the Nutrition Facts label is in sharp focus and well-lit. You can also enter a quick item name manually below:</p>
+              <div class="flex gap-2 pt-1">
+                <input type="text" id="barcode-fallback-name" placeholder="Product name..." class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs">
+                <button type="button" onclick="saveUnknownBarcodeItem('${barcode}')" class="px-4 py-2 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs shrink-0">Save</button>
+              </div>
+            </div>
+          `;
+          if (window.lucide) lucide.createIcons();
+        }
+      }
+      if (event && event.target) event.target.value = '';
+    }
+
+    function renderBarcodeProductResult(product) {
+      const resBox = document.getElementById('barcode-lookup-result');
+      if (!resBox) return;
+
+      const qParsed = (product.amount && product.unit) ? { amount: product.amount, unit: product.unit } : parsePackageQuantity(product.quantity);
+      const safeProductJson = JSON.stringify({
+        ...product,
+        amount: qParsed.amount,
+        unit: qParsed.unit
+      }).replace(/"/g, '&quot;');
+
+      resBox.innerHTML = `
+        <div class="space-y-3 text-xs bg-dark-elevated p-3.5 rounded-2xl border border-pastel-lavender/40 shadow-xl">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-1.5 mb-1">
+                <span class="text-[9px] px-2 py-0.5 rounded-md bg-pastel-lavender/15 text-pastel-lavender font-bold uppercase tracking-wider">${product.sourceBadge || 'Verified Food'}</span>
+                ${product.brand ? `<span class="text-[10px] text-slate-400 font-semibold">• ${product.brand}</span>` : ''}
+              </div>
+              <h4 class="font-bold text-white text-sm leading-tight">${product.name}</h4>
+              <span class="text-[11px] text-slate-300 font-mono mt-0.5 block">Package Size: <strong>${qParsed.amount} ${qParsed.unit}</strong></span>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="px-2.5 py-1.5 rounded-xl bg-pastel-mint/15 text-pastel-mint font-mono font-bold text-sm block">${product.kcal} kcal</span>
+            </div>
+          </div>
+
+          <!-- Macros Breakdown -->
+          <div class="grid grid-cols-4 gap-1.5 p-2 rounded-xl bg-dark-base border border-dark-border text-center font-mono text-[11px]">
+            <div><span class="text-slate-400 block text-[9px]">PROTEIN</span><span class="text-pastel-sky font-bold">${product.protein}g</span></div>
+            <div><span class="text-slate-400 block text-[9px]">CARBS</span><span class="text-pastel-butter font-bold">${product.carbs}g</span></div>
+            <div><span class="text-slate-400 block text-[9px]">FAT</span><span class="text-pastel-peach font-bold">${product.fat}g</span></div>
+            <div><span class="text-slate-400 block text-[9px]">FIBER</span><span class="text-pastel-mint font-bold">${product.fiber || 0}g</span></div>
+          </div>
+
+          <!-- Action button based on context -->
+          <div class="pt-1 flex flex-col sm:flex-row gap-2 justify-end">
+            <button type="button" onclick="startBarcodeCamera()" class="px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs flex items-center justify-center gap-1.5">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+              <span>Scan Next Barcode</span>
+            </button>
+            <button type="button" onclick="applyScannedBarcodeFood(${safeProductJson})" class="px-4 py-2 rounded-xl bg-gradient-to-r from-pastel-mint to-emerald-400 text-dark-base font-extrabold text-xs shadow-md shadow-pastel-mint/20 flex items-center justify-center gap-1.5 hover:opacity-95 transition">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              <span>${barcodeScannerContext === 'pantry' ? 'Add Item to Pantry' : (barcodeScannerContext === 'recipe' ? 'Add to Recipe' : 'Log Food')}</span>
+            </button>
+          </div>
+        </div>
+      `;
+      resBox.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function renderBarcodeMissingWithAiPrompt(code) {
+      const resBox = document.getElementById('barcode-lookup-result');
+      if (!resBox) return;
+
+      resBox.innerHTML = `
+        <div class="p-4 rounded-2xl bg-dark-elevated border border-pastel-lavender/50 space-y-3.5 text-xs shadow-2xl">
+          <div class="flex items-start gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-pastel-lavender/20 border border-pastel-lavender/40 flex items-center justify-center text-pastel-lavender shrink-0">
+              <i data-lucide="sparkles" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-white text-xs">Product Not Found in Databases (UPC: ${code})</h4>
+              <p class="text-[11px] text-slate-300 mt-0.5">Let Gemini AI Vision read the Nutrition Facts label &amp; package to extract exact macros and save it to your personal database forever.</p>
+            </div>
+          </div>
+
+          <div class="p-3 bg-dark-base rounded-2xl border border-pastel-lavender/30 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+            <div class="text-[11px] text-slate-300 space-y-0.5">
+              <span class="font-bold text-white block">📸 Scan Nutrition Facts Label</span>
+              <span class="text-slate-400 block text-[10px]">Photo of label + package front for instant AI macro extraction</span>
+            </div>
+            <label class="w-full sm:w-auto px-4 py-2 rounded-xl bg-gradient-to-r from-pastel-lavender via-purple-400 to-pastel-mint text-dark-base font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-lg hover:opacity-95 transition shrink-0">
+              <i data-lucide="camera" class="w-4 h-4"></i>
+              <span>Snap Nutrition Label</span>
+              <input type="file" accept="image/*" capture="environment" multiple class="hidden" onchange="handleNutritionLabelVisionUpload(event, '${code}')">
+            </label>
+          </div>
+
+          <div class="pt-1 border-t border-dark-border flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span class="text-[10px] text-slate-400">Or type a quick item name manually:</span>
+            <div class="flex gap-1.5 w-full sm:w-auto">
+              <input type="text" id="barcode-fallback-name" placeholder="Item name..." class="bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs flex-1 sm:w-44 focus:border-pastel-lavender">
+              <button type="button" onclick="saveUnknownBarcodeItem('${code}')" class="px-3.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-slate-500 text-slate-300 text-xs font-semibold shrink-0">Save</button>
+            </div>
+          </div>
+        </div>
+      `;
+      resBox.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
     async function lookupBarcode(directCode) {
       const code = (directCode || (document.getElementById('barcode-manual-input') || {}).value || '').trim();
       if (!code) {
@@ -2076,158 +2510,70 @@
       const resBox = document.getElementById('barcode-lookup-result');
       if (resBox) {
         resBox.innerHTML = `
-          <div class="text-xs text-pastel-sky flex items-center gap-2 p-2">
-            <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>
-            <span>Searching Open Food Facts &amp; whole foods database for <strong>${code}</strong>...</span>
+          <div class="text-xs text-pastel-sky flex items-center gap-2 p-2.5 bg-dark-base rounded-2xl border border-pastel-sky/30">
+            <i data-lucide="loader" class="w-4 h-4 animate-spin shrink-0"></i>
+            <span id="barcode-cascade-status">Checking personal database &amp; USDA FoodData Central for <strong>${code}</strong>...</span>
           </div>
         `;
         resBox.classList.remove('hidden');
         if (window.lucide) lucide.createIcons();
       }
 
-      // Offline test items for instant reliable testing
-      const testDb = {
-        '011110038332': {
-          name: 'Kroger Traditional 100% Whole Grain Rolled Oats',
-          brand: 'Kroger',
-          quantity: '18 oz',
-          category: 'grains',
-          storage: 'shelf',
-          kcal: 150,
-          protein: 5,
-          carbs: 27,
-          fat: 2.5,
-          fiber: 4.0,
-          sodium: 0
-        },
-        '052159701026': {
-          name: 'Chobani Non-Fat Plain Greek Yogurt',
-          brand: 'Chobani',
-          quantity: '32 oz',
-          category: 'dairy',
-          storage: 'fridge',
-          kcal: 90,
-          protein: 16,
-          carbs: 6,
-          fat: 0,
-          fiber: 0,
-          sodium: 65
-        }
+      const setStatus = (msg) => {
+        const el = document.getElementById('barcode-cascade-status');
+        if (el) el.innerHTML = msg;
       };
 
-      try {
-        let product = testDb[code];
-        if (!product) {
-          // Attempt query to Open Food Facts v0 API
-          try {
-            const resp = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
-            if (resp.ok) {
-              const data = await resp.json();
-              if (data && data.status === 1 && data.product) {
-                const p = data.product;
-                const n = p.nutriments || {};
-                const name = p.product_name || p.generic_name || p.product_name_en || 'Packaged Food Item';
-                const cat = inferFoodCategory(name, p.categories || '');
-                const stor = inferStorageZone(cat, name);
-                const qParsed = parsePackageQuantity(p.quantity || p.serving_size || '');
+      // Tier 1: Check Local Custom Barcode DB
+      const customDb = getCustomBarcodeDb();
+      if (customDb[code]) {
+        const prod = { ...customDb[code], sourceBadge: '💾 Your Custom Food Database' };
+        renderBarcodeProductResult(prod);
+        return;
+      }
 
-                product = {
-                  name: name,
-                  brand: p.brands || '',
-                  quantity: p.quantity || `${qParsed.amount} ${qParsed.unit}`,
-                  amount: qParsed.amount,
-                  unit: qParsed.unit,
-                  category: cat,
-                  storage: stor,
-                  kcal: Math.round(n['energy-kcal_100g'] || n['energy-kcal_serving'] || n['energy-kcal'] || 120),
-                  protein: Math.round(n.proteins_100g || n.proteins_serving || 0),
-                  carbs: Math.round(n.carbohydrates_100g || n.carbohydrates_serving || 0),
-                  fat: Math.round(n.fat_100g || n.fat_serving || 0),
-                  fiber: Math.round(n.fiber_100g || n.fiber_serving || 0),
-                  sodium: Math.round((n.sodium_100g || n.sodium_serving || 0) * (n.sodium_100g > 10 ? 1 : 1000))
-                };
-              }
-            }
-          } catch (netErr) {
-            console.warn("Open Food Facts fetch attempt 1 failed:", netErr);
-          }
-        }
+      // Offline built-in test items
+      const testDb = {
+        '011110038332': { name: 'Kroger Traditional 100% Whole Grain Rolled Oats', brand: 'Kroger', amount: 18, unit: 'oz', category: 'grains', storage: 'shelf', kcal: 150, protein: 5, carbs: 27, fat: 2.5, fiber: 4.0, sodium: 0, sourceBadge: '📦 Verified Database', barcode: '011110038332' },
+        '052159701026': { name: 'Chobani Non-Fat Plain Greek Yogurt', brand: 'Chobani', amount: 32, unit: 'oz', category: 'dairy', storage: 'fridge', kcal: 90, protein: 16, carbs: 6, fat: 0, fiber: 0, sodium: 65, sourceBadge: '📦 Verified Database', barcode: '052159701026' }
+      };
+      if (testDb[code]) {
+        renderBarcodeProductResult(testDb[code]);
+        return;
+      }
 
-        if (product && resBox) {
-          const qParsed = (product.amount && product.unit) ? { amount: product.amount, unit: product.unit } : parsePackageQuantity(product.quantity);
-          const safeProductJson = JSON.stringify({
-            ...product,
-            amount: qParsed.amount,
-            unit: qParsed.unit
-          }).replace(/"/g, '&quot;');
+      // Tier 2: USDA FoodData Central (Official US Gov Branded Food Products)
+      setStatus(`Searching official <strong>USDA FoodData Central</strong> for ${code}...`);
+      const usdaProd = await queryUsdaFoodDataCentral(code);
+      if (usdaProd) {
+        saveCustomBarcodeItem(code, usdaProd);
+        renderBarcodeProductResult(usdaProd);
+        return;
+      }
 
-          resBox.innerHTML = `
-            <div class="space-y-3 text-xs bg-dark-elevated p-3 rounded-2xl border border-pastel-lavender/40">
-              <div class="flex items-start justify-between gap-2">
-                <div>
-                  <span class="text-[10px] text-pastel-lavender uppercase tracking-wider font-semibold block">${product.brand || 'Verified Food'}</span>
-                  <h4 class="font-bold text-white text-sm">${product.name}</h4>
-                  <span class="text-[11px] text-slate-300 font-mono mt-0.5 block">Package Size: <strong>${qParsed.amount} ${qParsed.unit}</strong></span>
-                </div>
-                <div class="text-right shrink-0">
-                  <span class="px-2 py-1 rounded-lg bg-pastel-mint/15 text-pastel-mint font-mono font-bold text-xs">${product.kcal} kcal</span>
-                </div>
-              </div>
-
-              <!-- Macros Breakdown -->
-              <div class="grid grid-cols-4 gap-1.5 p-2 rounded-xl bg-dark-base border border-dark-border text-center font-mono text-[11px]">
-                <div><span class="text-slate-400 block text-[9px]">PROTEIN</span><span class="text-pastel-sky font-bold">${product.protein}g</span></div>
-                <div><span class="text-slate-400 block text-[9px]">CARBS</span><span class="text-pastel-butter font-bold">${product.carbs}g</span></div>
-                <div><span class="text-slate-400 block text-[9px]">FAT</span><span class="text-pastel-peach font-bold">${product.fat}g</span></div>
-                <div><span class="text-slate-400 block text-[9px]">FIBER</span><span class="text-pastel-mint font-bold">${product.fiber || 0}g</span></div>
-              </div>
-
-              <!-- Action button based on context -->
-              <div class="pt-1 flex flex-col sm:flex-row gap-2 justify-end">
-                <button type="button" onclick="startBarcodeCamera()" class="px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs flex items-center justify-center gap-1.5">
-                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-                  <span>Scan Next Barcode</span>
-                </button>
-                <button type="button" onclick="applyScannedBarcodeFood(${safeProductJson})" class="px-4 py-2 rounded-xl bg-gradient-to-r from-pastel-mint to-emerald-400 text-dark-base font-extrabold text-xs shadow-md shadow-pastel-mint/20 flex items-center justify-center gap-1.5 hover:opacity-95 transition">
-                  <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                  <span>${barcodeScannerContext === 'pantry' ? 'Add Item to Pantry' : (barcodeScannerContext === 'recipe' ? 'Add to Recipe' : 'Log Food')}</span>
-                </button>
-              </div>
-            </div>
-          `;
-          resBox.classList.remove('hidden');
-          if (window.lucide) lucide.createIcons();
-        } else if (resBox) {
-          resBox.innerHTML = `
-            <div class="p-3 rounded-2xl bg-dark-elevated border border-amber-400/40 space-y-2 text-xs">
-              <div class="flex items-center gap-2 text-amber-300 font-semibold">
-                <i data-lucide="help-circle" class="w-4 h-4"></i>
-                <span>Product not found in Open Food Facts database (UPC: ${code})</span>
-              </div>
-              <p class="text-[11px] text-slate-300">Enter a quick name to save it to your pantry or log anyway:</p>
-              <div class="flex gap-2">
-                <input type="text" id="barcode-fallback-name" placeholder="e.g. Organic Rolled Oats" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-lavender">
-                <button type="button" onclick="saveUnknownBarcodeItem('${code}')" class="px-4 py-2 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs shrink-0">
-                  Save Item
-                </button>
-              </div>
-              <div class="pt-1 flex justify-start">
-                <button type="button" onclick="startBarcodeCamera()" class="text-pastel-lavender hover:underline text-[11px] flex items-center gap-1">
-                  <i data-lucide="refresh-cw" class="w-3 h-3"></i>
-                  <span>Try Scanning Again</span>
-                </button>
-              </div>
-            </div>
-          `;
-          resBox.classList.remove('hidden');
-          if (window.lucide) lucide.createIcons();
-        }
-      } catch (err) {
-        if (resBox) {
-          resBox.innerHTML = `<div class="text-xs text-amber-300 p-2">Search unavailable. You can enter the food details manually.</div>`;
-          resBox.classList.remove('hidden');
+      // Tier 3: Nutritionix (curated commercial database)
+      const nxCreds = (typeof getNutritionixCredentials === 'function') ? getNutritionixCredentials() : { appId: '', appKey: '' };
+      if (nxCreds.appId && nxCreds.appKey) {
+        setStatus(`Searching <strong>Nutritionix</strong> database for ${code}...`);
+        const nxProd = await queryNutritionix(code);
+        if (nxProd) {
+          saveCustomBarcodeItem(code, nxProd);
+          renderBarcodeProductResult(nxProd);
+          return;
         }
       }
+
+      // Tier 4: Open Food Facts (global crowd-sourced database)
+      setStatus(`Searching <strong>Open Food Facts</strong> (3M+ items) for ${code}...`);
+      const offProd = await queryOpenFoodFacts(code);
+      if (offProd) {
+        saveCustomBarcodeItem(code, offProd);
+        renderBarcodeProductResult(offProd);
+        return;
+      }
+
+      // Tier 5: Fallback - Prompt for Gemini AI Nutrition Label & Package Scan
+      renderBarcodeMissingWithAiPrompt(code);
     }
 
     function saveUnknownBarcodeItem(code) {
@@ -2246,13 +2592,19 @@
         fat: 0,
         fiber: 0,
         sodium: 0,
+        sourceBadge: '💾 Your Custom Food Database',
         barcode: code
       };
+      saveCustomBarcodeItem(code, fallbackProduct);
       applyScannedBarcodeFood(fallbackProduct);
     }
 
     function applyScannedBarcodeFood(product) {
       closeBarcodeScannerModal();
+      if (product.barcode) {
+        saveCustomBarcodeItem(product.barcode, product);
+      }
+
       if (barcodeScannerContext === 'recipe') {
         const ingInput = document.getElementById('recipe-ingredients-input');
         if (ingInput) {

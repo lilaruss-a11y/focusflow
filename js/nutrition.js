@@ -1719,20 +1719,61 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       document.body.removeChild(textArea);
     }
 
-    // Custom non-intrusive alert box
+    // Custom alert & error notification system
+    // Errors NEVER auto-dismiss; they stay on screen until the user taps [✕], with a [Copy Error] button
     function alertBox(msg, title = "FocusFlow") {
+      const msgStr = String(msg || '');
+      const titleStr = String(title || 'FocusFlow');
+      const isError = /error|failed|failure|timed out|not enabled|needed|required|invalid|rejected/i.test(`${titleStr} ${msgStr}`);
       const box = document.createElement('div');
-      box.className = "fixed bottom-5 right-5 z-50 bg-dark-elevated border border-pastel-mint text-white p-4 rounded-2xl shadow-2xl flex items-center gap-3 text-xs max-w-sm animate-bounce";
+      
+      const borderColor = isError ? 'border-rose-400/80 bg-dark-elevated shadow-rose-900/40' : 'border-pastel-mint bg-dark-elevated shadow-2xl';
+      const titleColor = isError ? 'text-rose-400' : 'text-pastel-mint';
+      const iconName = isError ? 'alert-triangle' : 'bell';
+      const iconColor = isError ? 'text-rose-400' : 'text-pastel-mint';
+
+      box.className = `fixed bottom-5 right-5 z-[9999] ${borderColor} text-white p-4 rounded-2xl shadow-2xl flex flex-col gap-2.5 text-xs max-w-sm border backdrop-blur-md transition-all duration-300`;
+      
+      const safeEscaped = msgStr.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      
       box.innerHTML = `
-        <i data-lucide="bell" class="w-5 h-5 text-pastel-mint shrink-0"></i>
-        <div>
-          <strong class="block text-pastel-mint font-bold">${title}</strong>
-          <span>${msg}</span>
+        <div class="flex items-start justify-between gap-3 w-full">
+          <div class="flex items-start gap-2.5 min-w-0">
+            <i data-lucide="${iconName}" class="w-5 h-5 ${iconColor} shrink-0 mt-0.5"></i>
+            <div class="min-w-0">
+              <strong class="block ${titleColor} font-bold text-xs">${titleStr}</strong>
+              <div class="text-[11px] text-slate-200 break-words mt-0.5 leading-relaxed">${msgStr}</div>
+            </div>
+          </div>
+          <button type="button" aria-label="Close" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 shrink-0 transition" onclick="this.closest('.fixed').remove()">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
         </div>
+        ${isError ? `
+          <div class="pt-1 flex items-center justify-end gap-2 border-t border-dark-border/50">
+            <button type="button" class="px-2.5 py-1 rounded-lg bg-dark-base border border-dark-border text-[10px] text-slate-300 hover:text-white font-medium flex items-center gap-1 transition" onclick="navigator.clipboard.writeText('${safeEscaped}'); this.textContent='✓ Copied!'; setTimeout(()=>this.textContent='Copy Error', 2000)">
+              <i data-lucide="copy" class="w-3 h-3"></i>
+              <span>Copy Error</span>
+            </button>
+            <button type="button" class="px-3 py-1 rounded-lg bg-rose-500/20 border border-rose-500/40 text-[10px] text-rose-300 hover:bg-rose-500/30 font-semibold transition" onclick="this.closest('.fixed').remove()">
+              Dismiss ✕
+            </button>
+          </div>
+        ` : ''}
       `;
+      
       document.body.appendChild(box);
-      lucide.createIcons();
-      setTimeout(() => box.remove(), 4000);
+      if (window.lucide) lucide.createIcons();
+
+      // Only auto-dismiss non-error notices
+      if (!isError) {
+        setTimeout(() => {
+          if (box.parentNode) {
+            box.style.opacity = '0';
+            setTimeout(() => box.remove(), 300);
+          }
+        }, 5000);
+      }
     }
 
     // Boot on Load

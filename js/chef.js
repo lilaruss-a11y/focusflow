@@ -750,16 +750,26 @@
       }
 
       // Default priority list of models
+      // When inlineImage is present, vision-capable models are evaluated
       let targetModels = [
         'gemini-3.8-flash',
         'gemini-4-argon',
         'gemini-3.8-flash-latest',
-        'gemini-4-flash',
         'gemini-2.0-flash',
-        'gemini-1.5-flash'
+        'gemini-1.5-flash',
+        'gemini-2.5-flash',
+        'gemini-1.5-pro'
       ];
 
-      // Instant 2-second dynamic model discovery from the user's active key
+      // If a working vision model was previously confirmed in this session, put it first!
+      if (inlineImage && window.state && window.state.activeWorkingVisionModel) {
+        targetModels = [
+          window.state.activeWorkingVisionModel,
+          ...targetModels.filter(m => m !== window.state.activeWorkingVisionModel)
+        ];
+      }
+
+      // Fast dynamic model discovery from the user's active key
       if (typeof onStatus === 'function') onStatus("Connecting to Google AI Studio...");
       try {
         const discController = new AbortController();
@@ -777,13 +787,16 @@
             .filter(name => !/1\.0|embedding|aqa|imagen/i.test(name));
 
           if (available.length > 0) {
-            // Sort models: prioritize 3.8, argon/4, 2.0-flash, 1.5-flash
+            // Keep priority order of known vision & flash models
             available.sort((a, b) => {
               const score = (str) => {
+                if (window.state && window.state.activeWorkingVisionModel === str) return 200;
                 if (/3\.8/i.test(str)) return 100;
                 if (/argon|4/i.test(str)) return 90;
                 if (/2\.0.*flash/i.test(str)) return 80;
                 if (/1\.5.*flash/i.test(str)) return 70;
+                if (/2\.5.*flash/i.test(str)) return 65;
+                if (/pro/i.test(str)) return 50;
                 return 10;
               };
               return score(b) - score(a);
@@ -797,8 +810,9 @@
 
       let lastError = null;
 
-      // Try prioritized models with a 25-second timeout per model and live ticker
-      for (const model of targetModels.slice(0, 3)) {
+      // Iterate through models until a vision-compatible model successfully responds
+      // Automatically skips text-only models that return "image input modality not enabled"
+      for (const model of targetModels) {
         let elapsed = 0;
         if (typeof onStatus === 'function') onStatus(`Scanning receipt with ${model}...`);
         const statusTicker = setInterval(() => {
@@ -813,15 +827,36 @@
           const callTimer = setTimeout(() => callController.abort(), 25000);
 
           const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`;
-          const resp = await fetch(endpoint, {
+          
+          let curConfig = Object.assign({}, generationConfig);
+          let resp = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               contents: [{ parts }],
-              generationConfig
+              generationConfig: curConfig
             }),
             signal: callController.signal
           });
+
+          // If responseMimeType is rejected on certain models, retry without responseMimeType
+          if (!resp.ok && curConfig.responseMimeType) {
+            const peek = await resp.clone().json().catch(() => null);
+            const peekMsg = (peek && peek.error && peek.error.message) || '';
+            if (/responseMimeType|generationConfig|schema/i.test(peekMsg)) {
+              delete curConfig.responseMimeType;
+              resp = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  contents: [{ parts }],
+                  generationConfig: curConfig
+                }),
+                signal: callController.signal
+              });
+            }
+          }
+
           clearTimeout(callTimer);
           clearInterval(statusTicker);
 
@@ -838,6 +873,7 @@
               textOut = partsArr[partsArr.length - 1].text || '';
             }
             if (textOut.trim()) {
+              if (window.state) window.state.activeWorkingVisionModel = model;
               return { text: textOut.trim(), modelUsed: model };
             }
           }
@@ -846,6 +882,10 @@
             const errMsg = resJson.error?.message || `HTTP ${resp.status} on ${model}`;
             console.warn(`Gemini API ${model} failed (${resp.status}):`, errMsg);
             lastError = new Error(errMsg);
+            // If the model does not support images, immediately continue to the next model!
+            if (/modality|image|not enabled|not supported|unsupported/i.test(errMsg)) {
+              if (typeof onStatus === 'function') onStatus(`${model} is text-only. Trying vision model...`);
+            }
             continue;
           }
         } catch (netErr) {

@@ -35,8 +35,12 @@ The project is modularized into dedicated feature files to prevent regressions a
   * **`biometrics.js`**: Cardiac & medication tracking, actual vs plan duration calculation, and event completion/skip toggles.
   * **`app.js`**: Tab navigation (`switchTab`), state persistence (`saveAppState`, `loadAppState`), phone demo modal, and `window.onload` startup sequence.
 
-* **`verify.py`** (Automated Test Suite):
-  * Automated testing script that verifies HTML tags, local asset links, compiles all JS, and validates `site/` deployment sync.
+* **`verify.py`** (Automated Test Suite & Regression Prevention):
+  * Automated testing script that verifies HTML tags, local asset links, compiles all JS with macOS WebKit JavaScriptCore, and validates `site/` deployment sync in ~0.25s.
+  * Includes dynamic regression tests loaded from `tests/regressions.json`.
+
+* **`tests/regressions.json`** (Known Mistakes Database):
+  * Automatically loaded and tested by `verify.py` on every run. Stores all past bugs and mistakes to prevent them from ever recurring.
 
 * **`backups/`** (Historical Backups & Archives):
   * All safety backups, archive copies, or temporary exported files MUST live here. Never leave backups in the root folder.
@@ -61,20 +65,25 @@ Before changing ANY code:
    > *"Would you like me to proceed with this plan?"*
    **WAIT** for the user's explicit approval before touching any files.
 
-### Rule 2: Run Tests After Making Changes
+### Rule 2: Run Tests After Making Changes & Register Fixed Bugs
 After the user approves your plan and you make the changes:
 1. **Run the Automated Test Suite:**
    Execute:
    ```bash
    python3 verify.py
    ```
-   Verify that all checks pass with zero errors (all HTML tags matched, all JS modules compiled, and all files synchronized).
-2. **Verify Desired Effect:**
+   Verify that all checks pass with zero errors in ~0.25s.
+2. **Automatically Register Fixed Bugs / Mistakes:**
+   Whenever you fix a bug, you MUST register it into the regression database so it is tested forever:
+   ```bash
+   python3 verify.py --add-mistake --id "short_id" --desc "Plain English description of what to avoid" --file "filename" --pattern "forbidden_string"
+   ```
+3. **Verify Desired Effect:**
    Inspect the modified functions line-by-line to verify logic flow:
    * Are element IDs and class names identical between HTML and JS?
    * Are event listeners attached to elements that actually exist?
    * Did the edit specifically produce the user's requested behavior without collateral side-effects?
-3. **Provide a Testing Checklist:**
+4. **Provide a Testing Checklist:**
    Give the user a simple, 1-2-3 checklist of what to tap in Google Chrome on their computer or phone to verify the change.
 
 ### Rule 3: Auto-Sync to `site/` and Push to GitHub

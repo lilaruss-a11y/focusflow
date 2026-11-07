@@ -1,0 +1,52 @@
+[
+  {
+    "id": "unclosed_style_tag",
+    "description": "Never leave an unclosed <style> tag in index.html (causes browser to treat scripts as styles and print raw code onto the screen)",
+    "file": "index.html",
+    "check_type": "tag_balance",
+    "open_tag": "<style",
+    "close_tag": "</style>"
+  },
+  {
+    "id": "unclosed_script_tag",
+    "description": "Never leave an unclosed <script> tag in index.html",
+    "file": "index.html",
+    "check_type": "tag_balance",
+    "open_tag": "<script",
+    "close_tag": "</script>"
+  },
+  {
+    "id": "html_tags_in_css",
+    "description": "Never include HTML tags like <style> or </style> inside css/styles.css",
+    "file": "css/styles.css",
+    "check_type": "forbidden_pattern",
+    "pattern": "<style|</style>",
+    "is_regex": true
+  },
+  {
+    "id": "html_tags_in_js",
+    "description": "Never include HTML tags like <script> or </script> inside standalone .js files",
+    "directory": "js",
+    "check_type": "forbidden_pattern",
+    "pattern": "<script|</script>",
+    "is_regex": true
+  },
+  {
+    "id": "raw_js_leaking_into_html_body",
+    "description": "Never print raw JavaScript code text into the HTML body outside of script tags",
+    "file": "index.html",
+    "check_type": "forbidden_outside_scripts",
+    "patterns": [
+      "resetViewportZoom",
+      "window.addEventListener('visibilitychange'",
+      "document.documentElement.classList.add"
+    ]
+  },
+  {
+    "id": "site_deployment_sync",
+    "description": "Always keep the site/ folder byte-for-byte identical to root index.html so mobile PWA stays updated",
+    "file": "site/index.html",
+    "check_type": "file_match",
+    "match_file": "index.html"
+  }
+]

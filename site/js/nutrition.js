@@ -2404,6 +2404,33 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
     let zxingBarcodeReader = null;
     let isBarcodeScanningLocked = false;
 
+    function initZXingReader() {
+      if (!window.ZXing) return null;
+      try {
+        const hints = new Map();
+        const formats = [
+          window.ZXing.BarcodeFormat.UPC_A,
+          window.ZXing.BarcodeFormat.UPC_E,
+          window.ZXing.BarcodeFormat.EAN_13,
+          window.ZXing.BarcodeFormat.EAN_8,
+          window.ZXing.BarcodeFormat.CODE_128,
+          window.ZXing.BarcodeFormat.CODE_39,
+          window.ZXing.BarcodeFormat.ITF,
+          window.ZXing.BarcodeFormat.QR_CODE
+        ];
+        hints.set(window.ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+        hints.set(window.ZXing.DecodeHintType.TRY_HARDER, true);
+        return new window.ZXing.BrowserMultiFormatReader(hints, 200);
+      } catch (e) {
+        console.warn("Failed to instantiate ZXing reader with hints, falling back to default:", e);
+        try {
+          return new window.ZXing.BrowserMultiFormatReader();
+        } catch (e2) {
+          return null;
+        }
+      }
+    }
+
     function openBarcodeScannerModal(context = 'food') {
       barcodeScannerContext = context;
       isBarcodeScanningLocked = false;
@@ -2441,7 +2468,10 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       const flipBtn = document.getElementById('barcode-flip-cam-btn');
 
       if (video) {
-        video.srcObject = null;
+        try {
+          video.pause();
+          video.srcObject = null;
+        } catch (e) {}
         video.classList.add('hidden');
       }
       if (ph) ph.classList.remove('hidden');
@@ -2479,9 +2509,19 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         barcodeStream = null;
       }
 
-      if (phMsg) phMsg.textContent = "Requesting camera access...";
+      if (phMsg) phMsg.textContent = "Connecting to camera...";
+
+      // Wait briefly if ZXing script is still initializing
+      if (!window.ZXing) {
+        await new Promise(r => setTimeout(r, 250));
+      }
 
       try {
+        zxingBarcodeReader = initZXingReader();
+        if (!zxingBarcodeReader) {
+          throw new Error("Barcode scanner engine not loaded");
+        }
+
         const constraints = {
           video: {
             facingMode: { ideal: barcodeFacingMode },
@@ -2491,82 +2531,104 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
           audio: false
         };
 
-        barcodeStream = await navigator.mediaDevices.getUserMedia(constraints);
         if (video) {
-          video.srcObject = barcodeStream;
+          video.classList.remove('hidden');
           video.setAttribute('playsinline', 'true');
           video.setAttribute('autoplay', 'true');
           video.muted = true;
-          video.classList.remove('hidden');
-          await video.play();
         }
         if (ph) ph.classList.add('hidden');
         if (reticle) reticle.classList.remove('hidden');
         if (liveStatus) {
           liveStatus.classList.remove('hidden');
-          if (statusText) statusText.textContent = "Scanning for barcode...";
+          if (statusText) statusText.textContent = "Scanning... Hold barcode 6-8 in away";
         }
         if (flipBtn) flipBtn.classList.remove('hidden');
         if (window.lucide) lucide.createIcons();
 
-        // Dual Engine Detection:
-        // Try native BarcodeDetector if available; otherwise use ZXing Multi-Format Reader
-        let nativeActive = false;
-        if ('BarcodeDetector' in window) {
-          try {
-            const detector = new window.BarcodeDetector({
-              formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code']
-            });
-            nativeActive = true;
-            const scanLoop = async () => {
-              if (!barcodeStream || isBarcodeScanningLocked) return;
-              try {
-                if (video.readyState >= 2) {
-                  const barcodes = await detector.detect(video);
-                  if (barcodes && barcodes.length > 0 && !isBarcodeScanningLocked) {
-                    const foundCode = barcodes[0].rawValue;
-                    if (foundCode) {
-                      onBarcodeDetected(foundCode);
-                      return;
-                    }
-                  }
-                }
-              } catch (e) {}
-              if (barcodeStream && !isBarcodeScanningLocked) {
-                requestAnimationFrame(scanLoop);
-              }
-            };
-            requestAnimationFrame(scanLoop);
-          } catch (e) {
-            nativeActive = false;
+        // decodeFromConstraints continuously scans the stream using ZXing multi-pass algorithm
+        await zxingBarcodeReader.decodeFromConstraints(constraints, video, (result, err) => {
+          if (result && !isBarcodeScanningLocked) {
+            const foundCode = result.getText();
+            if (foundCode) {
+              onBarcodeDetected(foundCode);
+            }
           }
-        }
-
-        // If native BarcodeDetector not active, use ZXing engine
-        if (!nativeActive && window.ZXing) {
-          try {
-            zxingBarcodeReader = new window.ZXing.BrowserMultiFormatReader();
-            zxingBarcodeReader.decodeFromVideoElement(video, (result, err) => {
-              if (result && !isBarcodeScanningLocked) {
-                const text = result.getText();
-                if (text) {
-                  onBarcodeDetected(text);
-                }
-              }
-            });
-          } catch (zxingErr) {
-            console.warn("ZXing scanner initialization fallback:", zxingErr);
-          }
-        }
+        });
       } catch (err) {
-        console.warn("Camera access failed or unavailable:", err);
+        console.warn("Camera start or decode error:", err);
         if (video) video.classList.add('hidden');
         if (ph) ph.classList.remove('hidden');
-        if (phMsg) phMsg.textContent = "Camera not available or access denied. Enter the barcode manually below:";
+        if (phMsg) phMsg.textContent = "Camera unavailable or access denied. Enter barcode manually or tap Snap Photo:";
         if (reticle) reticle.classList.add('hidden');
         if (liveStatus) liveStatus.classList.add('hidden');
         if (flipBtn) flipBtn.classList.add('hidden');
       }
+    }
+
+    async function handleBarcodePhotoUpload(event) {
+      const file = event && event.target && event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const resBox = document.getElementById('barcode-lookup-result');
+      if (resBox) {
+        resBox.innerHTML = `
+          <div class="text-xs text-pastel-sky flex items-center gap-2 p-2">
+            <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>
+            <span>Analyzing photo with high-resolution barcode scan...</span>
+          </div>
+        `;
+        resBox.classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+      }
+
+      try {
+        const fileReader = new FileReader();
+        fileReader.onload = async (e) => {
+          const imgUrl = e.target.result;
+          const zx = initZXingReader() || (window.ZXing ? new window.ZXing.BrowserMultiFormatReader() : null);
+          if (!zx) {
+            if (resBox) resBox.innerHTML = `<div class="text-xs text-rose-400 p-2">Barcode engine not ready. Please try again.</div>`;
+            return;
+          }
+          try {
+            const img = new Image();
+            img.onload = async () => {
+              try {
+                const result = await zx.decodeFromImageElement(img);
+                if (result && result.getText()) {
+                  onBarcodeDetected(result.getText());
+                } else {
+                  throw new Error("No barcode found in image");
+                }
+              } catch (decodeErr) {
+                if (resBox) {
+                  resBox.innerHTML = `
+                    <div class="p-3 rounded-2xl bg-dark-elevated border border-amber-400/40 text-xs space-y-2">
+                      <div class="text-amber-300 font-semibold flex items-center gap-1.5">
+                        <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                        <span>Could not read barcode from this photo</span>
+                      </div>
+                      <p class="text-slate-300 text-[11px]">Make sure the barcode lines are in sharp focus, well-lit, and filling the frame. You can also type the barcode number directly below.</p>
+                      <button type="button" onclick="document.getElementById('barcode-photo-file-input').click()" class="px-3 py-1.5 rounded-xl bg-pastel-lavender text-dark-base font-bold text-xs">
+                        Try Another Photo
+                      </button>
+                    </div>
+                  `;
+                  if (window.lucide) lucide.createIcons();
+                }
+              }
+            };
+            img.src = imgUrl;
+          } catch (imgErr) {
+            console.warn("Image decode error:", imgErr);
+          }
+        };
+        fileReader.readAsDataURL(file);
+      } catch (err) {
+        console.warn("FileReader error:", err);
+      }
+      if (event && event.target) event.target.value = '';
     }
 
     function onBarcodeDetected(code) {

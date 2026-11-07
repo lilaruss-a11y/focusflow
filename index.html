@@ -5284,6 +5284,16 @@
         </div>
       </div>
 
+      <!-- Live Guidance & Snap Barcode Photo Action -->
+      <div class="flex items-center justify-between gap-2 text-xs">
+        <span class="text-[11px] text-slate-400">💡 Hold barcode 6-8 inches away in steady light</span>
+        <label class="cursor-pointer px-3 py-1.5 rounded-xl bg-dark-base border border-pastel-lavender/40 hover:border-pastel-lavender text-pastel-lavender text-xs font-semibold flex items-center gap-1.5 shrink-0 transition shadow-sm" title="Snap or upload a clear photo of the barcode">
+          <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+          <span>Snap Photo</span>
+          <input type="file" id="barcode-photo-file-input" accept="image/*" capture="environment" class="hidden" onchange="handleBarcodePhotoUpload(event)">
+        </label>
+      </div>
+
       <!-- Manual Barcode Input with instant test buttons -->
       <div class="space-y-2 text-xs">
         <label class="block text-slate-300 font-semibold">Or Enter Barcode / UPC Number:</label>

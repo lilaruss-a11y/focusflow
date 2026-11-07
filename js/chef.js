@@ -638,19 +638,53 @@
     }
 
     // Client-Side Safe Image Processor for Gemini Vision (Fast, crisp, and high-resolution)
-    // Preserves sharp digital screenshots up to 2048px so Walmart receipt details & small text remain razor sharp
+    // Preserves sharp digital screenshots up to 2048px with strict 2-second timeout so it never hangs
     function prepareImageForGemini(file) {
       return new Promise((resolve, reject) => {
         if (!file) {
           return reject(new Error("No file provided"));
         }
 
-        // Method A: Modern createImageBitmap if available (runs on worker thread, zero UI stutter)
-        if (typeof createImageBitmap === 'function') {
-          createImageBitmap(file)
-            .then(bitmap => {
-              let width = bitmap.width;
-              let height = bitmap.height;
+        // Direct read for standard image files under 4MB (preserves 100% digital screenshot sharpness with zero canvas lag)
+        if (file.size && file.size < 4 * 1024 * 1024 && (file.type === 'image/png' || file.type === 'image/jpeg' || file.type === 'image/webp')) {
+          readDirectBase64(file).then(resolve).catch(reject);
+          return;
+        }
+
+        // Fast canvas scaler for very large camera photos
+        let isDone = false;
+        const safetyTimer = setTimeout(() => {
+          if (!isDone) {
+            isDone = true;
+            readDirectBase64(file).then(resolve).catch(reject);
+          }
+        }, 2500);
+
+        const reader = new FileReader();
+        reader.onerror = () => {
+          if (!isDone) {
+            isDone = true;
+            clearTimeout(safetyTimer);
+            readDirectBase64(file).then(resolve).catch(reject);
+          }
+        };
+
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onerror = () => {
+            if (!isDone) {
+              isDone = true;
+              clearTimeout(safetyTimer);
+              readDirectBase64(file).then(resolve).catch(reject);
+            }
+          };
+          img.onload = () => {
+            if (isDone) return;
+            isDone = true;
+            clearTimeout(safetyTimer);
+            try {
+              let width = img.width;
+              let height = img.height;
               const maxDim = 2048;
 
               if (width > maxDim || height > maxDim) {
@@ -667,87 +701,19 @@
               canvas.width = width;
               canvas.height = height;
               const ctx = canvas.getContext('2d');
-              ctx.drawImage(bitmap, 0, 0, width, height);
+              ctx.drawImage(img, 0, 0, width, height);
 
-              const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-              const base64Data = dataUrl.split(',')[1];
+              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+              const base64Data = compressedDataUrl.split(',')[1];
               resolve({ base64Data, mimeType: 'image/jpeg' });
-            })
-            .catch(() => {
-              // Fallback to Method B
-              runFileReaderImageCompress(file, resolve, reject);
-            });
-          return;
-        }
-
-        // Method B: Standard FileReader + Image loader
-        runFileReaderImageCompress(file, resolve, reject);
-      });
-    }
-
-    function runFileReaderImageCompress(file, resolve, reject) {
-      let isResolved = false;
-      const timeout = setTimeout(() => {
-        if (!isResolved) {
-          isResolved = true;
-          console.warn("Image downscaling timed out, falling back to direct base64");
-          readDirectBase64(file).then(resolve).catch(reject);
-        }
-      }, 8000);
-
-      const reader = new FileReader();
-      reader.onerror = () => {
-        if (!isResolved) {
-          isResolved = true;
-          clearTimeout(timeout);
-          readDirectBase64(file).then(resolve).catch(reject);
-        }
-      };
-
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onerror = () => {
-          if (!isResolved) {
-            isResolved = true;
-            clearTimeout(timeout);
-            readDirectBase64(file).then(resolve).catch(reject);
-          }
-        };
-        img.onload = () => {
-          if (isResolved) return;
-          isResolved = true;
-          clearTimeout(timeout);
-          try {
-            let width = img.width;
-            let height = img.height;
-            const maxDim = 2048;
-
-            if (width > maxDim || height > maxDim) {
-              if (width > height) {
-                height = Math.round((height * maxDim) / width);
-                width = maxDim;
-              } else {
-                width = Math.round((width * maxDim) / height);
-                height = maxDim;
-              }
+            } catch (err) {
+              readDirectBase64(file).then(resolve).catch(reject);
             }
-
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-
-            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
-            const base64Data = compressedDataUrl.split(',')[1];
-            resolve({ base64Data, mimeType: 'image/jpeg' });
-          } catch (err) {
-            readDirectBase64(file).then(resolve).catch(reject);
-          }
+          };
+          img.src = e.target.result;
         };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
+      });
     }
 
     function readDirectBase64(file) {
@@ -767,20 +733,12 @@
       });
     }
 
-    // High-performance Gemini Vision caller: Powered by Gemini 3.8 Flash & Gemini 4 Argon
-    // Deprecated/lower-level models are removed to prevent rejection errors
-    async function callGeminiGenerateContent({ prompt, inlineImage = null, key = '', expectJson = false }) {
+    // High-performance Gemini Vision caller with dynamic model discovery and strict 8s timeout
+    async function callGeminiGenerateContent({ prompt, inlineImage = null, key = '', expectJson = false, onStatus = null }) {
       const activeKey = (key || getGeminiApiKey() || '').trim();
       if (!activeKey) {
         throw new Error("API_KEY_REQUIRED");
       }
-
-      const candidateModels = [
-        'gemini-3.8-flash',
-        'gemini-4-argon',
-        'gemini-3.8-flash-latest',
-        'gemini-4-flash'
-      ];
 
       const parts = [{ text: prompt }];
       if (inlineImage && inlineImage.base64Data) {
@@ -800,10 +758,61 @@
         generationConfig.responseMimeType = "application/json";
       }
 
+      // Default priority list of models
+      let targetModels = [
+        'gemini-3.8-flash',
+        'gemini-4-argon',
+        'gemini-3.8-flash-latest',
+        'gemini-4-flash',
+        'gemini-2.0-flash',
+        'gemini-1.5-flash'
+      ];
+
+      // Instant 2-second dynamic model discovery from the user's active key
+      if (typeof onStatus === 'function') onStatus("Connecting to Google AI Studio...");
+      try {
+        const discController = new AbortController();
+        const discTimer = setTimeout(() => discController.abort(), 2500);
+        const modelsListResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${activeKey}`, {
+          signal: discController.signal
+        });
+        clearTimeout(discTimer);
+
+        if (modelsListResp.ok) {
+          const listJson = await modelsListResp.json();
+          const available = (listJson.models || [])
+            .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.indexOf('generateContent') !== -1)
+            .map(m => (m.name || '').replace(/^models\//, ''))
+            .filter(name => !/1\.0|embedding|aqa|imagen/i.test(name));
+
+          if (available.length > 0) {
+            // Sort models: prioritize 3.8, argon/4, 2.0-flash, 1.5-flash
+            available.sort((a, b) => {
+              const score = (str) => {
+                if (/3\.8/i.test(str)) return 100;
+                if (/argon|4/i.test(str)) return 90;
+                if (/2\.0.*flash/i.test(str)) return 80;
+                if (/1\.5.*flash/i.test(str)) return 70;
+                return 10;
+              };
+              return score(b) - score(a);
+            });
+            targetModels = available;
+          }
+        }
+      } catch (e) {
+        console.warn("Fast model discovery skipped:", e.message);
+      }
+
       let lastError = null;
 
-      for (const model of candidateModels) {
+      // Try prioritized models with a strict 8-second timeout per model
+      for (const model of targetModels.slice(0, 3)) {
+        if (typeof onStatus === 'function') onStatus(`Scanning receipt with ${model}...`);
         try {
+          const callController = new AbortController();
+          const callTimer = setTimeout(() => callController.abort(), 8000);
+
           const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`;
           const resp = await fetch(endpoint, {
             method: 'POST',
@@ -811,8 +820,10 @@
             body: JSON.stringify({
               contents: [{ parts }],
               generationConfig
-            })
+            }),
+            signal: callController.signal
           });
+          clearTimeout(callTimer);
 
           const resJson = await resp.json();
           if (resp.ok && resJson.candidates && resJson.candidates.length > 0) {
@@ -838,51 +849,10 @@
             continue;
           }
         } catch (netErr) {
-          console.warn(`Network error trying model ${model}:`, netErr);
-          lastError = netErr;
+          const isAbort = netErr.name === 'AbortError';
+          console.warn(`Model ${model} ${isAbort ? 'timed out after 8s' : 'error'}:`, netErr.message);
+          lastError = isAbort ? new Error(`Connection to ${model} timed out.`) : netErr;
         }
-      }
-
-      // Dynamic model auto-discovery fallback if hardcoded models didn't respond
-      try {
-        const modelsListResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${activeKey}`);
-        if (modelsListResp.ok) {
-          const listJson = await modelsListResp.json();
-          const dynamicModels = (listJson.models || [])
-            .map(m => (m.name || '').replace(/^models\//, ''))
-            .filter(name => /3\.8|argon|4|flash/i.test(name) && !/embedding|aqa/i.test(name));
-
-          for (const model of dynamicModels) {
-            if (candidateModels.includes(model)) continue;
-            try {
-              const dynEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`;
-              const dynResp = await fetch(dynEndpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  contents: [{ parts }],
-                  generationConfig
-                })
-              });
-              const dynJson = await dynResp.json();
-              if (dynResp.ok && dynJson.candidates && dynJson.candidates.length > 0) {
-                const partsArr = dynJson.candidates[0].content?.parts || [];
-                let textOut = '';
-                for (const p of partsArr) {
-                  if (p.text && !p.thought) textOut += p.text;
-                }
-                if (!textOut && partsArr.length > 0) textOut = partsArr[partsArr.length - 1].text || '';
-                if (textOut.trim()) {
-                  return { text: textOut.trim(), modelUsed: model };
-                }
-              }
-            } catch (dErr) {
-              console.warn(`Dynamic model ${model} attempt failed:`, dErr);
-            }
-          }
-        }
-      } catch (discErr) {
-        console.warn("Dynamic model auto-discovery failed:", discErr);
       }
 
       throw lastError || new Error("Could not connect to Gemini Vision service. Please check your internet connection.");
@@ -1000,12 +970,16 @@ Example output:
 
 Return strictly the raw JSON array.`;
 
+        const statusSpan = loadingEl ? loadingEl.querySelector('.text-xs') : null;
+        const setStatus = (msg) => { if (statusSpan) statusSpan.textContent = msg; };
+
         // 3. Post to Gemini Vision with modern models (Gemini 3.8 Flash & Gemini 4 Argon)
         const result = await callGeminiGenerateContent({
           prompt,
           inlineImage,
           key,
-          expectJson: true
+          expectJson: true,
+          onStatus: setStatus
         });
 
         const items = extractJsonArrayFromAiText(result.text);

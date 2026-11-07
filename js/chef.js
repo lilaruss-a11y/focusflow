@@ -1185,15 +1185,48 @@ Return strictly the raw JSON array.`;
       const titleEl = document.getElementById('wrapup-recipe-title');
       const statsEl = document.getElementById('wrapup-recipe-stats');
       const portionInput = document.getElementById('wrapup-portion-input');
+      const totalServingsTxt = document.getElementById('wrapup-total-servings-txt');
+      const leftoverAmtInput = document.getElementById('wrapup-leftover-amount');
 
+      const totalServings = recipe.servings || 2;
       if (titleEl) titleEl.textContent = recipe.title;
-      if (statsEl) statsEl.textContent = `${recipe.kcal} kcal • ${recipe.servings || 2} Servings`;
+      if (statsEl) statsEl.textContent = `${recipe.kcal} kcal • ${totalServings} Servings`;
+      if (totalServingsTxt) totalServingsTxt.textContent = totalServings;
       if (portionInput) portionInput.value = "1.0";
+      if (leftoverAmtInput) leftoverAmtInput.value = Math.max(0.5, totalServings - 1.0);
 
+      setWrapupLeftoverUnit('servings');
       updateWrapupNutritionPreview();
       modal.classList.remove('hidden');
       if (window.lucide) lucide.createIcons();
       playChime('bell');
+    }
+
+    function setWrapupLeftoverUnit(unitVal) {
+      const select = document.getElementById('wrapup-leftover-unit');
+      if (select) select.value = unitVal;
+      ['servings', 'oz', 'g', 'items'].forEach(u => {
+        const btn = document.getElementById(`btn-wrapup-unit-${u}`);
+        if (!btn) return;
+        if (u === unitVal) {
+          btn.className = "py-1 px-1 rounded-xl border border-pastel-mint bg-pastel-mint/20 text-[11px] text-center text-pastel-mint font-bold transition shadow-sm truncate";
+        } else {
+          btn.className = "py-1 px-1 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition truncate";
+        }
+      });
+    }
+
+    function stepWrapupLeftoverAmount(delta) {
+      const input = document.getElementById('wrapup-leftover-amount');
+      if (!input) return;
+      const current = parseFloat(input.value) || 1;
+      const unit = document.getElementById('wrapup-leftover-unit')?.value || 'servings';
+      let step = delta;
+      if (unit === 'g' && Math.abs(delta) === 1 && (current > 25 || (current === 25 && delta < 0))) {
+        step = delta * 25;
+      }
+      const next = Math.max(0.25, Math.round((current + step) * 100) / 100);
+      input.value = next;
     }
 
     function closeCookingWrapupModal() {
@@ -1206,20 +1239,27 @@ Return strictly the raw JSON array.`;
       const portionInput = document.getElementById('wrapup-portion-input');
       const mult = portionInput ? (parseFloat(portionInput.value) || 1.0) : 1.0;
 
+      const totalServings = r.servings || 2;
       const baseKcal = r.kcal || 480;
-      const adjKcal = Math.round(baseKcal * (mult / 2));
-      const adjProtein = Math.round(42 * (mult / 2));
-      const adjCarbs = Math.round(34 * (mult / 2));
-      const adjFat = Math.round(16 * (mult / 2));
-      const adjFiber = Math.round(6 * (mult / 2));
+      const adjKcal = Math.round(baseKcal * (mult / totalServings));
+      const adjProtein = Math.round(42 * (mult / totalServings));
+      const adjCarbs = Math.round(34 * (mult / totalServings));
+      const adjFat = Math.round(16 * (mult / totalServings));
+      const adjFiber = Math.round(6 * (mult / totalServings));
 
       const kcalEl = document.getElementById('wrapup-preview-kcal');
       const macrosEl = document.getElementById('wrapup-preview-macros');
       const leftServTxt = document.getElementById('wrapup-leftovers-servings-txt');
+      const leftoverAmtInput = document.getElementById('wrapup-leftover-amount');
+      const leftoverUnitSelect = document.getElementById('wrapup-leftover-unit');
 
+      const remainingPortion = Math.max(0, totalServings - mult);
       if (kcalEl) kcalEl.textContent = `${adjKcal} kcal`;
       if (macrosEl) macrosEl.textContent = `P: ${adjProtein}g | C: ${adjCarbs}g | F: ${adjFat}g | Fiber: ${adjFiber}g`;
-      if (leftServTxt) leftServTxt.textContent = `${Math.max(0, 2 - mult).toFixed(1)} servings`;
+      if (leftServTxt) leftServTxt.textContent = `${remainingPortion.toFixed(1)} servings`;
+      if (leftoverAmtInput && leftoverUnitSelect && leftoverUnitSelect.value === 'servings') {
+        leftoverAmtInput.value = parseFloat(remainingPortion.toFixed(2));
+      }
 
       // Expandable ingredient breakdown list
       const breakdownEl = document.getElementById('wrapup-ingredient-breakdown-list');
@@ -1295,13 +1335,18 @@ Return strictly the raw JSON array.`;
       // 3. Save Leftovers to Pantry
       if (saveLeftovers) {
         const dest = document.querySelector('input[name="wrapup-leftover-dest"]:checked') ? document.querySelector('input[name="wrapup-leftover-dest"]:checked').value : 'fridge';
+        const leftoverAmtInput = document.getElementById('wrapup-leftover-amount');
+        const leftoverUnitSelect = document.getElementById('wrapup-leftover-unit');
+        const chosenAmount = leftoverAmtInput ? (parseFloat(leftoverAmtInput.value) || 1) : 1;
+        const chosenUnit = leftoverUnitSelect ? leftoverUnitSelect.value : 'servings';
+
         state.pantry.push({
           id: `p-${Date.now()}-leftover`,
-          name: `Leftover: ${r.title} (1 serving)`,
-          category: 'protein',
+          name: `Leftover: ${r.title}`,
+          category: 'leftovers',
           storage: dest,
-          amount: 1,
-          unit: 'servings',
+          amount: chosenAmount,
+          unit: chosenUnit,
           dateAdded: new Date().toISOString().split('T')[0]
         });
         renderPantry();

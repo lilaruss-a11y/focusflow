@@ -2063,24 +2063,170 @@
       playChime('bell');
     }
 
-            // 3. Smart Pantry Rendering with Nutritional Summaries & Freshness Dates
-    function renderPantry() {
-      const lists = {
-        produce: document.getElementById('list-produce'),
-        protein: document.getElementById('list-protein'),
-        grains: document.getElementById('list-grains'),
-        condiments: document.getElementById('list-condiments')
-      };
+    // 3. Smart Pantry Rendering with Nutritional Summaries & Freshness Dates (Dual-Lens: Zones & Food Types)
+    function getItemZone(item) {
+      const s = (item.storage || '').toLowerCase();
+      const name = (item.name || '').toLowerCase();
+      const cat = (item.category || '').toLowerCase();
 
-      Object.keys(lists).forEach(k => { if (lists[k]) lists[k].innerHTML = ''; });
-      const counts = { produce: 0, protein: 0, grains: 0, condiments: 0 };
+      if (s === 'frozen') return 'freezer';
+      if (s === 'counter') return 'counter';
+      if (s === 'fridge') {
+        const isCrisper = /spinach|kale|lettuce|broccoli|celery|carrot|cucumber|zucchini|cauliflower|asparagus|cabbage|herb|cilantro|parsley|greens|salad|bell pepper|pepper|mushroom|scallion|radish|onion|tomato|avocado|berries|strawberry|produce/i.test(name) || cat === 'produce';
+        return isCrisper ? 'fridge-crisper' : 'fridge-main';
+      }
+      if (s === 'shelf') {
+        const isSpice = /spice|seasoning|salt|pepper|oregano|cumin|cinnamon|garlic powder|onion powder|paprika|curry|sauce|soy sauce|hot sauce|vinegar|oil|olive oil|dressing|mustard|ketchup|mayo|extract|vanilla/i.test(name) || cat === 'condiments';
+        return isSpice ? 'spices' : 'pantry';
+      }
+
+      // Default inferences if storage not explicitly set
+      if (/banana|avocado|bread|bagel|tortilla|tomato|onion|garlic|potato|sweet potato/i.test(name)) return 'counter';
+      if (/frozen|freezer|ice cream/i.test(name)) return 'freezer';
+      if (/milk|cheese|egg|yogurt|chicken|beef|turkey|deli|pork|tofu/i.test(name)) return 'fridge-main';
+      if (/spinach|lettuce|broccoli|cucumber|greens|carrot/i.test(name) || cat === 'produce') return 'fridge-crisper';
+      if (/oil|vinegar|spice|salt|pepper|sauce/i.test(name) || cat === 'condiments') return 'spices';
+      return 'pantry';
+    }
+
+    function getItemTypes(item) {
+      const name = (item.name || '').toLowerCase();
+      const cat = (item.category || '').toLowerCase();
+      const types = [];
+
+      // 1. Leftovers & Prepared Meals
+      if (/leftover|cooked|meal prep|\(1 serving\)|\bserving\b/i.test(name) || cat === 'leftovers') {
+        types.push('leftovers');
+      }
+
+      // 2. Fruits & Berries
+      if (/apple|banana|berry|berries|strawberry|strawberries|blueberry|blueberries|raspberry|raspberries|blackberry|blackberries|orange|lemon|lime|avocado|grape|grapes|watermelon|melon|peach|pear|mango|pineapple|kiwi|plum|cherry|cherries|fruit|raisin|cranberr/i.test(name) || cat === 'fruits' || cat === 'fruit') {
+        types.push('fruits');
+      }
+
+      // 3. Vegetables & Greens
+      if (/spinach|kale|lettuce|broccoli|carrot|onion|garlic|tomato|pepper|cucumber|zucchini|cauliflower|celery|potato|sweet potato|mushroom|asparagus|cabbage|green bean|pea|corn|veggie|vegetable|salad|arugula|scallion|shallot|radish|sprout/i.test(name) || cat === 'vegetables' || (cat === 'produce' && !types.includes('fruits'))) {
+        types.push('vegetables');
+      }
+
+      // 4. Proteins & Meats
+      if (/chicken|breast|thigh|beef|steak|ground beef|turkey|pork|bacon|sausage|ham|egg|eggs|salmon|tuna|shrimp|fish|tilapia|cod|tofu|tempeh|whey|protein/i.test(name) || cat === 'protein') {
+        types.push('protein');
+      }
+
+      // 5. Dairy & Alternatives
+      if (/milk|cheese|cheddar|mozzarella|parmesan|swiss|gouda|feta|yogurt|butter|cream|sour cream|heavy cream|oat milk|oatmilk|almond milk|soy milk|cottage cheese/i.test(name) || cat === 'dairy') {
+        types.push('dairy');
+      }
+
+      // 6. Grains, Breads & Starches
+      if (/rice|jasmine|brown rice|bread|toast|loaf|pasta|noodle|spaghetti|penne|macaroni|oat|oatmeal|rolled oats|quinoa|flour|tortilla|bagel|english muffin|cereal|grain|couscous|barley|wrap/i.test(name) || cat === 'grains') {
+        types.push('grains');
+      }
+
+      // 7. Canned & Jarred Goods
+      if (/can\b|canned|jar\b|jarred|diced tomato|tomato paste|black bean|kidney bean|chickpea|broth|soup|marinara|pasta sauce|salsa|pickles|olives|tuna can/i.test(name) || cat === 'canned') {
+        types.push('canned');
+      }
+
+      // 8. Baking, Oils & Seasonings
+      if (/oil|olive oil|canola oil|avocado oil|vinegar|salt|pepper|spice|seasoning|garlic powder|onion powder|cinnamon|oregano|cumin|paprika|chili powder|sugar|honey|maple syrup|baking powder|baking soda|yeast|vanilla|extract|soy sauce|hot sauce|sriracha|mustard|ketchup|mayo|mayonnaise|dressing/i.test(name) || cat === 'condiments' || cat === 'baking' || cat === 'spices') {
+        types.push('baking');
+      }
+
+      // 9. Snacks & Drinks
+      if (/chip|chips|pretzel|popcorn|cracker|crackers|nuts|almond|walnut|peanut|cashew|trail mix|snack|bar\b|granola bar|protein bar|cookie|cookies|chocolate|candy|soda|sparkling|seltzer|coffee|tea|juice/i.test(name) || cat === 'snacks') {
+        types.push('snacks');
+      }
+
+      // Fallback if none matched
+      if (types.length === 0) {
+        if (cat === 'produce') types.push('vegetables');
+        else if (cat === 'protein') types.push('protein');
+        else if (cat === 'grains') types.push('grains');
+        else if (cat === 'condiments') types.push('baking');
+        else types.push('canned');
+      }
+
+      return types;
+    }
+
+    function buildPantryItemPillHtml(item, expiryBadge) {
+      let storageBadge = '';
+      if (item.storage === 'frozen') {
+        storageBadge = `<button type="button" onclick="event.stopPropagation(); togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-950/40 text-sky-300 border border-sky-400/30 flex items-center gap-1 hover:brightness-110 transition shrink-0" title="Storage: Freezer (Tap to cycle: Freezer → Counter → Shelf → Fridge)"><span>🧊</span><span class="hidden sm:inline">Freezer</span></button>`;
+      } else if (item.storage === 'counter') {
+        storageBadge = `<button type="button" onclick="event.stopPropagation(); togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-peach-950/40 text-pastel-peach border border-pastel-peach/30 flex items-center gap-1 hover:brightness-110 transition shrink-0" title="Storage: On Counter (Tap to cycle: Counter → Shelf → Fridge → Freezer)"><span>🧺</span><span class="hidden sm:inline">Counter</span></button>`;
+      } else if (item.storage === 'shelf') {
+        storageBadge = `<button type="button" onclick="event.stopPropagation(); togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-950/40 text-amber-300 border border-amber-400/30 flex items-center gap-1 hover:brightness-110 transition shrink-0" title="Storage: Shelf (Tap to cycle: Shelf → Fridge → Freezer → Counter)"><span>🥫</span><span class="hidden sm:inline">Shelf</span></button>`;
+      } else {
+        storageBadge = `<button type="button" onclick="event.stopPropagation(); togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-950/40 text-emerald-300 border border-emerald-400/30 flex items-center gap-1 hover:brightness-110 transition shrink-0" title="Storage: Fridge (Tap to cycle: Fridge → Freezer → Counter → Shelf)"><span>❄️</span><span class="hidden sm:inline">Fridge</span></button>`;
+      }
+
+      return `
+        <div class="flex items-center gap-1.5 min-w-0 flex-1">
+          <span class="text-slate-200 font-semibold truncate group-hover:text-pastel-mint transition">${item.name}</span>
+          ${expiryBadge}
+        </div>
+        <div class="flex items-center gap-1 shrink-0" onclick="event.stopPropagation()">
+          <!-- Amount Stepper -->
+          <div class="flex items-center bg-dark-elevated border border-dark-border rounded-lg px-1 py-0.5 gap-1 font-mono text-[10px]">
+            <button type="button" onclick="event.stopPropagation(); changePantryItemAmount('${item.id}', -1)" class="w-3.5 h-3.5 rounded hover:bg-slate-700 text-slate-300 hover:text-white font-bold flex items-center justify-center">-</button>
+            <span class="text-pastel-mint font-bold px-0.5">${item.amount != null ? item.amount : 1}${item.unit ? ' ' + item.unit : ''}</span>
+            <button type="button" onclick="event.stopPropagation(); changePantryItemAmount('${item.id}', 1)" class="w-3.5 h-3.5 rounded hover:bg-slate-700 text-slate-300 hover:text-white font-bold flex items-center justify-center">+</button>
+          </div>
+          <!-- Storage badge -->
+          ${storageBadge}
+          <!-- Quick Add to Shopping List Cart Icon -->
+          <button type="button" onclick="event.stopPropagation(); addPantryItemToShoppingList('${item.id}')" class="p-1 rounded-lg bg-dark-elevated hover:bg-pastel-coral/20 text-slate-400 hover:text-pastel-coral border border-dark-border transition" title="Add to Shopping List (Running Low)">
+            <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
+          </button>
+          <!-- Delete -->
+          <button type="button" onclick="event.stopPropagation(); deletePantryItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-0.5" title="Remove ingredient">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      `;
+    }
+
+    function renderPantry() {
+      // 1. Zone Lists
+      const zoneLists = {
+        'fridge-crisper': document.getElementById('list-zone-fridge-crisper'),
+        'fridge-main': document.getElementById('list-zone-fridge-main'),
+        'freezer': document.getElementById('list-zone-freezer'),
+        'counter': document.getElementById('list-zone-counter'),
+        'pantry': document.getElementById('list-zone-pantry'),
+        'spices': document.getElementById('list-zone-spices')
+      };
+      Object.keys(zoneLists).forEach(k => { if (zoneLists[k]) zoneLists[k].innerHTML = ''; });
+      const zoneCounts = { 'fridge-crisper': 0, 'fridge-main': 0, freezer: 0, counter: 0, pantry: 0, spices: 0 };
+
+      // 2. Type Lists
+      const typeLists = {
+        protein: document.getElementById('list-type-protein'),
+        dairy: document.getElementById('list-type-dairy'),
+        vegetables: document.getElementById('list-type-vegetables'),
+        fruits: document.getElementById('list-type-fruits'),
+        grains: document.getElementById('list-type-grains'),
+        canned: document.getElementById('list-type-canned'),
+        baking: document.getElementById('list-type-baking'),
+        snacks: document.getElementById('list-type-snacks'),
+        leftovers: document.getElementById('list-type-leftovers')
+      };
+      Object.keys(typeLists).forEach(k => { if (typeLists[k]) typeLists[k].innerHTML = ''; });
+      const typeCounts = { protein: 0, dairy: 0, vegetables: 0, fruits: 0, grains: 0, canned: 0, baking: 0, snacks: 0, leftovers: 0 };
+
       const now = new Date();
       const expiringSoonItems = [];
-      const filter = state.pantryStorageFilter || 'all';
+      const zoneFilter = state.pantryZoneFilter || 'all';
+      const typeFilter = state.pantryTypeFilter || 'all';
+      const viewMode = state.pantryViewGroup || 'zone';
 
       (state.pantry || []).forEach(item => {
         if (!item.storage) {
-          item.storage = (item.category === 'produce' || item.category === 'protein') ? 'fridge' : 'shelf';
+          const z = getItemZone(item);
+          item.storage = z.startsWith('fridge') ? 'fridge' : (z === 'counter' ? 'counter' : (z === 'freezer' ? 'frozen' : 'shelf'));
         }
         if (!item.dateAdded) {
           item.dateAdded = new Date().toISOString().split('T')[0];
@@ -2102,61 +2248,93 @@
           }
         }
 
-        // Apply storage filter
-        if (filter === 'fridge' && item.storage !== 'fridge') return;
-        if (filter === 'frozen' && item.storage !== 'frozen') return;
-        if (filter === 'shelf' && item.storage !== 'shelf') return;
-        if (filter === 'expiring' && !isExpiringSoon) return;
+        const itemZone = getItemZone(item);
+        const itemTypes = getItemTypes(item);
 
-        counts[item.category] = (counts[item.category] || 0) + 1;
-        const target = lists[item.category];
-        if (!target) return;
-
-        let storageBadge = '';
-        if (item.storage === 'frozen') {
-          storageBadge = `<button type="button" onclick="event.stopPropagation(); togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-950/40 text-sky-300 border border-sky-400/30 flex items-center gap-1 hover:brightness-110 transition shrink-0" title="Storage: Frozen (Tap to cycle)"><span>🧊</span><span class="hidden sm:inline">Freezer</span></button>`;
-        } else if (item.storage === 'shelf') {
-          storageBadge = `<button type="button" onclick="event.stopPropagation(); togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-950/40 text-amber-300 border border-amber-400/30 flex items-center gap-1 hover:brightness-110 transition shrink-0" title="Storage: Shelf (Tap to cycle)"><span>🥫</span><span class="hidden sm:inline">Shelf</span></button>`;
-        } else {
-          storageBadge = `<button type="button" onclick="event.stopPropagation(); togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-950/40 text-emerald-300 border border-emerald-400/30 flex items-center gap-1 hover:brightness-110 transition shrink-0" title="Storage: Fridge (Tap to cycle)"><span>❄️</span><span class="hidden sm:inline">Fridge</span></button>`;
+        // Zone filter check:
+        let matchesZone = false;
+        if (zoneFilter === 'all') {
+          matchesZone = true;
+        } else if (zoneFilter === 'fridge') {
+          matchesZone = (itemZone === 'fridge-crisper' || itemZone === 'fridge-main' || item.storage === 'fridge');
+        } else if (zoneFilter === 'freezer') {
+          matchesZone = (itemZone === 'freezer' || item.storage === 'frozen');
+        } else if (zoneFilter === 'counter') {
+          matchesZone = (itemZone === 'counter' || item.storage === 'counter');
+        } else if (zoneFilter === 'pantry') {
+          matchesZone = (itemZone === 'pantry');
+        } else if (zoneFilter === 'spices') {
+          matchesZone = (itemZone === 'spices');
         }
 
-        const pill = document.createElement('div');
-        pill.className = "flex items-center justify-between p-2.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm group";
-        pill.onclick = () => openPantryItemDetailModal(item.id);
-        pill.innerHTML = `
-          <div class="flex items-center gap-1.5 min-w-0 flex-1">
-            <span class="text-slate-200 font-semibold truncate group-hover:text-pastel-mint transition">${item.name}</span>
-            ${expiryBadge}
-          </div>
-          <div class="flex items-center gap-1 shrink-0" onclick="event.stopPropagation()">
-            <!-- Amount Stepper -->
-            <div class="flex items-center bg-dark-elevated border border-dark-border rounded-lg px-1 py-0.5 gap-1 font-mono text-[10px]">
-              <button type="button" onclick="event.stopPropagation(); changePantryItemAmount('${item.id}', -1)" class="w-3.5 h-3.5 rounded hover:bg-slate-700 text-slate-300 hover:text-white font-bold flex items-center justify-center">-</button>
-              <span class="text-pastel-mint font-bold px-0.5">${item.amount != null ? item.amount : 1}${item.unit ? ' ' + item.unit : ''}</span>
-              <button type="button" onclick="event.stopPropagation(); changePantryItemAmount('${item.id}', 1)" class="w-3.5 h-3.5 rounded hover:bg-slate-700 text-slate-300 hover:text-white font-bold flex items-center justify-center">+</button>
-            </div>
-            <!-- Storage badge -->
-            ${storageBadge}
-            <!-- Quick Add to Shopping List Cart Icon -->
-            <button type="button" onclick="event.stopPropagation(); addPantryItemToShoppingList('${item.id}')" class="p-1 rounded-lg bg-dark-elevated hover:bg-pastel-coral/20 text-slate-400 hover:text-pastel-coral border border-dark-border transition" title="Add to Shopping List (Running Low)">
-              <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
-            </button>
-            <!-- Delete -->
-            <button type="button" onclick="event.stopPropagation(); deletePantryItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-0.5" title="Remove ingredient">
-              <i data-lucide="x" class="w-3.5 h-3.5"></i>
-            </button>
-          </div>
-        `;
-        target.appendChild(pill);
+        // Type filter check:
+        let matchesType = false;
+        if (typeFilter === 'all') {
+          matchesType = true;
+        } else if (typeFilter === 'expiring') {
+          matchesType = isExpiringSoon;
+        } else {
+          matchesType = itemTypes.includes(typeFilter);
+        }
+
+        // Cross-filtering pass: must satisfy both filters
+        if (!matchesZone || !matchesType) return;
+
+        // Populate Zone View:
+        if (zoneLists[itemZone]) {
+          zoneCounts[itemZone] = (zoneCounts[itemZone] || 0) + 1;
+          const pill = document.createElement('div');
+          pill.className = "flex items-center justify-between p-2.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm group";
+          pill.onclick = () => openPantryItemDetailModal(item.id);
+          pill.innerHTML = buildPantryItemPillHtml(item, expiryBadge);
+          zoneLists[itemZone].appendChild(pill);
+        }
+
+        // Populate Type View:
+        const targetTypes = (typeFilter !== 'all' && typeFilter !== 'expiring') ? [typeFilter] : itemTypes;
+        targetTypes.forEach(t => {
+          if (typeLists[t]) {
+            typeCounts[t] = (typeCounts[t] || 0) + 1;
+            const pill = document.createElement('div');
+            pill.className = "flex items-center justify-between p-2.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm group";
+            pill.onclick = () => openPantryItemDetailModal(item.id);
+            pill.innerHTML = buildPantryItemPillHtml(item, expiryBadge);
+            typeLists[t].appendChild(pill);
+          }
+        });
       });
 
+      // Update counters in UI
       const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
-      setTxt('count-produce', counts.produce);
-      setTxt('count-protein', counts.protein);
-      setTxt('count-grains', counts.grains);
-      setTxt('count-condiments', counts.condiments);
+      setTxt('count-zone-fridge-crisper', zoneCounts['fridge-crisper']);
+      setTxt('count-zone-fridge-main', zoneCounts['fridge-main']);
+      setTxt('count-zone-freezer', zoneCounts.freezer);
+      setTxt('count-zone-counter', zoneCounts.counter);
+      setTxt('count-zone-pantry', zoneCounts.pantry);
+      setTxt('count-zone-spices', zoneCounts.spices);
+
+      setTxt('count-type-protein', typeCounts.protein);
+      setTxt('count-type-dairy', typeCounts.dairy);
+      setTxt('count-type-vegetables', typeCounts.vegetables);
+      setTxt('count-type-fruits', typeCounts.fruits);
+      setTxt('count-type-grains', typeCounts.grains);
+      setTxt('count-type-canned', typeCounts.canned);
+      setTxt('count-type-baking', typeCounts.baking);
+      setTxt('count-type-snacks', typeCounts.snacks);
+      setTxt('count-type-leftovers', typeCounts.leftovers);
+
       setTxt('pantry-total-count-badge', (state.pantry || []).length);
+
+      // Make sure active grid matches viewMode
+      const gridZone = document.getElementById('pantry-grid-zone');
+      const gridType = document.getElementById('pantry-grid-type');
+      if (viewMode === 'type') {
+        if (gridZone) gridZone.classList.add('hidden');
+        if (gridType) gridType.classList.remove('hidden');
+      } else {
+        if (gridZone) gridZone.classList.remove('hidden');
+        if (gridType) gridType.classList.add('hidden');
+      }
 
       // Check expiring soon alert in kitchen & reverse chef
       checkExpiringSoonAlerts(expiringSoonItems);
@@ -2273,13 +2451,13 @@
 
     function setPantryDetailStorage(storageType) {
       if (state.activePantryDetailItem) state.activePantryDetailItem.storage = storageType;
-      ['fridge', 'frozen', 'shelf'].forEach(s => {
+      ['fridge', 'frozen', 'counter', 'shelf'].forEach(s => {
         const btn = document.getElementById(`btn-pantry-storage-${s}`);
         if (!btn) return;
         if (s === storageType) {
-          btn.className = "p-2 rounded-xl border-2 border-pastel-mint bg-pastel-mint/15 text-white font-bold text-center";
+          btn.className = "p-2 rounded-xl border-2 border-pastel-mint bg-pastel-mint/15 text-white font-bold text-center text-xs";
         } else {
-          btn.className = "p-2 rounded-xl bg-dark-base border border-dark-border text-slate-400 text-center";
+          btn.className = "p-2 rounded-xl bg-dark-base border border-dark-border text-slate-400 text-center text-xs";
         }
       });
     }

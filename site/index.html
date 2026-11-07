@@ -932,18 +932,51 @@
             <div id="kitchen-search-suggestions" class="hidden absolute left-0 right-0 top-full mt-1.5 z-30 bg-dark-elevated border border-dark-border rounded-2xl p-2 shadow-2xl space-y-1"></div>
           </div>
 
-          <!-- Storage Location Filter Pills -->
-          <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-dark-border/60 text-xs">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-slate-400 font-semibold text-[11px] mr-1">Filter View:</span>
-              <button type="button" onclick="filterPantryByStorage('all')" id="btn-pantry-filter-all" class="px-3 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition">All Items</button>
-              <button type="button" onclick="filterPantryByStorage('fridge')" id="btn-pantry-filter-fridge" class="px-3 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition">❄️ Fridge</button>
-              <button type="button" onclick="filterPantryByStorage('frozen')" id="btn-pantry-filter-frozen" class="px-3 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition">🧊 Freezer</button>
-              <button type="button" onclick="filterPantryByStorage('shelf')" id="btn-pantry-filter-shelf" class="px-3 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition">🥫 Shelf / Pantry</button>
-              <button type="button" onclick="filterPantryByStorage('expiring')" id="btn-pantry-filter-expiring" class="px-3 py-1 rounded-xl bg-dark-base border border-dark-border text-amber-300 hover:text-white transition">⚠️ Expiring Soon</button>
+          <!-- Top View Mode & Multi-Filter Control Panel -->
+          <div class="space-y-3 pt-2 border-t border-dark-border/60 text-xs">
+            <!-- Row 1: Dual View Mode Switcher -->
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div class="flex items-center gap-1 bg-dark-base p-1 rounded-2xl border border-dark-border">
+                <button type="button" onclick="switchPantryViewGroup('zone')" id="btn-pantry-view-zone" class="px-3 py-1.5 rounded-xl font-bold bg-pastel-mint text-dark-base shadow-sm transition flex items-center gap-1.5 text-xs">
+                  <i data-lucide="home" class="w-3.5 h-3.5"></i>
+                  <span>By Kitchen Zone</span>
+                </button>
+                <button type="button" onclick="switchPantryViewGroup('type')" id="btn-pantry-view-type" class="px-3 py-1.5 rounded-xl font-semibold text-slate-300 hover:text-white transition flex items-center gap-1.5 text-xs">
+                  <i data-lucide="utensils" class="w-3.5 h-3.5"></i>
+                  <span>By Food Type</span>
+                </button>
+              </div>
+
+              <div class="text-[11px] text-slate-400 font-mono">
+                💡 Combine zone &amp; food type filters below
+              </div>
             </div>
-            <div class="text-[11px] text-slate-400 font-mono">
-              💡 Tap cards to adjust amount or send to shopping list
+
+            <!-- Row 2: Physical Kitchen Zone Filter Pills -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-slate-400 font-semibold text-[11px] mr-1">Zone:</span>
+              <button type="button" onclick="setPantryZoneFilter('all')" id="btn-pzone-all" class="px-2.5 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition text-[11px]">All Zones</button>
+              <button type="button" onclick="setPantryZoneFilter('fridge')" id="btn-pzone-fridge" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">❄️ Fridge</button>
+              <button type="button" onclick="setPantryZoneFilter('freezer')" id="btn-pzone-freezer" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧊 Freezer</button>
+              <button type="button" onclick="setPantryZoneFilter('counter')" id="btn-pzone-counter" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧺 Counter</button>
+              <button type="button" onclick="setPantryZoneFilter('pantry')" id="btn-pzone-pantry" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥫 Dry Pantry</button>
+              <button type="button" onclick="setPantryZoneFilter('spices')" id="btn-pzone-spices" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧂 Spices</button>
+            </div>
+
+            <!-- Row 3: Food Type Filter Pills -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-slate-400 font-semibold text-[11px] mr-1">Food:</span>
+              <button type="button" onclick="setPantryTypeFilter('all')" id="btn-ptype-all" class="px-2.5 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition text-[11px]">All Types</button>
+              <button type="button" onclick="setPantryTypeFilter('protein')" id="btn-ptype-protein" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥩 Protein</button>
+              <button type="button" onclick="setPantryTypeFilter('dairy')" id="btn-ptype-dairy" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥛 Dairy</button>
+              <button type="button" onclick="setPantryTypeFilter('vegetables')" id="btn-ptype-vegetables" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥦 Veggies</button>
+              <button type="button" onclick="setPantryTypeFilter('fruits')" id="btn-ptype-fruits" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🍎 Fruits</button>
+              <button type="button" onclick="setPantryTypeFilter('grains')" id="btn-ptype-grains" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🌾 Grains</button>
+              <button type="button" onclick="setPantryTypeFilter('canned')" id="btn-ptype-canned" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥫 Canned</button>
+              <button type="button" onclick="setPantryTypeFilter('baking')" id="btn-ptype-baking" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧂 Spices &amp; Oils</button>
+              <button type="button" onclick="setPantryTypeFilter('snacks')" id="btn-ptype-snacks" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🍿 Snacks</button>
+              <button type="button" onclick="setPantryTypeFilter('leftovers')" id="btn-ptype-leftovers" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-amber-300 hover:text-white transition text-[11px]">🍲 Leftovers</button>
+              <button type="button" onclick="setPantryTypeFilter('expiring')" id="btn-ptype-expiring" class="px-2.5 py-1 rounded-xl bg-dark-base border border-rose-500/40 text-rose-300 hover:text-white transition text-[11px]">⚠️ Expiring</button>
             </div>
           </div>
         </div>
@@ -970,50 +1003,174 @@
           </div>
         </div>
 
-        <!-- Inventory Categorized Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <!-- Produce -->
+        <!-- VIEW CONTAINER 1: BY KITCHEN ZONE (6 Zones) -->
+        <div id="pantry-grid-zone" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- 1. Fridge: Fresh Crisper -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                <span>❄️</span> Fridge: Fresh Crisper
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-zone-fridge-crisper">0</span>
+            </div>
+            <div id="list-zone-fridge-crisper" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 2. Fridge: Main & Deli -->
           <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
             <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
               <span class="text-xs font-bold text-pastel-mint flex items-center gap-1.5">
-                <i data-lucide="apple" class="w-4 h-4"></i> Produce
+                <span>🧀</span> Fridge: Main &amp; Deli
               </span>
-              <span class="text-xs text-slate-400 font-mono font-bold" id="count-produce">0</span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-zone-fridge-main">0</span>
             </div>
-            <div id="list-produce" class="space-y-2 min-h-[120px]"></div>
+            <div id="list-zone-fridge-main" class="space-y-2 min-h-[100px]"></div>
           </div>
 
-          <!-- Protein & Dairy -->
-          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
-            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
-              <span class="text-xs font-bold text-pastel-peach flex items-center gap-1.5">
-                <i data-lucide="egg" class="w-4 h-4"></i> Protein &amp; Dairy
-              </span>
-              <span class="text-xs text-slate-400 font-mono font-bold" id="count-protein">0</span>
-            </div>
-            <div id="list-protein" class="space-y-2 min-h-[120px]"></div>
-          </div>
-
-          <!-- Grains & Staples -->
-          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
-            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
-              <span class="text-xs font-bold text-pastel-butter flex items-center gap-1.5">
-                <i data-lucide="wheat" class="w-4 h-4"></i> Grains &amp; Staples
-              </span>
-              <span class="text-xs text-slate-400 font-mono font-bold" id="count-grains">0</span>
-            </div>
-            <div id="list-grains" class="space-y-2 min-h-[120px]"></div>
-          </div>
-
-          <!-- Condiments & Quick Snacks -->
+          <!-- 3. The Deep Freeze -->
           <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
             <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
               <span class="text-xs font-bold text-pastel-sky flex items-center gap-1.5">
-                <i data-lucide="cookie" class="w-4 h-4"></i> Condiments &amp; Snacks
+                <span>🧊</span> Freezer: Deep Freeze
               </span>
-              <span class="text-xs text-slate-400 font-mono font-bold" id="count-condiments">0</span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-zone-freezer">0</span>
             </div>
-            <div id="list-condiments" class="space-y-2 min-h-[120px]"></div>
+            <div id="list-zone-freezer" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 4. On the Counter -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-pastel-peach flex items-center gap-1.5">
+                <span>🧺</span> On the Counter
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-zone-counter">0</span>
+            </div>
+            <div id="list-zone-counter" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 5. Dry Pantry Shelves -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-pastel-butter flex items-center gap-1.5">
+                <span>🥫</span> Dry Pantry Shelves
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-zone-pantry">0</span>
+            </div>
+            <div id="list-zone-pantry" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 6. Spice Rack & Condiments -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-pastel-lavender flex items-center gap-1.5">
+                <span>🧂</span> Spice Rack &amp; Condiments
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-zone-spices">0</span>
+            </div>
+            <div id="list-zone-spices" class="space-y-2 min-h-[100px]"></div>
+          </div>
+        </div>
+
+        <!-- VIEW CONTAINER 2: BY FOOD TYPE (9 Food Groups) -->
+        <div id="pantry-grid-type" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- 1. Proteins & Meats -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-rose-400 flex items-center gap-1.5">
+                <span>🥩</span> Proteins &amp; Meats
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-protein">0</span>
+            </div>
+            <div id="list-type-protein" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 2. Dairy & Alternatives -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-pastel-sky flex items-center gap-1.5">
+                <span>🥛</span> Dairy &amp; Alternatives
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-dairy">0</span>
+            </div>
+            <div id="list-type-dairy" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 3. Vegetables & Greens -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                <span>🥦</span> Vegetables &amp; Greens
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-vegetables">0</span>
+            </div>
+            <div id="list-type-vegetables" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 4. Fruits & Berries -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-pastel-coral flex items-center gap-1.5">
+                <span>🍎</span> Fruits &amp; Berries
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-fruits">0</span>
+            </div>
+            <div id="list-type-fruits" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 5. Grains, Breads & Starches -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-pastel-butter flex items-center gap-1.5">
+                <span>🌾</span> Grains, Breads &amp; Starches
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-grains">0</span>
+            </div>
+            <div id="list-type-grains" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 6. Canned & Jarred Goods -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                <span>🥫</span> Canned &amp; Jarred Goods
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-canned">0</span>
+            </div>
+            <div id="list-type-canned" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 7. Baking, Oils & Seasonings -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-pastel-lavender flex items-center gap-1.5">
+                <span>🧂</span> Baking, Oils &amp; Seasonings
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-baking">0</span>
+            </div>
+            <div id="list-type-baking" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 8. Snacks & Drinks -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-pastel-peach flex items-center gap-1.5">
+                <span>🍿</span> Snacks &amp; Drinks
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-snacks">0</span>
+            </div>
+            <div id="list-type-snacks" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 9. Leftovers & Prepared Meals -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-pastel-mint flex items-center gap-1.5">
+                <span>🍲</span> Leftovers &amp; Prepared Meals
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-leftovers">0</span>
+            </div>
+            <div id="list-type-leftovers" class="space-y-2 min-h-[100px]"></div>
           </div>
         </div>
       </div>
@@ -1908,6 +2065,7 @@
             <select id="custom-food-input-storage" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs">
               <option value="fridge">❄️ Fridge</option>
               <option value="frozen">🧊 Frozen</option>
+              <option value="counter">🧺 On the Counter</option>
               <option value="shelf">🥫 Shelf / Pantry</option>
             </select>
           </div>
@@ -5040,10 +5198,11 @@
       <!-- Storage Selector -->
       <div class="space-y-1.5 text-xs">
         <label class="font-semibold text-slate-300">Storage Location:</label>
-        <div class="grid grid-cols-3 gap-2">
-          <button type="button" onclick="setPantryDetailStorage('fridge')" id="btn-pantry-storage-fridge" class="p-2 rounded-xl bg-dark-base border border-dark-border text-center">❄️ Fridge</button>
-          <button type="button" onclick="setPantryDetailStorage('frozen')" id="btn-pantry-storage-frozen" class="p-2 rounded-xl bg-dark-base border border-dark-border text-center">🧊 Frozen</button>
-          <button type="button" onclick="setPantryDetailStorage('shelf')" id="btn-pantry-storage-shelf" class="p-2 rounded-xl bg-dark-base border border-dark-border text-center">🥫 Shelf</button>
+        <div class="grid grid-cols-4 gap-1.5">
+          <button type="button" onclick="setPantryDetailStorage('fridge')" id="btn-pantry-storage-fridge" class="p-2 rounded-xl bg-dark-base border border-dark-border text-center text-xs">❄️ Fridge</button>
+          <button type="button" onclick="setPantryDetailStorage('frozen')" id="btn-pantry-storage-frozen" class="p-2 rounded-xl bg-dark-base border border-dark-border text-center text-xs">🧊 Frozen</button>
+          <button type="button" onclick="setPantryDetailStorage('counter')" id="btn-pantry-storage-counter" class="p-2 rounded-xl bg-dark-base border border-dark-border text-center text-xs">🧺 Counter</button>
+          <button type="button" onclick="setPantryDetailStorage('shelf')" id="btn-pantry-storage-shelf" class="p-2 rounded-xl bg-dark-base border border-dark-border text-center text-xs">🥫 Shelf</button>
         </div>
       </div>
 

@@ -39,18 +39,60 @@
       switchKitchenSubTab(activeSub);
     }
 
-    function filterPantryByStorage(filter) {
-      state.pantryStorageFilter = filter;
-      ['all', 'fridge', 'frozen', 'shelf', 'expiring'].forEach(f => {
-        const btn = document.getElementById(`btn-pantry-filter-${f}`);
+    function switchPantryViewGroup(mode) {
+      state.pantryViewGroup = mode;
+      const btnZone = document.getElementById('btn-pantry-view-zone');
+      const btnType = document.getElementById('btn-pantry-view-type');
+      const gridZone = document.getElementById('pantry-grid-zone');
+      const gridType = document.getElementById('pantry-grid-type');
+      if (mode === 'type') {
+        if (btnType) btnType.className = "px-3 py-1.5 rounded-xl font-bold bg-pastel-mint text-dark-base shadow-sm transition flex items-center gap-1.5 text-xs";
+        if (btnZone) btnZone.className = "px-3 py-1.5 rounded-xl font-semibold text-slate-300 hover:text-white transition flex items-center gap-1.5 text-xs";
+        if (gridZone) gridZone.classList.add('hidden');
+        if (gridType) gridType.classList.remove('hidden');
+      } else {
+        if (btnZone) btnZone.className = "px-3 py-1.5 rounded-xl font-bold bg-pastel-mint text-dark-base shadow-sm transition flex items-center gap-1.5 text-xs";
+        if (btnType) btnType.className = "px-3 py-1.5 rounded-xl font-semibold text-slate-300 hover:text-white transition flex items-center gap-1.5 text-xs";
+        if (gridZone) gridZone.classList.remove('hidden');
+        if (gridType) gridType.classList.add('hidden');
+      }
+      saveAppState();
+      renderPantry();
+    }
+
+    function setPantryZoneFilter(zone) {
+      state.pantryZoneFilter = zone;
+      const zones = ['all', 'fridge', 'freezer', 'counter', 'pantry', 'spices'];
+      zones.forEach(z => {
+        const btn = document.getElementById(`btn-pzone-${z}`);
         if (!btn) return;
-        if (f === filter) {
-          btn.className = "px-3 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition shadow-sm";
+        if (z === zone) {
+          btn.className = "px-2.5 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition text-[11px] shadow-sm";
         } else {
-          btn.className = "px-3 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition";
+          btn.className = "px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]";
         }
       });
       renderPantry();
+    }
+
+    function setPantryTypeFilter(type) {
+      state.pantryTypeFilter = type;
+      const types = ['all', 'protein', 'dairy', 'vegetables', 'fruits', 'grains', 'canned', 'baking', 'snacks', 'leftovers', 'expiring'];
+      types.forEach(t => {
+        const btn = document.getElementById(`btn-ptype-${t}`);
+        if (!btn) return;
+        if (t === type) {
+          btn.className = "px-2.5 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition text-[11px] shadow-sm";
+        } else {
+          const borderCls = t === 'expiring' ? 'border-rose-500/40 text-rose-300' : 'border-dark-border text-slate-300';
+          btn.className = `px-2.5 py-1 rounded-xl bg-dark-base border ${borderCls} hover:text-white transition text-[11px]`;
+        }
+      });
+      renderPantry();
+    }
+
+    function filterPantryByStorage(filter) {
+      setPantryZoneFilter(filter);
     }
 
     // Quick common staple 1-tap adder
@@ -141,7 +183,7 @@
     function togglePantryItemStorage(id) {
       const item = (state.pantry || []).find(p => p.id === id);
       if (!item) return;
-      const cycle = { fridge: 'frozen', frozen: 'shelf', shelf: 'fridge' };
+      const cycle = { fridge: 'frozen', frozen: 'counter', counter: 'shelf', shelf: 'fridge' };
       item.storage = cycle[item.storage || 'fridge'] || 'fridge';
       saveAppState();
       renderPantry();
@@ -3049,10 +3091,11 @@ function renderIncomingGroceriesApprovalList(items) {
           <option value="condiments" ${item.category === 'condiments' ? 'selected' : ''}>🥫 Pantry/Staples</option>
         </select>
 
-        <!-- Storage Location Selector (Fridge vs Freezer vs Shelf) -->
+        <!-- Storage Location Selector (Fridge vs Freezer vs Counter vs Shelf) -->
         <select onchange="updateGroceryStorage(${idx}, this.value)" class="bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1 text-slate-200 text-[11px] font-bold focus:border-pastel-sky focus:outline-none" title="Storage Location">
           <option value="fridge" ${item.storage === 'fridge' ? 'selected' : ''}>❄️ Fridge</option>
           <option value="frozen" ${item.storage === 'frozen' ? 'selected' : ''}>🧊 Freezer</option>
+          <option value="counter" ${item.storage === 'counter' ? 'selected' : ''}>🧺 Counter</option>
           <option value="shelf" ${item.storage === 'shelf' ? 'selected' : ''}>🥫 Shelf</option>
         </select>
 

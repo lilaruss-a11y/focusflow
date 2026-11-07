@@ -167,7 +167,15 @@
       if (!item) return;
 
       const current = parseFloat(item.amount) || 1;
-      const next = Math.max(0, current + delta);
+      const u = (item.unit || '').toLowerCase();
+
+      // Smart delta: 25g if grams and >= 25, else 1
+      let stepDelta = delta;
+      if (u === 'g' && Math.abs(delta) === 1 && (current > 25 || (current === 25 && delta < 0))) {
+        stepDelta = delta * 25;
+      }
+
+      const next = Math.max(0, Math.round((current + stepDelta) * 100) / 100);
       item.amount = next;
 
       if (next === 0) {
@@ -3080,7 +3088,16 @@ function renderIncomingGroceriesApprovalList(items) {
         <!-- Quantity & Unit -->
         <div class="flex items-center gap-1 bg-dark-elevated border border-dark-border rounded-xl px-2 py-1">
           <input type="number" min="0.25" step="0.25" value="${item.amount || 1}" onchange="updateGroceryAmount(${idx}, this.value)" class="w-10 bg-transparent text-center text-white font-mono text-[11px] focus:outline-none" title="Quantity">
-          <input type="text" value="${item.unit || 'item'}" onchange="updateGroceryUnit(${idx}, this.value)" class="w-10 bg-transparent text-slate-300 font-mono text-[10px] focus:outline-none" title="Unit">
+          <select onchange="updateGroceryUnit(${idx}, this.value)" class="bg-transparent text-slate-300 font-mono text-[11px] focus:outline-none cursor-pointer" title="Unit">
+            <option value="items" ${(!item.unit || item.unit === 'items' || item.unit === 'item' || item.unit === 'each') ? 'selected' : ''}>items</option>
+            <option value="oz" ${item.unit === 'oz' ? 'selected' : ''}>oz</option>
+            <option value="g" ${item.unit === 'g' ? 'selected' : ''}>g</option>
+            <option value="servings" ${item.unit === 'servings' || item.unit === 'serving' ? 'selected' : ''}>servings</option>
+            <option value="lb" ${item.unit === 'lb' ? 'selected' : ''}>lb</option>
+            <option value="pack" ${item.unit === 'pack' ? 'selected' : ''}>pack</option>
+            <option value="can" ${item.unit === 'can' ? 'selected' : ''}>can</option>
+            <option value="bottle" ${item.unit === 'bottle' ? 'selected' : ''}>bottle</option>
+          </select>
         </div>
 
         <!-- Category Selector -->
@@ -3354,6 +3371,53 @@ function testSampleWalmartReceiptPhoto() {
       return types;
     }
 
+    function formatPantryAmountAndUnit(amount, unit) {
+      const amt = (amount != null && !isNaN(parseFloat(amount))) ? parseFloat(amount) : 1;
+      const u = (unit || 'items').toLowerCase().trim();
+
+      if (u === 'oz' || u === 'ounce' || u === 'ounces') {
+        return `${amt} oz`;
+      }
+      if (u === 'g' || u === 'gram' || u === 'grams') {
+        return `${amt} g`;
+      }
+      if (u === 'serving' || u === 'servings') {
+        return `${amt} ${amt === 1 ? 'serving' : 'servings'}`;
+      }
+      if (u === 'item' || u === 'items' || u === 'each' || u === 'ea' || u === 'count' || u === 'pc' || u === 'pcs' || u === 'piece' || u === 'pieces') {
+        return `${amt} ${amt === 1 ? 'item' : 'items'}`;
+      }
+      if (u === 'lb' || u === 'lbs' || u === 'pound' || u === 'pounds') {
+        return `${amt} lb`;
+      }
+      return `${amt} ${u}`;
+    }
+
+    function cyclePantryItemUnit(id) {
+      const item = (state.pantry || []).find(p => p.id === id);
+      if (!item) return;
+      const u = (item.unit || 'items').toLowerCase().trim();
+
+      // 4 Primary Options: items -> oz -> g -> servings -> items
+      let nextUnit = 'items';
+      if (u === 'item' || u === 'items' || u === 'each' || u === 'ea' || u === 'count' || u.includes('pc')) {
+        nextUnit = 'oz';
+      } else if (u === 'oz' || u.includes('ounce')) {
+        nextUnit = 'g';
+      } else if (u === 'g' || u.includes('gram')) {
+        nextUnit = 'servings';
+      } else if (u.includes('serv')) {
+        nextUnit = 'items';
+      } else {
+        nextUnit = 'items';
+      }
+
+      item.unit = nextUnit;
+      saveAppState();
+      renderPantry();
+      playChime('bell');
+    }
+
     function buildPantryItemPillHtml(item, expiryBadge) {
       let storageBadge = '';
       if (item.storage === 'frozen') {
@@ -3372,10 +3436,12 @@ function testSampleWalmartReceiptPhoto() {
           ${expiryBadge}
         </div>
         <div class="flex items-center gap-1 shrink-0" onclick="event.stopPropagation()">
-          <!-- Amount Stepper -->
+          <!-- Amount Stepper with 1-Tap Unit Cycling -->
           <div class="flex items-center bg-dark-elevated border border-dark-border rounded-lg px-1 py-0.5 gap-1 font-mono text-[10px]">
             <button type="button" onclick="event.stopPropagation(); changePantryItemAmount('${item.id}', -1)" class="w-3.5 h-3.5 rounded hover:bg-slate-700 text-slate-300 hover:text-white font-bold flex items-center justify-center">-</button>
-            <span class="text-pastel-mint font-bold px-0.5">${item.amount != null ? item.amount : 1}${item.unit ? ' ' + item.unit : ''}</span>
+            <button type="button" onclick="event.stopPropagation(); cyclePantryItemUnit('${item.id}')" class="text-pastel-mint hover:text-pastel-sky font-bold px-1 hover:underline cursor-pointer transition flex items-center" title="Amount: ${item.amount != null ? item.amount : 1} • Unit: ${item.unit || 'items'} (Tap to cycle: items ➔ oz ➔ g ➔ servings)">
+              ${formatPantryAmountAndUnit(item.amount, item.unit)}
+            </button>
             <button type="button" onclick="event.stopPropagation(); changePantryItemAmount('${item.id}', 1)" class="w-3.5 h-3.5 rounded hover:bg-slate-700 text-slate-300 hover:text-white font-bold flex items-center justify-center">+</button>
           </div>
           <!-- Storage badge -->
@@ -3589,9 +3655,8 @@ function testSampleWalmartReceiptPhoto() {
 
       if (nameEl) nameEl.textContent = item.name;
       const amtInput = document.getElementById('pantry-detail-amount');
-      const unitInput = document.getElementById('pantry-detail-unit');
       if (amtInput) amtInput.value = item.amount != null ? item.amount : 1;
-      if (unitInput) unitInput.value = item.unit || 'item';
+      setPantryDetailUnit(item.unit || 'items');
 
       // Find match in whole foods database
       const match = (typeof commonFoodsDatabase !== 'undefined') ? commonFoodsDatabase.find(cf => item.name.toLowerCase().includes(cf.name.toLowerCase().split(' ')[0])) : null;
@@ -3665,6 +3730,25 @@ function testSampleWalmartReceiptPhoto() {
       });
     }
 
+    function setPantryDetailUnit(unitVal) {
+      if (state.activePantryDetailItem) state.activePantryDetailItem.unit = unitVal;
+      const unitInput = document.getElementById('pantry-detail-unit');
+      let mapped = unitVal || 'items';
+      if (mapped === 'item' || mapped === 'each' || mapped === 'ea' || mapped === 'count') mapped = 'items';
+      if (mapped === 'serving') mapped = 'servings';
+      if (unitInput) unitInput.value = mapped;
+
+      ['items', 'oz', 'g', 'servings'].forEach(u => {
+        const btn = document.getElementById(`btn-punit-${u}`);
+        if (!btn) return;
+        if (u === mapped) {
+          btn.className = "py-1.5 px-1 rounded-xl border border-pastel-mint bg-pastel-mint/20 text-[11px] text-center text-pastel-mint font-bold transition shadow-sm truncate";
+        } else {
+          btn.className = "py-1.5 px-1 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint/50 text-[11px] text-center text-slate-300 font-semibold transition truncate";
+        }
+      });
+    }
+
     function savePantryItemDetail() {
       if (!state.activePantryDetailItem) return;
       const item = state.activePantryDetailItem;
@@ -3681,7 +3765,12 @@ function testSampleWalmartReceiptPhoto() {
         const val = parseFloat(amtInput.value);
         item.amount = !isNaN(val) ? val : 1;
       }
-      if (unitInput) item.unit = unitInput.value || 'item';
+      if (unitInput) {
+        let uVal = unitInput.value || 'items';
+        if (uVal === 'item' || uVal === 'each' || uVal === 'ea' || uVal === 'count') uVal = 'items';
+        if (uVal === 'serving') uVal = 'servings';
+        item.unit = uVal;
+      }
 
       saveAppState();
       renderPantry();
@@ -3866,3 +3955,71 @@ function testSampleWalmartReceiptPhoto() {
 
 
 
+
+
+// ==============================================
+// RECIPE INSPECT & DETAIL MODAL CONTROLLER
+// ==============================================
+function inspectRecipeDetails(idx) {
+      const opt = (state.currentMealOptions && state.currentMealOptions[idx]) || (state.currentMealOptions && state.currentMealOptions[0]);
+      if (!opt) return;
+
+      const titleEl = document.getElementById('inspect-recipe-title');
+      const metaEl = document.getElementById('inspect-recipe-meta');
+      const descEl = document.getElementById('inspect-recipe-desc');
+      const ingListEl = document.getElementById('inspect-recipe-ingredients');
+      const stepsListEl = document.getElementById('inspect-recipe-steps');
+      const cookBtn = document.getElementById('inspect-recipe-cook-btn');
+
+      if (titleEl) titleEl.textContent = opt.title;
+      if (metaEl) metaEl.textContent = `${opt.cookTime}m • ${opt.kcal} kcal • 2 Servings`;
+      if (descEl) descEl.textContent = opt.description;
+
+      if (ingListEl) {
+        ingListEl.innerHTML = '';
+        (opt.ingredients || []).forEach(ing => {
+          const item = document.createElement('div');
+          item.className = "p-2 rounded-xl bg-dark-base border border-dark-border flex items-center justify-between text-xs";
+          item.innerHTML = `
+            <span class="text-white font-medium">${ing}</span>
+            <span class="text-[10px] text-pastel-mint font-mono font-bold">✓ Verified</span>
+          `;
+          ingListEl.appendChild(item);
+        });
+      }
+
+      if (stepsListEl) {
+        stepsListEl.innerHTML = '';
+        (opt.steps || []).forEach((st, sIdx) => {
+          const item = document.createElement('div');
+          item.className = `p-2 rounded-xl border flex items-center justify-between text-xs ${st.isDish ? 'bg-pastel-sky/10 border-pastel-sky/30 text-pastel-sky' : 'bg-dark-base border-dark-border text-slate-300'}`;
+          item.innerHTML = `
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded-full bg-dark-elevated text-slate-400 flex items-center justify-center text-[10px] font-bold">${sIdx + 1}</span>
+              <span>${st.text}</span>
+            </div>
+            <span class="font-mono text-[10px] text-slate-400 shrink-0 ml-2 font-bold">${st.minutes}m</span>
+          `;
+          stepsListEl.appendChild(item);
+        });
+      }
+
+      if (cookBtn) {
+        cookBtn.onclick = () => {
+          closeRecipeInspectModal();
+          launchRecipeOption(idx);
+        };
+      }
+
+      const modal = document.getElementById('recipe-inspect-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeRecipeInspectModal() {
+      const modal = document.getElementById('recipe-inspect-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+  
+
+// ==============================================
+    

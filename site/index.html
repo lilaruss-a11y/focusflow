@@ -16915,36 +16915,6 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       sendCookingQuestion(q);
     }
 
-        // Dynamic Model Resolver: Auto-detects newest active flash model from Google AI Studio to prevent model retirement breaks
-    let _cachedActiveGeminiModel = null;
-    async function resolveActiveGeminiModel(key) {
-      if (_cachedActiveGeminiModel) return _cachedActiveGeminiModel;
-      try {
-        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
-        if (resp.ok) {
-          const data = await resp.json();
-          const models = (data.models || [])
-            .map(m => (m.name || '').replace(/^models\//, ''))
-            .filter(m => m.includes('flash') && !m.includes('embedding') && !m.includes('image'));
-          
-          if (models.length > 0) {
-            const preferred = models.find(m => m.includes('3.8-flash')) ||
-                              models.find(m => m.includes('3.')) ||
-                              models.find(m => m.includes('2.5-flash')) ||
-                              models.find(m => m.includes('flash')) ||
-                              models[0];
-            if (preferred) {
-              _cachedActiveGeminiModel = preferred;
-              return preferred;
-            }
-          }
-        }
-      } catch(e) {
-        console.warn('Could not query dynamic models list:', e);
-      }
-      return 'gemini-3.8-flash';
-    }
-
     async function sendCookingQuestion(q) {
       const stream = document.getElementById('cooking-companion-qa-stream');
       if (!stream) return;
@@ -16962,13 +16932,20 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       if (key) {
         try {
           const prompt = `You are Sous Chef, an expert real-time culinary companion. The user is actively cooking "${r ? r.title : 'Meal'}". Current active step: "${curStep}". User question: "${q}". Answer directly and practically in 2-3 reassuring sentences. If they ask about a substitute, confirm if it works, how much to substitute, and adjust for salt/heat.`;
-          const activeModel = await resolveActiveGeminiModel(key);
-          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${key}`;
-          const resp = await fetch(endpoint, {
+          let endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${key}`;
+          let resp = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
           });
+          if (!resp.ok) {
+            endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+            resp = await fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+          }
           if (resp.ok) {
             const data = await resp.json();
             const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -17019,7 +16996,7 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
     }
 
     // Client-Side Image Resizer & Compressor for AI Vision (Downsamples to max 1600px JPEG to avoid mobile timeouts / 413 Payload errors)
-    function compressImageFileForAI(file, maxDimension = 1600, quality = 0.8) {
+    function compressImageFileForAI(file, maxDimension = 1200, quality = 0.75) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onerror = reject;
@@ -17094,7 +17071,7 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
 
       try {
         // 1. Compress image down to ~250KB JPEG to guarantee fast upload and prevent 413 / timeout
-        const { base64Data, mimeType } = await compressImageFileForAI(file, 1600, 0.82);
+        const { base64Data, mimeType } = await compressImageFileForAI(file, 1200, 0.75);
 
         // 2. Prepare structured extraction prompt
         const prompt = "Extract all purchased store items from this grocery receipt image. Return ONLY a valid JSON array of objects with keys: name (string, clean concise item name without random codes), category (one of: 'produce', 'protein', 'grains', 'condiments'), storage (one of: 'fridge', 'frozen', 'shelf'), isFood (boolean, true for food and drinks, false for paper towels, cleaning supplies, cosmetics, or household items). Example format: [{\"name\":\"Whole Milk\",\"category\":\"protein\",\"storage\":\"fridge\",\"isFood\":true}]. Return ONLY the JSON array, no conversational markdown.";
@@ -17112,18 +17089,21 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
           }
         };
 
-        // 3. Resolve active model (defaults to gemini-3.8-flash)
-        const activeModel = await resolveActiveGeminiModel(key);
-        let endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${key}`;
-        let resp = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+        // 3. Send directly to active Gemini 3.8 Flash (skipping browser-blocked /models list)
+        let endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${key}`;
+        let resp = null;
+        try {
+          resp = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        } catch(fetchErr) {
+          console.warn("Direct gemini-3.8-flash fetch threw, trying gemini-2.5-flash fallback:", fetchErr);
+        }
 
-        if (!resp.ok) {
-          console.warn(`${activeModel} returned status ${resp.status}, trying direct gemini-3.8-flash fallback`);
-          endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${key}`;
+        if (!resp || !resp.ok) {
+          endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
           resp = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -17157,7 +17137,11 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         }
       } catch (err) {
         console.error("Gemini receipt scan error:", err);
-        alertBox(`Receipt scan notice: ${err.message || 'Could not process photo'}. You can also paste order text in the tab above.`, "Receipt Scan");
+        let userMsg = err.message || 'Could not process photo';
+        if (userMsg.toLowerCase().includes('load failed') || userMsg.toLowerCase().includes('failed to fetch')) {
+          userMsg = "Network connection interrupted or blocked by browser security. Please check your internet, or tap the 'Paste Receipt Text' tab above to import immediately.";
+        }
+        alertBox(`Receipt scan notice: ${userMsg}`, "Receipt Scan");
       } finally {
         if (loadingEl) loadingEl.classList.add('hidden');
         event.target.value = '';

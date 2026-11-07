@@ -96,6 +96,16 @@ After your tests pass:
 - If an issue is not resolved after **2 attempts**, STOP editing.
 - Do not make a 3rd blind guess. Summarize what was tried, ask the user to check their Chrome Developer Tools Console (`Right-Click > Inspect > Console`), and wait for input.
 
+### Rule 5: Failed Hypotheses Tracking (Never Retry Failed Solutions)
+- When diagnosing a problem or proposing a second attempt, you MUST explicitly state:
+  1. What previous approaches were already tried and why they failed.
+  2. Why your new proposed solution is architecturally different from those failed approaches.
+- You are **STRICTLY FORBIDDEN** from re-attempting or proposing minor variations of a solution that already failed.
+
+### Rule 6: Clean Revert Before New Attempts (Never Stack Broken Edits)
+- If an attempt fails automated tests or does not resolve the issue, you MUST immediately revert the modified files back to the last clean git commit (`git checkout HEAD -- <file>`) before attempting anything else.
+- NEVER stack speculative edits on top of previously broken code. Every new attempt must start from a clean, working baseline.
+
 ---
 
 ## 3. Permanent Code Hygiene & Organization Rules

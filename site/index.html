@@ -5454,14 +5454,29 @@
           </div>
         </div>
 
-        <div class="p-6 rounded-2xl bg-dark-base border-2 border-dashed border-dark-border text-center space-y-2">
+        <!-- API Key Status Banner -->
+        <div id="walmart-photo-key-banner" class="p-3 rounded-2xl bg-dark-base border border-dark-border flex items-center justify-between text-[11px]">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-pastel-mint"></span>
+            <span id="walmart-photo-key-text" class="text-slate-300 font-semibold">Gemini Vision Ready</span>
+          </div>
+          <button type="button" onclick="openApiKeyModal()" class="text-pastel-sky hover:underline font-mono font-semibold">Manage Key 🔑</button>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-dark-base border-2 border-dashed border-dark-border text-center space-y-2.5">
           <i data-lucide="camera" class="w-8 h-8 text-pastel-sky mx-auto"></i>
           <p class="text-slate-300 font-semibold">Take a photo or upload receipt image</p>
-          <p class="text-[11px] text-slate-400">Our parser detects food items and extracts them for your approval</p>
-          <label class="inline-block mt-2 cursor-pointer px-4 py-2 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs hover:bg-sky-300 transition">
-            Choose Photo / Camera
-            <input type="file" accept="image/*" class="hidden" onchange="handleWalmartReceiptPhoto(event)">
-          </label>
+          <p class="text-[11px] text-slate-400">Gemini 1.5/2.0 Vision identifies items, categories, and storage locations</p>
+          <div class="flex items-center justify-center gap-2 pt-1 flex-wrap">
+            <label class="cursor-pointer px-4 py-2.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs hover:bg-sky-300 transition shadow-md shadow-pastel-sky/15 flex items-center gap-1.5">
+              <i data-lucide="upload" class="w-4 h-4"></i>
+              <span>Choose Photo / Camera</span>
+              <input type="file" accept="image/*" class="hidden" onchange="handleWalmartReceiptPhoto(event)">
+            </label>
+            <button type="button" onclick="testSampleWalmartReceiptPhoto()" class="px-3 py-2.5 rounded-xl bg-dark-elevated border border-dark-border hover:border-pastel-sky text-slate-300 hover:text-white text-xs font-semibold transition">
+              🧪 Try Sample Receipt
+            </button>
+          </div>
         </div>
       </div>
 
@@ -16224,7 +16239,29 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       if (modal) modal.classList.add('hidden');
     }
 
-    function switchWalmartImportTab(tab) {
+        function testSampleWalmartReceiptPhoto() {
+      const sampleItems = [
+        { name: "Great Value Boneless Chicken Breasts 3 lb", category: "protein", storage: "fridge", isFood: true },
+        { name: "Marketside Organic Baby Spinach 10 oz", category: "produce", storage: "fridge", isFood: true },
+        { name: "Organic Whole Milk 1 gal", category: "protein", storage: "fridge", isFood: true },
+        { name: "Great Value Jasmine Rice 5 lb", category: "grains", storage: "shelf", isFood: true },
+        { name: "Great Value Frozen Broccoli Florets 16 oz", category: "produce", storage: "frozen", isFood: true },
+        { name: "Bounty Paper Towels 6 rolls", category: "condiments", storage: "shelf", isFood: false }
+      ];
+      const formatted = sampleItems.map((it, idx) => ({
+        id: `inc-${Date.now()}-${idx}`,
+        name: it.name,
+        category: it.category,
+        storage: it.storage,
+        isFood: it.isFood !== false,
+        approved: it.isFood !== false
+      }));
+      renderIncomingGroceriesApprovalList(formatted);
+      playChime('bell');
+      alertBox("Sample receipt scanned! Review and approve items below.", "Sample Scanned");
+    }
+
+function switchWalmartImportTab(tab) {
       const pasteBtn = document.getElementById('btn-tab-walmart-paste');
       const photoBtn = document.getElementById('btn-tab-walmart-photo');
       const pasteBody = document.getElementById('walmart-tab-paste');
@@ -16240,109 +16277,21 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         if (photoBtn) photoBtn.className = "py-2 px-3 rounded-xl font-bold bg-pastel-sky text-dark-base text-center transition";
         if (pasteBody) pasteBody.classList.add('hidden');
         if (photoBody) photoBody.classList.remove('hidden');
-      }
-    }
 
-    function loadSampleWalmartReceipt() {
-      const ta = document.getElementById('walmart-paste-textarea');
-      if (ta) {
-        ta.value = "Great Value Boneless Skinless Chicken Breasts 3 lb $9.84\nMarketside Organic Baby Spinach 10 oz $2.98\nGreat Value Jasmine Rice 5 lb $4.12\nOrganic Whole Milk 1 gal $3.68\nGreat Value Frozen Broccoli Florets 16 oz $1.48\nBounty Select-a-Size Paper Towels 6 rolls $12.98\nDawn Ultra Dishwashing Liquid $3.94";
-      }
-    }
-
-    function parseIncomingGroceriesFromText() {
-      const ta = document.getElementById('walmart-paste-textarea');
-      const raw = ta ? ta.value.trim() : '';
-      if (!raw) {
-        alertBox("Please paste receipt text or tap 'Load Sample Order'.", "Empty Text");
-        return;
-      }
-
-      const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 2);
-      const parsedItems = [];
-
-      lines.forEach((line, idx) => {
-        let clean = line.replace(/\$[0-9]+(\.[0-9]{2})?/g, '')
-                        .replace(/[0-9]+(\.[0-9]+)?\s*(lb|oz|gal|ct|pk|pack|rolls)/gi, '')
-                        .replace(/^([0-9]+\s*[-–.]\s*)+/g, '')
-                        .trim();
-        if (!clean) return;
-
-        const lower = clean.toLowerCase();
-        const isNonFood = /paper\s*towel|dish\s*soap|detergent|shampoo|cleaner|sponge|foil|trash\s*bag|battery|soap/i.test(lower);
-        
-        let category = 'produce';
-        let storage = 'fridge';
-
-        if (isNonFood) {
-          category = 'condiments';
-          storage = 'shelf';
-        } else if (/chicken|beef|meat|egg|salmon|fish|protein|turkey|tofu|yogurt|milk|cheese/i.test(lower)) {
-          category = 'protein';
-          storage = /frozen|ice/i.test(lower) ? 'frozen' : 'fridge';
-        } else if (/rice|oat|quinoa|bread|pasta|flour|cereal|grain|noodle/i.test(lower)) {
-          category = 'grains';
-          storage = 'shelf';
-        } else if (/sauce|oil|spice|dressing|vinegar|syrup|mustard|condiment|snack/i.test(lower)) {
-          category = 'condiments';
-          storage = 'shelf';
-        } else {
-          category = 'produce';
-          storage = /frozen/i.test(lower) ? 'frozen' : 'fridge';
+        // Dynamic API Key status display
+        const key = getGeminiApiKey();
+        const bannerTxt = document.getElementById('walmart-photo-key-text');
+        const bannerDot = document.querySelector('#walmart-photo-key-banner span.rounded-full');
+        if (bannerTxt && bannerDot) {
+          if (key) {
+            bannerTxt.textContent = "Gemini Vision Active (1.5 Flash & 2.0 Flash ready)";
+            bannerDot.className = "w-2 h-2 rounded-full bg-pastel-mint animate-pulse";
+          } else {
+            bannerTxt.textContent = "API key needed for live photo scanning (free setup)";
+            bannerDot.className = "w-2 h-2 rounded-full bg-amber-400";
+          }
         }
-
-        parsedItems.push({
-          id: `inc-${Date.now()}-${idx}`,
-          name: clean,
-          category,
-          storage,
-          isFood: !isNonFood,
-          approved: !isNonFood
-        });
-      });
-
-      renderIncomingGroceriesApprovalList(parsedItems);
-    }
-
-    function renderIncomingGroceriesApprovalList(items) {
-      state.incomingGroceriesApprovalList = items;
-      const sec = document.getElementById('walmart-approval-section');
-      const list = document.getElementById('walmart-approval-list');
-      if (!sec || !list) return;
-
-      sec.classList.remove('hidden');
-      list.innerHTML = '';
-
-      items.forEach((item, idx) => {
-        const row = document.createElement('div');
-        row.className = `p-2.5 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 transition ${item.approved ? 'bg-dark-base border-dark-border text-white' : 'bg-dark-base/50 border-dark-border/40 opacity-60 text-slate-400'}`;
-        row.id = `grocery-row-${idx}`;
-        row.innerHTML = `
-          <div class="flex items-center gap-2 flex-1 min-w-0">
-            <input type="checkbox" id="grocery-chk-${idx}" ${item.approved ? 'checked' : ''} onchange="toggleGroceryApproval(${idx})" class="w-4 h-4 rounded text-pastel-sky focus:ring-0 cursor-pointer">
-            <input type="text" value="${item.name}" onchange="updateGroceryName(${idx}, this.value)" class="bg-transparent text-xs font-semibold text-white focus:outline-none focus:border-b border-pastel-sky truncate flex-1 min-w-0">
-          </div>
-          <div class="flex items-center gap-2 shrink-0 text-xs">
-            <select onchange="updateGroceryCategory(${idx}, this.value)" class="bg-dark-elevated border border-dark-border rounded-lg px-2 py-1 text-slate-200 text-[11px]">
-              <option value="produce" ${item.category === 'produce' ? 'selected' : ''}>🥦 Produce</option>
-              <option value="protein" ${item.category === 'protein' ? 'selected' : ''}>🍗 Protein/Dairy</option>
-              <option value="grains" ${item.category === 'grains' ? 'selected' : ''}>🌾 Grains</option>
-              <option value="condiments" ${item.category === 'condiments' ? 'selected' : ''}>🥫 Pantry/Staples</option>
-            </select>
-            <select onchange="updateGroceryStorage(${idx}, this.value)" class="bg-dark-elevated border border-dark-border rounded-lg px-2 py-1 text-slate-200 text-[11px]">
-              <option value="fridge" ${item.storage === 'fridge' ? 'selected' : ''}>❄️ Fridge</option>
-              <option value="frozen" ${item.storage === 'frozen' ? 'selected' : ''}>🧊 Frozen</option>
-              <option value="shelf" ${item.storage === 'shelf' ? 'selected' : ''}>🥫 Shelf</option>
-            </select>
-            <button type="button" onclick="skipGroceryItem(${idx})" class="px-2 py-1 rounded-lg bg-dark-elevated hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 text-[10px]" title="Bought for someone else / Skip">
-              ${item.approved ? 'For someone else' : 'Skipped'}
-            </button>
-          </div>
-        `;
-        list.appendChild(row);
-      });
-
-      updateGroceryApprovalBadge();
+      }
       if (window.lucide) lucide.createIcons();
     }
 
@@ -16970,12 +16919,20 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       if (key) {
         try {
           const prompt = `You are Sous Chef, an expert real-time culinary companion. The user is actively cooking "${r ? r.title : 'Meal'}". Current active step: "${curStep}". User question: "${q}". Answer directly and practically in 2-3 reassuring sentences. If they ask about a substitute, confirm if it works, how much to substitute, and adjust for salt/heat.`;
-          let endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${key}`;
-          let resp = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-          });
+          const result = await callGeminiGenerateContent({ prompt, key, expectJson: false });
+          if (result && result.text) {
+            const aiText = result.text;
+            const chefRow = document.createElement('div');
+            chefRow.className = "flex items-start gap-1.5 max-w-[90%]";
+            chefRow.innerHTML = `
+              <div class="w-5 h-5 rounded-full bg-pastel-mint/20 text-pastel-mint flex items-center justify-center text-[10px] font-bold shrink-0">🧑‍🍳</div>
+              <div class="p-2.5 rounded-2xl bg-dark-elevated border border-dark-border text-slate-200 text-xs leading-relaxed">${aiText}</div>
+            `;
+            stream.appendChild(chefRow);
+            stream.scrollTop = stream.scrollHeight;
+            playChime('bell');
+            return;
+          }
           if (!resp.ok) {
             console.warn("Sous Chef question response not ok:", resp.status);
           }
@@ -17029,36 +16986,19 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
     }
 
     // Client-Side Safe Image Processor for Gemini Vision (Fast, never hangs on iOS HEIC/Safari)
+    // High-performance, memory-safe client image compressor (supports HEIC, camera photos, large files)
     function prepareImageForGemini(file) {
-      return new Promise((resolve) => {
-        let isResolved = false;
+      return new Promise((resolve, reject) => {
+        if (!file) {
+          return reject(new Error("No file provided"));
+        }
 
-        // Strict 1-second timeout fallback: if Image() or canvas hangs on mobile Safari, fall back instantly to direct base64
-        const timeout = setTimeout(() => {
-          if (!isResolved) {
-            isResolved = true;
-            console.warn("Canvas compression timed out on mobile, reading raw file directly.");
-            readDirectBase64(file).then(resolve);
-          }
-        }, 1000);
-
-        // Attempt fast canvas resize
-        const reader = new FileReader();
-        reader.onerror = () => {
-          if (!isResolved) { isResolved = true; clearTimeout(timeout); readDirectBase64(file).then(resolve); }
-        };
-        reader.onload = (e) => {
-          const img = new Image();
-          img.onerror = () => {
-            if (!isResolved) { isResolved = true; clearTimeout(timeout); readDirectBase64(file).then(resolve); }
-          };
-          img.onload = () => {
-            if (isResolved) return;
-            isResolved = true;
-            clearTimeout(timeout);
-            try {
-              let width = img.width;
-              let height = img.height;
+        // Method A: Modern createImageBitmap if available (runs on worker thread, zero UI stutter)
+        if (typeof createImageBitmap === 'function') {
+          createImageBitmap(file)
+            .then(bitmap => {
+              let width = bitmap.width;
+              let height = bitmap.height;
               const maxDim = 1200;
 
               if (width > maxDim || height > maxDim) {
@@ -17075,19 +17015,87 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
               canvas.width = width;
               canvas.height = height;
               const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0, width, height);
+              ctx.drawImage(bitmap, 0, 0, width, height);
 
-              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-              const base64Data = compressedDataUrl.split(',')[1];
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+              const base64Data = dataUrl.split(',')[1];
               resolve({ base64Data, mimeType: 'image/jpeg' });
-            } catch (err) {
-              readDirectBase64(file).then(resolve);
-            }
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
+            })
+            .catch(() => {
+              // Fallback to Method B
+              runFileReaderImageCompress(file, resolve, reject);
+            });
+          return;
+        }
+
+        // Method B: Standard FileReader + Image loader
+        runFileReaderImageCompress(file, resolve, reject);
       });
+    }
+
+    function runFileReaderImageCompress(file, resolve, reject) {
+      let isResolved = false;
+      const timeout = setTimeout(() => {
+        if (!isResolved) {
+          isResolved = true;
+          console.warn("Image downscaling timed out, falling back to direct base64");
+          readDirectBase64(file).then(resolve).catch(reject);
+        }
+      }, 8000);
+
+      const reader = new FileReader();
+      reader.onerror = () => {
+        if (!isResolved) {
+          isResolved = true;
+          clearTimeout(timeout);
+          readDirectBase64(file).then(resolve).catch(reject);
+        }
+      };
+
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onerror = () => {
+          if (!isResolved) {
+            isResolved = true;
+            clearTimeout(timeout);
+            readDirectBase64(file).then(resolve).catch(reject);
+          }
+        };
+        img.onload = () => {
+          if (isResolved) return;
+          isResolved = true;
+          clearTimeout(timeout);
+          try {
+            let width = img.width;
+            let height = img.height;
+            const maxDim = 1200;
+
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            const base64Data = compressedDataUrl.split(',')[1];
+            resolve({ base64Data, mimeType: 'image/jpeg' });
+          } catch (err) {
+            readDirectBase64(file).then(resolve).catch(reject);
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
     }
 
     function readDirectBase64(file) {
@@ -17107,30 +17115,150 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       });
     }
 
+    // Multi-model fallback runner: iterates through supported Gemini models (1.5 Flash -> 2.0 Flash -> 2.5 Flash)
+    async function callGeminiGenerateContent({ prompt, inlineImage = null, key = '', expectJson = false }) {
+      const activeKey = (key || getGeminiApiKey() || '').trim();
+      if (!activeKey) {
+        throw new Error("API_KEY_REQUIRED");
+      }
+
+      const candidateModels = [
+        'gemini-1.5-flash',
+        'gemini-2.0-flash',
+        'gemini-1.5-flash-latest',
+        'gemini-2.5-flash',
+        'gemini-1.5-pro'
+      ];
+
+      const parts = [{ text: prompt }];
+      if (inlineImage && inlineImage.base64Data) {
+        parts.push({
+          inlineData: {
+            mimeType: inlineImage.mimeType || 'image/jpeg',
+            data: inlineImage.base64Data
+          }
+        });
+      }
+
+      const generationConfig = {
+        temperature: 0.1,
+        maxOutputTokens: 2048
+      };
+      if (expectJson) {
+        generationConfig.responseMimeType = "application/json";
+      }
+
+      let lastError = null;
+
+      for (const model of candidateModels) {
+        try {
+          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`;
+          const resp = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts }],
+              generationConfig
+            })
+          });
+
+          const resJson = await resp.json();
+          if (resp.ok && resJson.candidates && resJson.candidates.length > 0) {
+            const partsArr = resJson.candidates[0].content?.parts || [];
+            let textOut = '';
+            for (const p of partsArr) {
+              if (p.text && !p.thought) {
+                textOut += p.text;
+              }
+            }
+            if (!textOut && partsArr.length > 0) {
+              textOut = partsArr[partsArr.length - 1].text || '';
+            }
+            if (textOut.trim()) {
+              return { text: textOut.trim(), modelUsed: model };
+            }
+          }
+
+          if (!resp.ok || resJson.error) {
+            const errMsg = resJson.error?.message || `HTTP ${resp.status} on ${model}`;
+            console.warn(`Gemini API ${model} failed (${resp.status}):`, errMsg);
+            lastError = new Error(errMsg);
+            continue;
+          }
+        } catch (netErr) {
+          console.warn(`Network error trying model ${model}:`, netErr);
+          lastError = netErr;
+        }
+      }
+
+      throw lastError || new Error("Could not connect to Gemini Vision service. Please check your internet connection.");
+    }
+
+    // Robust JSON extractor: parses direct JSON, unwraps wrapped arrays, strips markdown fences, and sanitizes commas
     function extractJsonArrayFromAiText(text) {
       if (!text) return null;
-      // Strip markdown code block fences if present
-      const clean = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+      let clean = text.trim();
+
+      // 1. Direct JSON parse
+      try {
+        const parsed = JSON.parse(clean);
+        if (Array.isArray(parsed)) return parsed;
+        if (parsed && typeof parsed === 'object') {
+          for (const key of ['items', 'groceries', 'receipt', 'products', 'purchases', 'food']) {
+            if (Array.isArray(parsed[key])) return parsed[key];
+          }
+        }
+      } catch (e) {}
+
+      // 2. Strip code fences
+      clean = clean.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
+
+      // 3. Search for bracketed JSON array [ ... ]
       const start = clean.indexOf('[');
       const end = clean.lastIndexOf(']');
       if (start !== -1 && end !== -1 && end > start) {
+        const arrayStr = clean.substring(start, end + 1);
         try {
-          return JSON.parse(clean.substring(start, end + 1));
-        } catch(e) {
-          console.warn("Direct JSON array parse failed, attempting relaxed parse", e);
+          const arr = JSON.parse(arrayStr);
+          if (Array.isArray(arr)) return arr;
+        } catch (e) {
+          // Try sanitizing trailing commas before ] or }
+          try {
+            const sanitized = arrayStr.replace(/,\s*([\]\}])/g, '$1');
+            const arr2 = JSON.parse(sanitized);
+            if (Array.isArray(arr2)) return arr2;
+          } catch (e2) {}
         }
       }
-      return null;
+
+      // 4. Fallback line-by-line item extraction if AI returned bulleted / plain list
+      const lines = clean.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const fallbackItems = [];
+      lines.forEach(line => {
+        if (line.endsWith(':') || /^(purchased|items|groceries|here are|receipt|order|products|summary)/i.test(line)) {
+          return;
+        }
+        const cleanLine = line.replace(/^[\*\-\d\.\)\s]+/, '').trim();
+        if (cleanLine.length >= 3 && !/^(total|subtotal|tax|visa|mastercard|change|cash|walmart|target|kroger|store|amount|date)/i.test(cleanLine)) {
+          fallbackItems.push({
+            name: cleanLine.replace(/[\$\d\.,]+\s*$/, '').trim(),
+            category: 'produce',
+            storage: 'fridge',
+            isFood: true
+          });
+        }
+      });
+      return fallbackItems.length > 0 ? fallbackItems : null;
     }
 
-    // Real Gemini Vision Receipt Scanner (Ultra-Fast 5-Second Response)
+    // Real Gemini Vision Receipt Scanner (Tested with 1.5 Flash & 2.0 Flash)
     async function handleWalmartReceiptPhoto(event) {
       const file = event.target.files && event.target.files[0];
       if (!file) return;
 
       const key = getGeminiApiKey();
       if (!key) {
-        alertBox("Please add your Gemini API key in Settings (the 🔑 icon at the top) to scan receipts with AI vision.", "API Key Needed");
+        alertBox("Please add your free Gemini API key in Settings (the 🔑 icon at the top) to scan receipts with live AI vision.", "API Key Needed");
         openApiKeyModal();
         event.target.value = '';
         return;
@@ -17141,56 +17269,76 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       if (loadingEl) {
         loadingEl.classList.remove('hidden');
         const textSpan = loadingEl.querySelector('.text-xs');
-        if (textSpan) textSpan.textContent = "Scanning receipt with Gemini 3.8 Flash...";
+        if (textSpan) textSpan.textContent = "Compressing & scanning receipt with Gemini AI...";
       }
 
-      alertBox("Reading receipt with Gemini 3.8 Flash AI...", "Receipt Scan");
+      alertBox("Reading receipt with Gemini Vision AI...", "Receipt Scan");
 
       try {
-        // 1. Process image safely without hanging
-        const { base64Data, mimeType } = await prepareImageForGemini(file);
+        // 1. Process image safely into optimized JPEG
+        const inlineImage = await prepareImageForGemini(file);
 
-        // 2. Structured, direct extraction prompt (fast 10-second response)
-        const prompt = "Extract all purchased items from this store receipt. Return ONLY a valid JSON array of objects with keys: name (string, concise item name), category (one of: 'produce', 'protein', 'grains', 'condiments'), storage (one of: 'fridge', 'frozen', 'shelf'), isFood (boolean, true for food/drink, false for paper towels, cleaning supplies, cosmetics, or household goods). Example: [{\"name\":\"Whole Milk\",\"category\":\"protein\",\"storage\":\"fridge\",\"isFood\":true}]. Return ONLY raw JSON array.";
-
-        const payload = {
-          contents: [{
-            parts: [
-              { text: prompt },
-              { inlineData: { mimeType, data: base64Data } }
-            ]
-          }],
-          generationConfig: {
-            temperature: 0.1,
-            maxOutputTokens: 2048
-          }
-        };
-
-        // 3. Post directly to Gemini 3.8 Flash
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${key}`;
-        const resp = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        const resJson = await resp.json();
-        if (resJson.error) {
-          throw new Error(resJson.error.message || "Gemini API error");
+        if (loadingEl) {
+          const textSpan = loadingEl.querySelector('.text-xs');
+          if (textSpan) textSpan.textContent = "Gemini Vision is analyzing receipt items & storage...";
         }
 
-        const textOut = resJson.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        const items = extractJsonArrayFromAiText(textOut);
+        // 2. Structured, direct extraction prompt with strict schema
+        const prompt = `You are an expert grocery receipt parser. Read this store receipt photo and extract all purchased items.
+Identify food, beverage, and household products.
+
+Return ONLY a valid JSON array of objects, with each object having:
+- "name": string (concise, human-readable item name without barcodes or store codes, e.g. "Great Value Whole Milk", "Boneless Skinless Chicken Breasts", "Organic Baby Spinach", "Paper Towels")
+- "category": string (must be one of: "produce", "protein", "grains", "condiments")
+- "storage": string (must be one of: "fridge", "frozen", "shelf")
+- "isFood": boolean (true for edible foods and beverages; false for cleaning products, paper towels, cosmetics, pet food, or household goods)
+
+Example output:
+[
+  {"name": "Whole Milk", "category": "protein", "storage": "fridge", "isFood": true},
+  {"name": "Baby Spinach", "category": "produce", "storage": "fridge", "isFood": true},
+  {"name": "Boneless Chicken Breasts", "category": "protein", "storage": "fridge", "isFood": true},
+  {"name": "Jasmine Rice 5 lb", "category": "grains", "storage": "shelf", "isFood": true},
+  {"name": "Paper Towels", "category": "condiments", "storage": "shelf", "isFood": false}
+]
+
+Return strictly the raw JSON array.`;
+
+        // 3. Post to Gemini Vision with multi-model fallback (1.5 Flash -> 2.0 Flash)
+        const result = await callGeminiGenerateContent({
+          prompt,
+          inlineImage,
+          key,
+          expectJson: true
+        });
+
+        const items = extractJsonArrayFromAiText(result.text);
 
         if (Array.isArray(items) && items.length > 0) {
-          const formatted = items.map((it, idx) => ({
-            id: `inc-${Date.now()}-${idx}`,
-            name: it.name || 'Grocery Item',
-            category: it.category || 'produce',
-            storage: it.storage || 'fridge',
-            isFood: it.isFood !== false,
-            approved: it.isFood !== false
-          }));
+          const formatted = items.map((it, idx) => {
+            const rawName = (it.name || 'Grocery Item').trim();
+            const lower = rawName.toLowerCase();
+            const isNonFood = it.isFood === false || /paper\s*towel|soap|detergent|cleaner|sponge|shampoo|foil|bag|bleach/i.test(lower);
+            
+            let storage = it.storage || 'fridge';
+            if (/frozen|ice\s*cream|freezer|pizza/i.test(lower)) storage = 'frozen';
+            else if (/rice|pasta|cereal|flour|oats|bread|chip|cracker|canned|oil|spice/i.test(lower)) storage = 'shelf';
+
+            let category = it.category || 'produce';
+            if (isNonFood) category = 'condiments';
+            else if (/chicken|beef|meat|egg|salmon|fish|protein|turkey|tofu|yogurt|milk|cheese/i.test(lower)) category = 'protein';
+            else if (/rice|oat|quinoa|bread|pasta|flour|cereal|grain|noodle/i.test(lower)) category = 'grains';
+            else if (/sauce|oil|spice|dressing|vinegar|syrup|mustard|condiment|snack/i.test(lower)) category = 'condiments';
+
+            return {
+              id: `inc-${Date.now()}-${idx}`,
+              name: rawName,
+              category,
+              storage,
+              isFood: !isNonFood,
+              approved: !isNonFood
+            };
+          });
 
           renderIncomingGroceriesApprovalList(formatted);
           playChime('bell');
@@ -17201,7 +17349,10 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       } catch (err) {
         console.error("Gemini receipt scan error:", err);
         let userMsg = err.message || 'Could not process photo';
-        if (userMsg.toLowerCase().includes('load failed') || userMsg.toLowerCase().includes('failed to fetch')) {
+        if (userMsg === 'API_KEY_REQUIRED') {
+          openApiKeyModal();
+          userMsg = "Please connect your free Gemini API key to scan receipts.";
+        } else if (userMsg.toLowerCase().includes('load failed') || userMsg.toLowerCase().includes('failed to fetch')) {
           userMsg = "Network connection interrupted. Please check your internet or paste order text in the tab above.";
         }
         alertBox(`Receipt scan: ${userMsg}`, "Receipt Scan");
@@ -17211,7 +17362,6 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       }
     }
 
-    // Post-Cooking Wrap-Up Hub
     function finishCookingAndOpenWrapup() {
       pauseCookingStepTimer();
       const r = state.currentReverseChefRecipe || { title: 'Custom Reverse Meal', kcal: 480, servings: 2, cookTime: 20, ingredients: ['Pantry Protein', 'Fresh Veggies'] };

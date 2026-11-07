@@ -1,6 +1,13 @@
 # FocusFlow Project & Agent Behavior Guide
 
-You are working on the **FocusFlow** web application for a non-technical user. Follow these mandatory rules and project architectural layout:
+You are working on the **FocusFlow** web application for a non-technical user. Follow these mandatory rules, user preferences, and project architectural layout:
+
+---
+
+## 0. User Preferences & Environment
+* **Browser Requirement:** The user **EXCLUSIVELY uses Google Chrome** (on both Mac and mobile). 
+  * Do NOT provide Safari-specific shortcuts or advice.
+  * All browser testing, developer tools guidance (e.g. `Right-Click > Inspect > Console`), and PWA behavior must be targeted for **Google Chrome**.
 
 ---
 
@@ -29,7 +36,7 @@ The project is modularized into dedicated feature files to prevent regressions a
   * **`app.js`**: Tab navigation (`switchTab`), state persistence (`saveAppState`, `loadAppState`), phone demo modal, and `window.onload` startup sequence.
 
 * **`verify.py`** (Automated Test Suite):
-  * Automated testing script that verifies HTML tags, local asset links, compiles all JS with macOS WebKit JavaScriptCore, and validates `site/` deployment sync.
+  * Automated testing script that verifies HTML tags, local asset links, compiles all JS, and validates `site/` deployment sync.
 
 * **`site/`** (Live GitHub Pages Mirror):
   * **Rule:** Whenever making edits to `index.html`, `css/`, `js/`, or `sw.js`, **ALWAYS copy the modified files into the `site/` folder** so that the user's phone (homescreen PWA) gets the updates!
@@ -58,21 +65,21 @@ After the user approves your plan and you make the changes:
    ```bash
    python3 verify.py
    ```
-   Verify that all checks pass with zero errors (all HTML tags matched, all JS modules compiled by macOS WebKit JavaScriptCore, and all files synchronized).
+   Verify that all checks pass with zero errors (all HTML tags matched, all JS modules compiled, and all files synchronized).
 2. **Verify Desired Effect:**
    Inspect the modified functions line-by-line to verify logic flow:
    * Are element IDs and class names identical between HTML and JS?
    * Are event listeners attached to elements that actually exist?
    * Did the edit specifically produce the user's requested behavior without collateral side-effects?
 3. **Provide a Testing Checklist:**
-   Give the user a simple, 1-2-3 checklist of what to tap on their phone or browser to verify the change.
+   Give the user a simple, 1-2-3 checklist of what to tap in Google Chrome on their computer or phone to verify the change.
 
 ### Rule 3: Auto-Sync to `site/` and Push to GitHub
 After your tests pass:
 1. Synchronize the modified files from the root into the `site/` folder.
 2. Commit the changes to Git with a concise, descriptive message.
-3. Push to `origin main` so the user's phone app updates immediately.
+3. Push to `origin main` so the user's Chrome app updates immediately.
 
 ### Rule 4: Thrash Prevention (Circuit Breaker)
 - If an issue is not resolved after **2 attempts**, STOP editing.
-- Do not make a 3rd blind guess. Summarize what was tried, ask the user to check their browser or phone console, and wait for input.
+- Do not make a 3rd blind guess. Summarize what was tried, ask the user to check their Chrome Developer Tools Console (`Right-Click > Inspect > Console`), and wait for input.

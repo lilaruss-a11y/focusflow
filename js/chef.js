@@ -987,6 +987,8 @@ Return strictly the raw JSON array.`;
               name: rawName,
               category,
               storage,
+              amount: parseFloat(it.amount) || 1,
+              unit: it.unit || 'item',
               isFood: !isNonFood,
               approved: !isNonFood
             };

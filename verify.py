@@ -115,6 +115,15 @@ else:
     else:
         success("All local stylesheet and script references exist on disk.")
 
+    html_ids = re.findall(r'id=[\"\']([^\s\"\'>]+)[\"\']', html)
+    from collections import Counter
+    id_counts = Counter(html_ids)
+    duplicate_ids = [i for i, c in id_counts.items() if c > 1]
+    if duplicate_ids:
+        error(f"Duplicate HTML IDs found in index.html: {', '.join(duplicate_ids)}")
+    else:
+        success(f"All {len(html_ids)} HTML IDs in index.html are 100% unique.")
+
 # --- 2. Verify JavaScript Modules via Native WebKit JavaScriptCore (jsc) ---
 print("\n2. Compiling JavaScript modules with macOS WebKit JavaScriptCore...")
 jsc_path = "/System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc"
@@ -225,7 +234,11 @@ MODULE_BOUNDARIES = {
             (r'function\s+.*HourHeight', 'hour height belongs in js/timeline.js'),
             (r'function\s+.*ReverseChef', 'Reverse Chef belongs in js/chef.js'),
             (r'function\s+.*Medication', 'medication belongs in js/biometrics.js'),
-            (r'function\s+.*Cardiac', 'cardiac biometrics belong in js/biometrics.js')
+            (r'function\s+.*Cardiac', 'cardiac biometrics belong in js/biometrics.js'),
+            (r'function\s+.*Calendar', 'calendar functions belong in js/timeline.js or js/calendar-categories.js'),
+            (r'function\s+.*Schedule', 'schedule loading belongs in js/timeline.js'),
+            (r'function\s+.*ApiKey', 'API key management belongs in js/app.js'),
+            (r'function\s+.*IPhone', 'iPhone export belongs in js/app.js')
         ]
     },
     'health.js': {

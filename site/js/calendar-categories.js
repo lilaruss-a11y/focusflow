@@ -1102,5 +1102,121 @@ Once enabled, tap 'Sync Live Events Now'!`,
       alertBox(msg, "Calendars Synced");
     }
 
+    // ==============================================
+    // GCAL SYNC MODAL & ICS FILE/FEED HANDLERS
+    // ==============================================
+    function openGCalSyncModal() {
+      if (typeof populateCalendarCategoriesDropdowns === 'function') {
+        populateCalendarCategoriesDropdowns();
+      }
+      if (typeof renderConnectedCalendars === 'function') {
+        renderConnectedCalendars();
+      }
+      if (typeof updateGoogleCalendarDirectUI === 'function') {
+        updateGoogleCalendarDirectUI();
+      }
+      const modal = document.getElementById('gcal-sync-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeGCalSyncModal() {
+      const modal = document.getElementById('gcal-sync-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function parseICS(icsText) {
+      const lines = icsText.split(/\r\n|\r|\n/);
+      const events = [];
+      let currentEvent = null;
+
+      for (let i = 0; i < lines.length; i++) {
+        let line = lines[i].trim();
+        if (line.startsWith('BEGIN:VEVENT')) {
+          currentEvent = {};
+        } else if (line.startsWith('END:VEVENT')) {
+          if (currentEvent && currentEvent.title) {
+            events.push(currentEvent);
+          }
+          currentEvent = null;
+        } else if (currentEvent) {
+          if (line.startsWith('SUMMARY:')) {
+            currentEvent.title = line.substring(8);
+          } else if (line.startsWith('DTSTART')) {
+            const val = line.split(':')[1] || '';
+            if (val.includes('T')) {
+              const timePart = val.split('T')[1];
+              currentEvent.startTime = `${timePart.substring(0, 2)}:${timePart.substring(2, 4)}`;
+            } else {
+              currentEvent.startTime = '09:00';
+            }
+          } else if (line.startsWith('DURATION:')) {
+            const dur = line.substring(9);
+            const mins = dur.match(/(\d+)M/);
+            const hrs = dur.match(/(\d+)H/);
+            let total = 0;
+            if (hrs) total += parseInt(hrs[1], 10) * 60;
+            if (mins) total += parseInt(mins[1], 10);
+            currentEvent.duration = total || 45;
+          }
+        }
+      }
+      return events;
+    }
+
+    function handleIcsFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const calName = file.name.replace(/\.ics$/i, '') || 'Imported Calendar';
+        const parsed = typeof parseICalEvents === 'function' ? parseICalEvents(text, calName, 'focus', 'sky') : [];
+        if (parsed.length > 0) {
+          const manualEvents = (state.events || []).filter(ev => 
+            !ev.id.startsWith('ev-ical-') && 
+            !ev.id.startsWith('ev-buf-') && 
+            ev.id !== 'ev-meal-choreo' &&
+            !ev.title.includes('Focus & Task Execution')
+          );
+          state.events = [...manualEvents, ...parsed];
+          saveAppState();
+          closeGCalSyncModal();
+          renderTimeline();
+          if (typeof ffUploadNow === 'function') {
+            ffUploadNow(true).catch(() => {});
+          }
+          playChime('bell');
+          alertBox(`Successfully imported ${parsed.length} events from "${file.name}" across all days of the week!`, "Calendar Imported");
+        } else {
+          alertBox("Could not find standard events in that file. Please verify it is a valid .ics calendar export.", "Import Notice");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function saveAndSyncIcalUrl() {
+      const inputEl = document.getElementById('gcal-feed-url-input') || document.getElementById('gcal-ical-url-input');
+      const url = inputEl ? inputEl.value.trim() : '';
+      if (url) {
+        localStorage.setItem('focusflow_gcal_ical_url', url);
+        if (!state.connectedCalendars) state.connectedCalendars = [];
+        const exists = state.connectedCalendars.some(c => c.url === url);
+        if (!exists) {
+          state.connectedCalendars.push({
+            id: `cal-${Date.now()}`,
+            name: 'Google Calendar',
+            url: url,
+            category: 'focus',
+            color: 'sky',
+            active: true
+          });
+          localStorage.setItem('focusflow_connected_calendars', JSON.stringify(state.connectedCalendars));
+          if (typeof renderConnectedCalendars === 'function') renderConnectedCalendars();
+        }
+      }
+      if (typeof syncAllConnectedCalendars === 'function') syncAllConnectedCalendars();
+    }
+
   
 

@@ -2171,3 +2171,228 @@ function setEditEventAnchorType(isFixed) {
       playChime('bell');
       alertBox(ev.skipped ? `Marked "${ev.title}" as Not Done.` : `Restored "${ev.title}".`, "Event Status");
     }
+
+    // ==============================================
+    // MODAL HELPERS FOR CALENDAR & SCHEDULE EVENTS
+    // ==============================================
+    state.newEventIsFixed = false;
+    function setNewEventAnchorType(isFixed) {
+      state.newEventIsFixed = Boolean(isFixed);
+      const btnFixed = document.getElementById('btn-anchor-fixed');
+      const btnFlex = document.getElementById('btn-anchor-flexible');
+      if (btnFixed && btnFlex) {
+        if (isFixed) {
+          btnFixed.className = "py-2 px-2 rounded-xl bg-pastel-sky/20 border-2 border-pastel-sky text-pastel-sky font-bold text-center transition flex flex-col items-center justify-center min-h-[52px]";
+          btnFixed.innerHTML = '<span class="text-xs font-bold">🔒 Fixed Anchor</span><span class="text-[10px] text-pastel-sky/80 mt-0.5">(Class / Appt)</span>';
+          btnFlex.className = "py-2 px-2 rounded-xl bg-dark-base border-2 border-dark-border text-slate-400 font-semibold text-center transition flex flex-col items-center justify-center min-h-[52px]";
+          btnFlex.innerHTML = '<span class="text-xs font-bold">⏳ Flexible Task</span><span class="text-[10px] text-slate-500 mt-0.5">(Self-Paced)</span>';
+        } else {
+          btnFixed.className = "py-2 px-2 rounded-xl bg-dark-base border-2 border-dark-border text-slate-400 font-semibold text-center transition flex flex-col items-center justify-center min-h-[52px]";
+          btnFixed.innerHTML = '<span class="text-xs font-bold">🔒 Fixed Anchor</span><span class="text-[10px] text-slate-500 mt-0.5">(Class / Appt)</span>';
+          btnFlex.className = "py-2 px-2 rounded-xl bg-pastel-coral/20 border-2 border-pastel-coral text-pastel-coral font-bold text-center transition flex flex-col items-center justify-center min-h-[52px]";
+          btnFlex.innerHTML = '<span class="text-xs font-bold">⏳ Flexible Task</span><span class="text-[10px] text-pastel-coral/80 mt-0.5">(Self-Paced)</span>';
+        }
+      }
+    }
+
+    function checkNewEventCalibrationTip(title) {
+      const tipEl = document.getElementById('new-event-calib-tip');
+      if (!tipEl) return;
+      const lower = (title || '').toLowerCase();
+      if (lower.includes('ready') || lower.includes('dress') || lower.includes('morning')) {
+        tipEl.innerHTML = "💡 <strong>Historical Calibration:</strong> 'Getting Ready' routines average <strong>48m</strong> in reality (+18m vs 30m plan). Consider scheduling 45m with 10m buffer.";
+        tipEl.classList.remove('hidden');
+      } else if (lower.includes('homework') || lower.includes('study') || lower.includes('paper') || lower.includes('code')) {
+        tipEl.innerHTML = "💡 <strong>Hyperfocus Calibration:</strong> Deep homework blocks stretch by <strong>+22m</strong> on average. We recommend inserting a 15m transition buffer right after.";
+        tipEl.classList.remove('hidden');
+      } else if (lower.includes('class') || lower.includes('lecture') || lower.includes('lab') || lower.includes('meeting')) {
+        setNewEventAnchorType(true);
+        tipEl.innerHTML = "🔒 <strong>Fixed Anchor Detected:</strong> Automatically flagged as fixed commitment (100% adherence history).";
+        tipEl.classList.remove('hidden');
+      } else {
+        tipEl.classList.add('hidden');
+      }
+    }
+
+    function logActualDurationFromEditModal() {
+      if (!state.activeEventModal) return;
+      const ev = state.activeEventModal;
+      const input = document.getElementById('edit-event-actual-duration');
+      const val = parseInt(input ? input.value : 0, 10);
+      if (!isNaN(val) && val > 0) {
+        ev.actualDuration = val;
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        state.timeEstimationHistory.push({
+          id: `te-${Date.now()}`,
+          date: dateStr,
+          title: ev.title,
+          category: ev.category || 'focus',
+          isFixed: Boolean(ev.isFixedAnchor),
+          plannedMin: ev.duration,
+          actualMin: val,
+          deltaMin: val - ev.duration
+        });
+        if (state.timeEstimationHistory.length > 15) state.timeEstimationHistory.shift();
+        saveAppState();
+        renderStructuredCalendarGrid();
+        renderCompactTimelineListView();
+        if (window.lucide) lucide.createIcons();
+        playChime('bell');
+        alertBox(`Logged ${val}m reality for "${ev.title}". Calibration graph updated!`, "Reality Logged");
+      }
+    }
+
+    function openNewEventModal() {
+      if (typeof populateCalendarCategoriesDropdowns === 'function') {
+        populateCalendarCategoriesDropdowns();
+      }
+      const modal = document.getElementById('new-event-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeNewEventModal() {
+      const modal = document.getElementById('new-event-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function saveNewCalendarEvent() {
+      const titleEl = document.getElementById('new-event-title');
+      const startEl = document.getElementById('new-event-start');
+      const durEl = document.getElementById('new-event-duration');
+      const catEl = document.getElementById('new-event-category');
+      const title = titleEl ? titleEl.value.trim() : '';
+      const start = startEl ? startEl.value : '09:00';
+      const duration = parseInt(durEl ? durEl.value : 30, 10) || 30;
+      const cat = catEl ? catEl.value : 'focus';
+      if (!title) return;
+
+      if (calendarHistory && typeof calendarHistory.recordState === 'function') {
+        calendarHistory.recordState();
+      }
+      const loc = (document.getElementById('new-event-location') && document.getElementById('new-event-location').value.trim()) || '';
+      const newEv = {
+        id: `ev-${Date.now()}`,
+        title,
+        startTime: start,
+        duration,
+        category: cat,
+        location: loc,
+        entryType: state.newEventEntryType || 'both',
+        actualDuration: state.newEventEntryType === 'reality' ? duration : undefined,
+        date: getSelectedTimelineDateStr() || getTodayDateString(),
+        lastLocalEdit: Date.now(),
+        subtasks: [
+          { text: 'Start with 0-friction prep', minutes: 5, done: false },
+          { text: 'Complete essential core block', minutes: Math.max(10, duration - 10), done: false },
+          { text: 'Wrap up and clean surfaces', minutes: 5, done: false }
+        ]
+      };
+      state.events.push(newEv);
+      saveAppState();
+      renderTimeline();
+      if (typeof pushEventChangeToGoogle === 'function') {
+        pushEventChangeToGoogle(newEv, 'create');
+      }
+      if (typeof ffUploadNow === 'function') ffUploadNow(true);
+      closeNewEventModal();
+      playChime('bell');
+    }
+
+    // ADHD SCAFFOLDING CALENDAR GENERATOR
+    function scaffoldCalendarEvent(title, startTime, rawDuration, category = 'focus') {
+      const stage = state.scaffoldLevel || 1;
+      const duration = Math.max(20, rawDuration || 45);
+
+      let goodEnough = "Complete essential agenda items and note down 1 clear next action.";
+      let subtasks = [];
+
+      if (category === 'meal') {
+        goodEnough = "Cook wholesome food, eat, rinse cooking pan; leave deep scrub for later.";
+        subtasks = [
+          { text: "Mise-en-place: wash & chop all ingredients before turning on heat", minutes: 10, done: false },
+          { text: "Active cook / simmer", minutes: Math.max(10, duration - 22), done: false },
+          { text: "[Safe Dish Window] Wash knives and cutting board while food simmers", minutes: 7, done: false },
+          { text: "Plate meal, rinse pan, sit down to enjoy", minutes: 5, done: false }
+        ];
+      } else if (stage === 1) {
+        goodEnough = "Hit B-minus standard on core deliverable; stop before perfectionist rabbit holes.";
+        subtasks = [
+          { text: "0-Friction Start: Open single needed doc, close other tabs, set timer", minutes: 5, done: false },
+          { text: `Core Sprint: Focus solely on ${title.slice(0, 30)}`, minutes: Math.max(15, duration - 15), done: false },
+          { text: "Stopping Boundary: Save draft, write down where to resume tomorrow, log off", minutes: 10, done: false }
+        ];
+      } else if (stage === 2) {
+        goodEnough = "Execute primary objective and summarize outcomes.";
+        subtasks = [
+          { text: "Quick 3-minute self-check: Confirm single desired outcome", minutes: 5, done: false },
+          { text: `Focused block on ${title.slice(0, 30)}`, minutes: Math.max(20, duration - 15), done: false },
+          { text: "Review against time prediction and wrap up", minutes: 10, done: false }
+        ];
+      } else {
+        goodEnough = "Complete scheduled milestone within budgeted time window.";
+        subtasks = [
+          { text: "Solo initiation & focus execution", minutes: Math.max(25, duration - 10), done: false },
+          { text: "Milestone wrap-up & pause", minutes: 10, done: false }
+        ];
+      }
+
+      return {
+        id: `ev-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        title,
+        startTime,
+        duration,
+        category,
+        goodEnough,
+        subtasks
+      };
+    }
+
+    function loadSampleSchedule() {
+      state.events = [
+        {
+          id: `ev-${Date.now()}-1`,
+          title: 'Morning Focus: High-Priority Deliverable',
+          startTime: '09:30',
+          duration: 60,
+          category: 'focus',
+          goodEnough: 'Outline core goals and send draft; stop before over-formatting',
+          subtasks: [
+            { text: 'Clear desk surface & open only needed doc', minutes: 5, done: false },
+            { text: 'Draft high-priority sections', minutes: 35, done: false },
+            { text: 'Send quick summary update', minutes: 10, done: false }
+          ]
+        },
+        {
+          id: `ev-${Date.now()}-2`,
+          title: 'Cook Lunch & Quick Kitchen Reset',
+          startTime: '12:30',
+          duration: 40,
+          category: 'meal',
+          goodEnough: 'Eat wholesome meal, rinse skillet and knives; leave cups for later',
+          subtasks: [
+            { text: 'Mise-en-place prep ingredients', minutes: 10, done: false },
+            { text: 'Cook main meal', minutes: 15, done: false },
+            { text: '[Dish Window] Wash prep knives & boards while heating', minutes: 8, done: false },
+            { text: 'Plate food and sit down to enjoy', minutes: 7, done: false }
+          ]
+        },
+        {
+          id: `ev-${Date.now()}-3`,
+          title: 'Admin, Emails & Task Prioritization',
+          startTime: '15:00',
+          duration: 45,
+          category: 'chores',
+          goodEnough: 'Answer top 3 urgent messages; archive the rest',
+          subtasks: [
+            { text: 'Set 15m timer & scan inbox', minutes: 15, done: false },
+            { text: 'Reply to 3 vital emails', minutes: 20, done: false },
+            { text: 'Close email tab completely', minutes: 5, done: false }
+          ]
+        }
+      ];
+      if (typeof closeGCalSyncModal === 'function') closeGCalSyncModal();
+      renderTimeline();
+      playChime('bell');
+      alertBox("Loaded realistic 3-block schedule into Timeline.", "Schedule Ready");
+    }

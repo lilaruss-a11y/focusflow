@@ -725,7 +725,7 @@
     }
 
     // High-performance Gemini Vision caller with dynamic model discovery and strict 8s timeout
-    async function callGeminiGenerateContent({ prompt, inlineImage = null, key = '', expectJson = false, onStatus = null }) {
+    async function callGeminiGenerateContent({ prompt, inlineImage = null, inlineImages = null, key = '', expectJson = false, onStatus = null }) {
       const activeKey = (key || getGeminiApiKey() || '').trim();
       if (!activeKey) {
         throw new Error("API_KEY_REQUIRED");
@@ -737,6 +737,18 @@
           inlineData: {
             mimeType: inlineImage.mimeType || 'image/jpeg',
             data: inlineImage.base64Data
+          }
+        });
+      }
+      if (Array.isArray(inlineImages)) {
+        inlineImages.forEach(img => {
+          if (img && img.base64Data) {
+            parts.push({
+              inlineData: {
+                mimeType: img.mimeType || 'image/jpeg',
+                data: img.base64Data
+              }
+            });
           }
         });
       }

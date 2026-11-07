@@ -3110,16 +3110,22 @@ function testSampleWalmartReceiptPhoto() {
     }
 
     function checkExpiringSoonAlerts(items) {
-      const banner = document.getElementById('chef-expiring-alert');
-      const text = document.getElementById('chef-expiring-alert-text');
-      if (banner && text) {
-        if (items && items.length > 0) {
-          text.textContent = `Ingredients expiring soon: ${items.slice(0, 3).join(', ')}. Use them up in your next recipe!`;
-          banner.classList.remove('hidden');
-        } else {
-          banner.classList.add('hidden');
+      const pantryBanner = document.getElementById('pantry-expiring-alert');
+      const pantryText = document.getElementById('pantry-expiring-alert-text');
+      const chefBanner = document.getElementById('chef-expiring-alert');
+      const chefText = document.getElementById('chef-expiring-alert-text');
+      const hasExpiring = items && items.length > 0;
+      const msg = hasExpiring ? `Ingredients expiring soon: ${items.slice(0, 3).join(', ')}. Use them up in your next recipe!` : '';
+
+      [pantryBanner, chefBanner].forEach(b => {
+        if (b) {
+          if (hasExpiring) b.classList.remove('hidden');
+          else b.classList.add('hidden');
         }
-      }
+      });
+      [pantryText, chefText].forEach(t => {
+        if (t && hasExpiring) t.textContent = msg;
+      });
     }
 
     function prioritizeExpiringIngredients() {

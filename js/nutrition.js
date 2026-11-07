@@ -1614,642 +1614,6 @@
       }, 1200);
     }
 
-    // Modal helpers for Calendar & Sync
-        state.newEventIsFixed = false;
-    function setNewEventAnchorType(isFixed) {
-      state.newEventIsFixed = Boolean(isFixed);
-      const btnFixed = document.getElementById('btn-anchor-fixed');
-      const btnFlex = document.getElementById('btn-anchor-flexible');
-      if (btnFixed && btnFlex) {
-        if (isFixed) {
-          btnFixed.className = "py-2 px-2 rounded-xl bg-pastel-sky/20 border-2 border-pastel-sky text-pastel-sky font-bold text-center transition flex flex-col items-center justify-center min-h-[52px]";
-          btnFixed.innerHTML = '<span class="text-xs font-bold">🔒 Fixed Anchor</span><span class="text-[10px] text-pastel-sky/80 mt-0.5">(Class / Appt)</span>';
-          btnFlex.className = "py-2 px-2 rounded-xl bg-dark-base border-2 border-dark-border text-slate-400 font-semibold text-center transition flex flex-col items-center justify-center min-h-[52px]";
-          btnFlex.innerHTML = '<span class="text-xs font-bold">⏳ Flexible Task</span><span class="text-[10px] text-slate-500 mt-0.5">(Self-Paced)</span>';
-        } else {
-          btnFixed.className = "py-2 px-2 rounded-xl bg-dark-base border-2 border-dark-border text-slate-400 font-semibold text-center transition flex flex-col items-center justify-center min-h-[52px]";
-          btnFixed.innerHTML = '<span class="text-xs font-bold">🔒 Fixed Anchor</span><span class="text-[10px] text-slate-500 mt-0.5">(Class / Appt)</span>';
-          btnFlex.className = "py-2 px-2 rounded-xl bg-pastel-coral/20 border-2 border-pastel-coral text-pastel-coral font-bold text-center transition flex flex-col items-center justify-center min-h-[52px]";
-          btnFlex.innerHTML = '<span class="text-xs font-bold">⏳ Flexible Task</span><span class="text-[10px] text-pastel-coral/80 mt-0.5">(Self-Paced)</span>';
-        }
-      }
-    }
-
-    function checkNewEventCalibrationTip(title) {
-      const tipEl = document.getElementById('new-event-calib-tip');
-      if (!tipEl) return;
-      const lower = (title || '').toLowerCase();
-      if (lower.includes('ready') || lower.includes('dress') || lower.includes('morning')) {
-        tipEl.innerHTML = "💡 <strong>Historical Calibration:</strong> 'Getting Ready' routines average <strong>48m</strong> in reality (+18m vs 30m plan). Consider scheduling 45m with 10m buffer.";
-        tipEl.classList.remove('hidden');
-      } else if (lower.includes('homework') || lower.includes('study') || lower.includes('paper') || lower.includes('code')) {
-        tipEl.innerHTML = "💡 <strong>Hyperfocus Calibration:</strong> Deep homework blocks stretch by <strong>+22m</strong> on average. We recommend inserting a 15m transition buffer right after.";
-        tipEl.classList.remove('hidden');
-      } else if (lower.includes('class') || lower.includes('lecture') || lower.includes('lab') || lower.includes('meeting')) {
-        setNewEventAnchorType(true);
-        tipEl.innerHTML = "🔒 <strong>Fixed Anchor Detected:</strong> Automatically flagged as fixed commitment (100% adherence history).";
-        tipEl.classList.remove('hidden');
-      } else {
-        tipEl.classList.add('hidden');
-      }
-    }
-
-    function logActualDurationFromEditModal() {
-      if (!state.activeEventModal) return;
-      const ev = state.activeEventModal;
-      const input = document.getElementById('edit-event-actual-duration');
-      const val = parseInt(input ? input.value : 0, 10);
-      if (!isNaN(val) && val > 0) {
-        ev.actualDuration = val;
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        state.timeEstimationHistory.push({
-          id: `te-${Date.now()}`,
-          date: dateStr,
-          title: ev.title,
-          category: ev.category || 'focus',
-          isFixed: Boolean(ev.isFixedAnchor),
-          plannedMin: ev.duration,
-          actualMin: val,
-          deltaMin: val - ev.duration
-        });
-        if (state.timeEstimationHistory.length > 15) state.timeEstimationHistory.shift();
-        saveAppState();
-        renderStructuredCalendarGrid();
-      renderCompactTimelineListView();
-      if (window.lucide) lucide.createIcons();
-        playChime('bell');
-        alertBox(`Logged ${val}m reality for "${ev.title}". Calibration graph updated!`, "Reality Logged");
-      }
-    }
-
-    function openNewEventModal() {
-      populateCalendarCategoriesDropdowns();
-      document.getElementById('new-event-modal').classList.remove('hidden');
-    }
-    function closeNewEventModal() { document.getElementById('new-event-modal').classList.add('hidden'); }
-    function saveNewCalendarEvent() {
-      const title = document.getElementById('new-event-title').value.trim();
-      const start = document.getElementById('new-event-start').value;
-      const duration = parseInt(document.getElementById('new-event-duration').value, 10) || 30;
-      const cat = document.getElementById('new-event-category').value;
-      if (!title) return;
-
-      calendarHistory.recordState();
-      const loc = (document.getElementById('new-event-location') && document.getElementById('new-event-location').value.trim()) || '';
-      const newEv = {
-        id: `ev-${Date.now()}`,
-        title,
-        startTime: start,
-        duration,
-        category: cat,
-        location: loc,
-        entryType: state.newEventEntryType || 'both',
-        actualDuration: state.newEventEntryType === 'reality' ? duration : undefined,
-        date: getSelectedTimelineDateStr() || getTodayDateString(),
-        lastLocalEdit: Date.now(),
-        subtasks: [
-          { text: 'Start with 0-friction prep', minutes: 5, done: false },
-          { text: 'Complete essential core block', minutes: Math.max(10, duration - 10), done: false },
-          { text: 'Wrap up and clean surfaces', minutes: 5, done: false }
-        ]
-      };
-      state.events.push(newEv);
-      saveAppState();
-      renderTimeline();
-      pushEventChangeToGoogle(newEv, 'create');
-      if (typeof ffUploadNow === 'function') ffUploadNow(true);
-      closeNewEventModal();
-      playChime('bell');
-    }
-
-    function openGCalSyncModal() {
-      populateCalendarCategoriesDropdowns();
-      renderConnectedCalendars();
-      updateGoogleCalendarDirectUI();
-      document.getElementById('gcal-sync-modal').classList.remove('hidden');
-    }
-    function closeGCalSyncModal() { document.getElementById('gcal-sync-modal').classList.add('hidden'); }
-
-    // ==============================================
-    // CALENDAR PARSER & REAL SYNC CONTROLLERS
-    // ==============================================
-
-    function parseICS(icsText) {
-      const lines = icsText.split(/\r\n|\r|\n/);
-      const events = [];
-      let currentEvent = null;
-
-      for (let i = 0; i < lines.length; i++) {
-        let line = lines[i].trim();
-        if (line.startsWith('BEGIN:VEVENT')) {
-          currentEvent = {};
-        } else if (line.startsWith('END:VEVENT')) {
-          if (currentEvent && currentEvent.title) {
-            events.push(currentEvent);
-          }
-          currentEvent = null;
-        } else if (currentEvent) {
-          if (line.startsWith('SUMMARY:')) {
-            currentEvent.title = line.substring(8);
-          } else if (line.startsWith('DTSTART')) {
-            const val = line.split(':')[1] || '';
-            // Handle formats like 20261031T140000Z or 20261031T140000
-            if (val.includes('T')) {
-              const timePart = val.split('T')[1];
-              currentEvent.startTime = `${timePart.substring(0, 2)}:${timePart.substring(2, 4)}`;
-            } else {
-              currentEvent.startTime = '09:00';
-            }
-          } else if (line.startsWith('DURATION:')) {
-            const dur = line.substring(9);
-            const mins = dur.match(/(\d+)M/);
-            const hrs = dur.match(/(\d+)H/);
-            let total = 0;
-            if (hrs) total += parseInt(hrs[1], 10) * 60;
-            if (mins) total += parseInt(mins[1], 10);
-            currentEvent.duration = total || 45;
-          }
-        }
-      }
-      return events;
-    }
-
-    function handleIcsFileUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const text = e.target.result;
-        const calName = file.name.replace(/\.ics$/i, '') || 'Imported Calendar';
-        const parsed = parseICalEvents(text, calName, 'focus', 'sky');
-        if (parsed.length > 0) {
-          const manualEvents = (state.events || []).filter(ev => 
-            !ev.id.startsWith('ev-ical-') && 
-            !ev.id.startsWith('ev-buf-') && 
-            ev.id !== 'ev-meal-choreo' &&
-            !ev.title.includes('Focus & Task Execution')
-          );
-          state.events = [...manualEvents, ...parsed];
-          saveAppState();
-          closeGCalSyncModal();
-          renderTimeline();
-          if (typeof ffUploadNow === 'function') {
-            ffUploadNow(true).catch(() => {});
-          }
-          playChime('bell');
-          alertBox(`Successfully imported ${parsed.length} events from "${file.name}" across all days of the week!`, "Calendar Imported");
-        } else {
-          alertBox("Could not find standard events in that file. Please verify it is a valid .ics calendar export.", "Import Notice");
-        }
-      };
-      reader.readAsText(file);
-    }
-
-
-    // ==============================================
-    // ADHD SCAFFOLDING CALENDAR GENERATOR
-    // ==============================================
-
-    function scaffoldCalendarEvent(title, startTime, rawDuration, category = 'focus') {
-      const stage = state.scaffoldLevel || 1;
-      const duration = Math.max(20, rawDuration || 45);
-
-      let goodEnough = "Complete essential agenda items and note down 1 clear next action.";
-      let subtasks = [];
-
-      if (category === 'meal') {
-        goodEnough = "Cook wholesome food, eat, rinse cooking pan; leave deep scrub for later.";
-        subtasks = [
-          { text: "Mise-en-place: wash & chop all ingredients before turning on heat", minutes: 10, done: false },
-          { text: "Active cook / simmer", minutes: Math.max(10, duration - 22), done: false },
-          { text: "[Safe Dish Window] Wash knives and cutting board while food simmers", minutes: 7, done: false },
-          { text: "Plate meal, rinse pan, sit down to enjoy", minutes: 5, done: false }
-        ];
-      } else if (stage === 1) {
-        // Level 1: Microscopic Co-Pilot scaffolding
-        goodEnough = "Hit B-minus standard on core deliverable; stop before perfectionist rabbit holes.";
-        subtasks = [
-          { text: "0-Friction Start: Open single needed doc, close other tabs, set timer", minutes: 5, done: false },
-          { text: `Core Sprint: Focus solely on ${title.slice(0, 30)}`, minutes: Math.max(15, duration - 15), done: false },
-          { text: "Stopping Boundary: Save draft, write down where to resume tomorrow, log off", minutes: 10, done: false }
-        ];
-      } else if (stage === 2) {
-        // Level 2: Self-Draft + Coach
-        goodEnough = "Execute primary objective and summarize outcomes.";
-        subtasks = [
-          { text: "Quick 3-minute self-check: Confirm single desired outcome", minutes: 5, done: false },
-          { text: `Focused block on ${title.slice(0, 30)}`, minutes: Math.max(20, duration - 15), done: false },
-          { text: "Review against time prediction and wrap up", minutes: 10, done: false }
-        ];
-      } else {
-        // Level 3: Solo Flight
-        goodEnough = "Complete scheduled milestone within budgeted time window.";
-        subtasks = [
-          { text: "Solo initiation & focus execution", minutes: Math.max(25, duration - 10), done: false },
-          { text: "Milestone wrap-up & pause", minutes: 10, done: false }
-        ];
-      }
-
-      return {
-        id: `ev-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        title,
-        startTime,
-        duration,
-        category,
-        goodEnough,
-        subtasks
-      };
-    }
-
-    function saveAndSyncIcalUrl() {
-      const inputEl = document.getElementById('gcal-feed-url-input') || document.getElementById('gcal-ical-url-input');
-      const url = inputEl ? inputEl.value.trim() : '';
-      if (url) {
-        localStorage.setItem('focusflow_gcal_ical_url', url);
-        if (!state.connectedCalendars) state.connectedCalendars = [];
-        const exists = state.connectedCalendars.some(c => c.url === url);
-        if (!exists) {
-          state.connectedCalendars.push({
-            id: `cal-${Date.now()}`,
-            name: 'Google Calendar',
-            url: url,
-            category: 'focus',
-            color: 'sky',
-            active: true
-          });
-          localStorage.setItem('focusflow_connected_calendars', JSON.stringify(state.connectedCalendars));
-          renderConnectedCalendars();
-        }
-      }
-      syncAllConnectedCalendars();
-    }
-
-
-    function loadSampleSchedule() {
-      state.events = [
-        {
-          id: `ev-${Date.now()}-1`,
-          title: 'Morning Focus: High-Priority Deliverable',
-          startTime: '09:30',
-          duration: 60,
-          category: 'focus',
-          goodEnough: 'Outline core goals and send draft; stop before over-formatting',
-          subtasks: [
-            { text: 'Clear desk surface & open only needed doc', minutes: 5, done: false },
-            { text: 'Draft high-priority sections', minutes: 35, done: false },
-            { text: 'Send quick summary update', minutes: 10, done: false }
-          ]
-        },
-        {
-          id: `ev-${Date.now()}-2`,
-          title: 'Cook Lunch & Quick Kitchen Reset',
-          startTime: '12:30',
-          duration: 40,
-          category: 'meal',
-          goodEnough: 'Eat wholesome meal, rinse skillet and knives; leave cups for later',
-          subtasks: [
-            { text: 'Mise-en-place prep ingredients', minutes: 10, done: false },
-            { text: 'Cook main meal', minutes: 15, done: false },
-            { text: '[Dish Window] Wash prep knives & boards while heating', minutes: 8, done: false },
-            { text: 'Plate food and sit down to enjoy', minutes: 7, done: false }
-          ]
-        },
-        {
-          id: `ev-${Date.now()}-3`,
-          title: 'Admin, Emails & Task Prioritization',
-          startTime: '15:00',
-          duration: 45,
-          category: 'chores',
-          goodEnough: 'Answer top 3 urgent messages; archive the rest',
-          subtasks: [
-            { text: 'Set 15m timer & scan inbox', minutes: 15, done: false },
-            { text: 'Reply to 3 vital emails', minutes: 20, done: false },
-            { text: 'Close email tab completely', minutes: 5, done: false }
-          ]
-        }
-      ];
-      closeGCalSyncModal();
-      renderTimeline();
-      playChime('bell');
-      alertBox("Loaded realistic 3-block schedule into Timeline.", "Schedule Ready");
-    }
-
-    // Auto-detect if user is already running the app in standalone/installed mode
-    
-    // ==============================================
-    // SEAMLESS INSTANT APP UPDATER (NO RE-INSTALL NEEDED)
-    // ==============================================
-    const APP_VERSION = "1.2.0";
-
-    function checkForAppUpdates() {
-      // Whenever the user opens the installed app, check for latest version
-      try {
-        const lastKnownVersion = localStorage.getItem('focusflow_app_version');
-        if (!lastKnownVersion) {
-          localStorage.setItem('focusflow_app_version', APP_VERSION);
-        } else if (lastKnownVersion !== APP_VERSION) {
-          localStorage.setItem('focusflow_app_version', APP_VERSION);
-          alertBox(`FocusFlow updated to version ${APP_VERSION} automatically!`, "App Updated");
-        }
-      } catch (err) {
-        console.warn('Update check', err);
-      }
-    }
-
-    function checkAppInstallState() {
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-      const isInstalled = isStandalone || localStorage.getItem('focusflow_app_installed') === 'true';
-      const btn = document.getElementById('btn-install-app');
-      if (btn && isInstalled) {
-        btn.classList.add('hidden');
-        btn.style.setProperty('display', 'none', 'important');
-      }
-    }
-
-    window.addEventListener('appinstalled', () => {
-      localStorage.setItem('focusflow_app_installed', 'true');
-      checkAppInstallState();
-    });
-
-    function closeInstallAppModal() {
-      localStorage.setItem('focusflow_app_installed', 'true');
-      checkAppInstallState();
-      const modal = document.getElementById('install-app-modal');
-      if (modal) modal.classList.add('hidden');
-    }
-
-
-
-    function getGeminiApiKey() {
-      return state.geminiApiKey || localStorage.getItem('focusflow_gemini_api_key') || localStorage.getItem('gemini_api_key') || '';
-    }
-
-    function setGeminiApiKey(key) {
-      const cleanKey = (key || '').trim();
-      state.geminiApiKey = cleanKey;
-      if (cleanKey) {
-        localStorage.setItem('focusflow_gemini_api_key', cleanKey);
-        localStorage.setItem('gemini_api_key', cleanKey);
-      } else {
-        localStorage.removeItem('focusflow_gemini_api_key');
-        localStorage.removeItem('gemini_api_key');
-      }
-    }
-
-    function openApiKeyModal() {
-      const modal = document.getElementById('apikey-modal');
-      const input = document.getElementById('gemini-api-key-input');
-      const statusEl = document.getElementById('apikey-validation-status');
-      const currentKey = getGeminiApiKey();
-
-      if (input) {
-        input.value = currentKey;
-      }
-      if (statusEl) {
-        if (currentKey) {
-          statusEl.textContent = "✓ Key connected and active";
-          statusEl.className = "text-[11px] text-pastel-mint mt-1 block font-semibold";
-          statusEl.classList.remove('hidden');
-        } else {
-          statusEl.classList.add('hidden');
-        }
-      }
-      if (modal) modal.classList.remove('hidden');
-      if (window.lucide) lucide.createIcons();
-    }
-
-    function closeApiKeyModal() {
-      const modal = document.getElementById('apikey-modal');
-      if (modal) modal.classList.add('hidden');
-    }
-
-    function saveApiKey() {
-      const input = document.getElementById('gemini-api-key-input');
-      if (!input) return;
-      const key = input.value.trim();
-      setGeminiApiKey(key);
-      closeApiKeyModal();
-      playChime('bell');
-      alertBox("Gemini API key saved.", "Key Saved");
-    }
-
-    // Modal: Antigravity iPhone Transfer Actions
-    function openAntigravityTransferModal() {
-      const modal = document.getElementById('antigravity-transfer-modal');
-      if (!modal) return;
-      modal.classList.remove('hidden');
-      
-      // Pre-fill the fallback textarea with the current source
-      const rawBox = document.getElementById('raw-export-textarea');
-      if (rawBox) {
-        rawBox.value = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-      }
-      
-      if (window.lucide) {
-        lucide.createIcons();
-      }
-      playChime('bell');
-    }
-
-    function closeAntigravityTransferModal() {
-      const modal = document.getElementById('antigravity-transfer-modal');
-      if (modal) modal.classList.add('hidden');
-    }
-
-    // Dedicated iOS native file export (Uses Web Share File API if supported, or direct Blob URL)
-    async function downloadForIPhoneFiles() {
-      const fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-      const fileName = 'FocusFlow.html';
-      const file = new File([fullHtml], fileName, { type: 'text/html;charset=utf-8' });
-
-      // If Chrome on iOS supports navigator.share with files, open the native iOS Share Sheet
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: 'FocusFlow Project',
-            text: 'FocusFlow ADHD Executive Daily Assistant file for Antigravity'
-          });
-          playChime('bell');
-          alertBox("Shared! Select 'Save to Files' or open with Antigravity.", "iOS Share Sheet");
-          return;
-        } catch (err) {
-          if (err.name !== 'AbortError') {
-            console.warn("Share sheet declined, using direct file download...", err);
-          } else {
-            return; // User canceled the share sheet
-          }
-        }
-      }
-
-      // Standard iOS browser download fallback
-      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      link.setAttribute('target', '_blank');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
-
-      playChime('bell');
-      alertBox("Downloaded 'FocusFlow.html'. In Chrome, tap 'Open In...' -> 'Save to Files' to place it into your Antigravity folder.", "File Ready");
-    }
-
-    function selectAndCopyRawBox() {
-      const box = document.getElementById('raw-export-textarea');
-      if (!box) return;
-      box.focus();
-      box.setSelectionRange(0, 9999999);
-      try {
-        document.execCommand('copy');
-        alertBox("All code selected and copied!", "Code Copied");
-        playChime('bell');
-      } catch (e) {
-        alertBox("Please long-press inside the box and tap 'Select All' then 'Copy'.", "Manual Copy");
-      }
-    }
-
-    function copyFullSourceCodeToClipboard() {
-      const fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-      const textArea = document.createElement("textarea");
-      textArea.value = fullHtml;
-      textArea.style.position = "fixed";
-      textArea.style.top = "0";
-      textArea.style.left = "0";
-      textArea.style.opacity = "0.01";
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      textArea.setSelectionRange(0, 9999999);
-      let success = false;
-      try {
-        success = document.execCommand('copy');
-      } catch (err) {
-        success = false;
-      }
-      document.body.removeChild(textArea);
-
-      if (success) {
-        playChime('bell');
-        alertBox("Full index.html copied to your clipboard. Paste into Antigravity!", "Copied for Antigravity");
-      } else {
-        // Highlight fallback box directly
-        selectAndCopyRawBox();
-      }
-    }
-
-    function downloadProjectFileDirect() {
-      const fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'index.html';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      playChime('bell');
-      alertBox("Downloaded 'index.html' to your iPhone Files.", "File Saved");
-    }
-
-    function copyAntigravityAgentPrompt() {
-      const prompt = `I am loading an ADHD executive function web app into Antigravity called FocusFlow. It is built as a responsive single-file client app with Tailwind CSS, vanilla JS, and Lucide icons.
-
-Current Core Features:
-1. Fading Scaffolding system (L1 Co-Pilot, L2 Self-Draft + Coach, L3 Solo Flight) across all tools to train neural pathways.
-2. Individualized body frame & target weight calculator with Cronometer-grade macro, micro, and amino acid breakdowns (including dopamine precursors like L-tyrosine and water tracking).
-3. Reverse-chained cooking choreographer with safe passive dish-washing windows.
-4. Categorized Recipe Codex (filtered by occasion, format, and origin) that links directly to cooking and nutrition logs.
-5. Eisenhower priority matrix with direct timeline integration.
-6. Taskmaster HUD with visual countdown timers, +2m grace extensions, and anti-over-thoroughness stopping boundaries.
-
-Goal: Please inspect index.html, index the codebase, and suggest next upgrades (e.g. modularizing, local offline storage via Dexie.js, or Apple HealthKit sync).`;
-
-      const textArea = document.createElement("textarea");
-      textArea.value = prompt;
-      textArea.style.position = "fixed";
-      textArea.style.top = "0";
-      textArea.style.left = "0";
-      textArea.style.opacity = "0.01";
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      textArea.setSelectionRange(0, 9999999);
-      try {
-        document.execCommand('copy');
-        playChime('bell');
-        alertBox("Agent briefing copied. Paste into Antigravity's chat!", "Prompt Copied");
-      } catch (err) {
-        alertBox("Failed to copy prompt.", "Error");
-      }
-      document.body.removeChild(textArea);
-    }
-
-    // Custom alert & error notification system
-    // Errors NEVER auto-dismiss; they stay on screen until the user taps [✕], with a [Copy Error] button
-    function alertBox(msg, title = "FocusFlow") {
-      const msgStr = String(msg || '');
-      const titleStr = String(title || 'FocusFlow');
-      const isError = /error|failed|failure|timed out|not enabled|needed|required|invalid|rejected/i.test(`${titleStr} ${msgStr}`);
-      const box = document.createElement('div');
-      
-      const borderColor = isError ? 'border-rose-400/80 bg-dark-elevated shadow-rose-900/40' : 'border-pastel-mint bg-dark-elevated shadow-2xl';
-      const titleColor = isError ? 'text-rose-400' : 'text-pastel-mint';
-      const iconName = isError ? 'alert-triangle' : 'bell';
-      const iconColor = isError ? 'text-rose-400' : 'text-pastel-mint';
-
-      box.className = `fixed bottom-5 right-5 z-[9999] ${borderColor} text-white p-4 rounded-2xl shadow-2xl flex flex-col gap-2.5 text-xs max-w-sm border backdrop-blur-md transition-all duration-300`;
-      
-      const safeEscaped = msgStr.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-      
-      box.innerHTML = `
-        <div class="flex items-start justify-between gap-3 w-full">
-          <div class="flex items-start gap-2.5 min-w-0">
-            <i data-lucide="${iconName}" class="w-5 h-5 ${iconColor} shrink-0 mt-0.5"></i>
-            <div class="min-w-0">
-              <strong class="block ${titleColor} font-bold text-xs">${titleStr}</strong>
-              <div class="text-[11px] text-slate-200 break-words mt-0.5 leading-relaxed">${msgStr}</div>
-            </div>
-          </div>
-          <button type="button" aria-label="Close" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 shrink-0 transition" onclick="this.closest('.fixed').remove()">
-            <i data-lucide="x" class="w-4 h-4"></i>
-          </button>
-        </div>
-        ${isError ? `
-          <div class="pt-1 flex items-center justify-end gap-2 border-t border-dark-border/50">
-            <button type="button" class="px-2.5 py-1 rounded-lg bg-dark-base border border-dark-border text-[10px] text-slate-300 hover:text-white font-medium flex items-center gap-1 transition" onclick="navigator.clipboard.writeText('${safeEscaped}'); this.textContent='✓ Copied!'; setTimeout(()=>this.textContent='Copy Error', 2000)">
-              <i data-lucide="copy" class="w-3 h-3"></i>
-              <span>Copy Error</span>
-            </button>
-            <button type="button" class="px-3 py-1 rounded-lg bg-rose-500/20 border border-rose-500/40 text-[10px] text-rose-300 hover:bg-rose-500/30 font-semibold transition" onclick="this.closest('.fixed').remove()">
-              Dismiss ✕
-            </button>
-          </div>
-        ` : ''}
-      `;
-      
-      document.body.appendChild(box);
-      if (window.lucide) lucide.createIcons();
-
-      // Only auto-dismiss non-error notices
-      if (!isError) {
-        setTimeout(() => {
-          if (box.parentNode) {
-            box.style.opacity = '0';
-            setTimeout(() => box.remove(), 300);
-          }
-        }, 5000);
-      }
-    }
-
-    // Boot on Load
-    
     // ==============================================
     // USDA COMMON WHOLE FOODS DATABASE (50+ Whole Foods)
     // ==============================================
@@ -2702,6 +2066,440 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       return 'shelf';
     }
 
+    // ==============================================
+    // PERSONAL CUSTOM BARCODE & FOOD DATABASE
+    // ==============================================
+    function getCustomBarcodeDb() {
+      try {
+        return JSON.parse(localStorage.getItem('focusflow_custom_barcode_db') || '{}');
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveCustomBarcodeItem(barcode, product) {
+      if (!barcode || !product) return;
+      try {
+        const db = getCustomBarcodeDb();
+        db[barcode] = {
+          name: product.name,
+          brand: product.brand || 'Verified Food',
+          amount: product.amount || 1,
+          unit: product.unit || 'items',
+          category: product.category || inferFoodCategory(product.name, ''),
+          storage: product.storage || inferStorageZone(product.category, product.name),
+          kcal: product.kcal || 0,
+          protein: product.protein || 0,
+          carbs: product.carbs || 0,
+          fat: product.fat || 0,
+          fiber: product.fiber || 0,
+          sodium: product.sodium || 0,
+          sourceBadge: product.sourceBadge || '💾 Your Custom Food Database',
+          barcode: barcode,
+          savedAt: new Date().toISOString()
+        };
+        localStorage.setItem('focusflow_custom_barcode_db', JSON.stringify(db));
+      } catch (e) {}
+    }
+
+    // ==============================================
+    // 5-TIER NUTRITIONAL DATABASE CASCADE QUERIES
+    // ==============================================
+
+    // Tier 2: USDA FoodData Central Branded Foods
+    async function queryUsdaFoodDataCentral(code) {
+      const usdaKey = (localStorage.getItem('focusflow_usda_api_key') || 'DEMO_KEY').trim();
+      const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(code)}&dataType=Branded&pageSize=1&api_key=${encodeURIComponent(usdaKey)}`;
+
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 6000);
+      try {
+        const resp = await fetch(url, { signal: ctrl.signal });
+        clearTimeout(timer);
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        if (data && Array.isArray(data.foods) && data.foods.length > 0) {
+          const f = data.foods[0];
+          let kcal = 0, protein = 0, carbs = 0, fat = 0, fiber = 0, sodium = 0;
+          (f.foodNutrients || []).forEach(n => {
+            const name = (n.nutrientName || '').toLowerCase();
+            const val = Math.round(n.value || 0);
+            if (name.includes('energy') && (n.unitName === 'KCAL' || !kcal)) kcal = val;
+            else if (name.includes('protein')) protein = val;
+            else if (name.includes('carbohydrate')) carbs = val;
+            else if (name.includes('total lipid') || name === 'fat') fat = val;
+            else if (name.includes('fiber')) fiber = val;
+            else if (name.includes('sodium')) sodium = val;
+          });
+
+          const title = (f.description || 'Branded Food Item').toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
+          const cat = inferFoodCategory(title, f.brandedFoodCategory || '');
+          const stor = inferStorageZone(cat, title);
+          const qParsed = parsePackageQuantity(f.packageWeight || f.householdServingFullText || `${f.servingSize || 1} ${f.servingSizeUnit || 'serving'}`);
+
+          return {
+            name: title,
+            brand: f.brandOwner || f.brandName || 'USDA Branded',
+            amount: qParsed.amount,
+            unit: qParsed.unit,
+            category: cat,
+            storage: stor,
+            kcal: kcal || 100,
+            protein: protein,
+            carbs: carbs,
+            fat: fat,
+            fiber: fiber,
+            sodium: sodium,
+            sourceBadge: '🏛️ USDA FoodData Central',
+            barcode: code
+          };
+        }
+      } catch (err) {
+        clearTimeout(timer);
+        console.warn("USDA FDC lookup skipped/timeout:", err);
+      }
+      return null;
+    }
+
+    // Tier 3: Nutritionix API
+    async function queryNutritionix(code) {
+      const appId = (localStorage.getItem('focusflow_nutritionix_app_id') || '').trim();
+      const appKey = (localStorage.getItem('focusflow_nutritionix_app_key') || '').trim();
+      if (!appId || !appKey) return null;
+
+      const url = `https://trackapi.nutritionix.com/v2/search/item?upc=${encodeURIComponent(code)}`;
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 6000);
+      try {
+        const resp = await fetch(url, {
+          headers: {
+            'x-app-id': appId,
+            'x-app-key': appKey
+          },
+          signal: ctrl.signal
+        });
+        clearTimeout(timer);
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        if (data && Array.isArray(data.foods) && data.foods.length > 0) {
+          const f = data.foods[0];
+          const name = f.food_name || f.item_name || 'Nutritionix Food Item';
+          const cat = inferFoodCategory(name, '');
+          const stor = inferStorageZone(cat, name);
+          const qParsed = parsePackageQuantity(`${f.serving_weight_grams ? f.serving_weight_grams + ' g' : (f.serving_qty + ' ' + (f.serving_unit || 'items'))}`);
+
+          return {
+            name: name,
+            brand: f.brand_name || 'Nutritionix Verified',
+            amount: qParsed.amount,
+            unit: qParsed.unit,
+            category: cat,
+            storage: stor,
+            kcal: Math.round(f.nf_calories || 0),
+            protein: Math.round(f.nf_protein || 0),
+            carbs: Math.round(f.nf_total_carbohydrate || 0),
+            fat: Math.round(f.nf_total_fat || 0),
+            fiber: Math.round(f.nf_dietary_fiber || 0),
+            sodium: Math.round(f.nf_sodium || 0),
+            sourceBadge: '🥗 Nutritionix Verified',
+            barcode: code
+          };
+        }
+      } catch (err) {
+        clearTimeout(timer);
+        console.warn("Nutritionix lookup skipped/timeout:", err);
+      }
+      return null;
+    }
+
+    // Tier 4: Open Food Facts API (world & US endpoints)
+    async function queryOpenFoodFacts(code) {
+      const endpoints = [
+        `https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(code)}.json`,
+        `https://us.openfoodfacts.org/api/v0/product/${encodeURIComponent(code)}.json`
+      ];
+
+      for (const endpoint of endpoints) {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 6000);
+        try {
+          const resp = await fetch(endpoint, { signal: ctrl.signal });
+          clearTimeout(timer);
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data && data.status === 1 && data.product) {
+              const p = data.product;
+              const n = p.nutriments || {};
+              const name = p.product_name || p.generic_name || p.product_name_en || 'Packaged Food Item';
+              const cat = inferFoodCategory(name, p.categories || '');
+              const stor = inferStorageZone(cat, name);
+              const qParsed = parsePackageQuantity(p.quantity || p.serving_size || '');
+
+              return {
+                name: name,
+                brand: p.brands || 'Open Food Facts',
+                amount: qParsed.amount,
+                unit: qParsed.unit,
+                category: cat,
+                storage: stor,
+                kcal: Math.round(n['energy-kcal_100g'] || n['energy-kcal_serving'] || n['energy-kcal'] || 120),
+                protein: Math.round(n.proteins_100g || n.proteins_serving || 0),
+                carbs: Math.round(n.carbohydrates_100g || n.carbohydrates_serving || 0),
+                fat: Math.round(n.fat_100g || n.fat_serving || 0),
+                fiber: Math.round(n.fiber_100g || n.fiber_serving || 0),
+                sodium: Math.round((n.sodium_100g || n.sodium_serving || 0) * (n.sodium_100g > 10 ? 1 : 1000)),
+                sourceBadge: '🌐 Open Food Facts',
+                barcode: code
+              };
+            }
+          }
+        } catch (err) {
+          clearTimeout(timer);
+        }
+      }
+      return null;
+    }
+
+    // Tier 5: Gemini AI Vision Scanner for Nutrition Facts Label & Package
+    async function handleNutritionLabelVisionUpload(event, barcode) {
+      const files = event && event.target && event.target.files;
+      if (!files || files.length === 0) return;
+
+      const resBox = document.getElementById('barcode-lookup-result');
+      if (resBox) {
+        resBox.innerHTML = `
+          <div class="p-3.5 rounded-2xl bg-dark-elevated border border-pastel-lavender/50 text-xs space-y-2">
+            <div class="flex items-center gap-2 text-pastel-lavender font-semibold">
+              <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>
+              <span id="barcode-ai-label-status">Analyzing Nutrition Facts label with Gemini AI Vision...</span>
+            </div>
+            <p class="text-[11px] text-slate-300">Reading exact calories, macronutrients, serving sizes, and package net weight...</p>
+          </div>
+        `;
+        resBox.classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+      }
+
+      const key = (typeof getGeminiApiKey === 'function') ? getGeminiApiKey() : '';
+      if (!key) {
+        alertBox("Please connect your free Gemini API key in Settings (the 🔑 icon) to use AI Nutrition Label scanning.", "API Key Needed");
+        if (typeof openApiKeyModal === 'function') openApiKeyModal();
+        return;
+      }
+
+      try {
+        const imagePromises = Array.from(files).slice(0, 2).map(file => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const dataUrl = e.target.result;
+              const mimeType = file.type || 'image/jpeg';
+              const base64Data = dataUrl.split(',')[1];
+              resolve({ base64Data, mimeType });
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+        });
+
+        const inlineImages = await Promise.all(imagePromises);
+
+        const prompt = `You are a clinical dietitian and OCR engine for food packages.
+Analyze the provided photo(s) of the Nutrition Facts label and/or package front.
+Extract the exact information and return ONLY a valid JSON object (no markdown, no backticks, no extra text):
+{
+  "name": "Product Name and Variety (e.g. Organic Creamy Peanut Butter)",
+  "brand": "Brand Name",
+  "amount": 16,
+  "unit": "oz",
+  "serving_size": "2 tbsp (32g)",
+  "category": "produce|protein|dairy|grains|frozen|condiments|snacks|beverages|pantry_staples",
+  "storage": "fridge|frozen|counter|shelf",
+  "nutrition": {
+    "kcal": 190,
+    "protein": 8,
+    "carbs": 7,
+    "fat": 16,
+    "fiber": 2,
+    "sodium": 140
+  }
+}
+Guidelines:
+- If package size is visible (e.g. 16 oz, 500 g, 32 fl oz, 1 gal), extract it as amount (number) and unit (string: "oz", "g", "fl oz", "ml", "L", "gal", "items").
+- If net weight is not visible, set amount to 1 and unit to "items".
+- Extract exact calories, protein (g), carbs (g), fat (g), fiber (g), and sodium (mg) from the Nutrition Facts panel.
+- Category must be one of: "produce", "protein", "dairy", "grains", "frozen", "condiments", "snacks", "beverages", "pantry_staples".
+- Storage must be one of: "fridge", "frozen", "counter", "shelf".`;
+
+        let rawResponse = '';
+        if (typeof callGeminiGenerateContent === 'function') {
+          rawResponse = await callGeminiGenerateContent({
+            prompt: prompt,
+            inlineImages: inlineImages,
+            key: key,
+            expectJson: true,
+            onStatus: (msg) => {
+              const sEl = document.getElementById('barcode-ai-label-status');
+              if (sEl) sEl.textContent = msg;
+            }
+          });
+        } else {
+          throw new Error("Gemini Vision caller not loaded");
+        }
+
+        let parsed = null;
+        try {
+          const cleanJson = rawResponse.replace(/```json/gi, '').replace(/```/g, '').trim();
+          parsed = JSON.parse(cleanJson);
+        } catch (e) {
+          const match = rawResponse.match(/\{[\s\S]*\}/);
+          if (match) parsed = JSON.parse(match[0]);
+        }
+
+        if (parsed && parsed.name) {
+          const nut = parsed.nutrition || {};
+          const product = {
+            name: parsed.name,
+            brand: parsed.brand || 'Verified Food',
+            amount: parseFloat(parsed.amount) || 1,
+            unit: parsed.unit || 'items',
+            category: parsed.category || inferFoodCategory(parsed.name, ''),
+            storage: parsed.storage || inferStorageZone(parsed.category, parsed.name),
+            kcal: Math.round(nut.kcal || 0),
+            protein: Math.round(nut.protein || 0),
+            carbs: Math.round(nut.carbs || 0),
+            fat: Math.round(nut.fat || 0),
+            fiber: Math.round(nut.fiber || 0),
+            sodium: Math.round(nut.sodium || 0),
+            sourceBadge: '✨ AI Nutrition Label Verified',
+            barcode: barcode || ''
+          };
+
+          // Save to personal database immediately
+          if (barcode) {
+            saveCustomBarcodeItem(barcode, product);
+          }
+
+          renderBarcodeProductResult(product);
+          playChime('bell');
+        } else {
+          throw new Error("Unable to parse nutrition data from label photo");
+        }
+      } catch (err) {
+        console.warn("AI label vision error:", err);
+        if (resBox) {
+          resBox.innerHTML = `
+            <div class="p-3.5 rounded-2xl bg-dark-elevated border border-amber-400/50 text-xs space-y-2">
+              <div class="text-amber-300 font-semibold flex items-center gap-1.5">
+                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                <span>Could not extract nutrition facts from photo</span>
+              </div>
+              <p class="text-slate-300 text-[11px]">Make sure the Nutrition Facts label is in sharp focus and well-lit. You can also enter a quick item name manually below:</p>
+              <div class="flex gap-2 pt-1">
+                <input type="text" id="barcode-fallback-name" placeholder="Product name..." class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs">
+                <button type="button" onclick="saveUnknownBarcodeItem('${barcode}')" class="px-4 py-2 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs shrink-0">Save</button>
+              </div>
+            </div>
+          `;
+          if (window.lucide) lucide.createIcons();
+        }
+      }
+      if (event && event.target) event.target.value = '';
+    }
+
+    function renderBarcodeProductResult(product) {
+      const resBox = document.getElementById('barcode-lookup-result');
+      if (!resBox) return;
+
+      const qParsed = (product.amount && product.unit) ? { amount: product.amount, unit: product.unit } : parsePackageQuantity(product.quantity);
+      const safeProductJson = JSON.stringify({
+        ...product,
+        amount: qParsed.amount,
+        unit: qParsed.unit
+      }).replace(/"/g, '&quot;');
+
+      resBox.innerHTML = `
+        <div class="space-y-3 text-xs bg-dark-elevated p-3.5 rounded-2xl border border-pastel-lavender/40 shadow-xl">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-1.5 mb-1">
+                <span class="text-[9px] px-2 py-0.5 rounded-md bg-pastel-lavender/15 text-pastel-lavender font-bold uppercase tracking-wider">${product.sourceBadge || 'Verified Food'}</span>
+                ${product.brand ? `<span class="text-[10px] text-slate-400 font-semibold">• ${product.brand}</span>` : ''}
+              </div>
+              <h4 class="font-bold text-white text-sm leading-tight">${product.name}</h4>
+              <span class="text-[11px] text-slate-300 font-mono mt-0.5 block">Package Size: <strong>${qParsed.amount} ${qParsed.unit}</strong></span>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="px-2.5 py-1.5 rounded-xl bg-pastel-mint/15 text-pastel-mint font-mono font-bold text-sm block">${product.kcal} kcal</span>
+            </div>
+          </div>
+
+          <!-- Macros Breakdown -->
+          <div class="grid grid-cols-4 gap-1.5 p-2 rounded-xl bg-dark-base border border-dark-border text-center font-mono text-[11px]">
+            <div><span class="text-slate-400 block text-[9px]">PROTEIN</span><span class="text-pastel-sky font-bold">${product.protein}g</span></div>
+            <div><span class="text-slate-400 block text-[9px]">CARBS</span><span class="text-pastel-butter font-bold">${product.carbs}g</span></div>
+            <div><span class="text-slate-400 block text-[9px]">FAT</span><span class="text-pastel-peach font-bold">${product.fat}g</span></div>
+            <div><span class="text-slate-400 block text-[9px]">FIBER</span><span class="text-pastel-mint font-bold">${product.fiber || 0}g</span></div>
+          </div>
+
+          <!-- Action button based on context -->
+          <div class="pt-1 flex flex-col sm:flex-row gap-2 justify-end">
+            <button type="button" onclick="startBarcodeCamera()" class="px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs flex items-center justify-center gap-1.5">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+              <span>Scan Next Barcode</span>
+            </button>
+            <button type="button" onclick="applyScannedBarcodeFood(${safeProductJson})" class="px-4 py-2 rounded-xl bg-gradient-to-r from-pastel-mint to-emerald-400 text-dark-base font-extrabold text-xs shadow-md shadow-pastel-mint/20 flex items-center justify-center gap-1.5 hover:opacity-95 transition">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              <span>${barcodeScannerContext === 'pantry' ? 'Add Item to Pantry' : (barcodeScannerContext === 'recipe' ? 'Add to Recipe' : 'Log Food')}</span>
+            </button>
+          </div>
+        </div>
+      `;
+      resBox.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function renderBarcodeMissingWithAiPrompt(code) {
+      const resBox = document.getElementById('barcode-lookup-result');
+      if (!resBox) return;
+
+      resBox.innerHTML = `
+        <div class="p-4 rounded-2xl bg-dark-elevated border border-pastel-lavender/50 space-y-3.5 text-xs shadow-2xl">
+          <div class="flex items-start gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-pastel-lavender/20 border border-pastel-lavender/40 flex items-center justify-center text-pastel-lavender shrink-0">
+              <i data-lucide="sparkles" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-white text-xs">Product Not Found in Databases (UPC: ${code})</h4>
+              <p class="text-[11px] text-slate-300 mt-0.5">Let Gemini AI Vision read the Nutrition Facts label &amp; package to extract exact macros and save it to your personal database forever.</p>
+            </div>
+          </div>
+
+          <div class="p-3 bg-dark-base rounded-2xl border border-pastel-lavender/30 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+            <div class="text-[11px] text-slate-300 space-y-0.5">
+              <span class="font-bold text-white block">📸 Scan Nutrition Facts Label</span>
+              <span class="text-slate-400 block text-[10px]">Photo of label + package front for instant AI macro extraction</span>
+            </div>
+            <label class="w-full sm:w-auto px-4 py-2 rounded-xl bg-gradient-to-r from-pastel-lavender via-purple-400 to-pastel-mint text-dark-base font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-lg hover:opacity-95 transition shrink-0">
+              <i data-lucide="camera" class="w-4 h-4"></i>
+              <span>Snap Nutrition Label</span>
+              <input type="file" accept="image/*" capture="environment" multiple class="hidden" onchange="handleNutritionLabelVisionUpload(event, '${code}')">
+            </label>
+          </div>
+
+          <div class="pt-1 border-t border-dark-border flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span class="text-[10px] text-slate-400">Or type a quick item name manually:</span>
+            <div class="flex gap-1.5 w-full sm:w-auto">
+              <input type="text" id="barcode-fallback-name" placeholder="Item name..." class="bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs flex-1 sm:w-44 focus:border-pastel-lavender">
+              <button type="button" onclick="saveUnknownBarcodeItem('${code}')" class="px-3.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-slate-500 text-slate-300 text-xs font-semibold shrink-0">Save</button>
+            </div>
+          </div>
+        </div>
+      `;
+      resBox.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
     async function lookupBarcode(directCode) {
       const code = (directCode || (document.getElementById('barcode-manual-input') || {}).value || '').trim();
       if (!code) {
@@ -2712,158 +2510,70 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       const resBox = document.getElementById('barcode-lookup-result');
       if (resBox) {
         resBox.innerHTML = `
-          <div class="text-xs text-pastel-sky flex items-center gap-2 p-2">
-            <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>
-            <span>Searching Open Food Facts &amp; whole foods database for <strong>${code}</strong>...</span>
+          <div class="text-xs text-pastel-sky flex items-center gap-2 p-2.5 bg-dark-base rounded-2xl border border-pastel-sky/30">
+            <i data-lucide="loader" class="w-4 h-4 animate-spin shrink-0"></i>
+            <span id="barcode-cascade-status">Checking personal database &amp; USDA FoodData Central for <strong>${code}</strong>...</span>
           </div>
         `;
         resBox.classList.remove('hidden');
         if (window.lucide) lucide.createIcons();
       }
 
-      // Offline test items for instant reliable testing
-      const testDb = {
-        '011110038332': {
-          name: 'Kroger Traditional 100% Whole Grain Rolled Oats',
-          brand: 'Kroger',
-          quantity: '18 oz',
-          category: 'grains',
-          storage: 'shelf',
-          kcal: 150,
-          protein: 5,
-          carbs: 27,
-          fat: 2.5,
-          fiber: 4.0,
-          sodium: 0
-        },
-        '052159701026': {
-          name: 'Chobani Non-Fat Plain Greek Yogurt',
-          brand: 'Chobani',
-          quantity: '32 oz',
-          category: 'dairy',
-          storage: 'fridge',
-          kcal: 90,
-          protein: 16,
-          carbs: 6,
-          fat: 0,
-          fiber: 0,
-          sodium: 65
-        }
+      const setStatus = (msg) => {
+        const el = document.getElementById('barcode-cascade-status');
+        if (el) el.innerHTML = msg;
       };
 
-      try {
-        let product = testDb[code];
-        if (!product) {
-          // Attempt query to Open Food Facts v0 API
-          try {
-            const resp = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
-            if (resp.ok) {
-              const data = await resp.json();
-              if (data && data.status === 1 && data.product) {
-                const p = data.product;
-                const n = p.nutriments || {};
-                const name = p.product_name || p.generic_name || p.product_name_en || 'Packaged Food Item';
-                const cat = inferFoodCategory(name, p.categories || '');
-                const stor = inferStorageZone(cat, name);
-                const qParsed = parsePackageQuantity(p.quantity || p.serving_size || '');
+      // Tier 1: Check Local Custom Barcode DB
+      const customDb = getCustomBarcodeDb();
+      if (customDb[code]) {
+        const prod = { ...customDb[code], sourceBadge: '💾 Your Custom Food Database' };
+        renderBarcodeProductResult(prod);
+        return;
+      }
 
-                product = {
-                  name: name,
-                  brand: p.brands || '',
-                  quantity: p.quantity || `${qParsed.amount} ${qParsed.unit}`,
-                  amount: qParsed.amount,
-                  unit: qParsed.unit,
-                  category: cat,
-                  storage: stor,
-                  kcal: Math.round(n['energy-kcal_100g'] || n['energy-kcal_serving'] || n['energy-kcal'] || 120),
-                  protein: Math.round(n.proteins_100g || n.proteins_serving || 0),
-                  carbs: Math.round(n.carbohydrates_100g || n.carbohydrates_serving || 0),
-                  fat: Math.round(n.fat_100g || n.fat_serving || 0),
-                  fiber: Math.round(n.fiber_100g || n.fiber_serving || 0),
-                  sodium: Math.round((n.sodium_100g || n.sodium_serving || 0) * (n.sodium_100g > 10 ? 1 : 1000))
-                };
-              }
-            }
-          } catch (netErr) {
-            console.warn("Open Food Facts fetch attempt 1 failed:", netErr);
-          }
-        }
+      // Offline built-in test items
+      const testDb = {
+        '011110038332': { name: 'Kroger Traditional 100% Whole Grain Rolled Oats', brand: 'Kroger', amount: 18, unit: 'oz', category: 'grains', storage: 'shelf', kcal: 150, protein: 5, carbs: 27, fat: 2.5, fiber: 4.0, sodium: 0, sourceBadge: '📦 Verified Database', barcode: '011110038332' },
+        '052159701026': { name: 'Chobani Non-Fat Plain Greek Yogurt', brand: 'Chobani', amount: 32, unit: 'oz', category: 'dairy', storage: 'fridge', kcal: 90, protein: 16, carbs: 6, fat: 0, fiber: 0, sodium: 65, sourceBadge: '📦 Verified Database', barcode: '052159701026' }
+      };
+      if (testDb[code]) {
+        renderBarcodeProductResult(testDb[code]);
+        return;
+      }
 
-        if (product && resBox) {
-          const qParsed = (product.amount && product.unit) ? { amount: product.amount, unit: product.unit } : parsePackageQuantity(product.quantity);
-          const safeProductJson = JSON.stringify({
-            ...product,
-            amount: qParsed.amount,
-            unit: qParsed.unit
-          }).replace(/"/g, '&quot;');
+      // Tier 2: USDA FoodData Central (Official US Gov Branded Food Products)
+      setStatus(`Searching official <strong>USDA FoodData Central</strong> for ${code}...`);
+      const usdaProd = await queryUsdaFoodDataCentral(code);
+      if (usdaProd) {
+        saveCustomBarcodeItem(code, usdaProd);
+        renderBarcodeProductResult(usdaProd);
+        return;
+      }
 
-          resBox.innerHTML = `
-            <div class="space-y-3 text-xs bg-dark-elevated p-3 rounded-2xl border border-pastel-lavender/40">
-              <div class="flex items-start justify-between gap-2">
-                <div>
-                  <span class="text-[10px] text-pastel-lavender uppercase tracking-wider font-semibold block">${product.brand || 'Verified Food'}</span>
-                  <h4 class="font-bold text-white text-sm">${product.name}</h4>
-                  <span class="text-[11px] text-slate-300 font-mono mt-0.5 block">Package Size: <strong>${qParsed.amount} ${qParsed.unit}</strong></span>
-                </div>
-                <div class="text-right shrink-0">
-                  <span class="px-2 py-1 rounded-lg bg-pastel-mint/15 text-pastel-mint font-mono font-bold text-xs">${product.kcal} kcal</span>
-                </div>
-              </div>
-
-              <!-- Macros Breakdown -->
-              <div class="grid grid-cols-4 gap-1.5 p-2 rounded-xl bg-dark-base border border-dark-border text-center font-mono text-[11px]">
-                <div><span class="text-slate-400 block text-[9px]">PROTEIN</span><span class="text-pastel-sky font-bold">${product.protein}g</span></div>
-                <div><span class="text-slate-400 block text-[9px]">CARBS</span><span class="text-pastel-butter font-bold">${product.carbs}g</span></div>
-                <div><span class="text-slate-400 block text-[9px]">FAT</span><span class="text-pastel-peach font-bold">${product.fat}g</span></div>
-                <div><span class="text-slate-400 block text-[9px]">FIBER</span><span class="text-pastel-mint font-bold">${product.fiber || 0}g</span></div>
-              </div>
-
-              <!-- Action button based on context -->
-              <div class="pt-1 flex flex-col sm:flex-row gap-2 justify-end">
-                <button type="button" onclick="startBarcodeCamera()" class="px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs flex items-center justify-center gap-1.5">
-                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-                  <span>Scan Next Barcode</span>
-                </button>
-                <button type="button" onclick="applyScannedBarcodeFood(${safeProductJson})" class="px-4 py-2 rounded-xl bg-gradient-to-r from-pastel-mint to-emerald-400 text-dark-base font-extrabold text-xs shadow-md shadow-pastel-mint/20 flex items-center justify-center gap-1.5 hover:opacity-95 transition">
-                  <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                  <span>${barcodeScannerContext === 'pantry' ? 'Add Item to Pantry' : (barcodeScannerContext === 'recipe' ? 'Add to Recipe' : 'Log Food')}</span>
-                </button>
-              </div>
-            </div>
-          `;
-          resBox.classList.remove('hidden');
-          if (window.lucide) lucide.createIcons();
-        } else if (resBox) {
-          resBox.innerHTML = `
-            <div class="p-3 rounded-2xl bg-dark-elevated border border-amber-400/40 space-y-2 text-xs">
-              <div class="flex items-center gap-2 text-amber-300 font-semibold">
-                <i data-lucide="help-circle" class="w-4 h-4"></i>
-                <span>Product not found in Open Food Facts database (UPC: ${code})</span>
-              </div>
-              <p class="text-[11px] text-slate-300">Enter a quick name to save it to your pantry or log anyway:</p>
-              <div class="flex gap-2">
-                <input type="text" id="barcode-fallback-name" placeholder="e.g. Organic Rolled Oats" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-lavender">
-                <button type="button" onclick="saveUnknownBarcodeItem('${code}')" class="px-4 py-2 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs shrink-0">
-                  Save Item
-                </button>
-              </div>
-              <div class="pt-1 flex justify-start">
-                <button type="button" onclick="startBarcodeCamera()" class="text-pastel-lavender hover:underline text-[11px] flex items-center gap-1">
-                  <i data-lucide="refresh-cw" class="w-3 h-3"></i>
-                  <span>Try Scanning Again</span>
-                </button>
-              </div>
-            </div>
-          `;
-          resBox.classList.remove('hidden');
-          if (window.lucide) lucide.createIcons();
-        }
-      } catch (err) {
-        if (resBox) {
-          resBox.innerHTML = `<div class="text-xs text-amber-300 p-2">Search unavailable. You can enter the food details manually.</div>`;
-          resBox.classList.remove('hidden');
+      // Tier 3: Nutritionix (curated commercial database)
+      const nxCreds = (typeof getNutritionixCredentials === 'function') ? getNutritionixCredentials() : { appId: '', appKey: '' };
+      if (nxCreds.appId && nxCreds.appKey) {
+        setStatus(`Searching <strong>Nutritionix</strong> database for ${code}...`);
+        const nxProd = await queryNutritionix(code);
+        if (nxProd) {
+          saveCustomBarcodeItem(code, nxProd);
+          renderBarcodeProductResult(nxProd);
+          return;
         }
       }
+
+      // Tier 4: Open Food Facts (global crowd-sourced database)
+      setStatus(`Searching <strong>Open Food Facts</strong> (3M+ items) for ${code}...`);
+      const offProd = await queryOpenFoodFacts(code);
+      if (offProd) {
+        saveCustomBarcodeItem(code, offProd);
+        renderBarcodeProductResult(offProd);
+        return;
+      }
+
+      // Tier 5: Fallback - Prompt for Gemini AI Nutrition Label & Package Scan
+      renderBarcodeMissingWithAiPrompt(code);
     }
 
     function saveUnknownBarcodeItem(code) {
@@ -2882,18 +2592,70 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         fat: 0,
         fiber: 0,
         sodium: 0,
+        sourceBadge: '💾 Your Custom Food Database',
         barcode: code
       };
+      saveCustomBarcodeItem(code, fallbackProduct);
       applyScannedBarcodeFood(fallbackProduct);
     }
 
     function applyScannedBarcodeFood(product) {
       closeBarcodeScannerModal();
+      if (product.barcode) {
+        saveCustomBarcodeItem(product.barcode, product);
+      }
+
       if (barcodeScannerContext === 'recipe') {
         const ingInput = document.getElementById('recipe-ingredients-input');
         if (ingInput) {
           ingInput.value += (ingInput.value ? '\n' : '') + `${product.name} (${product.kcal} kcal)`;
         }
+        alertBox(`Added "${product.name}" to recipe ingredients.`, "Barcode Added");
+      } else if (barcodeScannerContext === 'pantry') {
+        const cat = product.category || inferFoodCategory(product.name, '');
+        const stor = product.storage || inferStorageZone(cat, product.name);
+        const amount = (typeof product.amount === 'number' && product.amount > 0) ? product.amount : 1;
+        const unit = product.unit || 'items';
+
+        state.pantry.push({
+          id: `p-${Date.now()}`,
+          name: product.name,
+          category: cat,
+          storage: stor,
+          amount: amount,
+          unit: unit,
+          dateAdded: new Date().toISOString().split('T')[0],
+          nutrition: {
+            kcal: product.kcal || 0,
+            protein: product.protein || 0,
+            carbs: product.carbs || 0,
+            fat: product.fat || 0,
+            fiber: product.fiber || 0,
+            sodium: product.sodium || 0
+          }
+        });
+        saveAppState();
+        renderPantry();
+        if (typeof playChime === 'function') {
+          try { playChime('bell'); } catch (e) {}
+        }
+        alertBox(`Scanned and added "${product.name}" (${amount} ${unit}) to your pantry with verified nutrition!`, "Pantry Barcode Added");
+      } else {
+        openLogFoodModal('verified');
+        const setVal = (id, val) => {
+          const el = document.getElementById(id);
+          if (el) el.value = val;
+        };
+        setVal('food-input-name', product.name);
+        setVal('food-input-kcal', product.kcal);
+        setVal('food-input-protein', product.protein);
+        setVal('food-input-carbs', product.carbs);
+        setVal('food-input-fat', product.fat);
+        setVal('food-input-fiber', product.fiber || 0);
+        setVal('food-input-sodium', product.sodium || 0);
+        alertBox(`Loaded "${product.name}" into food log!`, "Barcode Verified");
+      }
+    }
         alertBox(`Added "${product.name}" to recipe ingredients.`, "Barcode Added");
       } else if (barcodeScannerContext === 'pantry') {
         const cat = product.category || inferFoodCategory(product.name, '');

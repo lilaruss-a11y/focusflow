@@ -1,14 +1,162 @@
     // ==============================================
-    // GEMINI API KEY VERIFICATION & EYE TOGGLE
+    // PWA INSTALLATION & UPDATE STATE
     // ==============================================
+    const APP_VERSION = "1.2.0";
+
+    function checkForAppUpdates() {
+      try {
+        const lastKnownVersion = localStorage.getItem('focusflow_app_version');
+        if (!lastKnownVersion) {
+          localStorage.setItem('focusflow_app_version', APP_VERSION);
+        } else if (lastKnownVersion !== APP_VERSION) {
+          localStorage.setItem('focusflow_app_version', APP_VERSION);
+          alertBox(`FocusFlow updated to version ${APP_VERSION} automatically!`, "App Updated");
+        }
+      } catch (err) {
+        console.warn('Update check', err);
+      }
+    }
+
+    function checkAppInstallState() {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      const isInstalled = isStandalone || localStorage.getItem('focusflow_app_installed') === 'true';
+      const btn = document.getElementById('btn-install-app');
+      if (btn && isInstalled) {
+        btn.classList.add('hidden');
+        btn.style.setProperty('display', 'none', 'important');
+      }
+    }
+
+    window.addEventListener('appinstalled', () => {
+      localStorage.setItem('focusflow_app_installed', 'true');
+      checkAppInstallState();
+    });
+
+    function closeInstallAppModal() {
+      localStorage.setItem('focusflow_app_installed', 'true');
+      checkAppInstallState();
+      const modal = document.getElementById('install-app-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    // ==============================================
+    // GEMINI API KEY MANAGEMENT & VERIFICATION
+    // ==============================================
+    function getGeminiApiKey() {
+      return state.geminiApiKey || localStorage.getItem('focusflow_gemini_api_key') || localStorage.getItem('gemini_api_key') || '';
+    }
+
+    function setGeminiApiKey(key) {
+      const cleanKey = (key || '').trim();
+      state.geminiApiKey = cleanKey;
+      if (cleanKey) {
+        localStorage.setItem('focusflow_gemini_api_key', cleanKey);
+        localStorage.setItem('gemini_api_key', cleanKey);
+      } else {
+        localStorage.removeItem('focusflow_gemini_api_key');
+        localStorage.removeItem('gemini_api_key');
+      }
+    }
+
+    function getUsdaApiKey() {
+      return (localStorage.getItem('focusflow_usda_api_key') || 'DEMO_KEY').trim();
+    }
+
+    function setUsdaApiKey(key) {
+      const cleanKey = (key || '').trim();
+      if (cleanKey && cleanKey !== 'DEMO_KEY') {
+        localStorage.setItem('focusflow_usda_api_key', cleanKey);
+      } else {
+        localStorage.removeItem('focusflow_usda_api_key');
+      }
+    }
+
+    function getNutritionixCredentials() {
+      return {
+        appId: (localStorage.getItem('focusflow_nutritionix_app_id') || '').trim(),
+        appKey: (localStorage.getItem('focusflow_nutritionix_app_key') || '').trim()
+      };
+    }
+
+    function setNutritionixCredentials(appId, appKey) {
+      const cleanId = (appId || '').trim();
+      const cleanKey = (appKey || '').trim();
+      if (cleanId) localStorage.setItem('focusflow_nutritionix_app_id', cleanId);
+      else localStorage.removeItem('focusflow_nutritionix_app_id');
+      if (cleanKey) localStorage.setItem('focusflow_nutritionix_app_key', cleanKey);
+      else localStorage.removeItem('focusflow_nutritionix_app_key');
+    }
+
+    function openApiKeyModal() {
+      const modal = document.getElementById('apikey-modal');
+      const input = document.getElementById('gemini-api-key-input');
+      const usdaInput = document.getElementById('usda-api-key-input');
+      const nxIdInput = document.getElementById('nutritionix-app-id-input');
+      const nxKeyInput = document.getElementById('nutritionix-app-key-input');
+      const statusEl = document.getElementById('apikey-validation-status');
+      const currentKey = getGeminiApiKey();
+
+      if (input) input.value = currentKey;
+      if (usdaInput) {
+        const savedUsda = localStorage.getItem('focusflow_usda_api_key') || '';
+        usdaInput.value = savedUsda;
+      }
+      if (nxIdInput) nxIdInput.value = localStorage.getItem('focusflow_nutritionix_app_id') || '';
+      if (nxKeyInput) nxKeyInput.value = localStorage.getItem('focusflow_nutritionix_app_key') || '';
+
+      if (statusEl) {
+        if (currentKey) {
+          statusEl.textContent = "✓ Gemini key connected and active";
+          statusEl.className = "text-[11px] text-pastel-mint mt-1 block font-semibold";
+          statusEl.classList.remove('hidden');
+        } else {
+          statusEl.classList.add('hidden');
+        }
+      }
+      if (modal) modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeApiKeyModal() {
+      const modal = document.getElementById('apikey-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function saveApiKey() {
+      const input = document.getElementById('gemini-api-key-input');
+      if (input) setGeminiApiKey(input.value.trim());
+
+      const usdaInput = document.getElementById('usda-api-key-input');
+      if (usdaInput) setUsdaApiKey(usdaInput.value.trim());
+
+      const nxIdInput = document.getElementById('nutritionix-app-id-input');
+      const nxKeyInput = document.getElementById('nutritionix-app-key-input');
+      if (nxIdInput || nxKeyInput) {
+        setNutritionixCredentials(nxIdInput ? nxIdInput.value : '', nxKeyInput ? nxKeyInput.value : '');
+      }
+
+      closeApiKeyModal();
+      playChime('bell');
+      alertBox("Settings & API keys saved.", "Keys Saved");
+    }
+
     async function testAndSaveApiKey() {
       const input = document.getElementById('gemini-api-key-input');
       const statusEl = document.getElementById('apikey-validation-status');
-      if (!input) return;
+      const usdaInput = document.getElementById('usda-api-key-input');
+      const nxIdInput = document.getElementById('nutritionix-app-id-input');
+      const nxKeyInput = document.getElementById('nutritionix-app-key-input');
 
-      const key = input.value.trim();
+      if (usdaInput) setUsdaApiKey(usdaInput.value.trim());
+      if (nxIdInput || nxKeyInput) {
+        setNutritionixCredentials(nxIdInput ? nxIdInput.value : '', nxKeyInput ? nxKeyInput.value : '');
+      }
+
+      const key = (input ? input.value : '').trim();
       if (!key) {
-        alertBox("Please paste your Gemini API key from Google AI Studio.", "API Key Needed");
+        closeApiKeyModal();
+        playChime('bell');
+        alertBox("Nutrition database keys saved.", "Settings Saved");
         return;
       }
 
@@ -53,6 +201,159 @@
       const input = document.getElementById('gemini-api-key-input');
       if (!input) return;
       input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    // ==============================================
+    // ANTIGRAVITY & PROJECT FILE EXPORT / TRANSFER
+    // ==============================================
+    function openAntigravityTransferModal() {
+      const modal = document.getElementById('antigravity-transfer-modal');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+      
+      const rawBox = document.getElementById('raw-export-textarea');
+      if (rawBox) {
+        rawBox.value = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      }
+      
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+      playChime('bell');
+    }
+
+    function closeAntigravityTransferModal() {
+      const modal = document.getElementById('antigravity-transfer-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function downloadForIPhoneFiles() {
+      const fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      const fileName = 'FocusFlow.html';
+      const file = new File([fullHtml], fileName, { type: 'text/html;charset=utf-8' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'FocusFlow Project',
+            text: 'FocusFlow ADHD Executive Daily Assistant file for Antigravity'
+          });
+          playChime('bell');
+          alertBox("Shared! Select 'Save to Files' or open with Antigravity.", "iOS Share Sheet");
+          return;
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            console.warn("Share sheet declined, using direct file download...", err);
+          } else {
+            return;
+          }
+        }
+      }
+
+      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.setAttribute('target', '_blank');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+      playChime('bell');
+      alertBox("Downloaded 'FocusFlow.html'. In Chrome, tap 'Open In...' -> 'Save to Files' to place it into your Antigravity folder.", "File Ready");
+    }
+
+    function selectAndCopyRawBox() {
+      const box = document.getElementById('raw-export-textarea');
+      if (!box) return;
+      box.focus();
+      box.setSelectionRange(0, 9999999);
+      try {
+        document.execCommand('copy');
+        alertBox("All code selected and copied!", "Code Copied");
+        playChime('bell');
+      } catch (e) {
+        alertBox("Please long-press inside the box and tap 'Select All' then 'Copy'.", "Manual Copy");
+      }
+    }
+
+    function copyFullSourceCodeToClipboard() {
+      const fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      const textArea = document.createElement("textarea");
+      textArea.value = fullHtml;
+      textArea.style.position = "fixed";
+      textArea.style.top = "0";
+      textArea.style.left = "0";
+      textArea.style.opacity = "0.01";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      textArea.setSelectionRange(0, 9999999);
+      let success = false;
+      try {
+        success = document.execCommand('copy');
+      } catch (err) {
+        success = false;
+      }
+      document.body.removeChild(textArea);
+
+      if (success) {
+        playChime('bell');
+        alertBox("Full index.html copied to your clipboard. Paste into Antigravity!", "Copied for Antigravity");
+      } else {
+        selectAndCopyRawBox();
+      }
+    }
+
+    function downloadProjectFileDirect() {
+      const fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'index.html';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      playChime('bell');
+      alertBox("Downloaded 'index.html' to your iPhone Files.", "File Saved");
+    }
+
+    function copyAntigravityAgentPrompt() {
+      const prompt = `I am loading an ADHD executive function web app into Antigravity called FocusFlow. It is built as a responsive single-file client app with Tailwind CSS, vanilla JS, and Lucide icons.
+
+Current Core Features:
+1. Fading Scaffolding system (L1 Co-Pilot, L2 Self-Draft + Coach, L3 Solo Flight) across all tools to train neural pathways.
+2. Individualized body frame & target weight calculator with Cronometer-grade macro, micro, and amino acid breakdowns (including dopamine precursors like L-tyrosine and water tracking).
+3. Reverse-chained cooking choreographer with safe passive dish-washing windows.
+4. Categorized Recipe Codex (filtered by occasion, format, and origin) that links directly to cooking and nutrition logs.
+5. Eisenhower priority matrix with direct timeline integration.
+6. Taskmaster HUD with visual countdown timers, +2m grace extensions, and anti-over-thoroughness stopping boundaries.
+
+Goal: Please inspect index.html, index the codebase, and suggest next upgrades (e.g. modularizing, local offline storage via Dexie.js, or Apple HealthKit sync).`;
+
+      const textArea = document.createElement("textarea");
+      textArea.value = prompt;
+      textArea.style.position = "fixed";
+      textArea.style.top = "0";
+      textArea.style.left = "0";
+      textArea.style.opacity = "0.01";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      textArea.setSelectionRange(0, 9999999);
+      try {
+        document.execCommand('copy');
+        playChime('bell');
+        alertBox("Agent briefing copied. Paste into Antigravity's chat!", "Prompt Copied");
+      } catch (err) {
+        alertBox("Failed to copy prompt.", "Error");
+      }
+      document.body.removeChild(textArea);
     }
 
     // Interop alias

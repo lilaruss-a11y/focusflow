@@ -18,6 +18,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- ZXing Multi-Format Barcode Engine -->
+  <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -5259,17 +5261,26 @@
 
       <!-- Camera Viewport / Scanning Reticle -->
       <div class="relative bg-black rounded-2xl overflow-hidden aspect-video flex flex-col items-center justify-center border border-dark-border">
-        <video id="barcode-camera-video" playsinline class="w-full h-full object-cover hidden"></video>
+        <video id="barcode-camera-video" playsinline autoplay muted class="w-full h-full object-cover hidden"></video>
+        <button type="button" onclick="toggleBarcodeCameraFacing()" id="barcode-flip-cam-btn" class="absolute top-2 right-2 p-1.5 rounded-lg bg-black/70 hover:bg-black text-white text-[11px] border border-white/20 hidden z-10 flex items-center gap-1 shadow-md" title="Switch Front/Back Camera">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+          <span>Flip</span>
+        </button>
         <div id="barcode-camera-placeholder" class="text-center p-4 space-y-2">
           <i data-lucide="camera" class="w-10 h-10 text-pastel-lavender/60 mx-auto animate-pulse"></i>
-          <span class="text-xs text-slate-300 block">Tap Start Camera or enter barcode below</span>
+          <span id="barcode-camera-placeholder-msg" class="text-xs text-slate-300 block">Starting camera...</span>
           <button type="button" onclick="startBarcodeCamera()" class="px-3.5 py-1.5 rounded-xl bg-pastel-lavender text-dark-base font-bold text-xs">
-            Start Phone Camera
+            Start Camera
           </button>
         </div>
         <!-- Reticle Overlay -->
-        <div id="barcode-scanner-reticle" class="hidden absolute inset-x-8 inset-y-6 border-2 border-dashed border-pastel-mint rounded-xl pointer-events-none flex items-center justify-center">
-          <span class="text-[10px] text-pastel-mint font-mono bg-black/60 px-2 py-0.5 rounded">Align Barcode Here</span>
+        <div id="barcode-scanner-reticle" class="hidden absolute inset-x-8 inset-y-6 border-2 border-dashed border-pastel-mint rounded-xl pointer-events-none flex flex-col items-center justify-center overflow-hidden">
+          <div class="w-full h-0.5 bg-gradient-to-r from-transparent via-pastel-mint to-transparent animate-pulse shadow-sm shadow-pastel-mint"></div>
+          <span class="text-[10px] text-pastel-mint font-mono bg-black/70 px-2 py-0.5 rounded mt-auto mb-1">Align Barcode Here</span>
+        </div>
+        <div id="barcode-live-status" class="hidden absolute bottom-2 inset-x-3 text-center text-[10px] text-pastel-mint font-mono bg-black/80 py-1 px-2 rounded-lg border border-pastel-mint/30 z-10 flex items-center justify-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-pastel-mint animate-ping"></span>
+          <span id="barcode-live-status-text">Scanning for barcode...</span>
         </div>
       </div>
 

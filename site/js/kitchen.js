@@ -2696,3 +2696,386 @@
     }
 
     
+
+
+// ==============================================
+// WALMART & GROCERY RECEIPT IMPORT SUITE
+// ==============================================
+
+function openWalmartGroceryImportModal() {
+  const modal = document.getElementById('walmart-import-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    switchWalmartImportTab('paste');
+    if (window.lucide) lucide.createIcons();
+    playChime('bell');
+  }
+}
+
+function closeWalmartGroceryImportModal() {
+  const modal = document.getElementById('walmart-import-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function clearReceiptPasteText() {
+  const ta = document.getElementById('walmart-paste-textarea');
+  if (ta) {
+    ta.value = '';
+    ta.focus();
+  }
+}
+
+function switchWalmartImportTab(tab) {
+  const pasteBtn = document.getElementById('btn-tab-walmart-paste');
+  const photoBtn = document.getElementById('btn-tab-walmart-photo');
+  const pasteBody = document.getElementById('walmart-tab-paste');
+  const photoBody = document.getElementById('walmart-tab-photo');
+
+  if (tab === 'paste') {
+    if (pasteBtn) pasteBtn.className = "py-2 px-3 rounded-xl font-bold bg-pastel-sky text-dark-base text-center transition shadow-sm";
+    if (photoBtn) photoBtn.className = "py-2 px-3 rounded-xl font-bold bg-dark-base border border-dark-border text-slate-400 hover:text-white text-center transition";
+    if (pasteBody) pasteBody.classList.remove('hidden');
+    if (photoBody) photoBody.classList.add('hidden');
+  } else {
+    if (pasteBtn) pasteBtn.className = "py-2 px-3 rounded-xl font-bold bg-dark-base border border-dark-border text-slate-400 hover:text-white text-center transition";
+    if (photoBtn) photoBtn.className = "py-2 px-3 rounded-xl font-bold bg-pastel-sky text-dark-base text-center transition shadow-sm";
+    if (pasteBody) pasteBody.classList.add('hidden');
+    if (photoBody) photoBody.classList.remove('hidden');
+
+    // Dynamic API Key status display
+    const key = (typeof getGeminiApiKey === 'function') ? getGeminiApiKey() : (state.geminiApiKey || localStorage.getItem('focusflow_gemini_api_key') || '');
+    const bannerTxt = document.getElementById('walmart-photo-key-text');
+    const bannerDot = document.querySelector('#walmart-photo-key-banner span.rounded-full');
+    if (bannerTxt && bannerDot) {
+      if (key) {
+        bannerTxt.textContent = "Gemini Vision Active (Gemini 3.8 Flash & 4 Argon ready)";
+        bannerDot.className = "w-2 h-2 rounded-full bg-pastel-mint animate-pulse";
+      } else {
+        bannerTxt.textContent = "API key needed for live photo scanning (free setup)";
+        bannerDot.className = "w-2 h-2 rounded-full bg-amber-400";
+      }
+    }
+  }
+  if (window.lucide) lucide.createIcons();
+}
+
+function loadSampleWalmartReceipt(store = 'walmart') {
+  const ta = document.getElementById('walmart-paste-textarea');
+  if (!ta) return;
+
+  if (store === 'walmart') {
+    ta.value = "Great Value Boneless Skinless Chicken Breasts 3 lb $9.84\nMarketside Fresh Organic Baby Spinach 10 oz $2.98\nGreat Value Jasmine Rice 5 lb $4.12\nOrganic Whole Vitamin D Milk 1 gal $3.68\nGreat Value Frozen Broccoli Florets 16 oz $1.48\nBounty Select-a-Size Paper Towels 6 Double Rolls $12.98\nDawn Platinum Dishwashing Liquid Soap $3.94";
+  } else if (store === 'target') {
+    ta.value = "Good & Gather Organic Boneless Chicken Tenders 2 lb $8.49\nGood & Gather Baby Spinach 5 oz $1.99\nGood & Gather Basmati Rice 32 oz $3.29\nGood & Gather Whole Milk 1 Gallon $3.59\nGood & Gather Frozen Triple Berry Blend 16 oz $3.19\nUp & Up Bath Tissue 12 Rolls $8.99";
+  } else if (store === 'kroger') {
+    ta.value = "Simple Truth Organic Chicken Breast 1.5 lb $8.99\nPrivate Selection Baby Arugula 5 oz $3.49\nKroger Enriched Long Grain Rice 5 lb $3.99\nSimple Truth Organic Whole Milk 1 gal $4.29\nKroger Frozen Sweet Peas 12 oz $1.29\nKroger Aluminum Foil 75 sq ft $3.49";
+  } else {
+    ta.value = "Chicken Breasts 2 lb\nFresh Spinach 1 bag\nJasmine Rice 1 bag\nAlmond Milk 1 carton\nFrozen Strawberries 1 bag\nPaper Napkins 1 pack";
+  }
+}
+
+function importFromFocusFlowShoppingList() {
+  const ta = document.getElementById('walmart-paste-textarea');
+  if (!ta) return;
+
+  const items = (state.shoppingList || []).filter(s => !s.checked);
+  if (items.length === 0) {
+    alertBox("Your FocusFlow Shopping List is empty. Tap 'Load Sample Order' to test or paste text directly.", "Shopping List Empty");
+    return;
+  }
+
+  const lines = items.map(it => {
+    let line = it.name;
+    if (it.quantity) line += ` ${it.quantity}`;
+    return line;
+  });
+
+  ta.value = lines.join('\n');
+  alertBox(`Loaded ${items.length} items from your FocusFlow Shopping List! Tap 'Parse & Review' below.`, "Shopping List Loaded");
+}
+
+function parseIncomingGroceriesFromText() {
+  const ta = document.getElementById('walmart-paste-textarea');
+  const raw = ta ? ta.value.trim() : '';
+  if (!raw) {
+    alertBox("Please paste order text, a store receipt, or tap a sample store button above.", "Empty Text");
+    return;
+  }
+
+  const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 1);
+  const parsedItems = [];
+
+  lines.forEach((line, idx) => {
+    // Skip receipt metadata lines
+    if (/^(order|subtotal|total|tax|shipping|pickup|delivery|store|terminal|cashier|visa|mastercard|amex|cash|change|date|time|rewards|savings|balance)/i.test(line)) {
+      return;
+    }
+
+    // 1. Detect and parse quantity & unit
+    let amount = 1;
+    let unit = 'item';
+    const unitMatch = line.match(/(\d+(?:\.\d+)?)\s*(lb|lbs|oz|fl\s*oz|gal|gallon|qt|pt|ct|count|pk|pack|rolls|bag|bunch|box|can|cans)\b/i);
+    if (unitMatch) {
+      amount = parseFloat(unitMatch[1]) || 1;
+      unit = unitMatch[2].toLowerCase();
+    }
+
+    // 2. Clean item name: remove prices, units, barcodes, item codes, leading numbers
+    let clean = line.replace(/\$[0-9]+(?:\.[0-9]{2})?/g, '')
+                    .replace(/(\d+(?:\.\d+)?)\s*(lb|lbs|oz|fl\s*oz|gal|gallon|qt|pt|ct|count|pk|pack|rolls|bag|bunch|box|can|cans)\b/gi, '')
+                    .replace(/^([\*\-\d\.\)\s]+)+/g, '')
+                    .replace(/item\s*#?\s*\d+/gi, '')
+                    .replace(/upc\s*#?\s*\d+/gi, '')
+                    .replace(/qty\s*\d+/gi, '')
+                    .replace(/[\s,]+$/g, '')
+                    .trim();
+
+    if (!clean || clean.length < 2) return;
+
+    const lower = clean.toLowerCase();
+
+    // 3. Detect non-food items
+    const isNonFood = /paper\s*towel|toilet\s*paper|tissue|napkin|detergent|dish\s*soap|soap|sponge|foil|trash\s*bag|garbage|cleaner|bleach|shampoo|conditioner|deodorant|lotion|toothpaste|battery|light\s*bulb|pet\s*food|cat\s*litter|dog\s*food|cosmetics|towel/i.test(lower);
+
+    // 4. Smart storage assignment
+    let storage = 'fridge';
+    if (/frozen|ice\s*cream|freezer|pizza|waffle|popsicle/i.test(lower)) {
+      storage = 'frozen';
+    } else if (isNonFood || /rice|pasta|cereal|flour|oat|quinoa|bread|chip|cracker|canned|oil|spice|vinegar|sauce|dressing|sugar|coffee|tea|nut|snack|cookie/i.test(lower)) {
+      storage = 'shelf';
+    } else if (/chicken|beef|meat|egg|salmon|fish|protein|turkey|tofu|yogurt|milk|cheese|spinach|berry|apple|banana|broccoli|lettuce|produce|fresh/i.test(lower)) {
+      storage = 'fridge';
+    } else {
+      storage = 'shelf';
+    }
+
+    // 5. Smart category assignment
+    let category = 'produce';
+    if (isNonFood) {
+      category = 'condiments';
+    } else if (/chicken|beef|meat|egg|salmon|fish|protein|turkey|tofu|yogurt|milk|cheese|pork|sausage|bacon/i.test(lower)) {
+      category = 'protein';
+    } else if (/rice|oat|quinoa|bread|pasta|flour|cereal|grain|noodle|bagel|tortilla|cracker/i.test(lower)) {
+      category = 'grains';
+    } else if (/sauce|oil|spice|dressing|vinegar|syrup|mustard|ketchup|mayo|condiment|snack|nut|chip|dip/i.test(lower)) {
+      category = 'condiments';
+    } else {
+      category = 'produce';
+    }
+
+    parsedItems.push({
+      id: `inc-${Date.now()}-${idx}`,
+      name: clean,
+      category,
+      storage,
+      amount,
+      unit,
+      isFood: !isNonFood,
+      approved: !isNonFood // Food checked by default, non-food unchecked by default
+    });
+  });
+
+  if (parsedItems.length === 0) {
+    alertBox("Could not extract any grocery items. Please check the text format.", "No Items Detected");
+    return;
+  }
+
+  renderIncomingGroceriesApprovalList(parsedItems);
+  playChime('bell');
+}
+
+function renderIncomingGroceriesApprovalList(items) {
+  state.incomingGroceriesApprovalList = items;
+  const sec = document.getElementById('walmart-approval-section');
+  const list = document.getElementById('walmart-approval-list');
+  if (!sec || !list) return;
+
+  sec.classList.remove('hidden');
+  list.innerHTML = '';
+
+  items.forEach((item, idx) => {
+    const row = document.createElement('div');
+    row.className = `p-3 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-2.5 transition shadow-sm ${item.approved ? 'bg-dark-base border-dark-border text-white' : 'bg-dark-base/40 border-dark-border/40 opacity-60 text-slate-400'}`;
+    row.id = `grocery-row-${idx}`;
+
+    row.innerHTML = `
+      <div class="flex items-center gap-2.5 flex-1 min-w-0">
+        <input type="checkbox" id="grocery-chk-${idx}" ${item.approved ? 'checked' : ''} onchange="toggleGroceryApproval(${idx})" class="w-4 h-4 rounded text-pastel-sky focus:ring-0 cursor-pointer shrink-0">
+        <div class="flex-1 min-w-0">
+          <input type="text" value="${item.name}" onchange="updateGroceryName(${idx}, this.value)" class="w-full bg-transparent text-xs font-semibold text-white focus:outline-none focus:border-b border-pastel-sky truncate" title="Edit item name">
+          ${!item.isFood ? '<span class="text-[9px] text-amber-400 font-mono block">Non-food item (excluded by default)</span>' : ''}
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 flex-wrap shrink-0 text-xs">
+        <!-- Quantity & Unit -->
+        <div class="flex items-center gap-1 bg-dark-elevated border border-dark-border rounded-xl px-2 py-1">
+          <input type="number" min="0.25" step="0.25" value="${item.amount || 1}" onchange="updateGroceryAmount(${idx}, this.value)" class="w-10 bg-transparent text-center text-white font-mono text-[11px] focus:outline-none" title="Quantity">
+          <input type="text" value="${item.unit || 'item'}" onchange="updateGroceryUnit(${idx}, this.value)" class="w-10 bg-transparent text-slate-300 font-mono text-[10px] focus:outline-none" title="Unit">
+        </div>
+
+        <!-- Category Selector -->
+        <select onchange="updateGroceryCategory(${idx}, this.value)" class="bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1 text-slate-200 text-[11px] focus:border-pastel-sky focus:outline-none" title="Pantry Category">
+          <option value="produce" ${item.category === 'produce' ? 'selected' : ''}>🥦 Produce</option>
+          <option value="protein" ${item.category === 'protein' ? 'selected' : ''}>🍗 Protein/Dairy</option>
+          <option value="grains" ${item.category === 'grains' ? 'selected' : ''}>🌾 Grains</option>
+          <option value="condiments" ${item.category === 'condiments' ? 'selected' : ''}>🥫 Pantry/Staples</option>
+        </select>
+
+        <!-- Storage Location Selector (Fridge vs Freezer vs Shelf) -->
+        <select onchange="updateGroceryStorage(${idx}, this.value)" class="bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1 text-slate-200 text-[11px] font-bold focus:border-pastel-sky focus:outline-none" title="Storage Location">
+          <option value="fridge" ${item.storage === 'fridge' ? 'selected' : ''}>❄️ Fridge</option>
+          <option value="frozen" ${item.storage === 'frozen' ? 'selected' : ''}>🧊 Freezer</option>
+          <option value="shelf" ${item.storage === 'shelf' ? 'selected' : ''}>🥫 Shelf</option>
+        </select>
+
+        <!-- Bought for someone else toggle -->
+        <button type="button" onclick="skipGroceryItem(${idx})" class="px-2.5 py-1 rounded-xl text-[10px] font-semibold transition ${item.approved ? 'bg-dark-elevated hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-dark-border' : 'bg-rose-950/40 text-rose-300 border border-rose-500/30'}" title="Bought for someone else / Exclude from pantry">
+          ${item.approved ? 'For someone else' : 'Excluded ✕'}
+        </button>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+
+  updateGroceryApprovalBadge();
+  if (window.lucide) lucide.createIcons();
+
+  // Scroll smoothly down to the approval section
+  sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function toggleGroceryApproval(idx) {
+  if (!state.incomingGroceriesApprovalList || !state.incomingGroceriesApprovalList[idx]) return;
+  state.incomingGroceriesApprovalList[idx].approved = !state.incomingGroceriesApprovalList[idx].approved;
+  renderIncomingGroceriesApprovalList(state.incomingGroceriesApprovalList);
+}
+
+function toggleAllGroceryApproval(selectState) {
+  if (!Array.isArray(state.incomingGroceriesApprovalList)) return;
+  state.incomingGroceriesApprovalList.forEach(it => {
+    it.approved = Boolean(selectState);
+  });
+  renderIncomingGroceriesApprovalList(state.incomingGroceriesApprovalList);
+}
+
+function updateGroceryName(idx, val) {
+  if (state.incomingGroceriesApprovalList && state.incomingGroceriesApprovalList[idx]) {
+    state.incomingGroceriesApprovalList[idx].name = val.trim();
+  }
+}
+
+function updateGroceryCategory(idx, val) {
+  if (state.incomingGroceriesApprovalList && state.incomingGroceriesApprovalList[idx]) {
+    state.incomingGroceriesApprovalList[idx].category = val;
+  }
+}
+
+function updateGroceryStorage(idx, val) {
+  if (state.incomingGroceriesApprovalList && state.incomingGroceriesApprovalList[idx]) {
+    state.incomingGroceriesApprovalList[idx].storage = val;
+  }
+}
+
+function updateGroceryAmount(idx, val) {
+  if (state.incomingGroceriesApprovalList && state.incomingGroceriesApprovalList[idx]) {
+    state.incomingGroceriesApprovalList[idx].amount = parseFloat(val) || 1;
+  }
+}
+
+function updateGroceryUnit(idx, val) {
+  if (state.incomingGroceriesApprovalList && state.incomingGroceriesApprovalList[idx]) {
+    state.incomingGroceriesApprovalList[idx].unit = val.trim() || 'item';
+  }
+}
+
+function skipGroceryItem(idx) {
+  if (!state.incomingGroceriesApprovalList || !state.incomingGroceriesApprovalList[idx]) return;
+  state.incomingGroceriesApprovalList[idx].approved = !state.incomingGroceriesApprovalList[idx].approved;
+  renderIncomingGroceriesApprovalList(state.incomingGroceriesApprovalList);
+}
+
+function updateGroceryApprovalBadge() {
+  const approvedCount = (state.incomingGroceriesApprovalList || []).filter(i => i.approved).length;
+  const totalCount = (state.incomingGroceriesApprovalList || []).length;
+  const badge = document.getElementById('walmart-approval-count-badge');
+  const btnTxt = document.getElementById('walmart-commit-btn-text');
+
+  if (badge) badge.textContent = `${approvedCount} of ${totalCount} Approved`;
+  if (btnTxt) {
+    btnTxt.textContent = approvedCount > 0
+      ? `Approve & Add ${approvedCount} Item${approvedCount === 1 ? '' : 's'} to Pantry`
+      : `Select Items to Add to Pantry`;
+  }
+}
+
+function approveAndCommitGroceriesToPantry() {
+  const approved = (state.incomingGroceriesApprovalList || []).filter(i => i.approved);
+  if (approved.length === 0) {
+    alertBox("No items approved. Please check at least 1 grocery item to add to your pantry.", "None Selected");
+    return;
+  }
+
+  if (!Array.isArray(state.pantry)) state.pantry = [];
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  approved.forEach((item, idx) => {
+    // Calculate intelligent expiration estimate based on category and storage
+    let expDays = 14;
+    if (item.storage === 'frozen') {
+      expDays = 90; // Frozen items last 3 months
+    } else if (item.storage === 'shelf') {
+      expDays = (item.category === 'grains' || item.category === 'condiments') ? 180 : 30;
+    } else {
+      // Fridge
+      if (item.category === 'protein') expDays = 5;
+      else if (item.category === 'produce') expDays = 7;
+      else expDays = 14;
+    }
+
+    const expDate = new Date();
+    expDate.setDate(expDate.getDate() + expDays);
+    const expDateStr = expDate.toISOString().split('T')[0];
+
+    state.pantry.push({
+      id: `p-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`,
+      name: item.name,
+      category: item.category,
+      storage: item.storage || 'fridge',
+      amount: parseFloat(item.amount) || 1,
+      unit: item.unit || 'item',
+      dateAdded: todayStr,
+      expirationDate: expDateStr
+    });
+  });
+
+  saveAppState();
+  if (typeof renderPantry === 'function') renderPantry();
+  closeWalmartGroceryImportModal();
+  playChime('bell');
+  alertBox(`Successfully added ${approved.length} approved item${approved.length === 1 ? '' : 's'} to your pantry!`, "Groceries Put Away 🎉");
+}
+
+function testSampleWalmartReceiptPhoto() {
+  const sampleItems = [
+    { name: "Great Value Boneless Chicken Breasts 3 lb", category: "protein", storage: "fridge", amount: 3, unit: "lb", isFood: true },
+    { name: "Marketside Organic Baby Spinach 10 oz", category: "produce", storage: "fridge", amount: 10, unit: "oz", isFood: true },
+    { name: "Organic Whole Milk 1 gal", category: "protein", storage: "fridge", amount: 1, unit: "gal", isFood: true },
+    { name: "Great Value Jasmine Rice 5 lb", category: "grains", storage: "shelf", amount: 5, unit: "lb", isFood: true },
+    { name: "Great Value Frozen Broccoli Florets 16 oz", category: "produce", storage: "frozen", amount: 16, unit: "oz", isFood: true },
+    { name: "Bounty Paper Towels 6 rolls", category: "condiments", storage: "shelf", amount: 6, unit: "rolls", isFood: false }
+  ];
+  const formatted = sampleItems.map((it, idx) => ({
+    id: `inc-${Date.now()}-${idx}`,
+    name: it.name,
+    category: it.category,
+    storage: it.storage,
+    amount: it.amount || 1,
+    unit: it.unit || 'item',
+    isFood: it.isFood !== false,
+    approved: it.isFood !== false
+  }));
+  renderIncomingGroceriesApprovalList(formatted);
+  playChime('bell');
+  alertBox("Sample receipt scanned! Review each item and adjust storage/amounts below.", "Sample Scanned");
+}

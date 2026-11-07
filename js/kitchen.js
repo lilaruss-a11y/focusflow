@@ -2748,7 +2748,7 @@ function switchWalmartImportTab(tab) {
     const bannerDot = document.querySelector('#walmart-photo-key-banner span.rounded-full');
     if (bannerTxt && bannerDot) {
       if (key) {
-        bannerTxt.textContent = "Gemini Vision Active (1.5 Flash & 2.0 Flash ready)";
+        bannerTxt.textContent = "Gemini Vision Active (Gemini 3.8 Flash & 4 Argon ready)";
         bannerDot.className = "w-2 h-2 rounded-full bg-pastel-mint animate-pulse";
       } else {
         bannerTxt.textContent = "API key needed for live photo scanning (free setup)";

@@ -637,8 +637,8 @@
       playChime('bell');
     }
 
-    // Client-Side Safe Image Processor for Gemini Vision (Fast, never hangs on iOS HEIC/Safari)
-    // High-performance, memory-safe client image compressor (supports HEIC, camera photos, large files)
+    // Client-Side Safe Image Processor for Gemini Vision (Fast, crisp, and high-resolution)
+    // Preserves sharp digital screenshots up to 2048px so Walmart receipt details & small text remain razor sharp
     function prepareImageForGemini(file) {
       return new Promise((resolve, reject) => {
         if (!file) {
@@ -651,7 +651,7 @@
             .then(bitmap => {
               let width = bitmap.width;
               let height = bitmap.height;
-              const maxDim = 1200;
+              const maxDim = 2048;
 
               if (width > maxDim || height > maxDim) {
                 if (width > height) {
@@ -669,7 +669,7 @@
               const ctx = canvas.getContext('2d');
               ctx.drawImage(bitmap, 0, 0, width, height);
 
-              const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
               const base64Data = dataUrl.split(',')[1];
               resolve({ base64Data, mimeType: 'image/jpeg' });
             })
@@ -720,7 +720,7 @@
           try {
             let width = img.width;
             let height = img.height;
-            const maxDim = 1200;
+            const maxDim = 2048;
 
             if (width > maxDim || height > maxDim) {
               if (width > height) {
@@ -738,7 +738,7 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
 
-            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
             const base64Data = compressedDataUrl.split(',')[1];
             resolve({ base64Data, mimeType: 'image/jpeg' });
           } catch (err) {
@@ -767,7 +767,8 @@
       });
     }
 
-    // Multi-model fallback runner: iterates through supported Gemini models (1.5 Flash -> 2.0 Flash -> 2.5 Flash)
+    // High-performance Gemini Vision caller: Powered by Gemini 3.8 Flash & Gemini 4 Argon
+    // Deprecated/lower-level models are removed to prevent rejection errors
     async function callGeminiGenerateContent({ prompt, inlineImage = null, key = '', expectJson = false }) {
       const activeKey = (key || getGeminiApiKey() || '').trim();
       if (!activeKey) {
@@ -775,11 +776,10 @@
       }
 
       const candidateModels = [
-        'gemini-1.5-flash',
-        'gemini-2.0-flash',
-        'gemini-1.5-flash-latest',
-        'gemini-2.5-flash',
-        'gemini-1.5-pro'
+        'gemini-3.8-flash',
+        'gemini-4-argon',
+        'gemini-3.8-flash-latest',
+        'gemini-4-flash'
       ];
 
       const parts = [{ text: prompt }];
@@ -794,7 +794,7 @@
 
       const generationConfig = {
         temperature: 0.1,
-        maxOutputTokens: 2048
+        maxOutputTokens: 4096
       };
       if (expectJson) {
         generationConfig.responseMimeType = "application/json";
@@ -841,6 +841,48 @@
           console.warn(`Network error trying model ${model}:`, netErr);
           lastError = netErr;
         }
+      }
+
+      // Dynamic model auto-discovery fallback if hardcoded models didn't respond
+      try {
+        const modelsListResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${activeKey}`);
+        if (modelsListResp.ok) {
+          const listJson = await modelsListResp.json();
+          const dynamicModels = (listJson.models || [])
+            .map(m => (m.name || '').replace(/^models\//, ''))
+            .filter(name => /3\.8|argon|4|flash/i.test(name) && !/embedding|aqa/i.test(name));
+
+          for (const model of dynamicModels) {
+            if (candidateModels.includes(model)) continue;
+            try {
+              const dynEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`;
+              const dynResp = await fetch(dynEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  contents: [{ parts }],
+                  generationConfig
+                })
+              });
+              const dynJson = await dynResp.json();
+              if (dynResp.ok && dynJson.candidates && dynJson.candidates.length > 0) {
+                const partsArr = dynJson.candidates[0].content?.parts || [];
+                let textOut = '';
+                for (const p of partsArr) {
+                  if (p.text && !p.thought) textOut += p.text;
+                }
+                if (!textOut && partsArr.length > 0) textOut = partsArr[partsArr.length - 1].text || '';
+                if (textOut.trim()) {
+                  return { text: textOut.trim(), modelUsed: model };
+                }
+              }
+            } catch (dErr) {
+              console.warn(`Dynamic model ${model} attempt failed:`, dErr);
+            }
+          }
+        }
+      } catch (discErr) {
+        console.warn("Dynamic model auto-discovery failed:", discErr);
       }
 
       throw lastError || new Error("Could not connect to Gemini Vision service. Please check your internet connection.");
@@ -935,28 +977,30 @@
           if (textSpan) textSpan.textContent = "Gemini Vision is analyzing receipt items & storage...";
         }
 
-        // 2. Structured, direct extraction prompt with strict schema
-        const prompt = `You are an expert grocery receipt parser. Read this store receipt photo and extract all purchased items.
-Identify food, beverage, and household products.
+        // 2. Structured, direct extraction prompt with strict schema tailored for digital screenshots & paper receipts
+        const prompt = `You are an expert grocery receipt parser. Read this store receipt photo or digital app screenshot (e.g. Walmart app e-receipt, Target, Kroger, grocery store) and extract all purchased items.
+Identify food, beverage, and household products. Expand cryptic abbreviations into clean human-readable names (e.g. "GV WHL MLK" -> "Great Value Whole Milk", "BNLS SKNLS CHIKN" -> "Boneless Skinless Chicken Breasts", "ORG BABY SPN" -> "Organic Baby Spinach").
 
 Return ONLY a valid JSON array of objects, with each object having:
 - "name": string (concise, human-readable item name without barcodes or store codes, e.g. "Great Value Whole Milk", "Boneless Skinless Chicken Breasts", "Organic Baby Spinach", "Paper Towels")
 - "category": string (must be one of: "produce", "protein", "grains", "condiments")
 - "storage": string (must be one of: "fridge", "frozen", "shelf")
+- "amount": number (e.g. 1, 2.5, 3)
+- "unit": string (e.g. "lb", "oz", "gal", "bag", "carton", "item", "pack")
 - "isFood": boolean (true for edible foods and beverages; false for cleaning products, paper towels, cosmetics, pet food, or household goods)
 
 Example output:
 [
-  {"name": "Whole Milk", "category": "protein", "storage": "fridge", "isFood": true},
-  {"name": "Baby Spinach", "category": "produce", "storage": "fridge", "isFood": true},
-  {"name": "Boneless Chicken Breasts", "category": "protein", "storage": "fridge", "isFood": true},
-  {"name": "Jasmine Rice 5 lb", "category": "grains", "storage": "shelf", "isFood": true},
-  {"name": "Paper Towels", "category": "condiments", "storage": "shelf", "isFood": false}
+  {"name": "Great Value Whole Milk", "category": "protein", "storage": "fridge", "amount": 1, "unit": "gal", "isFood": true},
+  {"name": "Organic Baby Spinach", "category": "produce", "storage": "fridge", "amount": 10, "unit": "oz", "isFood": true},
+  {"name": "Boneless Chicken Breasts", "category": "protein", "storage": "fridge", "amount": 3, "unit": "lb", "isFood": true},
+  {"name": "Jasmine Rice", "category": "grains", "storage": "shelf", "amount": 5, "unit": "lb", "isFood": true},
+  {"name": "Bounty Paper Towels", "category": "condiments", "storage": "shelf", "amount": 1, "unit": "pack", "isFood": false}
 ]
 
 Return strictly the raw JSON array.`;
 
-        // 3. Post to Gemini Vision with multi-model fallback (1.5 Flash -> 2.0 Flash)
+        // 3. Post to Gemini Vision with modern models (Gemini 3.8 Flash & Gemini 4 Argon)
         const result = await callGeminiGenerateContent({
           prompt,
           inlineImage,
@@ -996,7 +1040,8 @@ Return strictly the raw JSON array.`;
 
           renderIncomingGroceriesApprovalList(formatted);
           playChime('bell');
-          alertBox(`Gemini Vision identified ${formatted.length} items from your receipt! Review and approve below.`, "Receipt Scanned");
+          const modelTag = result.modelUsed ? ` via ${result.modelUsed}` : '';
+          alertBox(`Gemini Vision${modelTag} identified ${formatted.length} items from your receipt! Review and approve below.`, "Receipt Scanned");
         } else {
           throw new Error("Could not parse items from receipt image. You can also paste receipt text in the tab above.");
         }

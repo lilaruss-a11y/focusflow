@@ -1299,7 +1299,10 @@ Return strictly the raw JSON array.`;
           id: `p-${Date.now()}-leftover`,
           name: `Leftover: ${r.title} (1 serving)`,
           category: 'protein',
-          storage: dest
+          storage: dest,
+          amount: 1,
+          unit: 'servings',
+          dateAdded: new Date().toISOString().split('T')[0]
         });
         renderPantry();
       }

@@ -2390,7 +2390,7 @@ function getCustomReceiptAliases() {
   return (window.state && window.state.customReceiptAliases) || {};
 }
 
-function saveCustomReceiptAlias(rawPattern, cleanName, category, storage) {
+function saveCustomReceiptAlias(rawPattern, cleanName, category, storage, unit, amount) {
   if (!rawPattern || !cleanName) return;
   const rawKey = rawPattern.trim().toLowerCase();
   const aliases = getCustomReceiptAliases();
@@ -2399,6 +2399,8 @@ function saveCustomReceiptAlias(rawPattern, cleanName, category, storage) {
     name: cleanName.trim(),
     category: category || 'produce',
     storage: storage || 'fridge',
+    unit: unit || 'items',
+    amount: (amount != null && !isNaN(parseFloat(amount))) ? parseFloat(amount) : 1,
     updatedAt: new Date().toISOString()
   };
   try {
@@ -2440,6 +2442,8 @@ function applyCustomReceiptAliases(items) {
         name: match.name,
         category: match.category || item.category,
         storage: match.storage || item.storage,
+        unit: match.unit || item.unit,
+        amount: (match.amount != null) ? match.amount : item.amount,
         wasAutoTranslated: true
       });
     }
@@ -2453,6 +2457,8 @@ function applyCustomReceiptAliases(items) {
           name: match.name,
           category: match.category || item.category,
           storage: match.storage || item.storage,
+          unit: match.unit || item.unit,
+          amount: (match.amount != null) ? match.amount : item.amount,
           wasAutoTranslated: true
         });
       }
@@ -2488,7 +2494,7 @@ function renderCustomReceiptAliasesList() {
         <span class="font-mono text-slate-400 block truncate text-[10px]">"${entry.rawKey || k}"</span>
         <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
           <span class="font-bold text-pastel-mint truncate">${entry.name}</span>
-          <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-dark-elevated text-slate-400 font-mono">${entry.category} • ${entry.storage}</span>
+          <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-dark-elevated text-slate-400 font-mono">${entry.category} • ${entry.storage}${entry.unit ? ' • ' + entry.unit : ''}</span>
         </div>
       </div>
       <button type="button" onclick="deleteCustomReceiptAlias('${k.replace(/'/g, "\\'")}')" class="text-slate-500 hover:text-rose-400 p-1 rounded-lg hover:bg-white/5 transition" title="Delete translation rule">
@@ -2597,7 +2603,7 @@ function updateGroceryName(idx, val) {
     if (!clean) return;
     it.name = clean;
     it.wasCustomEdited = true;
-    saveCustomReceiptAlias(it.rawName || clean, clean, it.category, it.storage);
+    saveCustomReceiptAlias(it.rawName || clean, clean, it.category, it.storage, it.unit, it.amount);
   }
 }
 
@@ -2606,7 +2612,7 @@ function updateGroceryCategory(idx, val) {
     const it = state.incomingGroceriesApprovalList[idx];
     it.category = val;
     it.wasCustomEdited = true;
-    saveCustomReceiptAlias(it.rawName || it.name, it.name, val, it.storage);
+    saveCustomReceiptAlias(it.rawName || it.name, it.name, val, it.storage, it.unit, it.amount);
   }
 }
 
@@ -2615,19 +2621,25 @@ function updateGroceryStorage(idx, val) {
     const it = state.incomingGroceriesApprovalList[idx];
     it.storage = val;
     it.wasCustomEdited = true;
-    saveCustomReceiptAlias(it.rawName || it.name, it.name, it.category, val);
+    saveCustomReceiptAlias(it.rawName || it.name, it.name, it.category, val, it.unit, it.amount);
   }
 }
 
 function updateGroceryAmount(idx, val) {
   if (state.incomingGroceriesApprovalList && state.incomingGroceriesApprovalList[idx]) {
-    state.incomingGroceriesApprovalList[idx].amount = parseFloat(val) || 1;
+    const it = state.incomingGroceriesApprovalList[idx];
+    it.amount = parseFloat(val) || 1;
+    it.wasCustomEdited = true;
+    saveCustomReceiptAlias(it.rawName || it.name, it.name, it.category, it.storage, it.unit, it.amount);
   }
 }
 
 function updateGroceryUnit(idx, val) {
   if (state.incomingGroceriesApprovalList && state.incomingGroceriesApprovalList[idx]) {
-    state.incomingGroceriesApprovalList[idx].unit = val.trim() || 'item';
+    const it = state.incomingGroceriesApprovalList[idx];
+    it.unit = (val || 'items').trim();
+    it.wasCustomEdited = true;
+    saveCustomReceiptAlias(it.rawName || it.name, it.name, it.category, it.storage, it.unit, it.amount);
   }
 }
 
@@ -2685,7 +2697,7 @@ function approveAndCommitGroceriesToPantry() {
       category: item.category,
       storage: item.storage || 'fridge',
       amount: parseFloat(item.amount) || 1,
-      unit: item.unit || 'item',
+      unit: item.unit || 'items',
       dateAdded: todayStr,
       expirationDate: expDateStr
     });

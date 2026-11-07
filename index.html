@@ -5372,18 +5372,25 @@
         </div>
 
         <!-- API Key Status Banner -->
-        <div id="walmart-photo-key-banner" class="p-3 rounded-2xl bg-dark-base border border-dark-border flex items-center justify-between text-[11px]">
+        <div id="walmart-photo-key-banner" class="p-3 rounded-2xl bg-dark-base border border-dark-border flex items-center justify-between text-[11px] flex-wrap gap-2">
           <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-pastel-mint"></span>
-            <span id="walmart-photo-key-text" class="text-slate-300 font-semibold">Gemini 3.8 Flash Vision Ready</span>
+            <span id="walmart-photo-key-text" class="text-slate-300 font-semibold">Vision Ready: Locked to Gemini 3.8 Flash Lite ⚡</span>
           </div>
-          <button type="button" onclick="openApiKeyModal()" class="text-pastel-sky hover:underline font-mono font-semibold">Manage Key 🔑</button>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="calibrateFastestVisionModel()" class="text-pastel-mint hover:underline font-semibold flex items-center gap-1">
+              <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+              <span>Calibrate ⚡</span>
+            </button>
+            <span class="text-slate-600">•</span>
+            <button type="button" onclick="openApiKeyModal()" class="text-pastel-sky hover:underline font-mono font-semibold">Manage Key 🔑</button>
+          </div>
         </div>
 
         <div class="p-6 rounded-2xl bg-dark-base border-2 border-dashed border-dark-border text-center space-y-2.5">
           <i data-lucide="camera" class="w-8 h-8 text-pastel-sky mx-auto"></i>
           <p class="text-slate-300 font-semibold">Take a photo or upload receipt screenshot</p>
-          <p class="text-[11px] text-slate-400">Gemini 3.8 Flash Vision identifies items, categories, and storage locations</p>
+          <p class="text-[11px] text-slate-400">Gemini 3.8 Flash Lite reads items, units, and storage in under 5 seconds</p>
           <div class="flex items-center justify-center gap-2 pt-1 flex-wrap">
             <label class="cursor-pointer px-4 py-2.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs hover:bg-sky-300 transition shadow-md shadow-pastel-sky/15 flex items-center gap-1.5">
               <i data-lucide="upload" class="w-4 h-4"></i>

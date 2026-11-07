@@ -749,9 +749,13 @@
         generationConfig.responseMimeType = "application/json";
       }
 
-      // Default priority list of models
-      // When inlineImage is present, vision-capable models are evaluated
+      // Permanently remembered vision model from previous successful scans
+      const savedVisionModel = localStorage.getItem('focusflow_active_vision_model') || (window.state && window.state.activeWorkingVisionModel);
+
+      // Default priority list of models (prioritizing 3.8 Flash Lite)
       let targetModels = [
+        'gemini-3.8-flash-lite',
+        'gemini-3.8-lite',
         'gemini-3.8-flash',
         'gemini-4-argon',
         'gemini-3.8-flash-latest',
@@ -761,11 +765,11 @@
         'gemini-1.5-pro'
       ];
 
-      // If a working vision model was previously confirmed in this session, put it first!
-      if (inlineImage && window.state && window.state.activeWorkingVisionModel) {
+      // If a working vision model was previously confirmed, put it FIRST!
+      if (inlineImage && savedVisionModel) {
         targetModels = [
-          window.state.activeWorkingVisionModel,
-          ...targetModels.filter(m => m !== window.state.activeWorkingVisionModel)
+          savedVisionModel,
+          ...targetModels.filter(m => m !== savedVisionModel)
         ];
       }
 
@@ -787,10 +791,11 @@
             .filter(name => !/1\.0|embedding|aqa|imagen/i.test(name));
 
           if (available.length > 0) {
-            // Keep priority order of known vision & flash models
+            // Keep priority order: saved model first, then 3.8 lite, 3.8, argon, etc.
             available.sort((a, b) => {
               const score = (str) => {
-                if (window.state && window.state.activeWorkingVisionModel === str) return 200;
+                if (savedVisionModel && savedVisionModel === str) return 300;
+                if (/3\.8.*lite/i.test(str)) return 150;
                 if (/3\.8/i.test(str)) return 100;
                 if (/argon|4/i.test(str)) return 90;
                 if (/2\.0.*flash/i.test(str)) return 80;
@@ -874,6 +879,10 @@
             }
             if (textOut.trim()) {
               if (window.state) window.state.activeWorkingVisionModel = model;
+              try {
+                localStorage.setItem('focusflow_active_vision_model', model);
+                if (typeof updateWalmartVisionStatusBanner === 'function') updateWalmartVisionStatusBanner();
+              } catch(e){}
               return { text: textOut.trim(), modelUsed: model };
             }
           }
@@ -1073,6 +1082,88 @@ Return strictly the raw JSON array.`;
       } finally {
         if (loadingEl) loadingEl.classList.add('hidden');
         event.target.value = '';
+      }
+    }
+
+    // Vision Speed Calibrator: Tests key's models with a lightweight 1px image ping and permanently locks in the fastest vision model
+    async function calibrateFastestVisionModel() {
+      const activeKey = getGeminiApiKey();
+      if (!activeKey) {
+        alertBox("Please connect your Gemini API key in Settings (🔑) first.", "API Key Needed");
+        openApiKeyModal();
+        return;
+      }
+
+      alertBox("Speed-testing vision models on your account...", "Calibrating Vision Speed");
+
+      // 1x1 transparent GIF base64
+      const tiny1px = "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+      const testCandidates = [
+        'gemini-3.8-flash-lite',
+        'gemini-3.8-lite',
+        'gemini-3.8-flash',
+        'gemini-4-argon',
+        'gemini-2.0-flash',
+        'gemini-1.5-flash'
+      ];
+
+      try {
+        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${activeKey}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          const av = (data.models || []).map(m => (m.name || '').replace(/^models\//, '')).filter(m => /3\.8|lite|argon|flash/i.test(m) && !/embedding|aqa/i.test(m));
+          av.forEach(m => { if (!testCandidates.includes(m)) testCandidates.push(m); });
+        }
+      } catch(e) {}
+
+      let fastest = null;
+      let minLatency = 999999;
+
+      for (const model of testCandidates) {
+        const t0 = performance.now();
+        try {
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 6000);
+          const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [
+                  { text: "Ping" },
+                  { inlineData: { mimeType: "image/gif", data: tiny1px } }
+                ]
+              }],
+              generationConfig: { maxOutputTokens: 5 }
+            }),
+            signal: ctrl.signal
+          });
+          clearTimeout(timer);
+          const t1 = performance.now();
+          const latency = Math.round(t1 - t0);
+
+          if (r.ok) {
+            if (latency < minLatency) {
+              minLatency = latency;
+              fastest = model;
+            }
+          }
+        } catch(err) {}
+      }
+
+      const lockedModel = fastest || 'gemini-3.8-flash-lite';
+      localStorage.setItem('focusflow_active_vision_model', lockedModel);
+      if (window.state) window.state.activeWorkingVisionModel = lockedModel;
+      playChime('bell');
+      alertBox(`Locked to ${lockedModel}${fastest ? ` (${minLatency}ms response time)` : ''}! All future receipt scans will be instant.`, "Vision Calibrated ⚡");
+      updateWalmartVisionStatusBanner();
+    }
+
+    function updateWalmartVisionStatusBanner() {
+      const saved = localStorage.getItem('focusflow_active_vision_model') || (window.state && window.state.activeWorkingVisionModel) || 'gemini-3.8-flash-lite';
+      const bannerTxt = document.getElementById('walmart-photo-key-text');
+      if (bannerTxt) {
+        bannerTxt.textContent = `Vision Active: Locked to ${saved} ⚡`;
       }
     }
 

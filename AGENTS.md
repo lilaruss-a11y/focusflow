@@ -38,6 +38,9 @@ The project is modularized into dedicated feature files to prevent regressions a
 * **`verify.py`** (Automated Test Suite):
   * Automated testing script that verifies HTML tags, local asset links, compiles all JS, and validates `site/` deployment sync.
 
+* **`backups/`** (Historical Backups & Archives):
+  * All safety backups, archive copies, or temporary exported files MUST live here. Never leave backups in the root folder.
+
 * **`site/`** (Live GitHub Pages Mirror):
   * **Rule:** Whenever making edits to `index.html`, `css/`, `js/`, or `sw.js`, **ALWAYS copy the modified files into the `site/` folder** so that the user's phone (homescreen PWA) gets the updates!
 
@@ -83,3 +86,26 @@ After your tests pass:
 ### Rule 4: Thrash Prevention (Circuit Breaker)
 - If an issue is not resolved after **2 attempts**, STOP editing.
 - Do not make a 3rd blind guess. Summarize what was tried, ask the user to check their Chrome Developer Tools Console (`Right-Click > Inspect > Console`), and wait for input.
+
+---
+
+## 3. Permanent Code Hygiene & Organization Rules
+To ensure the project never degenerates into a monolithic mess again, you MUST obey these structural rules:
+
+1. **Never Re-Monolith `index.html`:**
+   * DO NOT insert `<script>` blocks with logic or `<style>` blocks with CSS directly into `index.html`.
+   * HTML is strictly for layout, buttons, and screens.
+   * Logic belongs in the appropriate file inside `js/`, and styles belong in `css/styles.css`.
+2. **Keep the Root Folder 100% Clean:**
+   * DO NOT save backup files (e.g. `*.bak*`, `index-copy.html`, `test.js`, `.zip` files) in the root directory.
+   * If a backup is needed, save it inside the **`backups/`** directory.
+   * Clean up all temporary or scratch files before concluding your turn.
+3. **Single Responsibility for `js/` Modules:**
+   * Kitchen/Cooking features go into `kitchen.js` or `chef.js`.
+   * Calendar/Timeline features go into `timeline.js` or `calendar-categories.js`.
+   * Nutrition/Foods features go into `nutrition.js`.
+   * Health/Biometrics features go into `health.js` or `biometrics.js`.
+   * Sync/Cloud features go into `sync.js`.
+   * If a completely new major capability is built (over 400 lines), create a new dedicated module in `js/` and link it in `index.html` and `sw.js` instead of bloating existing files.
+4. **Keep `verify.py` Green:**
+   * Any change you make must keep `python3 verify.py` passing with 0 errors.

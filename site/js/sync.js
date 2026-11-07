@@ -729,30 +729,72 @@
       }
     }
 
+    function showAppUpdateToast(reg) {
+      if (document.getElementById('pwa-update-toast')) return;
+      const toast = document.createElement('div');
+      toast.id = 'pwa-update-toast';
+      toast.className = "fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] bg-[#1e2638] border-2 border-pastel-mint text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 cursor-pointer transition active:scale-95";
+      toast.style.boxShadow = "0 10px 30px rgba(0,0,0,0.6), 0 0 15px rgba(110,231,183,0.3)";
+      toast.innerHTML = '<span class="text-xl animate-pulse">✨</span>' +
+        '<div class="text-left text-xs pr-2">' +
+        '  <div class="font-bold text-pastel-mint">New Update Ready!</div>' +
+        '  <div class="text-slate-300 text-[11px]">Tap here to reload the latest version</div>' +
+        '</div>' +
+        '<button class="ml-1 px-2.5 py-1 bg-pastel-mint text-dark-base rounded-lg font-bold text-xs">Update</button>';
+      toast.onclick = () => {
+        toast.innerHTML = '<span class="text-xs text-pastel-mint font-bold px-4 py-2">Updating...</span>';
+        if (reg && reg.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+        setTimeout(() => {
+          window.location.reload(true);
+        }, 300);
+      };
+      document.body.appendChild(toast);
+    }
+
     function ffRegisterServiceWorker() {
       try {
         if (!('serviceWorker' in navigator)) return;
         const host = location.hostname;
         if (!(location.protocol === 'https:' || host === 'localhost' || host === '127.0.0.1')) return;
-        navigator.serviceWorker.register('./sw.js?v=3.8.1').then((reg) => {
-          if (reg) {
-            reg.update().catch(() => {});
-            reg.addEventListener('updatefound', () => {
-              const worker = reg.installing;
-              if (worker) {
-                worker.addEventListener('statechange', () => {
-                  if (worker.state === 'activated') {
-                    console.log("New service worker active. Reloading to apply update.");
-                  }
-                });
-              }
-            });
+
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload(true);
           }
+        });
+
+        navigator.serviceWorker.register('./sw.js?v=3.9.0').then((reg) => {
+          if (!reg) return;
+
+          if (reg.waiting) {
+            showAppUpdateToast(reg);
+          }
+
+          reg.addEventListener('updatefound', () => {
+            const worker = reg.installing;
+            if (worker) {
+              worker.addEventListener('statechange', () => {
+                if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                  showAppUpdateToast(reg);
+                }
+              });
+            }
+          });
+
+          window.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+              reg.update().catch(() => {});
+            }
+          });
         }).catch(() => {});
       } catch (e) {}
     }
-  
-        // ==============================================
+
+// ==============================================
     // TIME ESTIMATION & CALIBRATION ENGINE
     // ==============================================
     function togglePlanVsReality() {

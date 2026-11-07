@@ -5159,28 +5159,39 @@
           <div>
             <label class="text-[11px] text-slate-400 block mb-0.5">Unit:</label>
             <select id="pantry-detail-unit" onchange="setPantryDetailUnit(this.value)" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs">
-              <option value="items">Items (each)</option>
-              <option value="oz">Ounces (oz)</option>
-              <option value="g">Grams (g)</option>
-              <option value="servings">Servings</option>
-              <option value="lb">Pounds (lb)</option>
-              <option value="cup">Cup(s)</option>
-              <option value="tbsp">Tbsp</option>
-              <option value="pack">Pack / Box</option>
-              <option value="can">Can</option>
-              <option value="bottle">Bottle</option>
+              <optgroup label="Weight (Solid Foods)">
+                <option value="oz">Ounces (oz)</option>
+                <option value="g">Grams (g)</option>
+                <option value="lb">Pounds (lb)</option>
+              </optgroup>
+              <optgroup label="Volume (Liquids &amp; Drinks)">
+                <option value="fl oz">Fluid Ounces (fl oz)</option>
+                <option value="ml">Milliliters (ml)</option>
+                <option value="l">Liters (L)</option>
+                <option value="cup">Cup(s)</option>
+                <option value="gal">Gallon(s)</option>
+              </optgroup>
+              <optgroup label="Count &amp; Portions">
+                <option value="items">Items (each)</option>
+                <option value="servings">Servings</option>
+                <option value="pack">Pack / Box</option>
+                <option value="can">Can</option>
+                <option value="bottle">Bottle</option>
+              </optgroup>
             </select>
           </div>
         </div>
 
-        <!-- 4 Primary Unit Option Buttons -->
+        <!-- Quick Select Unit Chips: Weight, Liquid, Portions -->
         <div>
-          <label class="text-[10.5px] text-slate-400 block mb-1 font-semibold">Categorize Amount By:</label>
-          <div class="grid grid-cols-4 gap-1.5">
-            <button type="button" onclick="setPantryDetailUnit('items')" id="btn-punit-items" class="py-1.5 px-1 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition truncate">Items (each)</button>
-            <button type="button" onclick="setPantryDetailUnit('oz')" id="btn-punit-oz" class="py-1.5 px-1 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition">oz</button>
-            <button type="button" onclick="setPantryDetailUnit('g')" id="btn-punit-g" class="py-1.5 px-1 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition">g</button>
-            <button type="button" onclick="setPantryDetailUnit('servings')" id="btn-punit-servings" class="py-1.5 px-1 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition truncate">Servings</button>
+          <label class="text-[10.5px] text-slate-400 block mb-1 font-semibold">Quick Select Unit:</label>
+          <div class="grid grid-cols-6 gap-1">
+            <button type="button" onclick="setPantryDetailUnit('oz')" id="btn-punit-oz" class="py-1.5 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition">oz</button>
+            <button type="button" onclick="setPantryDetailUnit('g')" id="btn-punit-g" class="py-1.5 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition">g</button>
+            <button type="button" onclick="setPantryDetailUnit('fl oz')" id="btn-punit-fl-oz" class="py-1.5 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition">fl oz</button>
+            <button type="button" onclick="setPantryDetailUnit('ml')" id="btn-punit-ml" class="py-1.5 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition">ml</button>
+            <button type="button" onclick="setPantryDetailUnit('items')" id="btn-punit-items" class="py-1.5 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition truncate">items</button>
+            <button type="button" onclick="setPantryDetailUnit('servings')" id="btn-punit-servings" class="py-1.5 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition truncate">servings</button>
           </div>
         </div>
       </div>
@@ -5745,19 +5756,23 @@
                 <option value="servings">Servings</option>
                 <option value="oz">Ounces (oz)</option>
                 <option value="g">Grams (g)</option>
+                <option value="fl oz">Fluid Oz (fl oz)</option>
+                <option value="ml">Milliliters (ml)</option>
                 <option value="items">Items (each)</option>
               </select>
             </div>
           </div>
 
-          <!-- 4 Quick-Select Unit Chips -->
+          <!-- Quick-Select Unit Chips -->
           <div>
             <label class="text-[10px] text-slate-400 block mb-1 font-semibold">Unit Quick Select:</label>
-            <div class="grid grid-cols-4 gap-1.5">
-              <button type="button" onclick="setWrapupLeftoverUnit('servings')" id="btn-wrapup-unit-servings" class="py-1 px-1 rounded-xl border border-pastel-mint bg-pastel-mint/20 text-[11px] text-center text-pastel-mint font-bold transition shadow-sm truncate">Servings</button>
-              <button type="button" onclick="setWrapupLeftoverUnit('oz')" id="btn-wrapup-unit-oz" class="py-1 px-1 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition">oz</button>
-              <button type="button" onclick="setWrapupLeftoverUnit('g')" id="btn-wrapup-unit-g" class="py-1 px-1 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition">g</button>
-              <button type="button" onclick="setWrapupLeftoverUnit('items')" id="btn-wrapup-unit-items" class="py-1 px-1 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition truncate">Items (each)</button>
+            <div class="grid grid-cols-6 gap-1">
+              <button type="button" onclick="setWrapupLeftoverUnit('servings')" id="btn-wrapup-unit-servings" class="py-1 px-0.5 rounded-xl border border-pastel-mint bg-pastel-mint/20 text-[11px] text-center text-pastel-mint font-bold transition shadow-sm truncate">servings</button>
+              <button type="button" onclick="setWrapupLeftoverUnit('oz')" id="btn-wrapup-unit-oz" class="py-1 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition">oz</button>
+              <button type="button" onclick="setWrapupLeftoverUnit('g')" id="btn-wrapup-unit-g" class="py-1 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition">g</button>
+              <button type="button" onclick="setWrapupLeftoverUnit('fl oz')" id="btn-wrapup-unit-fl-oz" class="py-1 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition">fl oz</button>
+              <button type="button" onclick="setWrapupLeftoverUnit('ml')" id="btn-wrapup-unit-ml" class="py-1 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition">ml</button>
+              <button type="button" onclick="setWrapupLeftoverUnit('items')" id="btn-wrapup-unit-items" class="py-1 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition truncate">items</button>
             </div>
           </div>
 

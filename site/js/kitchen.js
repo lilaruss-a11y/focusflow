@@ -2536,25 +2536,41 @@ function renderIncomingGroceriesApprovalList(items) {
       <div class="flex items-center gap-2 flex-wrap shrink-0 text-xs">
         <!-- Quantity & Unit -->
         <div class="flex items-center gap-1 bg-dark-elevated border border-dark-border rounded-xl px-2 py-1">
-          <input type="number" min="0.25" step="0.25" value="${item.amount || 1}" onchange="updateGroceryAmount(${idx}, this.value)" class="w-10 bg-transparent text-center text-white font-mono text-[11px] focus:outline-none" title="Quantity">
+          <input type="number" min="0.1" step="any" value="${item.amount || 1}" onchange="updateGroceryAmount(${idx}, this.value)" class="w-12 bg-transparent text-center text-white font-mono text-[11px] focus:outline-none" title="Quantity / Package Weight">
           <select onchange="updateGroceryUnit(${idx}, this.value)" class="bg-transparent text-slate-300 font-mono text-[11px] focus:outline-none cursor-pointer" title="Unit">
-            <option value="items" ${(!item.unit || item.unit === 'items' || item.unit === 'item' || item.unit === 'each') ? 'selected' : ''}>items</option>
-            <option value="oz" ${item.unit === 'oz' ? 'selected' : ''}>oz</option>
-            <option value="g" ${item.unit === 'g' ? 'selected' : ''}>g</option>
-            <option value="servings" ${item.unit === 'servings' || item.unit === 'serving' ? 'selected' : ''}>servings</option>
-            <option value="lb" ${item.unit === 'lb' ? 'selected' : ''}>lb</option>
-            <option value="pack" ${item.unit === 'pack' ? 'selected' : ''}>pack</option>
-            <option value="can" ${item.unit === 'can' ? 'selected' : ''}>can</option>
-            <option value="bottle" ${item.unit === 'bottle' ? 'selected' : ''}>bottle</option>
+            <optgroup label="Weight">
+              <option value="oz" ${item.unit === 'oz' ? 'selected' : ''}>oz</option>
+              <option value="g" ${item.unit === 'g' ? 'selected' : ''}>g</option>
+              <option value="lb" ${item.unit === 'lb' ? 'selected' : ''}>lb</option>
+            </optgroup>
+            <optgroup label="Liquid / Volume">
+              <option value="fl oz" ${(item.unit === 'fl oz' || item.unit === 'floz') ? 'selected' : ''}>fl oz</option>
+              <option value="ml" ${item.unit === 'ml' ? 'selected' : ''}>ml</option>
+              <option value="l" ${item.unit === 'l' ? 'selected' : ''}>L</option>
+              <option value="cup" ${item.unit === 'cup' ? 'selected' : ''}>cup</option>
+              <option value="gal" ${item.unit === 'gal' ? 'selected' : ''}>gal</option>
+            </optgroup>
+            <optgroup label="Count &amp; Portions">
+              <option value="items" ${(!item.unit || item.unit === 'items' || item.unit === 'item' || item.unit === 'each') ? 'selected' : ''}>items</option>
+              <option value="servings" ${(item.unit === 'servings' || item.unit === 'serving') ? 'selected' : ''}>servings</option>
+              <option value="pack" ${item.unit === 'pack' ? 'selected' : ''}>pack</option>
+              <option value="can" ${item.unit === 'can' ? 'selected' : ''}>can</option>
+              <option value="bottle" ${item.unit === 'bottle' ? 'selected' : ''}>bottle</option>
+            </optgroup>
           </select>
         </div>
 
-        <!-- Category Selector -->
-        <select onchange="updateGroceryCategory(${idx}, this.value)" class="bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1 text-slate-200 text-[11px] focus:border-pastel-sky focus:outline-none" title="Pantry Category">
-          <option value="produce" ${item.category === 'produce' ? 'selected' : ''}>🥦 Produce</option>
-          <option value="protein" ${item.category === 'protein' ? 'selected' : ''}>🍗 Protein/Dairy</option>
-          <option value="grains" ${item.category === 'grains' ? 'selected' : ''}>🌾 Grains</option>
-          <option value="condiments" ${item.category === 'condiments' ? 'selected' : ''}>🥫 Pantry/Staples</option>
+        <!-- Food Type Selector (9 Food Types) -->
+        <select onchange="updateGroceryCategory(${idx}, this.value)" class="bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1 text-slate-200 text-[11px] focus:border-pastel-sky focus:outline-none font-semibold" title="Food Type">
+          <option value="protein" ${item.category === 'protein' ? 'selected' : ''}>🥩 Protein &amp; Meat</option>
+          <option value="dairy" ${item.category === 'dairy' ? 'selected' : ''}>🥛 Dairy &amp; Alternatives</option>
+          <option value="vegetables" ${(item.category === 'vegetables' || item.category === 'produce') ? 'selected' : ''}>🥦 Vegetables &amp; Greens</option>
+          <option value="fruits" ${item.category === 'fruits' ? 'selected' : ''}>🍎 Fruits &amp; Berries</option>
+          <option value="grains" ${item.category === 'grains' ? 'selected' : ''}>🌾 Grains &amp; Breads</option>
+          <option value="canned" ${item.category === 'canned' ? 'selected' : ''}>🥫 Canned &amp; Jarred</option>
+          <option value="baking" ${(item.category === 'baking' || item.category === 'condiments') ? 'selected' : ''}>🧂 Baking, Oils &amp; Spices</option>
+          <option value="snacks" ${item.category === 'snacks' ? 'selected' : ''}>🍿 Snacks &amp; Drinks</option>
+          <option value="leftovers" ${item.category === 'leftovers' ? 'selected' : ''}>🍲 Leftovers &amp; Meals</option>
         </select>
 
         <!-- Storage Location Selector (Fridge vs Freezer vs Counter vs Shelf) -->
@@ -2562,7 +2578,7 @@ function renderIncomingGroceriesApprovalList(items) {
           <option value="fridge" ${item.storage === 'fridge' ? 'selected' : ''}>❄️ Fridge</option>
           <option value="frozen" ${item.storage === 'frozen' ? 'selected' : ''}>🧊 Freezer</option>
           <option value="counter" ${item.storage === 'counter' ? 'selected' : ''}>🧺 Counter</option>
-          <option value="shelf" ${item.storage === 'shelf' ? 'selected' : ''}>🥫 Shelf</option>
+          <option value="shelf" ${item.storage === 'shelf' ? 'selected' : ''}>🥫 Dry Shelf</option>
         </select>
 
         <!-- Bought for someone else toggle -->
@@ -2713,11 +2729,14 @@ function approveAndCommitGroceriesToPantry() {
 function testSampleWalmartReceiptPhoto() {
   const sampleItems = [
     { name: "Great Value Boneless Chicken Breasts 3 lb", category: "protein", storage: "fridge", amount: 3, unit: "lb", isFood: true },
-    { name: "Marketside Organic Baby Spinach 10 oz", category: "produce", storage: "fridge", amount: 10, unit: "oz", isFood: true },
-    { name: "Organic Whole Milk 1 gal", category: "protein", storage: "fridge", amount: 1, unit: "gal", isFood: true },
+    { name: "Marketside Organic Baby Spinach 10 oz", category: "vegetables", storage: "fridge", amount: 10, unit: "oz", isFood: true },
+    { name: "Organic Whole Milk 1 gal", category: "dairy", storage: "fridge", amount: 1, unit: "gal", isFood: true },
+    { name: "Fresh Bananas", category: "fruits", storage: "counter", amount: 1, unit: "items", isFood: true },
+    { name: "Great Value Extra Virgin Olive Oil 16.9 fl oz", category: "baking", storage: "shelf", amount: 16.9, unit: "fl oz", isFood: true },
+    { name: "Great Value Black Beans 15.5 oz", category: "canned", storage: "shelf", amount: 15.5, unit: "oz", isFood: true },
     { name: "Great Value Jasmine Rice 5 lb", category: "grains", storage: "shelf", amount: 5, unit: "lb", isFood: true },
-    { name: "Great Value Frozen Broccoli Florets 16 oz", category: "produce", storage: "frozen", amount: 16, unit: "oz", isFood: true },
-    { name: "Bounty Paper Towels 6 rolls", category: "condiments", storage: "shelf", amount: 6, unit: "rolls", isFood: false }
+    { name: "Great Value Frozen Broccoli Florets 16 oz", category: "vegetables", storage: "frozen", amount: 16, unit: "oz", isFood: true },
+    { name: "Bounty Paper Towels 6 rolls", category: "baking", storage: "shelf", amount: 6, unit: "pack", isFood: false }
   ];
   const formatted = sampleItems.map((it, idx) => ({
     id: `inc-${Date.now()}-${idx}`,
@@ -2836,6 +2855,27 @@ function testSampleWalmartReceiptPhoto() {
       if (u === 'g' || u === 'gram' || u === 'grams') {
         return `${amt} g`;
       }
+      if (u === 'fl oz' || u === 'fl. oz' || u === 'fluid oz' || u === 'fluid ounce' || u === 'fluid ounces' || u === 'floz') {
+        return `${amt} fl oz`;
+      }
+      if (u === 'ml' || u === 'milliliter' || u === 'milliliters') {
+        return `${amt} ml`;
+      }
+      if (u === 'l' || u === 'liter' || u === 'liters') {
+        return `${amt} L`;
+      }
+      if (u === 'cup' || u === 'cups') {
+        return `${amt} ${amt === 1 ? 'cup' : 'cups'}`;
+      }
+      if (u === 'gal' || u === 'gallon' || u === 'gallons') {
+        return `${amt} gal`;
+      }
+      if (u === 'pt' || u === 'pint' || u === 'pints') {
+        return `${amt} pt`;
+      }
+      if (u === 'qt' || u === 'quart' || u === 'quarts') {
+        return `${amt} qt`;
+      }
       if (u === 'serving' || u === 'servings') {
         return `${amt} ${amt === 1 ? 'serving' : 'servings'}`;
       }
@@ -2853,18 +2893,22 @@ function testSampleWalmartReceiptPhoto() {
       if (!item) return;
       const u = (item.unit || 'items').toLowerCase().trim();
 
-      // 4 Primary Options: items -> oz -> g -> servings -> items
-      let nextUnit = 'items';
-      if (u === 'item' || u === 'items' || u === 'each' || u === 'ea' || u === 'count' || u.includes('pc')) {
-        nextUnit = 'oz';
-      } else if (u === 'oz' || u.includes('ounce')) {
+      // Cycle through: oz -> g -> fl oz -> ml -> items -> servings -> oz
+      let nextUnit = 'oz';
+      if (u === 'oz' || u.includes('ounce')) {
         nextUnit = 'g';
       } else if (u === 'g' || u.includes('gram')) {
+        nextUnit = 'fl oz';
+      } else if (u.includes('fl') || u === 'fluid oz') {
+        nextUnit = 'ml';
+      } else if (u === 'ml' || u.includes('milli')) {
+        nextUnit = 'items';
+      } else if (u === 'item' || u === 'items' || u === 'each' || u === 'ea' || u === 'count' || u.includes('pc')) {
         nextUnit = 'servings';
       } else if (u.includes('serv')) {
-        nextUnit = 'items';
+        nextUnit = 'oz';
       } else {
-        nextUnit = 'items';
+        nextUnit = 'oz';
       }
 
       item.unit = nextUnit;
@@ -3193,13 +3237,22 @@ function testSampleWalmartReceiptPhoto() {
       if (mapped === 'serving') mapped = 'servings';
       if (unitInput) unitInput.value = mapped;
 
-      ['items', 'oz', 'g', 'servings'].forEach(u => {
-        const btn = document.getElementById(`btn-punit-${u}`);
+      const unitBtnMap = {
+        'oz': 'btn-punit-oz',
+        'g': 'btn-punit-g',
+        'fl oz': 'btn-punit-fl-oz',
+        'ml': 'btn-punit-ml',
+        'items': 'btn-punit-items',
+        'servings': 'btn-punit-servings'
+      };
+
+      Object.keys(unitBtnMap).forEach(u => {
+        const btn = document.getElementById(unitBtnMap[u]);
         if (!btn) return;
         if (u === mapped) {
-          btn.className = "py-1.5 px-1 rounded-xl border border-pastel-mint bg-pastel-mint/20 text-[11px] text-center text-pastel-mint font-bold transition shadow-sm truncate";
+          btn.className = "py-1.5 px-0.5 rounded-xl border border-pastel-mint bg-pastel-mint/20 text-[11px] text-center text-pastel-mint font-bold transition shadow-sm truncate";
         } else {
-          btn.className = "py-1.5 px-1 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint/50 text-[11px] text-center text-slate-300 font-semibold transition truncate";
+          btn.className = "py-1.5 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint/50 text-[11px] text-center text-slate-300 font-semibold transition truncate";
         }
       });
     }

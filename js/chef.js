@@ -1001,21 +1001,50 @@
         const prompt = `You are an expert grocery receipt parser. Read this store receipt photo or digital app screenshot (e.g. Walmart app e-receipt, Target, Kroger, grocery store) and extract all purchased items.
 Identify food, beverage, and household products. Expand cryptic abbreviations into clean human-readable names (e.g. "GV WHL MLK" -> "Great Value Whole Milk", "BNLS SKNLS CHIKN" -> "Boneless Skinless Chicken Breasts", "ORG BABY SPN" -> "Organic Baby Spinach").
 
+CRITICAL AMOUNT & PACKAGE MEASUREMENT INSTRUCTIONS:
+- Almost all food packages have the net weight or volume printed on the packaging or receipt item line (e.g. "10 oz", "15.5 oz", "32 fl oz", "500 g", "1 gal", "2 lb", "750 ml").
+- Extract the package net weight or volume directly:
+  * For solid foods (canned goods, meats, vegetables, cheeses, grains, snacks): DEFAULT TO "oz" or "g" as printed on the package (e.g. amount: 15.5, unit: "oz", or amount: 454, unit: "g").
+  * For liquids and beverages (milk, water, juices, oils, vinegars, broths, dressings, sauces): DEFAULT TO "fl oz", "ml", "L", or "gal" as printed on the package (e.g. amount: 64, unit: "fl oz", or amount: 500, unit: "ml").
+  * Only default to "items" or count if no package weight or volume is listed (e.g. "3 Lemons", "1 Fresh Avocado").
+
+CRITICAL CATEGORY INSTRUCTIONS:
+- "category" must be one of the 9 Food Groups:
+  "protein": meats, poultry, seafood, eggs, tofu, deli meats
+  "dairy": cow milk, cheese, yogurt, butter, plant-based milks
+  "vegetables": fresh veggies, greens, broccoli, carrots, onions, potatoes, salad
+  "fruits": fresh apples, bananas, berries, citrus, avocados
+  "grains": rice, bread, pasta, oats, cereal, tortillas, flour
+  "canned": canned beans, canned tomatoes, broths, soups, canned fish
+  "baking": oils, vinegars, spices, sauces, dressings, condiments, sugar
+  "snacks": chips, crackers, popcorn, nuts, cookies, soda, sparkling water, coffee
+  "leftovers": prepared store deli meals, rotisserie chicken
+
+CRITICAL STORAGE INSTRUCTIONS:
+- "storage" must be one of:
+  "fridge": fresh greens, milk, cheese, fresh meats, chilled dressings
+  "frozen": frozen vegetables, frozen berries, frozen meats, ice cream
+  "counter": bananas, bread, fresh whole tomatoes, avocados, apples
+  "shelf": dry pasta, rice, canned goods, cooking oils, spices
+
 Return ONLY a valid JSON array of objects, with each object having:
-- "name": string (concise, human-readable item name without barcodes or store codes, e.g. "Great Value Whole Milk", "Boneless Skinless Chicken Breasts", "Organic Baby Spinach", "Paper Towels")
-- "category": string (must be one of: "produce", "protein", "grains", "condiments")
-- "storage": string (must be one of: "fridge", "frozen", "shelf")
-- "amount": number (e.g. 1, 2.5, 3)
-- "unit": string (e.g. "lb", "oz", "gal", "bag", "carton", "item", "pack")
-- "isFood": boolean (true for edible foods and beverages; false for cleaning products, paper towels, cosmetics, pet food, or household goods)
+- "name": string (concise, human-readable item name without store item numbers)
+- "category": string (one of: "protein", "dairy", "vegetables", "fruits", "grains", "canned", "baking", "snacks", "leftovers")
+- "storage": string (one of: "fridge", "frozen", "counter", "shelf")
+- "amount": number (package net weight or volume, e.g. 15.5, 10, 32, 500, 1)
+- "unit": string ("oz", "g", "fl oz", "ml", "L", "gal", "lb", "items", "servings")
+- "isFood": boolean (true for food/drinks; false for household/cleaning/cosmetics)
 
 Example output:
 [
-  {"name": "Great Value Whole Milk", "category": "protein", "storage": "fridge", "amount": 1, "unit": "gal", "isFood": true},
-  {"name": "Organic Baby Spinach", "category": "produce", "storage": "fridge", "amount": 10, "unit": "oz", "isFood": true},
+  {"name": "Organic Whole Milk", "category": "dairy", "storage": "fridge", "amount": 1, "unit": "gal", "isFood": true},
+  {"name": "Marketside Baby Spinach", "category": "vegetables", "storage": "fridge", "amount": 10, "unit": "oz", "isFood": true},
+  {"name": "Fresh Bananas", "category": "fruits", "storage": "counter", "amount": 1, "unit": "items", "isFood": true},
   {"name": "Boneless Chicken Breasts", "category": "protein", "storage": "fridge", "amount": 3, "unit": "lb", "isFood": true},
+  {"name": "Great Value Black Beans", "category": "canned", "storage": "shelf", "amount": 15.5, "unit": "oz", "isFood": true},
+  {"name": "Great Value Olive Oil", "category": "baking", "storage": "shelf", "amount": 16.9, "unit": "fl oz", "isFood": true},
   {"name": "Jasmine Rice", "category": "grains", "storage": "shelf", "amount": 5, "unit": "lb", "isFood": true},
-  {"name": "Bounty Paper Towels", "category": "condiments", "storage": "shelf", "amount": 1, "unit": "pack", "isFood": false}
+  {"name": "Bounty Paper Towels", "category": "baking", "storage": "shelf", "amount": 1, "unit": "pack", "isFood": false}
 ]
 
 Return strictly the raw JSON array.`;
@@ -1038,17 +1067,70 @@ Return strictly the raw JSON array.`;
           const formatted = items.map((it, idx) => {
             const rawName = (it.name || 'Grocery Item').trim();
             const lower = rawName.toLowerCase();
-            const isNonFood = it.isFood === false || /paper\s*towel|soap|detergent|cleaner|sponge|shampoo|foil|bag|bleach/i.test(lower);
+            const isNonFood = it.isFood === false || /paper\s*towel|soap|detergent|cleaner|sponge|shampoo|foil|bag\b|bleach|tissue|trash|diaper|napkin/i.test(lower);
             
+            // 1. Storage Heuristic
             let storage = it.storage || 'fridge';
             if (/frozen|ice\s*cream|freezer|pizza/i.test(lower)) storage = 'frozen';
-            else if (/rice|pasta|cereal|flour|oats|bread|chip|cracker|canned|oil|spice/i.test(lower)) storage = 'shelf';
+            else if (/banana|bread|bagel|tortilla|tomato|avocado|onion|garlic|potato/i.test(lower)) storage = 'counter';
+            else if (/rice|pasta|cereal|flour|oats|chip|cracker|canned|oil|spice|vinegar|sauce|dressing/i.test(lower)) storage = 'shelf';
 
-            let category = it.category || 'produce';
-            if (isNonFood) category = 'condiments';
-            else if (/chicken|beef|meat|egg|salmon|fish|protein|turkey|tofu|yogurt|milk|cheese/i.test(lower)) category = 'protein';
-            else if (/rice|oat|quinoa|bread|pasta|flour|cereal|grain|noodle/i.test(lower)) category = 'grains';
-            else if (/sauce|oil|spice|dressing|vinegar|syrup|mustard|condiment|snack/i.test(lower)) category = 'condiments';
+            // 2. Food Type Heuristic
+            let category = it.category || 'vegetables';
+            if (isNonFood) category = 'baking';
+            else if (/milk|cheese|cheddar|mozzarella|yogurt|butter|cream|sour cream/i.test(lower)) category = 'dairy';
+            else if (/chicken|beef|steak|turkey|pork|bacon|sausage|meat|egg|salmon|fish|tuna|shrimp|tilapia|tofu/i.test(lower)) category = 'protein';
+            else if (/apple|banana|berry|berries|strawberry|blueberry|orange|lemon|lime|avocado|grape|melon|peach|mango/i.test(lower)) category = 'fruits';
+            else if (/spinach|kale|lettuce|broccoli|carrot|onion|garlic|tomato|pepper|cucumber|zucchini|cauliflower|celery|salad|green bean/i.test(lower)) category = 'vegetables';
+            else if (/rice|oat|quinoa|bread|pasta|flour|cereal|grain|noodle|tortilla|bagel/i.test(lower)) category = 'grains';
+            else if (/can\b|canned|broth|soup|marinara|diced tomato|black bean|kidney bean|chickpea/i.test(lower)) category = 'canned';
+            else if (/oil|vinegar|spice|salt|pepper|seasoning|sauce|dressing|mayo|mustard|ketchup|syrup|honey/i.test(lower)) category = 'baking';
+            else if (/chip|cracker|popcorn|pretzel|nuts|snack|cookie|chocolate|candy|soda|sparkling|coffee|tea/i.test(lower)) category = 'snacks';
+
+            // 3. Amount & Unit Heuristic (Default to package oz, g, fl oz, ml if present)
+            let amount = parseFloat(it.amount) || 1;
+            let unit = (it.unit || '').trim().toLowerCase();
+
+            // Regex extraction from name if package net weight/volume was in description
+            const flOzMatch = rawName.match(/(\d+(?:\.\d+)?)\s*(?:fl\s*oz|fluid\s*oz)/i);
+            const ozMatch = rawName.match(/(\d+(?:\.\d+)?)\s*(?:oz|ounce|ounces)\b/i);
+            const gMatch = rawName.match(/(\d+(?:\.\d+)?)\s*(?:g|gram|grams)\b/i);
+            const mlMatch = rawName.match(/(\d+(?:\.\d+)?)\s*(?:ml|milliliter|milliliters)\b/i);
+            const lMatch = rawName.match(/(\d+(?:\.\d+)?)\s*(?:l|liter|liters)\b/i);
+            const galMatch = rawName.match(/(\d+(?:\.\d+)?)\s*(?:gal|gallon|gallons)\b/i);
+            const lbMatch = rawName.match(/(\d+(?:\.\d+)?)\s*(?:lb|lbs|pound|pounds)\b/i);
+
+            if (flOzMatch) {
+              amount = parseFloat(flOzMatch[1]) || amount;
+              unit = 'fl oz';
+            } else if (mlMatch) {
+              amount = parseFloat(mlMatch[1]) || amount;
+              unit = 'ml';
+            } else if (lMatch) {
+              amount = parseFloat(lMatch[1]) || amount;
+              unit = 'l';
+            } else if (galMatch) {
+              amount = parseFloat(galMatch[1]) || amount;
+              unit = 'gal';
+            } else if (ozMatch) {
+              amount = parseFloat(ozMatch[1]) || amount;
+              unit = 'oz';
+            } else if (gMatch) {
+              amount = parseFloat(gMatch[1]) || amount;
+              unit = 'g';
+            } else if (lbMatch) {
+              amount = parseFloat(lbMatch[1]) || amount;
+              unit = 'lb';
+            } else if (!unit || unit === 'item' || unit === 'items') {
+              // Liquid vs solid check default
+              if (/milk|oil|vinegar|juice|water|sauce|dressing|broth|syrup/i.test(lower)) {
+                unit = 'fl oz';
+              } else if (/produce|vegetables|greens|fruit|beans|meat|chicken|beef|cheese|rice|pasta|snack/i.test(lower)) {
+                unit = 'oz';
+              } else {
+                unit = 'items';
+              }
+            }
 
             return {
               id: `inc-${Date.now()}-${idx}`,
@@ -1056,8 +1138,8 @@ Return strictly the raw JSON array.`;
               name: rawName,
               category,
               storage,
-              amount: parseFloat(it.amount) || 1,
-              unit: it.unit || 'item',
+              amount,
+              unit,
               isFood: !isNonFood,
               approved: !isNonFood
             };
@@ -1205,13 +1287,21 @@ Return strictly the raw JSON array.`;
     function setWrapupLeftoverUnit(unitVal) {
       const select = document.getElementById('wrapup-leftover-unit');
       if (select) select.value = unitVal;
-      ['servings', 'oz', 'g', 'items'].forEach(u => {
-        const btn = document.getElementById(`btn-wrapup-unit-${u}`);
+      const unitMap = {
+        'servings': 'btn-wrapup-unit-servings',
+        'oz': 'btn-wrapup-unit-oz',
+        'g': 'btn-wrapup-unit-g',
+        'fl oz': 'btn-wrapup-unit-fl-oz',
+        'ml': 'btn-wrapup-unit-ml',
+        'items': 'btn-wrapup-unit-items'
+      };
+      Object.keys(unitMap).forEach(u => {
+        const btn = document.getElementById(unitMap[u]);
         if (!btn) return;
         if (u === unitVal) {
-          btn.className = "py-1 px-1 rounded-xl border border-pastel-mint bg-pastel-mint/20 text-[11px] text-center text-pastel-mint font-bold transition shadow-sm truncate";
+          btn.className = "py-1 px-0.5 rounded-xl border border-pastel-mint bg-pastel-mint/20 text-[11px] text-center text-pastel-mint font-bold transition shadow-sm truncate";
         } else {
-          btn.className = "py-1 px-1 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition truncate";
+          btn.className = "py-1 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition truncate";
         }
       });
     }

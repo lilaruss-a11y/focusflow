@@ -4,8 +4,8 @@ You are working on the **FocusFlow** web application for a non-technical user. F
 
 ---
 
-## 1. Project Directory Map
-The project is modularized into dedicated files to prevent regressions:
+## 1. Project Directory Structure
+The project is modularized into dedicated feature files to prevent regressions and keep context focused:
 
 * **`index.html`** (UI Skeleton & Layout):
   * Header, tab bar, navigation, screens, cards, modals, and inline UI triggers.
@@ -15,21 +15,21 @@ The project is modularized into dedicated files to prevent regressions:
   * Color schemes, container constraints, animations, safe-area headers for mobile/PWA.
   * **Rule:** All styling belongs here.
 
-* **`js/audio.js`** (Audio Effects):
-  * Web Audio API synthesized chimes (`playChime('bell')`, `playChime('alert')`) and sound toggle.
+* **`js/`** (Feature Logic Modules):
+  * **`state.js`**: Initial app state, Firebase config, scaffold stages, color schemes, and core helpers.
+  * **`audio.js`**: Web Audio API synthesized chimes (`playChime('bell')`) and sound toggle.
+  * **`sync.js`**: Firebase Firestore Cloud Sync, Google sign-in, offline queue, and password management.
+  * **`timeline.js`**: Calendar day grid, timeline view, drag-and-drop events, and ADHD suggestions.
+  * **`calendar-categories.js`**: Dynamic calendar categories, color palettes, and Google Calendar 2-way sync.
+  * **`kitchen.js`**: Kitchen sub-tabs, pantry, weekly meal planner, shopping list, recipe book, and filters.
+  * **`chef.js`**: Reverse Chef wizard (stages 1, 2, 3), step timers, and Walmart grocery importer.
+  * **`nutrition.js`**: Macronutrient calculations & adjustments, USDA whole foods database, and barcode scanner.
+  * **`health.js`**: Wellbeing correlations, 7-day health averages, 30-day skill graphs, and Apple Health sync.
+  * **`biometrics.js`**: Cardiac & medication tracking, actual vs plan duration calculation, and event completion/skip toggles.
+  * **`app.js`**: Tab navigation (`switchTab`), state persistence (`saveAppState`, `loadAppState`), phone demo modal, and `window.onload` startup sequence.
 
-* **`js/app.js`** (Core Logic & Controllers):
-  * Landmark Map inside `js/app.js`:
-    1. **Lines 1 – 300**: Firebase config, global `state` object, scaffold stages, OCD settings.
-    2. **Lines 300 – 2,800**: Calendar day grid, timeline view, drag-and-drop events, calendar sync.
-    3. **Lines 2,800 – 4,900**: Kitchen sub-tabs, pantry, recipe book, meal planner, grocery shopping list.
-    4. **Lines 4,900 – 7,600**: Nutrition engine, USDA whole foods database, barcode scanner, macro adjustments.
-    5. **Lines 7,600 – 9,500**: Wellbeing correlations, 7-day health averages, Apple Health sync.
-    6. **Lines 9,500 – 9,550**: App lifecycle & startup (`window.onload`), screen re-rendering.
-    7. **Lines 9,550 – 10,650**: Firebase Firestore Cloud Sync & offline data persistence.
-    8. **Lines 10,650 – 11,800**: Reverse Chef wizard, recipe timers, Walmart grocery importer.
-    9. **Lines 11,800 – 12,900**: Multi-calendar engine, Google Calendar 2-way sync, color palettes.
-    10. **Lines 12,900 – 13,570**: Biometrics, cardiac & medication trackers, event completion/skip toggles.
+* **`site/`** (Live GitHub Pages Mirror):
+  * **Rule:** Whenever making edits to `index.html`, `css/`, `js/`, or `sw.js`, **ALWAYS copy the modified files into the `site/` folder** so that the user's phone (homescreen PWA) gets the updates!
 
 * **`sw.js`** (Service Worker):
   * Handles offline caching for the PWA app shell and external CDN libraries.
@@ -41,15 +41,21 @@ The project is modularized into dedicated files to prevent regressions:
 ### Rule 1: No Blind Guessing (Find Root Cause First)
 - Before changing any code, you must locate the exact lines causing the bug and explain the root cause in plain English.
 - Double-check:
-  * Are IDs and class names spelled identically in `index.html` and `js/app.js`?
+  * Are IDs and class names spelled identically in `index.html` and the corresponding `js/` module?
   * Are functions invoked by inline `onclick="..."` defined on the global scope?
-  * Do event listeners target elements that actually exist?
+  * Do event listeners target elements that actually exist on the page?
 
 ### Rule 2: Mandatory Verification
 - Inspect all modified functions to verify logic flow.
 - Ensure no JavaScript syntax errors (e.g. unclosed brackets or stray tags) are introduced.
-- Provide the user with a simple 1-2-3 checklist to test the fix in their browser.
+- Provide the user with a simple 1-2-3 checklist to test the fix in their browser or on their phone.
 
-### Rule 3: Thrash Prevention (Circuit Breaker)
+### Rule 3: Auto-Sync to `site/` and Commit & Push to GitHub
+- After completing a verified edit:
+  1. Synchronize the modified files from the root into the `site/` folder.
+  2. Commit the changes to Git with a concise, descriptive message.
+  3. Push to `origin main` so the user's phone app updates immediately.
+
+### Rule 4: Thrash Prevention (Circuit Breaker)
 - If an issue is not resolved after **2 attempts**, STOP editing.
 - Summarize what was tested, ask the user to check their browser's Developer Tools Console (`Right-Click > Inspect > Console`) for any red errors, and wait for feedback.

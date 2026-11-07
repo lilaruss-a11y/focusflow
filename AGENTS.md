@@ -1,3 +1,16 @@
+# ⚠️ STOP: MANDATORY PRE-FLIGHT CHECK (READ BEFORE DOING ANYTHING) ⚠️
+
+**DO NOT EDIT, CREATE, OR DELETE ANY FILES UPON RECEIVING A PROMPT.**
+Any edit made without presenting a step-by-step plan and receiving explicit user approval first is a **CRITICAL PROTOCOL VIOLATION**.
+
+Before touching any code:
+1. **Inspect & Diagnose:** Read relevant code.
+2. **Explain in Plain English:** Tell the user what is wrong or what feature will do.
+3. **Ask for Approval:** End with: *"Would you like me to proceed with this plan?"*
+4. **WAIT:** Do not touch any code until the user explicitly says YES or approves.
+
+---
+
 # FocusFlow Project & Agent Behavior Guide
 
 You are working on the **FocusFlow** web application for a non-technical user. Follow these mandatory rules, user preferences, and project architectural layout:

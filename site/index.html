@@ -5486,7 +5486,13 @@
       </div>
 
       <div class="pt-2 flex justify-end border-t border-dark-border">
-        <button type="button" onclick="closeWalmartGroceryImportModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs">Cancel</button>
+        <div class="flex items-center justify-between w-full">
+          <button type="button" onclick="forceReloadLatestApp()" class="text-[11px] text-pastel-sky hover:underline flex items-center gap-1 font-semibold">
+            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+            <span>Force Update App (Clear Cache)</span>
+          </button>
+          <button type="button" onclick="closeWalmartGroceryImportModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs">Cancel</button>
+        </div>
       </div>
     </div>
   </div>
@@ -15929,13 +15935,45 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
     }
 
     // Offline support: service worker caches the app + libraries (only works on https or localhost)
+        // Force Cache-Busting and App Update for iPhone Standalone PWAs
+    function forceReloadLatestApp() {
+      alertBox("Clearing cached PWA assets and reloading newest build...", "Updating FocusFlow");
+      if ('caches' in window) {
+        caches.keys().then(names => Promise.all(names.map(name => caches.delete(name)))).then(() => {
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(regs => Promise.all(regs.map(r => r.unregister()))).then(() => {
+              window.location.reload(true);
+            });
+          } else {
+            window.location.reload(true);
+          }
+        }).catch(() => {
+          window.location.reload(true);
+        });
+      } else {
+        window.location.reload(true);
+      }
+    }
+
     function ffRegisterServiceWorker() {
       try {
         if (!('serviceWorker' in navigator)) return;
         const host = location.hostname;
         if (!(location.protocol === 'https:' || host === 'localhost' || host === '127.0.0.1')) return;
-        navigator.serviceWorker.register('./sw.js').then((reg) => {
-          if (reg) reg.update().catch(() => {});
+        navigator.serviceWorker.register('./sw.js?v=3.8.1').then((reg) => {
+          if (reg) {
+            reg.update().catch(() => {});
+            reg.addEventListener('updatefound', () => {
+              const worker = reg.installing;
+              if (worker) {
+                worker.addEventListener('statechange', () => {
+                  if (worker.state === 'activated') {
+                    console.log("New service worker active. Reloading to apply update.");
+                  }
+                });
+              }
+            });
+          }
         }).catch(() => {});
       } catch (e) {}
     }
@@ -16939,12 +16977,7 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
           });
           if (!resp.ok) {
-            endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
-            resp = await fetch(endpoint, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            });
+            console.warn("Sous Chef question response not ok:", resp.status);
           }
           if (resp.ok) {
             const data = await resp.json();

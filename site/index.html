@@ -3898,52 +3898,28 @@
           <div>• Smart adaptive schedule balancing</div>
         </div>
 
-        <!-- USDA & Nutritionix Databases Configuration -->
+        <!-- USDA FoodData Central Configuration -->
         <div class="pt-3 border-t border-dark-border space-y-3">
           <div class="flex items-center gap-2">
             <i data-lucide="database" class="w-4 h-4 text-pastel-mint"></i>
-            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Extended Nutrition Databases</h4>
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Official USDA Food Database</h4>
           </div>
 
-          <!-- USDA FoodData Central Key (Optional) -->
-          <div class="space-y-1">
+          <div class="p-3 bg-dark-base rounded-2xl border border-dark-border space-y-2">
             <div class="flex items-center justify-between">
-              <label class="text-slate-300 font-semibold text-[11px] flex items-center gap-1.5">
-                <span>🏛️ USDA FoodData Central Key</span>
-                <span class="text-[9px] text-pastel-mint font-normal bg-pastel-mint/15 px-1.5 py-0.5 rounded">Active (Demo Key)</span>
+              <label class="text-slate-200 font-semibold text-[11px] flex items-center gap-1.5">
+                <span>🏛️ USDA FoodData Central</span>
+                <span class="text-[9px] text-pastel-mint font-bold bg-pastel-mint/15 px-2 py-0.5 rounded-full">✓ Active Out-of-the-Box</span>
               </label>
-              <a href="https://fdc.nal.usda.gov/api-key.html" target="_blank" rel="noopener noreferrer" class="text-[10px] text-pastel-sky hover:underline flex items-center gap-0.5">
-                <span>Get Free USDA Key</span>
+              <a href="https://api.data.gov/signup/" target="_blank" rel="noopener noreferrer" class="text-[10px] text-pastel-sky hover:underline flex items-center gap-0.5">
+                <span>Get Personal Key</span>
                 <i data-lucide="external-link" class="w-3 h-3"></i>
               </a>
             </div>
-            <input type="text" id="usda-api-key-input" placeholder="DEMO_KEY (or paste your personal USDA key)" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-pastel-lavender">
-            <span class="text-[10px] text-slate-400 block">FocusFlow uses USDA standard access by default. You can paste a personal USDA key for unlimited queries.</span>
-          </div>
-
-          <!-- Nutritionix API Credentials -->
-          <div class="space-y-1.5">
-            <div class="flex items-center justify-between">
-              <label class="text-slate-300 font-semibold text-[11px] flex items-center gap-1.5">
-                <span>🥗 Nutritionix API</span>
-                <span class="text-[9px] text-slate-400 font-normal">Optional Tier 3</span>
-              </label>
-              <a href="https://developer.nutritionix.com" target="_blank" rel="noopener noreferrer" class="text-[10px] text-pastel-sky hover:underline flex items-center gap-0.5">
-                <span>Free Nutritionix Account</span>
-                <i data-lucide="external-link" class="w-3 h-3"></i>
-              </a>
-            </div>
-            <div class="grid grid-cols-2 gap-2">
-              <div>
-                <label class="text-[10px] text-slate-400 block mb-0.5">App ID</label>
-                <input type="text" id="nutritionix-app-id-input" placeholder="e.g. 1a2b3c4d" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-1.5 text-white font-mono text-xs focus:outline-none focus:border-pastel-lavender">
-              </div>
-              <div>
-                <label class="text-[10px] text-slate-400 block mb-0.5">API Key</label>
-                <input type="password" id="nutritionix-app-key-input" placeholder="e.g. 9f8e7d6c..." class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-1.5 text-white font-mono text-xs focus:outline-none focus:border-pastel-lavender">
-              </div>
-            </div>
-            <span class="text-[10px] text-slate-400 block">Provides access to Nutritionix's curated database for 1M+ branded groceries & restaurants.</span>
+            <p class="text-[11px] text-slate-400 leading-snug">
+              FocusFlow is pre-connected with official USDA standard access to verify US grocery package nutrients. You can paste your personal free key from <a href="https://api.data.gov/signup/" target="_blank" rel="noopener noreferrer" class="text-pastel-sky underline">api.data.gov/signup/</a> below if you want unlimited query limits.
+            </p>
+            <input type="text" id="usda-api-key-input" placeholder="DEMO_KEY (already active by default)" class="w-full bg-dark-surface border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-pastel-lavender">
           </div>
         </div>
       </div>

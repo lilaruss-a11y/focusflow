@@ -91,8 +91,6 @@
       const modal = document.getElementById('apikey-modal');
       const input = document.getElementById('gemini-api-key-input');
       const usdaInput = document.getElementById('usda-api-key-input');
-      const nxIdInput = document.getElementById('nutritionix-app-id-input');
-      const nxKeyInput = document.getElementById('nutritionix-app-key-input');
       const statusEl = document.getElementById('apikey-validation-status');
       const currentKey = getGeminiApiKey();
 
@@ -101,8 +99,6 @@
         const savedUsda = localStorage.getItem('focusflow_usda_api_key') || '';
         usdaInput.value = savedUsda;
       }
-      if (nxIdInput) nxIdInput.value = localStorage.getItem('focusflow_nutritionix_app_id') || '';
-      if (nxKeyInput) nxKeyInput.value = localStorage.getItem('focusflow_nutritionix_app_key') || '';
 
       if (statusEl) {
         if (currentKey) {
@@ -129,12 +125,6 @@
       const usdaInput = document.getElementById('usda-api-key-input');
       if (usdaInput) setUsdaApiKey(usdaInput.value.trim());
 
-      const nxIdInput = document.getElementById('nutritionix-app-id-input');
-      const nxKeyInput = document.getElementById('nutritionix-app-key-input');
-      if (nxIdInput || nxKeyInput) {
-        setNutritionixCredentials(nxIdInput ? nxIdInput.value : '', nxKeyInput ? nxKeyInput.value : '');
-      }
-
       closeApiKeyModal();
       playChime('bell');
       alertBox("Settings & API keys saved.", "Keys Saved");
@@ -144,19 +134,14 @@
       const input = document.getElementById('gemini-api-key-input');
       const statusEl = document.getElementById('apikey-validation-status');
       const usdaInput = document.getElementById('usda-api-key-input');
-      const nxIdInput = document.getElementById('nutritionix-app-id-input');
-      const nxKeyInput = document.getElementById('nutritionix-app-key-input');
 
       if (usdaInput) setUsdaApiKey(usdaInput.value.trim());
-      if (nxIdInput || nxKeyInput) {
-        setNutritionixCredentials(nxIdInput ? nxIdInput.value : '', nxKeyInput ? nxKeyInput.value : '');
-      }
 
       const key = (input ? input.value : '').trim();
       if (!key) {
         closeApiKeyModal();
         playChime('bell');
-        alertBox("Nutrition database keys saved.", "Settings Saved");
+        alertBox("Settings & USDA access saved.", "Settings Saved");
         return;
       }
 

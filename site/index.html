@@ -16996,7 +16996,7 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
     }
 
     // Client-Side Image Resizer & Compressor for AI Vision (Downsamples to max 1600px JPEG to avoid mobile timeouts / 413 Payload errors)
-    function compressImageFileForAI(file, maxDimension = 1200, quality = 0.75) {
+    function compressImageFileForAI(file, maxDimension = 960, quality = 0.70) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onerror = reject;
@@ -17071,7 +17071,7 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
 
       try {
         // 1. Compress image down to ~250KB JPEG to guarantee fast upload and prevent 413 / timeout
-        const { base64Data, mimeType } = await compressImageFileForAI(file, 1200, 0.75);
+        const { base64Data, mimeType } = await compressImageFileForAI(file, 960, 0.70);
 
         // 2. Prepare structured extraction prompt
         const prompt = "Extract all purchased store items from this grocery receipt image. Return ONLY a valid JSON array of objects with keys: name (string, clean concise item name without random codes), category (one of: 'produce', 'protein', 'grains', 'condiments'), storage (one of: 'fridge', 'frozen', 'shelf'), isFood (boolean, true for food and drinks, false for paper towels, cleaning supplies, cosmetics, or household items). Example format: [{\"name\":\"Whole Milk\",\"category\":\"protein\",\"storage\":\"fridge\",\"isFood\":true}]. Return ONLY the JSON array, no conversational markdown.";
@@ -17085,7 +17085,10 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
           }],
           generationConfig: {
             temperature: 0.1,
-            maxOutputTokens: 2048
+            maxOutputTokens: 1500,
+            thinkingConfig: {
+              thinkingBudget: 0
+            }
           }
         };
 

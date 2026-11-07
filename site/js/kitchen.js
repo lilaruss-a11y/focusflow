@@ -2191,564 +2191,7 @@
       playChime('bell');
     }
 
-    // Apple Health Linking Modal & Exports
-    function openAppleHealthModal() {
-      if (typeof renderAppleHealthUI === 'function') renderAppleHealthUI();
-      document.getElementById('apple-health-modal').classList.remove('hidden');
-      if (window.lucide) lucide.createIcons();
-    }
-    function closeAppleHealthModal() {
-      document.getElementById('apple-health-modal').classList.add('hidden');
-    }
-
-    function triggerAppleHealthShortcut() {
-      // Direct deep link to launch Apple Shortcuts app with HealthKit payload
-      const totals = calculateDailyNutrientTotals();
-      const shortcutUrl = `shortcuts://run-shortcut?name=Log%20FocusFlow%20Nutrition&input=text&text=${encodeURIComponent(JSON.stringify(totals))}`;
-      window.location.href = shortcutUrl;
-      alertBox("Connecting to Apple Shortcuts for HealthKit sync...", "Apple Health");
-    }
-
-    function exportHealthDataJSON() {
-      const totals = calculateDailyNutrientTotals();
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(totals, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `FocusFlow_HealthKit_${new Date().toISOString().slice(0,10)}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-      alertBox("Downloaded Apple Health compatible JSON.", "HealthKit Export");
-    }
-
-    function calculateDailyNutrientTotals() {
-      let totals = {
-        date: new Date().toISOString().slice(0, 10),
-        caloriesKcal: 0,
-        waterMl: state.waterLoggedMl || 0,
-        proteinG: 0,
-        carbsG: 0,
-        fatG: 0,
-        fiberG: 0,
-        sugarG: 0,
-        saturatedFatG: 0,
-        monounsaturatedFatG: 0,
-        polyunsaturatedFatG: 0,
-        omega3G: 0,
-        cholesterolMg: 0,
-        sodiumMg: 0,
-        potassiumMg: 0,
-        ironMg: 0,
-        calciumMg: 0,
-        magnesiumMg: 0,
-        zincMg: 0,
-        vitaminAmcg: 0,
-        vitaminCmg: 0,
-        vitaminD_IU: 0,
-        vitaminEmg: 0,
-        vitaminKmcg: 0,
-        tyrosineMg: 0,
-        tryptophanMg: 0
-      };
-
-      state.nutritionLog.forEach(n => {
-        totals.caloriesKcal += (n.kcal || 0);
-        totals.waterMl += (n.waterMl || 0);
-        totals.proteinG += (n.protein || 0);
-        totals.carbsG += (n.carbs || 0);
-        totals.fatG += (n.fat || 0);
-        totals.fiberG += (n.fiber || 0);
-        totals.sugarG += (n.sugar || 0);
-        totals.saturatedFatG += (n.saturated || 0);
-        totals.monounsaturatedFatG += (n.mufa || 0);
-        totals.polyunsaturatedFatG += (n.pufa || 0);
-        totals.omega3G += (n.omega3 || 0);
-        totals.cholesterolMg += (n.cholesterol || 0);
-        totals.sodiumMg += (n.sodium || 0);
-        totals.potassiumMg += (n.potassium || 0);
-        totals.ironMg += (n.iron || 0);
-        totals.calciumMg += (n.calcium || 0);
-        totals.magnesiumMg += (n.magnesium || 0);
-        totals.zincMg += (n.zinc || 0);
-        totals.vitaminAmcg += (n.vitA || 0);
-        totals.vitaminCmg += (n.vitC || 0);
-        totals.vitaminD_IU += (n.vitD || 0);
-        totals.vitaminEmg += (n.vitE || 0);
-        totals.vitaminKmcg += (n.vitK || 0);
-        totals.tyrosineMg += (n.tyrosine || 0);
-        totals.tryptophanMg += (n.tryptophan || 0);
-      });
-      return totals;
-    }
-
-    // Extended Nutrition Rendering with All Biomarkers
-    function renderNutrition() {
-      const totals = calculateDailyNutrientTotals();
-      renderWeightGoalTimeline();
-      renderSavedRecipesDropdown();
-      const list = document.getElementById('nutrition-diary-list');
-      if (list) {
-        list.innerHTML = '';
-        state.nutritionLog.forEach(n => {
-          const row = document.createElement('div');
-          row.className = "p-3 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint/50 cursor-pointer flex items-center justify-between text-xs transition";
-          row.onclick = () => inspectLoggedFood(n.id);
-          row.innerHTML = `
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full ${n.isVerified ? 'bg-pastel-mint' : 'bg-pastel-butter'}"></span>
-                <span class="text-slate-200 font-semibold">${n.name}</span>
-                <span class="text-[10px] px-1.5 py-0.5 rounded ${n.isVerified ? 'bg-pastel-mint/15 text-pastel-mint' : 'bg-pastel-butter/15 text-pastel-butter'}">${n.isVerified ? 'Verified' : 'Estimated'}</span>
-              </div>
-              <div class="text-[11px] text-slate-400 mt-1 font-mono">
-                P: ${n.protein}g | C: ${n.carbs}g | F: ${n.fat}g | Fiber: ${n.fiber || 0}g • <span class="text-pastel-mint underline">Tap for vitamins</span>
-              </div>
-            </div>
-            <span class="font-mono font-bold text-white text-sm">${n.kcal} kcal</span>
-          `;
-          list.appendChild(row);
-        });
-      }
-
-      const countEl = document.getElementById('nutrition-log-count');
-      if (countEl) countEl.textContent = `${state.nutritionLog.length} items`;
-
-      const targets = state.userProfile || {};
-      const setTxt = (id, txt) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = txt;
-      };
-      const setWidth = (id, w) => {
-        const el = document.getElementById(id);
-        if (el) el.style.width = w;
-      };
-
-      // Hydration label and buttons: fl oz default with ml option
-      const waterUnit = targets.waterUnit || 'fl_oz';
-      const waterLabelEl = document.getElementById('water-intake-label');
-      const btn1 = document.getElementById('water-quick-btn-1');
-      const btn2 = document.getElementById('water-quick-btn-2');
-
-      if (waterUnit === 'fl_oz') {
-        const curFlOz = Math.round((state.waterLoggedMl || 0) / 29.5735);
-        const tgtFlOz = targets.dailyWaterTargetFlOz || 90;
-        if (waterLabelEl) waterLabelEl.textContent = `${curFlOz} / ${tgtFlOz} fl oz (Goal calibrated for energy)`;
-        if (btn1) {
-          btn1.textContent = '+8 fl oz';
-          btn1.setAttribute('onclick', 'logQuickWater(8)');
-        }
-        if (btn2) {
-          btn2.textContent = '+16 fl oz';
-          btn2.setAttribute('onclick', 'logQuickWater(16)');
-        }
-      } else {
-        const curMl = Math.round(state.waterLoggedMl || 0);
-        const tgtMl = targets.dailyWaterTargetMl || 2700;
-        if (waterLabelEl) waterLabelEl.textContent = `${curMl} / ${tgtMl} ml (Goal calibrated for energy)`;
-        if (btn1) {
-          btn1.textContent = '+250 ml';
-          btn1.setAttribute('onclick', 'logQuickWater(250)');
-        }
-        if (btn2) {
-          btn2.textContent = '+500 ml';
-          btn2.setAttribute('onclick', 'logQuickWater(500)');
-        }
-      }
-
-      // Macro gauges on main nutrition interface
-      const calTarget = targets.dailyCaloriesTarget || 2130;
-      const protTarget = targets.dailyProteinTarget || 135;
-      const carbTarget = targets.dailyCarbsTarget || 240;
-      const fatTarget = targets.dailyFatTarget || 71;
-
-      setTxt('macro-calories', `${totals.caloriesKcal} / ${calTarget.toLocaleString()}`);
-      setTxt('macro-protein', `${Math.round(totals.proteinG)}g / ${protTarget}g`);
-      setTxt('macro-carbs', `${Math.round(totals.carbsG)}g / ${carbTarget}g`);
-      setTxt('macro-fats', `${Math.round(totals.fatG)}g / ${fatTarget}g`);
-
-      const pctCal = Math.min(100, Math.round((totals.caloriesKcal / calTarget) * 100));
-      const pctProt = Math.min(100, Math.round((totals.proteinG / protTarget) * 100));
-      const pctCarb = Math.min(100, Math.round((totals.carbsG / carbTarget) * 100));
-      const pctFat = Math.min(100, Math.round((totals.fatG / fatTarget) * 100));
-
-      setWidth('bar-calories', `${pctCal}%`);
-      setTxt('pct-calories', `${pctCal}% • Tap for Micronutrients`);
-      setWidth('bar-protein', `${pctProt}%`);
-      setTxt('pct-protein', `${pctProt}%`);
-      setWidth('bar-carbs', `${pctCarb}%`);
-      setTxt('pct-carbs', `${pctCarb}%`);
-      setWidth('bar-fats', `${pctFat}%`);
-      setTxt('pct-fats', `${pctFat}%`);
-
-      // View A: Full Day Summary Headline Card inside modal
-      setTxt('full-summary-cal-display', `${totals.caloriesKcal.toLocaleString()} / ${calTarget.toLocaleString()} kcal`);
-      setTxt('full-summary-cal-pct', `${pctCal}% of Target`);
-      const deficitKcal = targets.dailyEnergyDeficitKcal || 0;
-      if (deficitKcal > 0) {
-        setTxt('full-summary-deficit-status', `Deficit: -${deficitKcal} kcal/day (${targets.weeklyPaceLbs || 0.5} lbs/wk pace)`);
-      } else {
-        setTxt('full-summary-deficit-status', `Maintenance Energy Goal`);
-      }
-      setWidth('full-summary-cal-bar', `${pctCal}%`);
-      setTxt('full-summary-protein', `${Math.round(totals.proteinG)}g / ${protTarget}g`);
-      setTxt('full-summary-carbs', `${Math.round(totals.carbsG)}g / ${carbTarget}g`);
-      setTxt('full-summary-fats', `${Math.round(totals.fatG)}g / ${fatTarget}g`);
-
-      // Micronutrient & Biochemical cards inside modal
-      setTxt('stat-fiber', `${totals.fiberG.toFixed(1)}g / ${targets.dailyFiberTarget || 30}g`);
-      setTxt('stat-sugar', `${totals.sugarG.toFixed(1)}g / <50g`);
-      setTxt('stat-starch', `${totals.carbsG - totals.fiberG - totals.sugarG > 0 ? (totals.carbsG - totals.fiberG - totals.sugarG).toFixed(1) : 0}g`);
-      setTxt('stat-netcarbs', `${Math.max(0, totals.carbsG - totals.fiberG).toFixed(1)}g / ${carbTarget}g`);
-
-      setTxt('stat-satfat', `${totals.saturatedFatG.toFixed(1)}g / <20g`);
-      setTxt('stat-mufa', `${totals.monounsaturatedFatG.toFixed(1)}g`);
-      setTxt('stat-pufa', `${totals.polyunsaturatedFatG.toFixed(1)}g`);
-      setTxt('stat-omega3', `${totals.omega3G.toFixed(1)}g / 1.6g`);
-      setTxt('stat-cholesterol', `${Math.round(totals.cholesterolMg)}mg / <300mg`);
-
-      setTxt('stat-vitA', `${Math.round(totals.vitaminAmcg)} / 700 mcg`);
-      setTxt('stat-vitC', `${Math.round(totals.vitaminCmg)} / 75 mg`);
-      setTxt('stat-vitD', `${Math.round(totals.vitaminD_IU)} / 600 IU`);
-      setTxt('stat-vitE', `${totals.vitaminEmg.toFixed(1)} / 15 mg`);
-      setTxt('stat-vitK', `${Math.round(totals.vitaminKmcg)} / 90 mcg`);
-
-      setTxt('stat-calcium', `${Math.round(totals.calciumMg)} / ${targets.dailyCalciumTarget || 1000} mg`);
-      setTxt('stat-iron', `${totals.ironMg.toFixed(1)} / ${targets.dailyIronTarget || 18} mg`);
-      setTxt('stat-magnesium', `${Math.round(totals.magnesiumMg)} / 320 mg`);
-      setTxt('stat-potassium', `${Math.round(totals.potassiumMg)} / ${targets.dailyPotassiumTarget || 2600} mg`);
-      setTxt('stat-sodium', `${Math.round(totals.sodiumMg)} / ${targets.dailySodiumTarget || 2300} mg`);
-      setTxt('stat-zinc', `${totals.zincMg.toFixed(1)} / 8 mg`);
-
-      setTxt('stat-tyrosine', `${Math.round(totals.tyrosineMg)} mg`);
-      setTxt('stat-tryptophan', `${Math.round(totals.tryptophanMg)} mg`);
-      setTxt('stat-leucine', `${Math.round(totals.proteinG * 80)} mg`);
-      setTxt('stat-lysine', `${Math.round(totals.proteinG * 65)} mg`);
-      setTxt('stat-choline', `${Math.round(totals.proteinG * 2.8)} / 425 mg`);
-    }
-
-    function closeNutrientBreakdownModal() {
-      const modal = document.getElementById('nutrient-breakdown-modal');
-      if (modal) modal.classList.add('hidden');
-    }
-
-    // Modal: Full Day Calorie Breakdown or Single Nutrient Drilldown
-    function openNutrientBreakdownModal(nutrientKey = 'calories') {
-      const modal = document.getElementById('nutrient-breakdown-modal');
-      if (!modal) return;
-
-      const fullSummaryView = document.getElementById('drilldown-full-summary-view');
-      const singleView = document.getElementById('drilldown-single-view');
-      const backBtn = document.getElementById('drilldown-back-btn');
-      const titleEl = document.getElementById('drilldown-title');
-
-      renderNutrition(); // Fresh totals
-
-      if (nutrientKey === 'calories') {
-        // VIEW A: Full Day Calorie & Micronutrient Summary
-        if (fullSummaryView) fullSummaryView.classList.remove('hidden');
-        if (singleView) singleView.classList.add('hidden');
-        if (backBtn) backBtn.classList.add('hidden');
-        if (titleEl) titleEl.textContent = "Full Day Calorie & Nutrient Summary";
-
-        const calListEl = document.getElementById('drilldown-calorie-contributors-list');
-        if (calListEl) {
-          calListEl.innerHTML = '';
-          const totals = calculateDailyNutrientTotals();
-          const foodsSorted = [...state.nutritionLog].sort((a, b) => (b.kcal || 0) - (a.kcal || 0));
-          if (foodsSorted.length === 0) {
-            calListEl.innerHTML = `
-              <div class="text-[11px] text-slate-400 italic p-3 bg-dark-base rounded-xl border border-dark-border">
-                No foods logged today yet. Tap "Log Food" on the Nutrition tab to add breakfast, lunch, or dinner.
-              </div>
-            `;
-          } else {
-            foodsSorted.forEach(f => {
-              const fKcal = f.kcal || 0;
-              const calPct = totals.caloriesKcal > 0 ? Math.round((fKcal / totals.caloriesKcal) * 100) : 0;
-              const row = document.createElement('div');
-              row.className = "p-2.5 rounded-xl bg-dark-base border border-dark-border flex items-center justify-between text-xs";
-              row.innerHTML = `
-                <div class="flex items-center gap-2 truncate pr-2">
-                  <span class="w-1.5 h-1.5 rounded-full ${f.isVerified ? 'bg-pastel-mint' : 'bg-pastel-butter'} shrink-0"></span>
-                  <span class="text-white font-semibold truncate">${f.name}</span>
-                  <span class="text-[9px] px-1.5 py-0.2 rounded bg-dark-elevated text-slate-400 font-mono shrink-0">${f.protein}g P | ${f.carbs}g C | ${f.fat}g F</span>
-                </div>
-                <div class="text-right shrink-0">
-                  <span class="font-mono font-bold text-pastel-mint">${fKcal} kcal</span>
-                  <span class="text-[10px] text-slate-400 font-mono ml-1">(${calPct}%)</span>
-                </div>
-              `;
-              calListEl.appendChild(row);
-            });
-          }
-        }
-
-        modal.classList.remove('hidden');
-        if (window.lucide) lucide.createIcons();
-        return;
-      }
-
-      // VIEW B: Single Nutrient Drilldown View
-      if (fullSummaryView) fullSummaryView.classList.add('hidden');
-      if (singleView) singleView.classList.remove('hidden');
-      if (backBtn) backBtn.classList.remove('hidden');
-
-      const summaryEl = document.getElementById('drilldown-summary');
-      const pctEl = document.getElementById('drilldown-pct');
-      const barEl = document.getElementById('drilldown-progress-bar');
-      const listEl = document.getElementById('drilldown-contributors-list');
-      const tipEl = document.getElementById('drilldown-health-tip');
-
-      const waterUnit = (state.userProfile && state.userProfile.waterUnit) || 'fl_oz';
-      const waterTarget = waterUnit === 'fl_oz'
-        ? ((state.userProfile && state.userProfile.dailyWaterTargetFlOz) || 90)
-        : ((state.userProfile && state.userProfile.dailyWaterTargetMl) || 2700);
-
-      const meta = {
-        protein: { name: 'Total Protein', unit: 'g', target: state.userProfile.dailyProteinTarget, barColor: 'bg-pastel-peach', tip: 'Essential for neurotransmitter synthesis (dopamine, norepinephrine, serotonin).' },
-        carbs: { name: 'Carbohydrates', unit: 'g', target: state.userProfile.dailyCarbsTarget, barColor: 'bg-pastel-butter', tip: 'Complex carbs provide steady cerebral glucose without insulin spikes.' },
-        netcarbs: { name: 'Net Carbs', unit: 'g', target: state.userProfile.dailyCarbsTarget, barColor: 'bg-pastel-butter', tip: 'Total carbohydrates minus dietary fiber.' },
-        fat: { name: 'Healthy Lipids & Fats', unit: 'g', target: state.userProfile.dailyFatTarget, barColor: 'bg-pastel-sky', tip: 'Supports brain cellular membranes, myelin sheaths, and hormone balance.' },
-        water: { name: 'Water & Fluid Hydration', unit: waterUnit === 'fl_oz' ? 'fl oz' : 'ml', target: waterTarget, barColor: 'bg-pastel-sky', tip: 'Hydration directly improves executive working memory and prevents afternoon fatigue.' },
-        fiber: { name: 'Dietary Fiber', unit: 'g', target: state.userProfile.dailyFiberTarget || 28, barColor: 'bg-pastel-mint', tip: 'Microbiome diversity fuels short-chain fatty acids that regulate brain inflammation.' },
-        sugar: { name: 'Sugars', unit: 'g', target: 50, barColor: 'bg-pastel-butter', tip: 'Maintain within moderate bounds to prevent dopamine dysregulation crashes.' },
-        starch: { name: 'Complex Starch', unit: 'g', target: 150, barColor: 'bg-pastel-butter', tip: 'Slow-digesting polysaccharides that fuel physical stamina.' },
-        saturated: { name: 'Saturated Fat', unit: 'g', target: 20, barColor: 'bg-slate-400', tip: 'Upper boundary: maintain under 20g/day for cardiovascular and lipid health.' },
-        monounsaturated: { name: 'Monounsaturated Fats (MUFA)', unit: 'g', target: 35, barColor: 'bg-pastel-sky', tip: 'Cardioprotective oleic acids found in olive oil and avocados.' },
-        polyunsaturated: { name: 'Polyunsaturated Fats (PUFA)', unit: 'g', target: 20, barColor: 'bg-pastel-sky', tip: 'Essential fatty acids including linoleic acid.' },
-        omega3: { name: 'Omega-3 (EPA/DHA)', unit: 'g', target: 1.6, barColor: 'bg-pastel-sky', tip: 'Crucial for ADHD neuro-protection and brain signal transmission.' },
-        cholesterol: { name: 'Dietary Cholesterol', unit: 'mg', target: 300, barColor: 'bg-slate-400', tip: 'Precursor to neurosteroids, sex hormones, and bile salts.' },
-        calcium: { name: 'Calcium', unit: 'mg', target: state.userProfile.dailyCalciumTarget || 1000, barColor: 'bg-pastel-lavender', tip: 'Regulates neuronal signal transduction and skeletal strength.' },
-        iron: { name: 'Iron (Bioavailable)', unit: 'mg', target: state.userProfile.dailyIronTarget || 18, barColor: 'bg-pastel-sky', tip: 'Critical rate-limiting co-factor for tyrosine hydroxylase (dopamine synthesis).' },
-        magnesium: { name: 'Magnesium', unit: 'mg', target: 320, barColor: 'bg-pastel-mint', tip: 'Calms NMDA glutamate receptors, easing ADHD hyper-reactivity and anxiety.' },
-        potassium: { name: 'Potassium', unit: 'mg', target: state.userProfile.dailyPotassiumTarget || 2600, barColor: 'bg-pastel-sky', tip: 'Electrolyte regulating fluid balance, cellular hydration, and blood pressure.' },
-        sodium: { name: 'Sodium', unit: 'mg', target: state.userProfile.dailySodiumTarget || 2300, barColor: 'bg-slate-400', tip: 'Upper limit: 2,300mg. Essential for cellular fluid balance without hypertension.' },
-        zinc: { name: 'Zinc', unit: 'mg', target: 8, barColor: 'bg-pastel-lavender', tip: 'Modulates dopamine transporter kinetics and immune defense.' },
-        vitaminA: { name: 'Vitamin A', unit: 'mcg', target: 700, barColor: 'bg-pastel-peach', tip: 'Retinol and beta-carotene for vision, skin health, and mucosal immunity.' },
-        vitaminC: { name: 'Vitamin C', unit: 'mg', target: 75, barColor: 'bg-pastel-butter', tip: 'Antioxidant cofactor in dopamine-to-norepinephrine conversion.' },
-        vitaminD: { name: 'Vitamin D3', unit: 'IU', target: 600, barColor: 'bg-pastel-butter', tip: 'Neuro-steroid vitamin regulating dopamine release and seasonal mood.' },
-        vitaminE: { name: 'Vitamin E', unit: 'mg', target: 15, barColor: 'bg-pastel-peach', tip: 'Lipid-soluble antioxidant protecting brain cell membranes.' },
-        vitaminK: { name: 'Vitamin K', unit: 'mcg', target: 90, barColor: 'bg-pastel-mint', tip: 'Coagulation co-factor and vascular calcium chaperone.' },
-        tyrosine: { name: 'L-Tyrosine', unit: 'mg', target: 2000, barColor: 'bg-pastel-mint', tip: 'Direct amino acid precursor to dopamine, boosting executive initiation.' },
-        tryptophan: { name: 'L-Tryptophan', unit: 'mg', target: 400, barColor: 'bg-pastel-lavender', tip: 'Precursor to serotonin and evening melatonin for restorative sleep.' },
-        leucine: { name: 'L-Leucine (mTOR)', unit: 'mg', target: 2500, barColor: 'bg-pastel-peach', tip: 'Branched-chain amino acid triggering muscle protein synthesis.' },
-        lysine: { name: 'L-Lysine', unit: 'mg', target: 2100, barColor: 'bg-pastel-coral', tip: 'Collagen integrity, antiviral immune modulation, and anxiety reduction.' },
-        choline: { name: 'Choline', unit: 'mg', target: 425, barColor: 'bg-pastel-sky', tip: 'Precursor to acetylcholine, vital for attention, memory, and focus.' }
-      };
-
-      const info = meta[nutrientKey] || { name: nutrientKey, unit: '', target: 100, barColor: 'bg-pastel-mint', tip: 'Essential dietary nutrient.' };
-      if (titleEl) titleEl.textContent = info.name;
-
-      const ingredientNutrientMap = {
-        'lemon': { vitaminC: 6.2, potassium: 45, bioTip: 'Synergistic citrus acids triple iron absorption.' },
-        'blueberries': { vitaminC: 7.2, fiber: 2.0, potassium: 57, bioTip: 'Anthocyanins cross the blood-brain barrier.' },
-        'broccoli': { vitaminC: 89, fiber: 3.8, calcium: 62, iron: 1.0, vitaminK: 90, bioTip: 'Contains sulforaphane, an anti-inflammatory neuroprotector.' },
-        'salmon': { protein: 34, omega3: 2.1, vitaminD: 570, potassium: 576, bioTip: 'Bioavailable marine EPA & DHA for brain cell membrane fluidity.' },
-        'spinach': { iron: 2.7, vitaminA: 469, calcium: 99, magnesium: 79, vitaminK: 145, bioTip: 'Rich in active methylfolate for dopamine neurotransmitter recycling.' },
-        'lentils': { iron: 6.6, fiber: 7.8, protein: 18, potassium: 365, zinc: 2.5, bioTip: 'Slow-burning prebiotic starches stabilize focus.' },
-        'eggs': { protein: 12.6, choline: 147, vitaminD: 44, iron: 1.8, leucine: 1100, bioTip: 'Gold standard for choline, vital for memory encoding.' },
-        'yogurt': { protein: 18, calcium: 187, potassium: 240, tryptophan: 240, bioTip: 'Live cultures support gut-microbiome serotonin production.' },
-        'oats': { fiber: 4.0, iron: 1.4, magnesium: 55, zinc: 1.2, protein: 5.3, bioTip: 'Beta-glucan fibers prevent post-meal dopamine drop.' },
-        'avocado': { fat: 14.7, monounsaturated: 10, potassium: 485, fiber: 6.7, vitaminE: 2.1, bioTip: 'Oleic fats facilitate fat-soluble nutrient absorption.' },
-        'chickpeas': { iron: 2.4, protein: 7.3, fiber: 6.2, potassium: 239, bioTip: 'Plant iron and steady low-glycemic carbohydrates.' },
-        'rice': { carbs: 43, starch: 40, protein: 3.6, iron: 1.9, bioTip: 'Clean hypoallergenic carbohydrate fuel for cerebral glucose.' }
-      };
-
-      let calculatedTotal = 0;
-      const ingredientContributors = [];
-
-      state.nutritionLog.forEach(food => {
-        let directVal = food[nutrientKey] || 0;
-        
-        const matchDb = commonFoodsDatabase.find(cf => cf.name.toLowerCase() === food.name.toLowerCase());
-        if (matchDb && matchDb[nutrientKey] !== undefined) {
-          directVal = matchDb[nutrientKey];
-        }
-
-        const matchRecipe = state.recipes.find(r => r.id === food.recipeId || r.title.toLowerCase() === food.name.toLowerCase().replace(' (1 serving)', ''));
-        if (matchRecipe && matchRecipe.ingredients && matchRecipe.ingredients.length > 0) {
-          let foundIngredientInRecipe = false;
-          matchRecipe.ingredients.forEach(ing => {
-            const ingLower = ing.toLowerCase();
-            Object.keys(ingredientNutrientMap).forEach(key => {
-              if (ingLower.includes(key) && ingredientNutrientMap[key][nutrientKey] !== undefined) {
-                const ingVal = ingredientNutrientMap[key][nutrientKey];
-                ingredientContributors.push({
-                  ingredientName: ing,
-                  foodParent: matchRecipe.title,
-                  val: ingVal,
-                  bioTip: ingredientNutrientMap[key].bioTip || 'Bioactive nutrient source.',
-                  isVerified: true
-                });
-                calculatedTotal += ingVal;
-                foundIngredientInRecipe = true;
-              }
-            });
-          });
-
-          if (!foundIngredientInRecipe && directVal > 0) {
-            ingredientContributors.push({
-              ingredientName: food.name,
-              foodParent: 'Recipe Ingredients',
-              val: directVal,
-              bioTip: 'Whole recipe contribution.',
-              isVerified: true
-            });
-            calculatedTotal += directVal;
-          }
-        } else {
-          if (directVal > 0) {
-            calculatedTotal += directVal;
-            let tip = 'Natural whole food nutrient source.';
-            Object.keys(ingredientNutrientMap).forEach(k => {
-              if (food.name.toLowerCase().includes(k) && ingredientNutrientMap[k].bioTip) {
-                tip = ingredientNutrientMap[k].bioTip;
-              }
-            });
-
-            ingredientContributors.push({
-              ingredientName: food.name,
-              foodParent: 'Logged Food',
-              val: directVal,
-              bioTip: tip,
-              isVerified: food.isVerified
-            });
-          }
-        }
-      });
-
-      let current = 0;
-      if (nutrientKey === 'water') {
-        current = waterUnit === 'fl_oz'
-          ? Math.round((state.waterLoggedMl || 0) / 29.5735)
-          : Math.round(state.waterLoggedMl || 0);
-        
-        if (current > 0) {
-          ingredientContributors.unshift({
-            ingredientName: 'Direct Water Intake',
-            foodParent: 'Hydration Log',
-            val: current,
-            bioTip: 'Optimal cellular hydration, neurotransmitter flow, and mitochondrial energy.',
-            isVerified: true
-          });
-        }
-      } else {
-        current = calculatedTotal > 0 ? calculatedTotal : (calculateDailyNutrientTotals()[nutrientKey] || 0);
-      }
-
-      const target = info.target || 1;
-      const pct = Math.round((current / target) * 100);
-
-      if (summaryEl) summaryEl.textContent = `${current.toLocaleString()} / ${target.toLocaleString()} ${info.unit}`;
-
-      let rdaBadge = '';
-      if (['saturated', 'sugar', 'sodium', 'cholesterol'].includes(nutrientKey)) {
-        if (current > target) {
-          rdaBadge = `<span class="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold text-[10px]">🔴 Upper Limit Exceeded (${pct}%)</span>`;
-        } else {
-          rdaBadge = `<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold text-[10px]">🟢 Safe Bounds (${pct}% of Limit)</span>`;
-        }
-      } else {
-        if (pct >= 70 && pct <= 130) {
-          rdaBadge = `<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold text-[10px]">🟢 Optimal DRI (${pct}% RDA)</span>`;
-        } else if (pct < 70) {
-          rdaBadge = `<span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-[10px]">🟡 Building (${pct}% of RDA)</span>`;
-        } else {
-          rdaBadge = `<span class="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30 font-bold text-[10px]">🔵 Healthy Surplus (${pct}% RDA)</span>`;
-        }
-      }
-
-      if (pctEl) pctEl.innerHTML = `${pct}% ${rdaBadge}`;
-      if (barEl) {
-        barEl.className = `${info.barColor} h-full rounded-full transition-all duration-500`;
-        barEl.style.width = `${Math.min(100, pct)}%`;
-      }
-      if (tipEl) tipEl.textContent = info.tip;
-
-      if (listEl) {
-        listEl.innerHTML = '';
-        ingredientContributors.sort((a, b) => b.val - a.val);
-
-        if (ingredientContributors.length === 0) {
-          listEl.innerHTML = `
-            <div class="text-[11px] text-slate-400 italic p-3 bg-dark-base rounded-xl border border-dark-border space-y-1">
-              <span>No specific ingredients logged containing this nutrient today yet.</span>
-              <p class="text-[10px] text-slate-500">Tip: Tap "Log Food" and search for whole food staples or recipes to populate your micronutrient radar!</p>
-            </div>
-          `;
-        } else {
-          ingredientContributors.forEach(c => {
-            const contribPct = current > 0 ? Math.round((c.val / current) * 100) : 0;
-            const item = document.createElement('div');
-            item.className = "p-2.5 rounded-xl bg-dark-base border border-dark-border space-y-1.5 transition hover:border-pastel-mint/40";
-            item.innerHTML = `
-              <div class="flex items-center justify-between text-xs">
-                <div class="flex items-center gap-2 truncate pr-2">
-                  <span class="w-1.5 h-1.5 rounded-full bg-pastel-mint shrink-0"></span>
-                  <span class="text-white font-semibold truncate">${c.ingredientName}</span>
-                  <span class="text-[9px] px-1.5 py-0.2 rounded bg-dark-elevated text-slate-400 font-mono shrink-0">${c.foodParent}</span>
-                </div>
-                <div class="text-right shrink-0">
-                  <span class="font-mono font-bold text-pastel-mint">${c.val} ${info.unit}</span>
-                  <span class="text-[10px] text-slate-400 font-mono ml-1">(${contribPct}%)</span>
-                </div>
-              </div>
-              <div class="w-full bg-dark-elevated h-1 rounded-full overflow-hidden">
-                <div class="bg-pastel-mint h-full rounded-full" style="width: ${Math.min(100, contribPct)}%"></div>
-              </div>
-              <p class="text-[10px] text-slate-400 leading-tight italic">${c.bioTip}</p>
-            `;
-            listEl.appendChild(item);
-          });
-        }
-      }
-
-      modal.classList.remove('hidden');
-      if (window.lucide) lucide.createIcons();
-    }
-
-    function selectWaterUnitSetting(unit) {
-      if (!state.userProfile) state.userProfile = {};
-      state.userProfile.waterUnit = unit;
-      const btnFloz = document.getElementById('water-unit-btn-floz');
-      const btnMl = document.getElementById('water-unit-btn-ml');
-      const chkFloz = document.getElementById('water-unit-check-floz');
-      const chkMl = document.getElementById('water-unit-check-ml');
-      const badge = document.getElementById('profile-water-unit-badge');
-
-      if (unit === 'ml') {
-        if (btnMl) btnMl.className = "p-2.5 rounded-xl border-2 border-pastel-sky bg-pastel-sky/15 text-left transition flex items-center justify-between";
-        if (btnFloz) btnFloz.className = "p-2.5 rounded-xl border border-dark-border bg-dark-elevated text-left transition flex items-center justify-between hover:border-slate-500";
-        if (chkMl) chkMl.classList.remove('hidden');
-        if (chkFloz) chkFloz.classList.add('hidden');
-        if (badge) badge.textContent = "Active: Milliliters (ml)";
-      } else {
-        if (btnFloz) btnFloz.className = "p-2.5 rounded-xl border-2 border-pastel-sky bg-pastel-sky/15 text-left transition flex items-center justify-between";
-        if (btnMl) btnMl.className = "p-2.5 rounded-xl border border-dark-border bg-dark-elevated text-left transition flex items-center justify-between hover:border-slate-500";
-        if (chkFloz) chkFloz.classList.remove('hidden');
-        if (chkMl) chkMl.classList.add('hidden');
-        if (badge) badge.textContent = "Default: Fluid Ounces (fl oz)";
-      }
-    }
-
-    function selectFrameSize(size) {
-      state.userProfile.frameSize = size;
-      ['small', 'medium', 'large'].forEach(s => {
-        const btn = document.getElementById(`frame-btn-${s}`);
-        if (!btn) return;
-        if (s === size) {
-          btn.className = "p-2.5 rounded-xl border-2 border-pastel-lavender bg-pastel-lavender/10 text-center transition";
-        } else {
-          btn.className = "p-2.5 rounded-xl border border-dark-border bg-dark-base text-center transition";
-        }
-      });
-      recalculateHealthTargets();
-    }
-
-    
-
-
-// ==============================================
+    // ==============================================
 // WALMART & GROCERY RECEIPT IMPORT SUITE
 // ==============================================
 
@@ -3955,3 +3398,71 @@ function testSampleWalmartReceiptPhoto() {
 
 
 
+
+
+// ==============================================
+// RECIPE INSPECT & DETAIL MODAL CONTROLLER
+// ==============================================
+function inspectRecipeDetails(idx) {
+      const opt = (state.currentMealOptions && state.currentMealOptions[idx]) || (state.currentMealOptions && state.currentMealOptions[0]);
+      if (!opt) return;
+
+      const titleEl = document.getElementById('inspect-recipe-title');
+      const metaEl = document.getElementById('inspect-recipe-meta');
+      const descEl = document.getElementById('inspect-recipe-desc');
+      const ingListEl = document.getElementById('inspect-recipe-ingredients');
+      const stepsListEl = document.getElementById('inspect-recipe-steps');
+      const cookBtn = document.getElementById('inspect-recipe-cook-btn');
+
+      if (titleEl) titleEl.textContent = opt.title;
+      if (metaEl) metaEl.textContent = `${opt.cookTime}m • ${opt.kcal} kcal • 2 Servings`;
+      if (descEl) descEl.textContent = opt.description;
+
+      if (ingListEl) {
+        ingListEl.innerHTML = '';
+        (opt.ingredients || []).forEach(ing => {
+          const item = document.createElement('div');
+          item.className = "p-2 rounded-xl bg-dark-base border border-dark-border flex items-center justify-between text-xs";
+          item.innerHTML = `
+            <span class="text-white font-medium">${ing}</span>
+            <span class="text-[10px] text-pastel-mint font-mono font-bold">✓ Verified</span>
+          `;
+          ingListEl.appendChild(item);
+        });
+      }
+
+      if (stepsListEl) {
+        stepsListEl.innerHTML = '';
+        (opt.steps || []).forEach((st, sIdx) => {
+          const item = document.createElement('div');
+          item.className = `p-2 rounded-xl border flex items-center justify-between text-xs ${st.isDish ? 'bg-pastel-sky/10 border-pastel-sky/30 text-pastel-sky' : 'bg-dark-base border-dark-border text-slate-300'}`;
+          item.innerHTML = `
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded-full bg-dark-elevated text-slate-400 flex items-center justify-center text-[10px] font-bold">${sIdx + 1}</span>
+              <span>${st.text}</span>
+            </div>
+            <span class="font-mono text-[10px] text-slate-400 shrink-0 ml-2 font-bold">${st.minutes}m</span>
+          `;
+          stepsListEl.appendChild(item);
+        });
+      }
+
+      if (cookBtn) {
+        cookBtn.onclick = () => {
+          closeRecipeInspectModal();
+          launchRecipeOption(idx);
+        };
+      }
+
+      const modal = document.getElementById('recipe-inspect-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeRecipeInspectModal() {
+      const modal = document.getElementById('recipe-inspect-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+  
+
+// ==============================================
+    

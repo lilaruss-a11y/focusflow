@@ -11,33 +11,56 @@ You are working on the **FocusFlow** web application for a non-technical user. F
 
 ---
 
-## 1. Project Directory Structure
-The project is modularized into dedicated feature files to prevent regressions and keep context focused:
+## 1. Project Directory Structure & Strict Domain Ownership
+Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN** from declaring functions in any file outside its designated domain:
 
 * **`index.html`** (UI Skeleton & Layout):
-  * Header, tab bar, navigation, screens, cards, modals, and inline UI triggers.
-  * **Rule:** Only edit this file when changing HTML structure, adding buttons/modals, or modifying text.
+  * Exclusively for HTML header, tab bar, navigation, screens, cards, modals, and buttons.
+  * **Rule:** ZERO inline `<script>` blocks with logic and ZERO `<style>` tags.
 
 * **`css/styles.css`** (Design & Layout):
-  * Color schemes, container constraints, animations, safe-area headers for mobile/PWA.
-  * **Rule:** All styling belongs here. Zero `<style>` or `</style>` tags allowed inside this file.
+  * Exclusively for CSS color schemes, container constraints, animations, safe-area headers.
+  * **Rule:** ZERO HTML tags (`<style>`, `</style>`) allowed.
 
-* **`js/`** (Feature Logic Modules):
-  * **`state.js`**: Initial app state, Firebase config, scaffold stages, color schemes, and core helpers.
-  * **`audio.js`**: Web Audio API synthesized chimes (`playChime('bell')`) and sound toggle.
-  * **`sync.js`**: Firebase Firestore Cloud Sync, Google sign-in, offline queue, and PWA update toast.
-  * **`timeline.js`**: Calendar day grid, timeline view, drag-and-drop events, and ADHD suggestions.
-  * **`calendar-categories.js`**: Dynamic calendar categories, color palettes, and Google Calendar 2-way sync.
-  * **`kitchen.js`**: Kitchen sub-tabs, pantry, weekly meal planner, shopping list, recipe book, and filters.
-  * **`chef.js`**: Reverse Chef wizard (stages 1, 2, 3), step timers, and Walmart grocery importer.
-  * **`nutrition.js`**: Macronutrient calculations & adjustments, USDA whole foods database, and barcode scanner.
-  * **`health.js`**: Wellbeing correlations, 7-day health averages, 30-day skill graphs, and Apple Health sync.
-  * **`biometrics.js`**: Cardiac & medication tracking, actual vs plan duration calculation, and event completion/skip toggles.
-  * **`app.js`**: Tab navigation (`switchTab`), state persistence (`saveAppState`, `loadAppState`), phone demo modal, and `window.onload` startup sequence.
+* **`js/timeline.js`** (Calendar & Day Grid Timeline):
+  * Exclusively owns: Calendar day grid, timeline view, event drag-and-drop, hour height math, event anchor types, and ADHD schedule suggestions.
+  * **Forbidden:** ❌ Pantry, recipes, cooking, barcodes, macros, cardiac health.
 
-* **`verify.py`** (Automated Test Suite & Regression Prevention):
-  * Automated testing script that verifies HTML tags, local asset links, compiles all JS with macOS WebKit JavaScriptCore, and validates `site/` deployment sync in ~0.25s.
-  * Includes dynamic regression tests loaded from `tests/regressions.json`.
+* **`js/kitchen.js`** (Kitchen, Pantry, Recipes & Shopping):
+  * Exclusively owns: Smart pantry, kitchen zones, food types, weekly meal planner, grocery shopping list, recipe book, and recipe inspect modal.
+  * **Forbidden:** ❌ Calendar day grid math, event dragging, biometrics, Apple Health.
+
+* **`js/chef.js`** (Reverse Chef Wizard & Receipt Importer):
+  * Exclusively owns: Reverse Chef 3-step wizard, kitchen scale mode, recipe step timers, Walmart & grocery receipt photo scanner & OCR parser.
+  * **Forbidden:** ❌ Calendar timeline rendering, daily schedules, macro charts.
+
+* **`js/nutrition.js`** (Nutrition, Macros & Whole Foods):
+  * Exclusively owns: `renderNutrition()`, macro dials, macronutrient calculations & adjustments, USDA whole foods database, and barcode scanner.
+  * **Forbidden:** ❌ Calendar drag-and-drop, cooking timers, Firebase cloud sync.
+
+* **`js/health.js`** (Wellbeing Correlations & Apple Health):
+  * Exclusively owns: Wellbeing correlation charts, 7-day health averages, 30-day skill growth graphs, and Apple Health sync & export modal.
+  * **Forbidden:** ❌ Pantry rendering, recipes, timeline grid drawing.
+
+* **`js/biometrics.js`** (Biometrics & Cardiac Tracking):
+  * Exclusively owns: Blood pressure, resting heart rate, and medication tracking.
+  * **Forbidden:** ❌ Pantry logic, recipe book filters, calendar zoom controls.
+
+* **`js/sync.js`** (Cloud Sync & Google Calendar Sync):
+  * Exclusively owns: Firebase Firestore Cloud Sync, Google sign-in, offline queue, Google Calendar 2-way sync, and PWA update toast.
+  * **Forbidden:** ❌ Visual card rendering for kitchen, food, or nutrition.
+
+* **`js/state.js`** (App State & Scaffolding):
+  * Global `state` object, constants, Firebase config, scaffold stages, and core time helpers.
+
+* **`js/audio.js`** (Audio Effects):
+  * Web Audio API synthesized chimes (`playChime('bell')`) and sound toggle.
+
+* **`js/app.js`** (App Lifecycle & Navigation):
+  * Tab navigation (`switchTab`), state persistence (`saveAppState`, `loadAppState`), phone demo modal, and `window.onload` startup sequence.
+
+* **`verify.py`** (Universal Boundary Enforcer & Test Suite):
+  * Automated testing script that verifies HTML tags, local asset links, compiles all JS with macOS WebKit JavaScriptCore, validates `site/` deployment sync, and **strictly enforces module domain boundaries** in ~0.25s.
 
 * **`tests/regressions.json`** (Known Mistakes Database):
   * Automatically loaded and tested by `verify.py` on every run. Stores all past bugs and mistakes to prevent them from ever recurring.
@@ -72,7 +95,7 @@ After the user approves your plan and you make the changes:
    ```bash
    python3 verify.py
    ```
-   Verify that all checks pass with zero errors in ~0.25s.
+   Verify that all checks pass with zero errors in ~0.25s, including domain boundary checks.
 2. **Automatically Register Fixed Bugs / Mistakes:**
    Whenever you fix a bug, you MUST register it into the regression database so it is tested forever:
    ```bash
@@ -119,12 +142,8 @@ To ensure the project never degenerates into a monolithic mess again, you MUST o
    * DO NOT save backup files (e.g. `*.bak*`, `index-copy.html`, `test.js`, `.zip` files) in the root directory.
    * If a backup is needed, save it inside the **`backups/`** directory.
    * Clean up all temporary or scratch files before concluding your turn.
-3. **Single Responsibility for `js/` Modules:**
-   * Kitchen/Cooking features go into `kitchen.js` or `chef.js`.
-   * Calendar/Timeline features go into `timeline.js` or `calendar-categories.js`.
-   * Nutrition/Foods features go into `nutrition.js`.
-   * Health/Biometrics features go into `health.js` or `biometrics.js`.
-   * Sync/Cloud features go into `sync.js`.
-   * If a completely new major capability is built (over 400 lines), create a new dedicated module in `js/` and link it in `index.html` and `sw.js` instead of bloating existing files.
+3. **Respect Module Domain Boundaries:**
+   * Every function MUST be defined in its designated domain file as listed in Section 1.
+   * Cross-domain function declarations will cause `verify.py` to fail and block your commit.
 4. **Keep `verify.py` Green:**
    * Any change you make must keep `python3 verify.py` passing with 0 errors.

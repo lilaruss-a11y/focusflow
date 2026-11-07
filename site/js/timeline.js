@@ -2063,3 +2063,111 @@
       playChime('bell');
     }
 
+
+
+// ==============================================
+// ACTUAL TIME & SKIPPED EVENT CONTROLLERS
+// ==============================================
+// ACTUAL TIME CALCULATION & SKIPPED EVENT TOGGLE
+    // ==============================================
+    function onEditActualTimeChange(trigger) {
+      const startIn = document.getElementById('edit-event-actual-start');
+      const endIn = document.getElementById('edit-event-actual-end');
+      const durIn = document.getElementById('edit-event-actual-duration');
+      if (!startIn || !endIn || !durIn) return;
+
+      const sVal = startIn.value || '09:00';
+      if (trigger === 'start' || trigger === 'duration') {
+        const dur = parseInt(durIn.value, 10) || 60;
+        endIn.value = getEndTimeFromStartAndDuration(sVal, dur);
+      } else if (trigger === 'end') {
+        const eVal = endIn.value || '10:00';
+        const [sH, sM] = sVal.split(':').map(Number);
+        const [eH, eM] = eVal.split(':').map(Number);
+        let diff = (eH * 60 + eM) - (sH * 60 + sM);
+        if (diff <= 0) diff += 1440;
+        durIn.value = Math.max(5, diff);
+      }
+    }
+
+    function onNewActualTimeChange(trigger) {
+      const startIn = document.getElementById('new-event-actual-start');
+      const endIn = document.getElementById('new-event-actual-end');
+      const durIn = document.getElementById('new-event-actual-duration');
+      if (!startIn || !endIn || !durIn) return;
+
+      const sVal = startIn.value || '09:00';
+      if (trigger === 'start' || trigger === 'duration') {
+        const dur = parseInt(durIn.value, 10) || 60;
+        endIn.value = getEndTimeFromStartAndDuration(sVal, dur);
+      } else if (trigger === 'end') {
+        const eVal = endIn.value || '10:00';
+        const [sH, sM] = sVal.split(':').map(Number);
+        const [eH, eM] = eVal.split(':').map(Number);
+        let diff = (eH * 60 + eM) - (sH * 60 + sM);
+        if (diff <= 0) diff += 1440;
+        durIn.value = Math.max(5, diff);
+      }
+    }
+
+    function toggleActiveEventSkipped() {
+      const ev = state.activeEventModal;
+      if (!ev) return;
+      calendarHistory.recordState();
+      ev.skipped = !ev.skipped;
+      if (ev.skipped) {
+        ev.actualDuration = 0;
+      } else {
+        ev.actualDuration = ev.duration;
+      }
+      saveAppState();
+      renderTimeline();
+      updateEventToolsModalSkippedUI(ev);
+      playChime('bell');
+      alertBox(ev.skipped ? `Marked "${ev.title}" as Didn’t Do / Skipped.` : `Restored "${ev.title}".`, "Event Status");
+    }
+
+    function updateEventToolsModalSkippedUI(ev) {
+      const btnDetails = document.getElementById('btn-details-toggle-skipped');
+      const btnEdit = document.getElementById('btn-edit-toggle-skipped');
+      if (ev.skipped) {
+        if (btnDetails) btnDetails.innerHTML = '<span>↩ Restore (Done)</span>';
+        if (btnEdit) btnEdit.textContent = "↩ Restore (Did Do)";
+      } else {
+        if (btnDetails) btnDetails.innerHTML = "<span>❌ Didn’t Do</span>";
+        if (btnEdit) btnEdit.textContent = "❌ Mark Didn’t Do";
+      }
+    }
+  
+
+function setEditEventAnchorType(isFixed) {
+      state.editEventIsFixedAnchor = Boolean(isFixed);
+      const btnFixed = document.getElementById('btn-edit-anchor-fixed');
+      const btnFlex = document.getElementById('btn-edit-anchor-flexible');
+      if (btnFixed && btnFlex) {
+        if (isFixed) {
+          btnFixed.className = "py-2 px-2 rounded-xl bg-pastel-sky/20 border-2 border-pastel-sky text-pastel-sky font-bold text-center transition flex flex-col items-center justify-center min-h-[52px]";
+          btnFixed.innerHTML = '<span class="text-xs font-bold">🔒 Fixed Anchor</span><span class="text-[10px] text-pastel-sky/80 mt-0.5">(Class / Appt)</span>';
+          btnFlex.className = "py-2 px-2 rounded-xl bg-dark-base border-2 border-dark-border text-slate-400 font-semibold text-center transition flex flex-col items-center justify-center min-h-[52px]";
+          btnFlex.innerHTML = '<span class="text-xs font-bold">⏳ Flexible Task</span><span class="text-[10px] text-slate-500 mt-0.5">(Self-Paced)</span>';
+        } else {
+          btnFixed.className = "py-2 px-2 rounded-xl bg-dark-base border-2 border-dark-border text-slate-400 font-semibold text-center transition flex flex-col items-center justify-center min-h-[52px]";
+          btnFixed.innerHTML = '<span class="text-xs font-bold">🔒 Fixed Anchor</span><span class="text-[10px] text-slate-500 mt-0.5">(Class / Appt)</span>';
+          btnFlex.className = "py-2 px-2 rounded-xl bg-pastel-coral/20 border-2 border-pastel-coral text-pastel-coral font-bold text-center transition flex flex-col items-center justify-center min-h-[52px]";
+          btnFlex.innerHTML = '<span class="text-xs font-bold">⏳ Flexible Task</span><span class="text-[10px] text-pastel-coral/80 mt-0.5">(Self-Paced)</span>';
+        }
+      }
+    }
+
+
+    function toggleActiveEventSkippedById(id) {
+      const ev = (state.events || []).find(e => e.id === id);
+      if (!ev) return;
+      calendarHistory.recordState();
+      ev.skipped = !ev.skipped;
+      ev.actualDuration = ev.skipped ? 0 : ev.duration;
+      saveAppState();
+      renderTimeline();
+      playChime('bell');
+      alertBox(ev.skipped ? `Marked "${ev.title}" as Not Done.` : `Restored "${ev.title}".`, "Event Status");
+    }

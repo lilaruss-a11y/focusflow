@@ -1095,3 +1095,99 @@
       alertBox(`Saved Apple Health metrics (${steps.toLocaleString()} steps, ${sleep}h sleep, ${cycle} phase). Multi-factor insights updated!`, "Apple Health Synced");
     }
 
+
+
+// ==============================================
+// APPLE HEALTH MODAL, EXPORTS & SHORTCUTS
+// ==============================================
+// Apple Health Linking Modal & Exports
+    function openAppleHealthModal() {
+      if (typeof renderAppleHealthUI === 'function') renderAppleHealthUI();
+      document.getElementById('apple-health-modal').classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+    function closeAppleHealthModal() {
+      document.getElementById('apple-health-modal').classList.add('hidden');
+    }
+
+    function triggerAppleHealthShortcut() {
+      // Direct deep link to launch Apple Shortcuts app with HealthKit payload
+      const totals = calculateDailyNutrientTotals();
+      const shortcutUrl = `shortcuts://run-shortcut?name=Log%20FocusFlow%20Nutrition&input=text&text=${encodeURIComponent(JSON.stringify(totals))}`;
+      window.location.href = shortcutUrl;
+      alertBox("Connecting to Apple Shortcuts for HealthKit sync...", "Apple Health");
+    }
+
+    function exportHealthDataJSON() {
+      const totals = calculateDailyNutrientTotals();
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(totals, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `FocusFlow_HealthKit_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      alertBox("Downloaded Apple Health compatible JSON.", "HealthKit Export");
+    }
+
+    function calculateDailyNutrientTotals() {
+      let totals = {
+        date: new Date().toISOString().slice(0, 10),
+        caloriesKcal: 0,
+        waterMl: state.waterLoggedMl || 0,
+        proteinG: 0,
+        carbsG: 0,
+        fatG: 0,
+        fiberG: 0,
+        sugarG: 0,
+        saturatedFatG: 0,
+        monounsaturatedFatG: 0,
+        polyunsaturatedFatG: 0,
+        omega3G: 0,
+        cholesterolMg: 0,
+        sodiumMg: 0,
+        potassiumMg: 0,
+        ironMg: 0,
+        calciumMg: 0,
+        magnesiumMg: 0,
+        zincMg: 0,
+        vitaminAmcg: 0,
+        vitaminCmg: 0,
+        vitaminD_IU: 0,
+        vitaminEmg: 0,
+        vitaminKmcg: 0,
+        tyrosineMg: 0,
+        tryptophanMg: 0
+      };
+
+      state.nutritionLog.forEach(n => {
+        totals.caloriesKcal += (n.kcal || 0);
+        totals.waterMl += (n.waterMl || 0);
+        totals.proteinG += (n.protein || 0);
+        totals.carbsG += (n.carbs || 0);
+        totals.fatG += (n.fat || 0);
+        totals.fiberG += (n.fiber || 0);
+        totals.sugarG += (n.sugar || 0);
+        totals.saturatedFatG += (n.saturated || 0);
+        totals.monounsaturatedFatG += (n.mufa || 0);
+        totals.polyunsaturatedFatG += (n.pufa || 0);
+        totals.omega3G += (n.omega3 || 0);
+        totals.cholesterolMg += (n.cholesterol || 0);
+        totals.sodiumMg += (n.sodium || 0);
+        totals.potassiumMg += (n.potassium || 0);
+        totals.ironMg += (n.iron || 0);
+        totals.calciumMg += (n.calcium || 0);
+        totals.magnesiumMg += (n.magnesium || 0);
+        totals.zincMg += (n.zinc || 0);
+        totals.vitaminAmcg += (n.vitA || 0);
+        totals.vitaminCmg += (n.vitC || 0);
+        totals.vitaminD_IU += (n.vitD || 0);
+        totals.vitaminEmg += (n.vitE || 0);
+        totals.vitaminKmcg += (n.vitK || 0);
+        totals.tyrosineMg += (n.tyrosine || 0);
+        totals.tryptophanMg += (n.tryptophan || 0);
+      });
+      return totals;
+    }
+
+    

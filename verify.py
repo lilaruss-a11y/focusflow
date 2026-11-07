@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-FocusFlow Automated Verification & Regression Prevention Suite
+FocusFlow Automated Verification & Universal Boundary Enforcement Suite
 1. Validates HTML, CSS, and Service Worker integrity.
 2. Compiles every JS module using macOS native WebKit JavaScriptCore (jsc).
-3. Executes dynamically learned regression checks from tests/regressions.json.
-4. Allows automatic registration of new mistakes via `--add-mistake`.
+3. Enforces strict architectural module boundaries (zero cross-domain contamination).
+4. Executes dynamically learned regression checks from tests/regressions.json.
+5. Allows automatic registration of new mistakes via `--add-mistake`.
 """
 
 import os
@@ -48,7 +49,6 @@ def handle_add_mistake():
         except Exception:
             regressions = []
 
-    # Check for existing ID
     regressions = [r for r in regressions if r.get("id") != args.id]
 
     new_rule = {
@@ -86,7 +86,6 @@ else:
     with open(index_path, "r", encoding="utf-8") as f:
         html = f.read()
 
-    # Style tag balance
     open_styles = len(re.findall(r'<style\b', html, re.I))
     close_styles = len(re.findall(r'</style>', html, re.I))
     if open_styles != close_styles:
@@ -94,7 +93,6 @@ else:
     else:
         success("Style tags are properly balanced.")
 
-    # Script tag balance
     inline_scripts_open = len(re.findall(r'<script(?![^>]*\bsrc=)[^>]*>', html, re.I))
     total_scripts_close = len(re.findall(r'</script>', html, re.I))
     scripts_with_src = len(re.findall(r'<script\b[^>]*\bsrc=[^>]*>', html, re.I))
@@ -103,7 +101,6 @@ else:
     else:
         success("Script tags are properly balanced.")
 
-    # Local file references
     src_refs = re.findall(r'(?:src|href)=[\"\']([^\"\']+)[\"\']', html)
     missing_refs = []
     for ref in src_refs:
@@ -183,8 +180,101 @@ else:
     else:
         success("site/ deployment files are 100% in sync with root.")
 
-# --- 5. Run Learned Regression Suite (tests/regressions.json) ---
-print("\n5. Testing against known past mistakes...")
+# --- 5. Strict Universal Architectural Module Boundaries Enforcement ---
+print("\n5. Enforcing Strict Architectural Module Boundaries...")
+
+MODULE_BOUNDARIES = {
+    'timeline.js': {
+        'name': 'Calendar & Day Grid Timeline',
+        'forbidden': [
+            (r'function\s+.*Pantry', 'pantry functions belong exclusively in js/kitchen.js'),
+            (r'function\s+.*Recipe', 'recipe functions belong exclusively in js/kitchen.js or js/chef.js'),
+            (r'function\s+.*MealPlan', 'meal planning belongs exclusively in js/kitchen.js'),
+            (r'function\s+.*ShoppingList', 'shopping list belongs exclusively in js/kitchen.js'),
+            (r'function\s+.*ReverseChef', 'Reverse Chef belongs exclusively in js/chef.js'),
+            (r'function\s+.*Macro', 'macro calculations belong exclusively in js/nutrition.js'),
+            (r'function\s+.*Barcode', 'barcode scanner belongs exclusively in js/nutrition.js'),
+            (r'function\s+.*Medication', 'medication tracking belongs exclusively in js/biometrics.js'),
+            (r'function\s+.*Cardiac', 'cardiac biometrics belong exclusively in js/biometrics.js')
+        ]
+    },
+    'kitchen.js': {
+        'name': 'Kitchen, Pantry, Recipes & Shopping',
+        'forbidden': [
+            (r'function\s+.*TimelineView', 'timeline views belong exclusively in js/timeline.js'),
+            (r'function\s+.*HourHeight', 'calendar hour height belongs exclusively in js/timeline.js'),
+            (r'function\s+.*CalendarZoom', 'calendar zoom belongs exclusively in js/timeline.js'),
+            (r'function\s+.*AppleHealth', 'Apple Health belongs exclusively in js/health.js'),
+            (r'function\s+.*Medication', 'medication tracking belongs exclusively in js/biometrics.js'),
+            (r'function\s+.*Cardiac', 'cardiac biometrics belong exclusively in js/biometrics.js')
+        ]
+    },
+    'chef.js': {
+        'name': 'Reverse Chef Wizard & Receipt Scanner',
+        'forbidden': [
+            (r'function\s+.*Timeline', 'timeline calendar belongs in js/timeline.js'),
+            (r'function\s+.*HourHeight', 'hour height math belongs in js/timeline.js'),
+            (r'function\s+.*DayGrid', 'day grid rendering belongs in js/timeline.js'),
+            (r'function\s+.*AppleHealth', 'Apple Health belongs in js/health.js'),
+            (r'function\s+.*Medication', 'medication belongs in js/biometrics.js')
+        ]
+    },
+    'nutrition.js': {
+        'name': 'Nutrition, Macros & Whole Foods',
+        'forbidden': [
+            (r'function\s+.*HourHeight', 'hour height belongs in js/timeline.js'),
+            (r'function\s+.*ReverseChef', 'Reverse Chef belongs in js/chef.js'),
+            (r'function\s+.*Medication', 'medication belongs in js/biometrics.js'),
+            (r'function\s+.*Cardiac', 'cardiac biometrics belong in js/biometrics.js')
+        ]
+    },
+    'health.js': {
+        'name': 'Wellbeing Correlations & Apple Health',
+        'forbidden': [
+            (r'function\s+.*Pantry', 'pantry belongs in js/kitchen.js'),
+            (r'function\s+.*Recipe', 'recipes belong in js/kitchen.js or js/chef.js'),
+            (r'function\s+.*HourHeight', 'hour height belongs in js/timeline.js'),
+            (r'function\s+.*TimelineView', 'timeline view belongs in js/timeline.js')
+        ]
+    },
+    'biometrics.js': {
+        'name': 'Biometrics & Cardiac Tracking',
+        'forbidden': [
+            (r'function\s+.*Pantry', 'pantry belongs in js/kitchen.js'),
+            (r'function\s+.*Recipe', 'recipes belong in js/kitchen.js or js/chef.js'),
+            (r'function\s+.*MealPlan', 'meal planning belongs in js/kitchen.js'),
+            (r'function\s+.*HourHeight', 'hour height belongs in js/timeline.js'),
+            (r'function\s+.*Macro', 'macro calculations belong in js/nutrition.js')
+        ]
+    },
+    'sync.js': {
+        'name': 'Cloud Sync & Google Calendar Sync',
+        'forbidden': [
+            (r'function\s+renderPantry', 'pantry rendering belongs in js/kitchen.js'),
+            (r'function\s+renderKitchen', 'kitchen rendering belongs in js/kitchen.js'),
+            (r'function\s+renderNutrition', 'nutrition rendering belongs in js/nutrition.js'),
+            (r'function\s+renderTimeline', 'timeline rendering belongs in js/timeline.js')
+        ]
+    }
+}
+
+for mod_file, binfo in MODULE_BOUNDARIES.items():
+    mpath = os.path.join(js_dir, mod_file)
+    if os.path.exists(mpath):
+        with open(mpath, "r", encoding="utf-8") as f:
+            code = f.read()
+        violations = []
+        for pat, hint in binfo['forbidden']:
+            matches = re.findall(pat, code)
+            if matches:
+                violations.append(f"{', '.join(matches)} ({hint})")
+        if violations:
+            error(f"[Boundary Violation: {mod_file}] Prohibited cross-domain function(s): {'; '.join(violations)}")
+        else:
+            success(f"{mod_file:22} strictly confined to {binfo['name']}.")
+
+# --- 6. Run Learned Regression Suite (tests/regressions.json) ---
+print("\n6. Testing against known past mistakes...")
 if not os.path.exists(REGRESSIONS_FILE):
     print("  ℹ️ No learned regressions registered yet.")
 else:
@@ -215,7 +305,6 @@ else:
         elif ctype == "forbidden_pattern":
             pat = rule.get("pattern", "")
             is_re = rule.get("is_regex", False)
-            # Can check single file or directory
             if "directory" in rule:
                 tdir = os.path.join(BASE_DIR, rule["directory"])
                 found_in = []
@@ -249,9 +338,7 @@ else:
             if os.path.exists(tfile):
                 with open(tfile, "r", encoding="utf-8") as tf:
                     full_html = tf.read()
-                # Remove all <script>...</script> tags
                 stripped_html = re.sub(r'<script\b[^>]*>.*?</script>', '', full_html, flags=re.DOTALL | re.I)
-                # Remove all <style>...</style> tags
                 stripped_html = re.sub(r'<style\b[^>]*>.*?</style>', '', stripped_html, flags=re.DOTALL | re.I)
                 
                 leaks = [p for p in rule.get("patterns", []) if p in stripped_html]

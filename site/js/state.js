@@ -390,3 +390,14 @@
         }, 5000);
       }
     }
+
+    // Merge Heirloom Family Recipes into state.recipes if loaded
+    if (typeof window !== 'undefined' && window.FAMILY_RECIPES && Array.isArray(window.FAMILY_RECIPES)) {
+      const existingIds = new Set(state.recipes.map(r => r.id));
+      window.FAMILY_RECIPES.forEach(r => {
+        if (!existingIds.has(r.id)) {
+          state.recipes.push(r);
+          existingIds.add(r.id);
+        }
+      });
+    }

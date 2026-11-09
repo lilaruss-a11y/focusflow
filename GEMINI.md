@@ -24,26 +24,56 @@ You are working on the **FocusFlow** web application for a non-technical user. F
 
 ---
 
-## 1. Project Directory Structure & Strict Domain Ownership
+## 1. Project Directory Structure & Strict Domain Ownership (Code Map & Table of Contents)
 Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN** from declaring functions in any file outside its designated domain:
 
-* **`index.html`** (UI Skeleton & Layout):
+### Core Application Files
+* **`index.html`** (UI Skeleton, Layout & Modals):
   * Exclusively for HTML header, tab bar, navigation, screens, cards, modals, and buttons.
   * **Rule:** ZERO inline `<script>` blocks with logic and ZERO `<style>` tags.
+  * **Component Map:**
+    * Top Navigation & Sync Status Pill (`#ff-sync-pill`)
+    * Screen 1: Calendar Timeline & Day Grid (`#view-timeline`)
+    * Screen 2: Smart Kitchen, Recipes & Shopping (`#view-kitchen`)
+    * Screen 3: Nutrition & Macro Goals (`#view-nutrition`)
+    * Screen 4: Wellbeing & Apple Health (`#view-health`)
+    * Screen 5: Biometrics & Medication (`#view-biometrics`)
+    * Modals: Event creation, recipe inspector, pantry manager, USDA food search, barcode scanner, and calibration modal.
 
 * **`css/styles.css`** (Design & Layout):
   * Exclusively for CSS color schemes, container constraints, animations, safe-area headers.
   * **Rule:** ZERO HTML tags (`<style>`, `</style>`) allowed.
 
+* **`sw.js`** (Service Worker):
+  * Handles offline caching for the PWA app shell and external CDN libraries. Always bump `CACHE_VERSION` upon deployment.
+
+### Data Layer (`data/`)
+* **`data/family-cookbook.js`** (Preloaded Recipes):
+  * Static catalog of whole-food recipes, ingredients, and prep steps (`familyCookbookDatabase`).
+* **`data/usda-foods.js`** (Whole Foods Database):
+  * Global reference data for raw USDA foods and whole food macros (`commonFoodsDatabase`).
+
+### JavaScript Modules (`js/`)
+* **`js/state.js`** (Global App State & Scaffolding):
+  * Global `state` object, constants, Firebase config, scaffold stages, and core time helpers.
+
 * **`js/timeline.js`** (Calendar & Day Grid Timeline):
   * Exclusively owns: Calendar day grid, timeline view, event drag-and-drop, hour height math, event anchor types, and ADHD schedule suggestions.
   * **Forbidden:** ❌ Pantry, recipes, cooking, barcodes, macros, cardiac health.
 
-* **`js/kitchen.js`** (Kitchen, Pantry, Recipes & Shopping):
-  * Exclusively owns: Smart pantry, kitchen zones, food types, weekly meal planner, grocery shopping list, recipe book, and recipe inspect modal.
+* **`js/calendar-categories.js`** (Calendar Categories & Google/iCal Sync):
+  * Exclusively owns: Calendar categories dropdowns, direct Google Calendar OAuth sync, iCal subscription feeds, and category color tags.
+  * **Forbidden:** ❌ Kitchen, recipes, macro calculations.
+
+* **`js/kitchen.js`** (Smart Pantry, Kitchen & Meal Planning):
+  * Exclusively owns: Smart pantry, kitchen zones, food types, weekly meal planner, recipe book, and recipe inspect modal.
   * **Forbidden:** ❌ Calendar day grid math, event dragging, biometrics, Apple Health.
 
-* **`js/chef.js`** (Reverse Chef Wizard & Receipt Importer):
+* **`js/shopping.js`** (Grocery Shopping List & Receipt Scanner):
+  * Exclusively owns: Grocery shopping list, item checking, store categories, receipt OCR import.
+  * **Forbidden:** ❌ Calendar day grid math, timeline views, cardiac health.
+
+* **`js/chef.js`** (Reverse Chef Wizard & Kitchen Scale):
   * Exclusively owns: Reverse Chef 3-step wizard, kitchen scale mode, recipe step timers, Walmart & grocery receipt photo scanner & OCR parser.
   * **Forbidden:** ❌ Calendar timeline rendering, daily schedules, macro charts.
 
@@ -59,12 +89,9 @@ Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN
   * Exclusively owns: Blood pressure, resting heart rate, and medication tracking.
   * **Forbidden:** ❌ Pantry logic, recipe book filters, calendar zoom controls.
 
-* **`js/sync.js`** (Cloud Sync & Google Calendar Sync):
-  * Exclusively owns: Firebase Firestore Cloud Sync, Google sign-in, offline queue, Google Calendar 2-way sync, and PWA update toast.
+* **`js/sync.js`** (Cloud Sync & Google Sign-In):
+  * Exclusively owns: Firebase Firestore Cloud Sync, Google sign-in, offline queue, and PWA update toast.
   * **Forbidden:** ❌ Visual card rendering for kitchen, food, or nutrition.
-
-* **`js/state.js`** (App State & Scaffolding):
-  * Global `state` object, constants, Firebase config, scaffold stages, and core time helpers.
 
 * **`js/audio.js`** (Audio Effects):
   * Web Audio API synthesized chimes (`playChime('bell')`) and sound toggle.
@@ -72,20 +99,23 @@ Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN
 * **`js/app.js`** (App Lifecycle & Navigation):
   * Tab navigation (`switchTab`), state persistence (`saveAppState`, `loadAppState`), phone demo modal, and `window.onload` startup sequence.
 
+### Assets & Icons (`assets/`)
+* **`assets/icons/`** (PWA Icons & Favicon):
+  * Canonical location for `apple-touch-icon.png`, `apple-touch-icon-precomposed.png`, and `favicon.ico`. Loose duplicates in root are forbidden.
+
+### Testing & Verification (`tests/` & `verify.py`)
 * **`verify.py`** (Universal Boundary Enforcer & Test Suite):
   * Automated testing script that verifies HTML tags, local asset links, compiles all JS with macOS WebKit JavaScriptCore, validates `site/` deployment sync, and **strictly enforces module domain boundaries** in ~0.25s.
 
 * **`tests/regressions.json`** (Known Mistakes Database):
   * Automatically loaded and tested by `verify.py` on every run. Stores all past bugs and mistakes to prevent them from ever recurring.
 
+### Deployment & Safety
+* **`site/`** (Live GitHub Pages Mirror):
+  * **Rule:** Whenever making edits to `index.html`, `css/`, `js/`, `data/`, or `sw.js`, **ALWAYS copy the modified files into the `site/` folder** so that the user's phone (homescreen PWA) gets the updates!
+
 * **`backups/`** (Historical Backups & Archives):
   * All safety backups, archive copies, or temporary exported files MUST live here. Never leave backups in the root folder.
-
-* **`site/`** (Live GitHub Pages Mirror):
-  * **Rule:** Whenever making edits to `index.html`, `css/`, `js/`, or `sw.js`, **ALWAYS copy the modified files into the `site/` folder** so that the user's phone (homescreen PWA) gets the updates!
-
-* **`sw.js`** (Service Worker):
-  * Handles offline caching for the PWA app shell and external CDN libraries.
 
 ---
 
@@ -141,6 +171,10 @@ After your tests pass:
 ### Rule 6: Clean Revert Before New Attempts (Never Stack Broken Edits)
 - If an attempt fails automated tests or does not resolve the issue, you MUST immediately revert the modified files back to the last clean git commit (`git checkout HEAD -- <file>`) before attempting anything else.
 - NEVER stack speculative edits on top of previously broken code. Every new attempt must start from a clean, working baseline.
+
+### Rule 7: Mandatory Code Map & Table of Contents Maintenance
+- Whenever you add, rename, delete, or split any files, modals, or architectural subsystems in FocusFlow, you MUST update Section 1 (Code Map & Table of Contents) in both `AGENTS.md` and `GEMINI.md` within the same commit.
+- Never leave new files, modules, or major components undocumented. Neglecting to update the Code Map is a strict protocol violation.
 
 ---
 

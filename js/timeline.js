@@ -143,9 +143,12 @@
 
 
     function jumpTimelineToNow() {
+      jumpTimelineToToday();
+    }
+
+    function jumpTimelineToToday() {
       state.selectedTimelineDate = getTodayDateString();
       renderTimeline();
-
       if (state.timelineViewMode === 'list') {
         setTimeout(() => {
           const divider = document.getElementById('timeline-now-divider-list');
@@ -161,21 +164,6 @@
             container.scrollTo({ top: Math.max(0, topPos - 70), behavior: 'smooth' });
           }
         }, 100);
-      } else {
-        scrollToCurrentTimeMarker();
-      }
-      playChime('bell');
-      alertBox("Jumped to current time NOW marker.", "Jump to NOW");
-    }
-
-    function jumpTimelineToToday() {
-      state.selectedTimelineDate = getTodayDateString();
-      renderTimeline();
-      if (state.timelineViewMode === 'list') {
-        setTimeout(() => {
-          const divider = document.getElementById('timeline-now-divider-list');
-          if (divider) divider.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 60);
       } else {
         scrollToCurrentTimeMarker();
       }

@@ -17,6 +17,23 @@
       }
     }
 
+    function forceAppUpdateAndRefresh() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          for (const reg of regs) {
+            reg.update();
+          }
+        }).catch(() => {});
+      }
+      try {
+        if (typeof playChime === 'function') playChime('bell');
+      } catch (e) {}
+      window.location.reload(true);
+    }
+    if (typeof window !== 'undefined') {
+      window.forceAppUpdateAndRefresh = forceAppUpdateAndRefresh;
+    }
+
     function checkAppInstallState() {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
       const isInstalled = isStandalone || localStorage.getItem('focusflow_app_installed') === 'true';

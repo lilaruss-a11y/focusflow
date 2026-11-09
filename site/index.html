@@ -81,7 +81,13 @@
         </div>
         <div>
           <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-pastel-mint via-pastel-sky to-pastel-lavender bg-clip-text text-transparent flex items-center" style="-webkit-background-clip: text; -webkit-text-fill-color: transparent;">FocusFlow</h1>
-          <p class="text-xs text-slate-400">ADHD Day Planner &amp; Executive Suite</p>
+          <div class="flex items-center gap-2">
+            <p class="text-xs text-slate-400">ADHD Day Planner &amp; Executive Suite</p>
+            <button type="button" onclick="forceAppUpdateAndRefresh()" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-dark-elevated hover:bg-dark-border border border-dark-border text-[10px] text-pastel-mint hover:text-white transition shadow-sm" title="Refresh app &amp; apply updates">
+              <i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i>
+              <span>Refresh &amp; Update</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -177,49 +183,30 @@
     <div id="view-timeline" class="flex-1 min-h-0 flex flex-col h-full w-full max-w-6xl mx-auto px-2 sm:px-4 pt-1.5 pb-1 gap-1.5 overflow-hidden">
       <!-- CONSOLIDATED HEADER (2 COMPRESSED ROWS + CALENDAR KEY BELOW) -->
       <div class="shrink-0 bg-dark-surface border border-dark-border rounded-2xl p-2 sm:p-2.5 shadow-xl space-y-1.5">
-        <!-- ROW 1: DEDICATED DATE, DISTINCT NOW BUTTON, 7-DAY WEEK STRIP, SYNC & ICON-ONLY ADD EVENT -->
+        <!-- ROW 1: DEDICATED DATE (WITH JUMP TO NOW) & 7-DAY WEEK STRIP -->
         <div class="flex items-center justify-between gap-1 sm:gap-1.5 w-full overflow-x-auto scrollbar-none pb-0.5">
-          <!-- Left: Dedicated Date, Distinct NOW Button, and Full 7-Day Strip -->
-          <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
-            <!-- Dedicated Date Button -->
-            <button type="button" onclick="jumpTimelineToToday()" id="btn-header-date" class="px-2 py-1 sm:px-2.5 rounded-xl bg-dark-base hover:bg-dark-elevated border border-dark-border text-slate-200 font-semibold text-xs flex items-center gap-1 transition shadow-sm shrink-0" title="Selected Date (Tap to reset to Today)">
-              <span id="timeline-today-date" class="font-bold text-xs">Today</span>
-            </button>
+          <!-- Left: Dedicated Date Button (serves both Date and jump-to-NOW) -->
+          <button type="button" onclick="jumpTimelineToToday()" id="btn-header-date" class="px-2.5 py-1 sm:px-3 rounded-xl bg-dark-base hover:bg-dark-elevated border border-dark-border text-slate-200 font-semibold text-xs flex items-center gap-1.5 transition shadow-sm shrink-0 active:scale-95" title="Selected Date (Tap to reset to Today & jump to NOW marker)">
+            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+            <span id="timeline-today-date" class="font-bold text-xs">Today</span>
+          </button>
 
-            <!-- Distinct NOW Button -->
-            <button type="button" onclick="jumpTimelineToNow()" id="btn-header-now" class="px-2 py-1 sm:px-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 font-bold text-xs flex items-center gap-1 transition shadow-sm shrink-0 active:scale-95" title="Jump to Current Time NOW Marker">
-              <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
-              <span class="font-bold text-xs">NOW</span>
+          <!-- Ultra-compact 7-Day Week Strip -->
+          <div class="flex items-center p-0.5 rounded-xl bg-dark-base/80 border border-dark-border gap-0.5 shadow-inner shrink-0 ml-auto sm:ml-0">
+            <button type="button" onclick="changeTimelineWeek(-1)" class="w-4 sm:w-5 h-6 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0" title="Previous Week">
+              <i data-lucide="chevron-left" class="w-2.5 sm:w-3 h-2.5 sm:h-3"></i>
             </button>
-
-            <!-- Ultra-compact 7-Day Week Strip -->
-            <div class="flex items-center p-0.5 rounded-xl bg-dark-base/80 border border-dark-border gap-0.5 shadow-inner shrink-0">
-              <button type="button" onclick="changeTimelineWeek(-1)" class="w-4 sm:w-5 h-6 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0" title="Previous Week">
-                <i data-lucide="chevron-left" class="w-2.5 sm:w-3 h-2.5 sm:h-3"></i>
-              </button>
-              <div id="timeline-week-strip" class="flex items-center gap-0.5 px-0.5">
-                <!-- Dynamically populated: Sun, Mon, Tue... -->
-              </div>
-              <button type="button" onclick="changeTimelineWeek(1)" class="w-4 sm:w-5 h-6 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0" title="Next Week">
-                <i data-lucide="chevron-right" class="w-2.5 sm:w-3 h-2.5 sm:h-3"></i>
-              </button>
+            <div id="timeline-week-strip" class="flex items-center gap-0.5 px-0.5">
+              <!-- Dynamically populated: Sun, Mon, Tue... -->
             </div>
-          </div>
-
-          <!-- Right: Sync & Icon-Only Add Event Button -->
-          <div class="flex items-center gap-1 shrink-0 ml-auto">
-            <button type="button" onclick="openGCalSyncModal()" class="flex items-center gap-1 px-2 py-1.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs shadow-md shadow-pastel-sky/20 hover:bg-sky-300 transition shrink-0" title="Google Calendar Sync">
-              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-              <span class="hidden sm:inline">Sync</span>
-            </button>
-            <button type="button" onclick="openNewEventModal()" class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-pastel-mint text-dark-base font-bold flex items-center justify-center shadow-md shadow-pastel-mint/20 hover:bg-emerald-300 transition shrink-0" title="Create New Event Block">
-              <i data-lucide="plus" class="w-4 h-4 text-dark-base stroke-[2.5]"></i>
+            <button type="button" onclick="changeTimelineWeek(1)" class="w-4 sm:w-5 h-6 rounded bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0" title="Next Week">
+              <i data-lucide="chevron-right" class="w-2.5 sm:w-3 h-2.5 sm:h-3"></i>
             </button>
           </div>
         </div>
 
-        <!-- ROW 2: VIEW SWITCHER, HEIGHT (HT 1-5), UNDO/REDO, REALITY & ACCURACY -->
-        <div class="flex items-center justify-between gap-1.5 w-full pt-1.5 border-t border-dark-border/50">
+        <!-- ROW 2: VIEW SWITCHER, HEIGHT (HT 1-5), UNDO/REDO, REALITY ICON, ACCURACY, SYNC & ADD EVENT -->
+        <div class="flex items-center justify-between gap-1 sm:gap-1.5 w-full pt-1.5 border-t border-dark-border/50">
           <!-- Left: View Mode (Grid/List), Height Stepper, Undo/Redo -->
           <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
             <div class="flex items-center p-0.5 rounded-xl bg-dark-base border border-dark-border gap-0.5 shadow-sm shrink-0">
@@ -247,15 +234,25 @@
             </div>
           </div>
 
-          <!-- Right: Plan vs Reality Toggle & Accuracy Progress Report -->
-          <div class="flex items-center gap-1 shrink-0">
-            <button type="button" onclick="togglePlanVsReality()" id="btn-toggle-plan-reality" class="flex items-center gap-1 px-2 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs transition active:scale-95" title="Toggle Plan vs Reality">
+          <!-- Right: Plan vs Reality (Icon-Only), Accuracy, Sync & Add Event -->
+          <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            <!-- Icon-only Plan vs Reality Button -->
+            <button type="button" onclick="togglePlanVsReality()" id="btn-toggle-plan-reality" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs transition active:scale-95 flex items-center justify-center shrink-0" title="Toggle Plan vs Reality View">
               <i data-lucide="split" class="w-3.5 h-3.5 text-pastel-lavender" id="icon-plan-reality"></i>
-              <span class="text-[10px] sm:text-[11px] font-semibold" id="label-plan-reality">Reality</span>
             </button>
-            <button type="button" onclick="openEstimationAccuracyModal()" class="flex items-center gap-1 px-2 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-pastel-mint text-xs transition active:scale-95" title="Estimation Progress Report">
+            <!-- Estimation Accuracy Progress -->
+            <button type="button" onclick="openEstimationAccuracyModal()" class="p-1.5 sm:px-2 sm:py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-pastel-mint text-xs transition active:scale-95 flex items-center gap-1 shrink-0" title="Estimation Progress Report">
               <i data-lucide="trending-up" class="w-3.5 h-3.5 text-pastel-mint"></i>
-              <span class="hidden sm:inline text-[11px] font-semibold">Accuracy</span>
+              <span class="hidden md:inline text-[11px] font-semibold">Accuracy</span>
+            </button>
+            <!-- Google Calendar Sync Button -->
+            <button type="button" onclick="openGCalSyncModal()" class="flex items-center gap-1 px-2 py-1.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs shadow-md shadow-pastel-sky/20 hover:bg-sky-300 transition shrink-0" title="Google Calendar Sync">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+              <span class="hidden sm:inline">Sync</span>
+            </button>
+            <!-- Add Event Button -->
+            <button type="button" onclick="openNewEventModal()" class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-pastel-mint text-dark-base font-bold flex items-center justify-center shadow-md shadow-pastel-mint/20 hover:bg-emerald-300 transition shrink-0" title="Create New Event Block">
+              <i data-lucide="plus" class="w-4 h-4 text-dark-base stroke-[2.5]"></i>
             </button>
           </div>
         </div>
@@ -962,6 +959,7 @@
               <button type="button" onclick="setPantryZoneFilter('fridge')" id="btn-pzone-fridge" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">❄️ Fridge</button>
               <button type="button" onclick="setPantryZoneFilter('freezer')" id="btn-pzone-freezer" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧊 Freezer</button>
               <button type="button" onclick="setPantryZoneFilter('counter')" id="btn-pzone-counter" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧺 Counter</button>
+              <button type="button" onclick="setPantryZoneFilter('cupboard')" id="btn-pzone-cupboard" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🚪 Cupboard</button>
               <button type="button" onclick="setPantryZoneFilter('pantry')" id="btn-pzone-pantry" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥫 Dry Pantry</button>
               <button type="button" onclick="setPantryZoneFilter('spices')" id="btn-pzone-spices" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧂 Spices</button>
             </div>
@@ -1052,7 +1050,18 @@
             <div id="list-zone-counter" class="space-y-2 min-h-[100px]"></div>
           </div>
 
-          <!-- 5. Dry Pantry Shelves -->
+          <!-- 5. Cupboard -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-teal-300 flex items-center gap-1.5">
+                <span>🚪</span> Cupboard
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-zone-cupboard">0</span>
+            </div>
+            <div id="list-zone-cupboard" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 6. Dry Pantry Shelves -->
           <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
             <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
               <span class="text-xs font-bold text-pastel-butter flex items-center gap-1.5">
@@ -1063,7 +1072,7 @@
             <div id="list-zone-pantry" class="space-y-2 min-h-[100px]"></div>
           </div>
 
-          <!-- 6. Spice Rack & Condiments -->
+          <!-- 7. Spice Rack & Condiments -->
           <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
             <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
               <span class="text-xs font-bold text-pastel-lavender flex items-center gap-1.5">
@@ -1308,163 +1317,133 @@
     <!-- TAB 6: CRONOMETER-STYLE NUTRITION TRACKER      -->
     <!-- ============================================== -->
     <div id="view-nutrition" class="hidden space-y-6">
-      <div class="bg-dark-surface border border-dark-border rounded-2xl p-6 shadow-xl">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-dark-border pb-5">
+      <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-dark-border pb-3">
           <div>
-            <div class="flex items-center gap-2">
-              <h2 class="text-xl font-bold text-slate-100">Daily Nutrition Diary</h2>
-            </div>
-            <p class="text-xs text-slate-400 mt-1">Focus on nourishing whole foods and complete micronutrients. Tap any macro or micronutrient gauge to inspect its biochemical benefits.</p>
+            <h2 class="text-xl font-bold text-slate-100 flex items-center gap-2">Daily Nutrition Diary</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Cronometer-style energy, macronutrients, and survival micronutrient radar.</p>
           </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button onclick="openBarcodeScannerModal()" class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-pastel-lavender text-dark-base hover:bg-purple-300 font-bold text-xs transition shadow-md shadow-pastel-lavender/20" title="Scan Barcode on Package">
-              <i data-lucide="scan-barcode" class="w-4 h-4"></i>
-              <span>Scan Barcode</span>
-            </button>
-            <button onclick="openInsightsHubModal()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-pastel-sky/15 hover:bg-pastel-sky/25 border border-pastel-sky/30 text-pastel-sky text-xs transition" title="View Correlations, Trends & Averages">
-              <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
-              <span>Trends &amp; Insights</span>
-            </button>
-            <button onclick="openAppleHealthModal()" id="apple-health-status-btn" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-pastel-coral/15 hover:bg-pastel-coral/25 border border-pastel-coral/30 text-pastel-coral text-xs transition" title="Apple Health Automated Sync">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" id="ah-sync-header-dot"></span>
-              <i data-lucide="heart" class="w-3.5 h-3.5 fill-pastel-coral"></i>
-              <span id="ah-sync-header-label">Apple Health (Auto-Sync)</span>
-            </button>
-            <button onclick="openOcdSupportModal()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-300 text-xs transition" title="OCD &amp; Cognitive Balance Hub">
-              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-purple-300"></i>
-              <span>OCD Balance</span>
-            </button>
-            <button onclick="openBodyProfileModal()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender text-xs transition" title="Calibrate daily energy & macro targets">
-              <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
-              <span class="hidden sm:inline">Calibrate Energy</span>
-            </button>
-            <button onclick="openLogFoodModal('verified')" class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-pastel-mint hover:bg-emerald-300 text-dark-base font-bold text-xs transition">
+        </div>
+
+        <!-- DUAL DONUT CHARTS AT THE TOP: Macro Donut (Left) + Water Intake Donut (Right) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+          <!-- Left & Center: Cronometer-Style Calorie & Macro Donut Chart -->
+          <div class="md:col-span-2 p-4 rounded-2xl bg-dark-base border border-dark-border flex flex-col sm:flex-row items-center gap-5 justify-between shadow-sm">
+            <div class="flex items-center justify-center shrink-0">
+              <div id="cronometer-macro-donut-container" class="relative w-36 h-36 flex items-center justify-center shrink-0 cursor-pointer" onclick="openNutrientBreakdownModal('calories')" title="Tap for full nutrient breakdown">
+                <!-- Calorie & Macro SVG Donut injected by renderNutrition() -->
+              </div>
+            </div>
+
+            <!-- Macro Legend & Progress Bars -->
+            <div class="flex-1 w-full space-y-2.5">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-slate-200">Daily Target: <span id="donut-target-kcal-label" class="font-mono text-pastel-mint">2,130 kcal</span></span>
+                <span id="donut-net-status" class="text-[11px] font-mono text-slate-400">0% consumed</span>
+              </div>
+
+              <!-- Protein -->
+              <div class="space-y-1 cursor-pointer group" onclick="openNutrientBreakdownModal('protein')">
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="flex items-center gap-1.5 text-pastel-mint font-semibold">
+                    <span class="w-2.5 h-2.5 rounded-full bg-pastel-mint"></span>
+                    <span>Protein</span>
+                  </span>
+                  <span id="donut-protein-stat" class="text-slate-300">0g / 135g (0%)</span>
+                </div>
+                <div class="w-full bg-dark-elevated h-2 rounded-full overflow-hidden">
+                  <div id="donut-protein-bar" class="h-full rounded-full transition-all duration-500 bg-slate-600" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <!-- Net Carbs -->
+              <div class="space-y-1 cursor-pointer group" onclick="openNutrientBreakdownModal('carbs')">
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="flex items-center gap-1.5 text-pastel-sky font-semibold">
+                    <span class="w-2.5 h-2.5 rounded-full bg-pastel-sky"></span>
+                    <span>Net Carbs</span>
+                  </span>
+                  <span id="donut-carbs-stat" class="text-slate-300">0g / 240g (0%)</span>
+                </div>
+                <div class="w-full bg-dark-elevated h-2 rounded-full overflow-hidden">
+                  <div id="donut-carbs-bar" class="h-full rounded-full transition-all duration-500 bg-slate-600" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <!-- Fat -->
+              <div class="space-y-1 cursor-pointer group" onclick="openNutrientBreakdownModal('fat')">
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="flex items-center gap-1.5 text-pastel-coral font-semibold">
+                    <span class="w-2.5 h-2.5 rounded-full bg-pastel-coral"></span>
+                    <span>Fat</span>
+                  </span>
+                  <span id="donut-fat-stat" class="text-slate-300">0g / 71g (0%)</span>
+                </div>
+                <div class="w-full bg-dark-elevated h-2 rounded-full overflow-hidden">
+                  <div id="donut-fat-bar" class="h-full rounded-full transition-all duration-500 bg-slate-600" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Water Intake Donut Chart -->
+          <div class="p-4 rounded-2xl bg-dark-base border border-pastel-sky/30 flex flex-col items-center justify-between text-center shadow-sm">
+            <div class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+              <i data-lucide="droplet" class="w-4 h-4 text-pastel-sky fill-pastel-sky/30"></i>
+              <span>Hydration Intake</span>
+            </div>
+            
+            <!-- Water SVG Donut -->
+            <div id="water-donut-container" class="relative w-28 h-28 my-1 flex items-center justify-center shrink-0 cursor-pointer" onclick="openNutrientBreakdownModal('water')" title="Tap for hydration details">
+              <!-- Water SVG Donut injected by renderNutrition() -->
+            </div>
+
+            <div class="w-full space-y-2">
+              <div class="text-[11px] font-mono text-slate-300" id="water-intake-label">0 / 90 fl oz (0%)</div>
+              <div class="flex items-center justify-center gap-1.5">
+                <button type="button" id="water-quick-btn-1" onclick="logQuickWater(8)" class="px-2.5 py-1 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-pastel-sky font-mono font-bold text-xs transition">+8 fl oz</button>
+                <button type="button" id="water-quick-btn-2" onclick="logQuickWater(16)" class="px-2.5 py-1 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-pastel-sky font-mono font-bold text-xs transition">+16 fl oz</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SINGLE-LINE STICKY ACTION TOOLBAR: Underneath Daily Summary, Sticks to Top on Scroll -->
+        <div id="nutrition-sticky-toolbar" class="sticky top-0 z-20 backdrop-blur-md bg-dark-surface/95 border border-dark-border rounded-2xl p-2 sm:p-2.5 shadow-lg flex items-center justify-between gap-1 sm:gap-2 flex-nowrap overflow-x-auto">
+          <!-- Left cluster: Primary Log Food & Scanners -->
+          <div class="flex items-center gap-1 sm:gap-1.5 flex-nowrap shrink-0">
+            <button onclick="openLogFoodModal('verified')" class="flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs hover:bg-emerald-300 transition shadow-sm shrink-0" title="Log Food Intake">
               <i data-lucide="plus-circle" class="w-4 h-4"></i>
-              <span>Log Food</span>
+              <span class="hidden sm:inline">Log Food</span>
+            </button>
+            <button onclick="openBarcodeScannerModal()" class="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-pastel-lavender text-dark-base hover:bg-purple-300 font-bold text-xs transition shadow-sm shrink-0" title="Scan Barcode on Package">
+              <i data-lucide="scan-barcode" class="w-4 h-4"></i>
+              <span class="hidden md:inline">Scan Barcode</span>
+            </button>
+            <button onclick="openLabelScannerModal()" class="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-pastel-sky/20 hover:bg-pastel-sky/30 border border-pastel-sky/40 text-pastel-sky font-bold text-xs transition shrink-0" title="Snap Nutrition Label Photo (AI Vision OCR)">
+              <i data-lucide="camera" class="w-4 h-4"></i>
+              <span class="hidden md:inline">Snap Label</span>
             </button>
           </div>
-        </div>
 
-        <!-- Subtle Energy & Nutrient Target Bar (Discreet Calorie & Macro Calibration) -->
-        <div id="weight-goal-timeline-card" class="mt-4 p-3 rounded-2xl bg-dark-base border border-dark-border/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-sm">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <div class="w-8 h-8 rounded-xl bg-pastel-mint/15 border border-pastel-mint/30 flex items-center justify-center text-pastel-mint shrink-0">
-              <i data-lucide="sparkles" class="w-4 h-4"></i>
-            </div>
-            <div class="min-w-0">
-              <div class="flex flex-wrap items-center gap-1.5 font-mono">
-                <span class="text-slate-200 font-bold font-sans text-xs">Daily Energy Target:</span>
-                <span class="text-pastel-mint font-bold text-xs" id="weight-card-target-kcal">2,130 kcal</span>
-                <span class="text-slate-500">•</span>
-                <span class="text-slate-300 text-[11px]" id="weight-card-macros-split">135g P • 240g C • 71g F</span>
-                <span id="weight-card-lock-badge" class="hidden px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-semibold font-sans items-center gap-1">
-                  <i data-lucide="lock" class="w-3 h-3"></i>
-                  <span>14-Day Consistency Lock</span>
-                </span>
-                <span id="weight-card-range-badge" class="hidden px-2 py-0.5 rounded-full bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30 text-[10px] font-semibold font-sans">
-                  <span>Flexible Buffer</span>
-                </span>
-              </div>
-              <div class="flex flex-wrap items-center gap-2 text-[10px] text-slate-400 mt-0.5 font-mono">
-                <span>Baseline Maintenance: <strong class="text-slate-300 font-normal" id="weight-card-baseline-kcal">2,380 kcal</strong></span>
-                <span>•</span>
-                <span>Energy Adjustment: <strong class="text-pastel-mint font-normal" id="weight-card-deficit-kcal">-250 kcal</strong> <span id="weight-card-deficit-sub" class="text-slate-500">(0.50 lb/wk)</span></span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-            <!-- Discreet Expandable Calculation Details Toggle -->
-            <details class="group relative">
-              <summary class="list-none cursor-pointer px-2.5 py-1.5 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-[10px] flex items-center gap-1 transition">
-                <i data-lucide="info" class="w-3 h-3"></i>
-                <span>Calculation Basis</span>
-                <i data-lucide="chevron-down" class="w-3 h-3 group-open:rotate-180 transition-transform"></i>
-              </summary>
-              <div class="absolute right-0 top-full mt-2 z-30 p-3.5 rounded-2xl bg-dark-elevated border border-dark-border shadow-2xl w-72 space-y-2 text-[10px] text-slate-300">
-                <div class="flex justify-between items-center pb-1.5 border-b border-dark-border">
-                  <span class="font-bold text-white text-[11px]">Underlying Body Data</span>
-                  <span id="weight-card-pace-badge" class="px-1.5 py-0.2 rounded bg-pastel-mint/20 text-pastel-mint text-[9px] font-mono">0.50 lb/wk</span>
-                </div>
-                <p id="weight-card-summary" class="text-[10px] text-slate-300">Current: 175 lbs ➔ Target: 165 lbs (10 lbs to go)</p>
-                <div class="flex justify-between text-[9px] font-mono text-slate-400">
-                  <span id="weight-card-current-label">Start: 175 lbs</span>
-                  <span id="weight-card-target-label">Target: 165 lbs</span>
-                </div>
-                <div class="w-full bg-dark-base h-1.5 rounded-full overflow-hidden border border-dark-border">
-                  <div id="weight-card-progress-bar" class="bg-pastel-mint h-full rounded-full" style="width: 25%;"></div>
-                </div>
-                <div class="flex justify-between text-[9px] text-slate-400 pt-0.5">
-                  <span id="weight-card-bmi-badge">Target BMI 25.8</span>
-                  <span id="weight-card-target-date-label" class="text-pastel-mint">Projected hold</span>
-                </div>
-                <div class="pt-1">
-                  <button type="button" onclick="openBodyProfileModal()" class="w-full py-1.5 rounded-lg bg-pastel-mint/15 hover:bg-pastel-mint/25 text-pastel-mint text-[10px] font-bold border border-pastel-mint/30 transition text-center">
-                    Adjust Body Data &amp; Pace
-                  </button>
-                </div>
-              </div>
-            </details>
-
-            <button type="button" onclick="openBodyProfileModal()" class="px-3 py-1.5 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white border border-dark-border text-xs flex items-center gap-1.5 transition" title="Calibrate daily energy budget & macros">
-              <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-pastel-lavender"></i>
-              <span>Calibrate Targets</span>
+          <!-- Right cluster: Tools, Insights, Calibrate & Quick Water -->
+          <div class="flex items-center gap-1 sm:gap-1.5 flex-nowrap shrink-0">
+            <button onclick="logQuickWater(8)" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-sky/40 text-pastel-sky font-mono font-bold text-xs transition shrink-0" title="Quick Water: +8 fl oz">
+              <i data-lucide="droplet" class="w-3.5 h-3.5 fill-pastel-sky/40"></i>
+              <span class="hidden sm:inline">+8 oz</span>
             </button>
-          </div>
-        </div>
-
-        <!-- Live Apple Health Auto-Sync Status Bar -->
-        <div id="apple-health-live-status-bar" class="mt-3 p-3 rounded-2xl bg-dark-base border border-pastel-coral/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs shadow-sm">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <div class="w-8 h-8 rounded-xl bg-pastel-coral/15 border border-pastel-coral/30 flex items-center justify-center text-pastel-coral shrink-0">
-              <i data-lucide="heart" class="w-4 h-4 fill-pastel-coral"></i>
-            </div>
-            <div class="min-w-0">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold text-[10px]">
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" id="ah-bar-dot"></span>
-                  <span id="ah-bar-sync-status">Auto-Sync: Connected</span>
-                </span>
-                <span class="text-slate-400 text-[11px]" id="ah-bar-sync-time">Last synced: Today at 8:15 AM</span>
-              </div>
-              <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-300 mt-1 font-mono">
-                <span>Steps: <strong class="text-white" id="ah-bar-steps">8,420</strong></span>
-                <span class="text-slate-600">•</span>
-                <span>Active: <strong class="text-pastel-coral" id="ah-bar-burn">480 kcal</strong></span>
-                <span class="text-slate-600">•</span>
-                <span>Sleep: <strong class="text-pastel-sky" id="ah-bar-sleep">7.6 hrs</strong></span>
-                <span class="text-slate-600">•</span>
-                <span>HR: <strong class="text-pastel-mint" id="ah-bar-rhr">64 bpm</strong></span>
-              </div>
-            </div>
-          </div>
-          <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-            <button type="button" onclick="triggerAppleHealthAutoSync(true)" class="px-2.5 py-1.5 rounded-xl bg-pastel-coral/20 hover:bg-pastel-coral/30 border border-pastel-coral/40 text-pastel-coral font-bold text-[11px] flex items-center gap-1.5 transition" title="Instantly refresh Apple Health sync">
-              <i data-lucide="refresh-cw" class="w-3 h-3"></i>
-              <span>Sync Now</span>
+            <button onclick="openInsightsHubModal()" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-300 hover:text-white text-xs transition shrink-0" title="Trends &amp; Insights">
+              <i data-lucide="trending-up" class="w-3.5 h-3.5 text-pastel-sky"></i>
+              <span class="hidden lg:inline">Trends</span>
             </button>
-            <button type="button" onclick="openAppleHealthModal()" class="px-2.5 py-1.5 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-300 text-[11px] flex items-center gap-1 transition">
-              <span>Sync Settings</span>
-              <i data-lucide="chevron-right" class="w-3 h-3"></i>
+            <button onclick="openOcdSupportModal()" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-purple-300 hover:text-white text-xs transition shrink-0" title="OCD &amp; Cognitive Balance Hub">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-purple-300"></i>
+              <span class="hidden lg:inline">OCD Balance</span>
             </button>
-          </div>
-        </div>
-
-          <!-- Hydration Water Bar Banner -->
-        <div class="mt-3.5 p-3.5 rounded-xl bg-dark-base border border-pastel-sky/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-pastel-sky/15 flex items-center justify-center text-pastel-sky shrink-0">
-              <i data-lucide="droplet" class="w-5 h-5 fill-pastel-sky/40"></i>
-            </div>
-            <div>
-              <span class="text-slate-300 font-semibold block">Water &amp; Fluid Hydration</span>
-              <span class="text-slate-400 text-[11px]" id="water-intake-label">36 / 90 fl oz (Goal calibrated for energy)</span>
-            </div>
-          </div>
-          <div class="flex items-center gap-2">
-            <button type="button" id="water-quick-btn-1" onclick="logQuickWater(1)" class="px-2.5 py-1.5 rounded-lg bg-dark-elevated hover:bg-slate-700 border border-dark-border text-pastel-sky font-mono font-bold">+8 fl oz</button>
-            <button type="button" id="water-quick-btn-2" onclick="logQuickWater(2)" class="px-2.5 py-1.5 rounded-lg bg-dark-elevated hover:bg-slate-700 border border-dark-border text-pastel-sky font-mono font-bold">+16 fl oz</button>
-            <button type="button" onclick="openNutrientBreakdownModal('water')" class="text-pastel-sky underline text-[11px] font-medium ml-1">Details</button>
+            <button onclick="openBodyProfileModal()" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-pastel-lavender hover:text-white text-xs transition shrink-0" title="Calibrate Daily Energy &amp; Macro Targets">
+              <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+              <span class="hidden sm:inline">Settings</span>
+            </button>
           </div>
         </div>
 
@@ -5164,12 +5143,33 @@
       <!-- Nutritional Profile -->
       <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-2.5 text-xs">
         <div class="flex items-center justify-between">
-          <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">Nutritional Profile (per serving)</span>
+          <div class="flex items-center gap-1.5">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">Nutritional Facts</span>
+            <span id="pantry-detail-base-serving" class="text-slate-400 font-mono text-[10px]">• Base: 1 serving (100g)</span>
+          </div>
           <button type="button" onclick="openManualNutritionModalForActivePantryItem()" class="px-2 py-0.5 rounded-lg bg-dark-elevated hover:bg-pastel-mint/20 border border-dark-border hover:border-pastel-mint/40 text-[10px] text-pastel-mint font-semibold flex items-center gap-1 transition">
             <i data-lucide="edit-3" class="w-3 h-3"></i>
             <span>Edit Nutrition</span>
           </button>
         </div>
+
+        <!-- Independent Viewing Portion Scaler (Scales displayed nutrients without altering pantry inventory) -->
+        <div class="p-2 rounded-xl bg-dark-elevated/80 border border-dark-border flex items-center justify-between gap-2 text-xs">
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span class="text-slate-300 font-semibold text-[11px] shrink-0">Viewing Portion:</span>
+            <span id="pantry-detail-serving-display" class="font-mono text-pastel-mint font-bold text-[11px] truncate">1.0 serving (100g)</span>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <button type="button" onclick="scalePantryDetailPortion(0.5)" class="px-1.5 py-0.5 rounded bg-dark-base hover:bg-slate-700 text-[10px] font-mono text-slate-300 transition">0.5x</button>
+            <button type="button" onclick="scalePantryDetailPortion(1.0)" class="px-1.5 py-0.5 rounded bg-pastel-mint/20 border border-pastel-mint/40 text-[10px] font-mono text-pastel-mint font-bold transition">1.0x</button>
+            <button type="button" onclick="scalePantryDetailPortion(1.5)" class="px-1.5 py-0.5 rounded bg-dark-base hover:bg-slate-700 text-[10px] font-mono text-slate-300 transition">1.5x</button>
+            <button type="button" onclick="scalePantryDetailPortion(2.0)" class="px-1.5 py-0.5 rounded bg-dark-base hover:bg-slate-700 text-[10px] font-mono text-slate-300 transition">2.0x</button>
+          </div>
+        </div>
+
+        <!-- Cronometer-style Mini Macro Donut & Split -->
+        <div id="pantry-detail-macro-donut" class="flex items-center justify-center"></div>
+
         <div class="grid grid-cols-4 gap-1.5 text-center font-mono">
           <div class="p-2 rounded-xl bg-dark-elevated">
             <span class="text-[9.5px] text-slate-400 block">Kcal</span>
@@ -5299,14 +5299,17 @@
         </div>
       </div>
 
-      <!-- Storage Selector -->
+      <!-- Storage Selector (7 Physical Kitchen Storage Zones) -->
       <div class="space-y-1.5 text-xs">
-        <label class="font-semibold text-slate-300">Storage Location:</label>
-        <div class="grid grid-cols-4 gap-1.5">
-          <button type="button" onclick="setPantryDetailStorage('fridge')" id="btn-pantry-storage-fridge" class="p-2 rounded-xl bg-dark-base border border-dark-border text-center text-xs">❄️ Fridge</button>
-          <button type="button" onclick="setPantryDetailStorage('frozen')" id="btn-pantry-storage-frozen" class="p-2 rounded-xl bg-dark-base border border-dark-border text-center text-xs">🧊 Frozen</button>
-          <button type="button" onclick="setPantryDetailStorage('counter')" id="btn-pantry-storage-counter" class="p-2 rounded-xl bg-dark-base border border-dark-border text-center text-xs">🧺 Counter</button>
-          <button type="button" onclick="setPantryDetailStorage('shelf')" id="btn-pantry-storage-shelf" class="p-2 rounded-xl bg-dark-base border border-dark-border text-center text-xs">🥫 Shelf</button>
+        <label class="font-semibold text-slate-300">Kitchen Storage Zone:</label>
+        <div class="grid grid-cols-4 sm:grid-cols-7 gap-1">
+          <button type="button" onclick="setPantryDetailStorage('fridge-crisper')" id="btn-pantry-storage-fridge-crisper" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Crisper Drawer">❄️ Crisper</button>
+          <button type="button" onclick="setPantryDetailStorage('fridge-main')" id="btn-pantry-storage-fridge-main" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Main Fridge & Deli">🥛 Fridge</button>
+          <button type="button" onclick="setPantryDetailStorage('freezer')" id="btn-pantry-storage-freezer" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Deep Freeze">🧊 Freezer</button>
+          <button type="button" onclick="setPantryDetailStorage('counter')" id="btn-pantry-storage-counter" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Countertop">🧺 Counter</button>
+          <button type="button" onclick="setPantryDetailStorage('cupboard')" id="btn-pantry-storage-cupboard" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Cupboard">🚪 Cupboard</button>
+          <button type="button" onclick="setPantryDetailStorage('pantry')" id="btn-pantry-storage-pantry" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Dry Pantry Shelf">🥫 Pantry</button>
+          <button type="button" onclick="setPantryDetailStorage('spices')" id="btn-pantry-storage-spices" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Spice Rack & Condiments">🧂 Spices</button>
         </div>
       </div>
 

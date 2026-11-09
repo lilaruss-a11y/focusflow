@@ -62,7 +62,7 @@
 
     function setPantryZoneFilter(zone) {
       state.pantryZoneFilter = zone;
-      const zones = ['all', 'fridge', 'freezer', 'counter', 'pantry', 'spices'];
+      const zones = ['all', 'fridge', 'freezer', 'counter', 'cupboard', 'pantry', 'spices'];
       zones.forEach(z => {
         const btn = document.getElementById(`btn-pzone-${z}`);
         if (!btn) return;
@@ -2143,18 +2143,21 @@
       const name = (item.name || '').toLowerCase();
       const cat = (item.category || '').toLowerCase();
 
-      if (s === 'frozen') return 'freezer';
+      if (s === 'fridge-crisper' || s === 'crisper') return 'fridge-crisper';
+      if (s === 'fridge-main') return 'fridge-main';
+      if (s === 'cupboard') return 'cupboard';
+      if (s === 'frozen' || s === 'freezer') return 'freezer';
       if (s === 'counter') return 'counter';
+      if (s === 'spices' || s === 'spice') return 'spices';
+      if (s === 'pantry' || s === 'shelf') return 'pantry';
+
       if (s === 'fridge') {
         const isCrisper = /spinach|kale|lettuce|broccoli|celery|carrot|cucumber|zucchini|cauliflower|asparagus|cabbage|herb|cilantro|parsley|greens|salad|bell pepper|pepper|mushroom|scallion|radish|onion|tomato|avocado|berries|strawberry|produce/i.test(name) || cat === 'produce';
         return isCrisper ? 'fridge-crisper' : 'fridge-main';
       }
-      if (s === 'shelf') {
-        const isSpice = /spice|seasoning|salt|pepper|oregano|cumin|cinnamon|garlic powder|onion powder|paprika|curry|sauce|soy sauce|hot sauce|vinegar|oil|olive oil|dressing|mustard|ketchup|mayo|extract|vanilla/i.test(name) || cat === 'condiments';
-        return isSpice ? 'spices' : 'pantry';
-      }
 
       // Default inferences if storage not explicitly set
+      if (/cupboard|cereal|cracker|cookie|chip|tea|coffee|mug|bowl|plate/i.test(name) || cat === 'snacks') return 'cupboard';
       if (/banana|avocado|bread|bagel|tortilla|tomato|onion|garlic|potato|sweet potato/i.test(name)) return 'counter';
       if (/frozen|freezer|ice cream/i.test(name)) return 'freezer';
       if (/milk|cheese|egg|yogurt|chicken|beef|turkey|deli|pork|tofu/i.test(name)) return 'fridge-main';
@@ -2298,23 +2301,22 @@
     }
 
     function buildPantryItemPillHtml(item, expiryBadge) {
-      let storageBadge = '';
-      if (item.storage === 'frozen') {
-        storageBadge = `<button type="button" onclick="event.stopPropagation(); togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-950/40 text-sky-300 border border-sky-400/30 flex items-center gap-1 hover:brightness-110 transition shrink-0" title="Storage: Freezer (Tap to cycle: Freezer → Counter → Shelf → Fridge)"><span>🧊</span><span class="hidden sm:inline">Freezer</span></button>`;
-      } else if (item.storage === 'counter') {
-        storageBadge = `<button type="button" onclick="event.stopPropagation(); togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-peach-950/40 text-pastel-peach border border-pastel-peach/30 flex items-center gap-1 hover:brightness-110 transition shrink-0" title="Storage: On Counter (Tap to cycle: Counter → Shelf → Fridge → Freezer)"><span>🧺</span><span class="hidden sm:inline">Counter</span></button>`;
-      } else if (item.storage === 'shelf') {
-        storageBadge = `<button type="button" onclick="event.stopPropagation(); togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-950/40 text-amber-300 border border-amber-400/30 flex items-center gap-1 hover:brightness-110 transition shrink-0" title="Storage: Shelf (Tap to cycle: Shelf → Fridge → Freezer → Counter)"><span>🥫</span><span class="hidden sm:inline">Shelf</span></button>`;
-      } else {
-        storageBadge = `<button type="button" onclick="event.stopPropagation(); togglePantryItemStorage('${item.id}')" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-950/40 text-emerald-300 border border-emerald-400/30 flex items-center gap-1 hover:brightness-110 transition shrink-0" title="Storage: Fridge (Tap to cycle: Fridge → Freezer → Counter → Shelf)"><span>❄️</span><span class="hidden sm:inline">Fridge</span></button>`;
-      }
+      const isOutOfStock = (item.amount == null || item.amount <= 0);
+
+      const outOfStockAction = isOutOfStock
+        ? `<button type="button" onclick="event.stopPropagation(); addPantryItemToShoppingList('${item.id}')" class="px-2 py-0.5 rounded-lg bg-pastel-coral/20 hover:bg-pastel-coral/30 border border-pastel-coral/40 text-pastel-coral text-[10px] font-bold flex items-center gap-1 transition" title="Item is out of stock! Tap to add to shopping list">
+             <i data-lucide="shopping-cart" class="w-3 h-3"></i>
+             <span>+ Add to Shopping List</span>
+           </button>`
+        : '';
 
       return `
         <div class="flex items-center gap-1.5 min-w-0 flex-1">
-          <span class="text-slate-200 font-semibold truncate group-hover:text-pastel-mint transition">${item.name}</span>
+          <span class="text-slate-200 font-semibold truncate group-hover:text-pastel-mint transition ${isOutOfStock ? 'line-through text-slate-400' : ''}">${item.name}</span>
           ${expiryBadge}
         </div>
         <div class="flex items-center gap-1 shrink-0" onclick="event.stopPropagation()">
+          ${outOfStockAction}
           <!-- Amount Stepper with 1-Tap Unit Cycling -->
           <div class="flex items-center bg-dark-elevated border border-dark-border rounded-lg px-1 py-0.5 gap-1 font-mono text-[10px]">
             <button type="button" onclick="event.stopPropagation(); changePantryItemAmount('${item.id}', -1)" class="w-3.5 h-3.5 rounded hover:bg-slate-700 text-slate-300 hover:text-white font-bold flex items-center justify-center">-</button>
@@ -2323,12 +2325,6 @@
             </button>
             <button type="button" onclick="event.stopPropagation(); changePantryItemAmount('${item.id}', 1)" class="w-3.5 h-3.5 rounded hover:bg-slate-700 text-slate-300 hover:text-white font-bold flex items-center justify-center">+</button>
           </div>
-          <!-- Storage badge -->
-          ${storageBadge}
-          <!-- Quick Add to Shopping List Cart Icon -->
-          <button type="button" onclick="event.stopPropagation(); addPantryItemToShoppingList('${item.id}')" class="p-1 rounded-lg bg-dark-elevated hover:bg-pastel-coral/20 text-slate-400 hover:text-pastel-coral border border-dark-border transition" title="Add to Shopping List (Running Low)">
-            <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
-          </button>
           <!-- Delete -->
           <button type="button" onclick="event.stopPropagation(); deletePantryItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-0.5" title="Remove ingredient">
             <i data-lucide="x" class="w-3.5 h-3.5"></i>
@@ -2338,17 +2334,18 @@
     }
 
     function renderPantry() {
-      // 1. Zone Lists
+      // 1. Zone Lists (7 Zones)
       const zoneLists = {
         'fridge-crisper': document.getElementById('list-zone-fridge-crisper'),
         'fridge-main': document.getElementById('list-zone-fridge-main'),
         'freezer': document.getElementById('list-zone-freezer'),
         'counter': document.getElementById('list-zone-counter'),
+        'cupboard': document.getElementById('list-zone-cupboard'),
         'pantry': document.getElementById('list-zone-pantry'),
         'spices': document.getElementById('list-zone-spices')
       };
       Object.keys(zoneLists).forEach(k => { if (zoneLists[k]) zoneLists[k].innerHTML = ''; });
-      const zoneCounts = { 'fridge-crisper': 0, 'fridge-main': 0, freezer: 0, counter: 0, pantry: 0, spices: 0 };
+      const zoneCounts = { 'fridge-crisper': 0, 'fridge-main': 0, freezer: 0, counter: 0, cupboard: 0, pantry: 0, spices: 0 };
 
       // 2. Type Lists
       const typeLists = {
@@ -2374,7 +2371,7 @@
       (state.pantry || []).forEach(item => {
         if (!item.storage) {
           const z = getItemZone(item);
-          item.storage = z.startsWith('fridge') ? 'fridge' : (z === 'counter' ? 'counter' : (z === 'freezer' ? 'frozen' : 'shelf'));
+          item.storage = z.startsWith('fridge') ? 'fridge' : (z === 'counter' ? 'counter' : (z === 'freezer' ? 'frozen' : (z === 'cupboard' ? 'cupboard' : 'shelf')));
         }
         if (!item.dateAdded) {
           item.dateAdded = new Date().toISOString().split('T')[0];
@@ -2409,6 +2406,8 @@
           matchesZone = (itemZone === 'freezer' || item.storage === 'frozen');
         } else if (zoneFilter === 'counter') {
           matchesZone = (itemZone === 'counter' || item.storage === 'counter');
+        } else if (zoneFilter === 'cupboard') {
+          matchesZone = (itemZone === 'cupboard' || item.storage === 'cupboard');
         } else if (zoneFilter === 'pantry') {
           matchesZone = (itemZone === 'pantry');
         } else if (zoneFilter === 'spices') {
@@ -2458,6 +2457,7 @@
       setTxt('count-zone-fridge-main', zoneCounts['fridge-main']);
       setTxt('count-zone-freezer', zoneCounts.freezer);
       setTxt('count-zone-counter', zoneCounts.counter);
+      setTxt('count-zone-cupboard', zoneCounts.cupboard);
       setTxt('count-zone-pantry', zoneCounts.pantry);
       setTxt('count-zone-spices', zoneCounts.spices);
 

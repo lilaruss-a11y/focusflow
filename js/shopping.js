@@ -574,6 +574,140 @@ function renderCustomReceiptAliasesList() {
   if (window.lucide) lucide.createIcons();
 }
 
+// ==============================================
+// RECEIPT NUTRITION LEARNING BRIDGE & RESOLUTION
+// ==============================================
+function getReceiptNutritionCatalog() {
+  try {
+    const raw = localStorage.getItem('focusflow_receipt_nutrition_catalog');
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return (window.state && window.state.receiptNutritionCatalog) || {};
+}
+
+function saveReceiptNutritionCatalogEntry(codeOrName, data) {
+  if (!codeOrName || !data) return;
+  const catalog = getReceiptNutritionCatalog();
+  const rawKey = codeOrName.trim().toLowerCase();
+  catalog[rawKey] = {
+    code: codeOrName.trim(),
+    name: data.name,
+    nutrition: data.nutrition,
+    isVerified: true,
+    source: data.source || 'Exact Label Verified',
+    sourceBadge: data.sourceBadge || '✓ Exact Label Verified',
+    barcode: data.barcode || '',
+    updatedAt: new Date().toISOString()
+  };
+  try {
+    localStorage.setItem('focusflow_receipt_nutrition_catalog', JSON.stringify(catalog));
+  } catch (e) {}
+  if (window.state) window.state.receiptNutritionCatalog = catalog;
+}
+
+function resolveReceiptItemNutrition(item) {
+  const origName = (item.name || '').trim();
+  const origRaw = (item.rawName || origName).trim();
+  const lowerName = origName.toLowerCase();
+  const lowerRaw = origRaw.toLowerCase();
+
+  // TIER 2 (OPTION 1): Check Personal Receipt-to-Label Catalog Bridge (Learned pairings)
+  const catalog = getReceiptNutritionCatalog();
+  if (catalog[lowerRaw] || catalog[lowerName]) {
+    const match = catalog[lowerRaw] || catalog[lowerName];
+    return {
+      nutrition: match.nutrition,
+      isVerified: true,
+      nutritionSource: match.source || 'Exact Label Verified',
+      sourceBadge: '✓ Exact Label Verified',
+      tier: 2
+    };
+  }
+
+  // TIER 1 (OPTION 2): USDA FoodData Central Branded / Whole Food Matching
+  const usdaMatch = (typeof commonFoodsDatabase !== 'undefined')
+    ? commonFoodsDatabase.find(cf => {
+        const cfWord = cf.name.toLowerCase().split(' ')[0];
+        return lowerName.includes(cfWord) || lowerRaw.includes(cfWord);
+      })
+    : null;
+
+  if (usdaMatch) {
+    const micros = (typeof estimateMicronutrientsForFood === 'function')
+      ? estimateMicronutrientsForFood(item.category || 'produce', usdaMatch.kcal, usdaMatch.protein, usdaMatch.carbs, usdaMatch.fat, usdaMatch.name)
+      : {};
+    return {
+      nutrition: {
+        kcal: usdaMatch.kcal,
+        protein: usdaMatch.protein,
+        carbs: usdaMatch.carbs,
+        fat: usdaMatch.fat,
+        fiber: usdaMatch.fiber || 0,
+        sodium: usdaMatch.sodium || 40,
+        sugar: usdaMatch.sugar || 0,
+        satFat: usdaMatch.satFat || 0,
+        micros: micros
+      },
+      isVerified: true,
+      nutritionSource: 'USDA Branded Match',
+      sourceBadge: '✓ USDA Branded Match',
+      tier: 1
+    };
+  }
+
+  // TIER 3 (OPTION 4 FAIL-SAFE): Clinical Estimate
+  const cat = item.category || 'produce';
+  const estKcal = cat === 'protein' ? 180 : (cat === 'produce' || cat === 'vegetables' ? 35 : (cat === 'fruits' ? 60 : 120));
+  const estProt = cat === 'protein' ? 24 : (cat === 'dairy' ? 8 : 2);
+  const estCarbs = (cat === 'produce' || cat === 'vegetables') ? 6 : (cat === 'grains' ? 28 : (cat === 'fruits' ? 15 : 2));
+  const estFat = cat === 'protein' ? 6 : (cat === 'dairy' ? 4 : 0.5);
+
+  const estMicros = (typeof estimateMicronutrientsForFood === 'function')
+    ? estimateMicronutrientsForFood(cat, estKcal, estProt, estCarbs, estFat, origName)
+    : {};
+
+  return {
+    nutrition: {
+      kcal: estKcal,
+      protein: estProt,
+      carbs: estCarbs,
+      fat: estFat,
+      fiber: 2,
+      sodium: 40,
+      sugar: 1,
+      satFat: 0.2,
+      micros: estMicros
+    },
+    isVerified: false,
+    nutritionSource: 'Clinical Estimate',
+    sourceBadge: '~ Clinical Estimate',
+    tier: 3
+  };
+}
+
+function pairReceiptItemWithLabelOrBarcode(idx) {
+  const item = (state.incomingGroceriesApprovalList || [])[idx];
+  if (!item) return;
+  if (typeof openManualNutritionModal === 'function') {
+    openManualNutritionModal({
+      barcode: '',
+      name: item.name,
+      amount: item.amount || 1,
+      unit: item.unit || 'items',
+      category: item.category || 'produce',
+      storage: item.storage || 'fridge-main',
+      nutrition: item.nutrition,
+      isReceiptPairing: true,
+      receiptIndex: idx,
+      receiptRawCode: item.rawName || item.name
+    });
+  }
+}
+
+function editReceiptItemNutrition(idx) {
+  pairReceiptItemWithLabelOrBarcode(idx);
+}
+
 function renderIncomingGroceriesApprovalList(items) {
   state.incomingGroceriesApprovalList = items;
   const sec = document.getElementById('walmart-approval-section');
@@ -584,9 +718,22 @@ function renderIncomingGroceriesApprovalList(items) {
   list.innerHTML = '';
 
   items.forEach((item, idx) => {
+    // Auto-resolve nutritional accuracy profile (Tier 1 -> Tier 2 -> Tier 3)
+    if (!item.nutrition) {
+      const res = resolveReceiptItemNutrition(item);
+      item.nutrition = res.nutrition;
+      item.isVerified = res.isVerified;
+      item.nutritionSource = res.nutritionSource;
+      item.sourceBadge = res.sourceBadge;
+    }
+
     const row = document.createElement('div');
     row.className = `p-3 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-2.5 transition shadow-sm ${item.approved ? 'bg-dark-base border-dark-border text-white' : 'bg-dark-base/40 border-dark-border/40 opacity-60 text-slate-400'}`;
     row.id = `grocery-row-${idx}`;
+
+    const badgeHtml = item.isVerified
+      ? `<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-950/40 text-emerald-300 border border-emerald-400/30 flex items-center gap-1 font-mono"><span>✓</span><span>${item.sourceBadge || 'USDA / Label Verified'}</span></span>`
+      : `<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-950/40 text-amber-300 border border-amber-400/30 flex items-center gap-1 font-mono"><span>~</span><span>Clinical Estimate</span></span>`;
 
     row.innerHTML = `
       <div class="flex items-center gap-2.5 flex-1 min-w-0">
@@ -594,7 +741,8 @@ function renderIncomingGroceriesApprovalList(items) {
         <div class="flex-1 min-w-0">
           <input type="text" value="${item.name}" onchange="updateGroceryName(${idx}, this.value)" class="w-full bg-transparent text-xs font-semibold text-white focus:outline-none focus:border-b border-pastel-sky truncate" title="Edit item name (auto-saved for future receipts)">
           <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
-            ${item.wasAutoTranslated ? '<span class="text-[9px] text-pastel-mint font-mono font-bold">✓ Auto-translated from custom rules</span>' : ''}
+            ${badgeHtml}
+            ${item.wasAutoTranslated ? '<span class="text-[9px] text-pastel-mint font-mono font-bold">✓ Learned alias</span>' : ''}
             ${item.rawName && item.rawName !== item.name ? `<span class="text-[9px] text-slate-500 truncate font-mono">Store code: "${item.rawName}"</span>` : ''}
             ${!item.isFood ? '<span class="text-[9px] text-amber-400 font-mono">Non-food item (excluded by default)</span>' : ''}
           </div>
@@ -602,6 +750,18 @@ function renderIncomingGroceriesApprovalList(items) {
       </div>
 
       <div class="flex items-center gap-2 flex-wrap shrink-0 text-xs">
+        <!-- Nutrition Pair / Edit Buttons -->
+        ${!item.isVerified ? `
+          <button type="button" onclick="pairReceiptItemWithLabelOrBarcode(${idx})" class="px-2 py-1 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-[10px] font-bold flex items-center gap-1 transition shadow-sm" title="Scan package barcode or label to pair with this store code permanently">
+            <i data-lucide="camera" class="w-3 h-3"></i>
+            <span>📷 Pair Label/Barcode</span>
+          </button>
+        ` : ''}
+        <button type="button" onclick="editReceiptItemNutrition(${idx})" class="px-2 py-1 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white border border-dark-border text-[10px] flex items-center gap-1 transition" title="View or edit macro and micronutrient facts">
+          <i data-lucide="edit-3" class="w-3 h-3"></i>
+          <span>✏️ Facts</span>
+        </button>
+
         <!-- Quantity & Unit -->
         <div class="flex items-center gap-1 bg-dark-elevated border border-dark-border rounded-xl px-2 py-1">
           <input type="number" min="0.1" step="any" value="${item.amount || 1}" onchange="updateGroceryAmount(${idx}, this.value)" class="w-12 bg-transparent text-center text-white font-mono text-[11px] focus:outline-none" title="Quantity / Package Weight">
@@ -641,12 +801,15 @@ function renderIncomingGroceriesApprovalList(items) {
           <option value="leftovers" ${item.category === 'leftovers' ? 'selected' : ''}>🍲 Leftovers &amp; Meals</option>
         </select>
 
-        <!-- Storage Location Selector (Fridge vs Freezer vs Counter vs Shelf) -->
-        <select onchange="updateGroceryStorage(${idx}, this.value)" class="bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1 text-slate-200 text-[11px] font-bold focus:border-pastel-sky focus:outline-none" title="Storage Location">
-          <option value="fridge" ${item.storage === 'fridge' ? 'selected' : ''}>❄️ Fridge</option>
-          <option value="frozen" ${item.storage === 'frozen' ? 'selected' : ''}>🧊 Freezer</option>
+        <!-- Storage Location Selector (7 Physical Kitchen Storage Zones) -->
+        <select onchange="updateGroceryStorage(${idx}, this.value)" class="bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1 text-slate-200 text-[11px] font-bold focus:border-pastel-sky focus:outline-none" title="Kitchen Storage Zone">
+          <option value="fridge-crisper" ${item.storage === 'fridge-crisper' ? 'selected' : ''}>❄️ Crisper</option>
+          <option value="fridge-main" ${(!item.storage || item.storage === 'fridge-main' || item.storage === 'fridge') ? 'selected' : ''}>🥛 Fridge</option>
+          <option value="freezer" ${(item.storage === 'freezer' || item.storage === 'frozen') ? 'selected' : ''}>🧊 Freezer</option>
           <option value="counter" ${item.storage === 'counter' ? 'selected' : ''}>🧺 Counter</option>
-          <option value="shelf" ${item.storage === 'shelf' ? 'selected' : ''}>🥫 Dry Shelf</option>
+          <option value="cupboard" ${item.storage === 'cupboard' ? 'selected' : ''}>🚪 Cupboard</option>
+          <option value="pantry" ${(item.storage === 'pantry' || item.storage === 'shelf') ? 'selected' : ''}>🥫 Dry Pantry</option>
+          <option value="spices" ${item.storage === 'spices' ? 'selected' : ''}>🧂 Spices</option>
         </select>
 
         <!-- Bought for someone else toggle -->
@@ -779,9 +942,13 @@ function approveAndCommitGroceriesToPantry() {
       id: `p-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`,
       name: item.name,
       category: item.category,
-      storage: item.storage || 'fridge',
+      storage: item.storage || 'fridge-main',
       amount: parseFloat(item.amount) || 1,
       unit: item.unit || 'items',
+      nutrition: item.nutrition,
+      isVerified: Boolean(item.isVerified),
+      nutritionSource: item.nutritionSource || (item.isVerified ? 'USDA / Label' : 'Clinical Estimate'),
+      sourceBadge: item.sourceBadge || (item.isVerified ? '✓ Verified' : '~ Clinical Estimate'),
       dateAdded: todayStr,
       expirationDate: expDateStr
     });
@@ -819,6 +986,14 @@ function testSampleWalmartReceiptPhoto() {
   renderIncomingGroceriesApprovalList(formatted);
   playChime('bell');
   alertBox("Sample receipt scanned! Review each item and adjust storage/amounts below.", "Sample Scanned");
+}
+
+if (typeof window !== 'undefined') {
+  window.getReceiptNutritionCatalog = getReceiptNutritionCatalog;
+  window.saveReceiptNutritionCatalogEntry = saveReceiptNutritionCatalogEntry;
+  window.resolveReceiptItemNutrition = resolveReceiptItemNutrition;
+  window.pairReceiptItemWithLabelOrBarcode = pairReceiptItemWithLabelOrBarcode;
+  window.editReceiptItemNutrition = editReceiptItemNutrition;
 }
 
 

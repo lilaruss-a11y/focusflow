@@ -2849,30 +2849,6 @@
       });
     }
 
-      if (modal) modal.classList.remove('hidden');
-      if (window.lucide) lucide.createIcons();
-      playChime('bell');
-    }
-
-    function closePantryItemDetailModal() {
-      const modal = document.getElementById('pantry-item-detail-modal');
-      if (modal) modal.classList.add('hidden');
-      state.activePantryDetailItem = null;
-    }
-
-    function setPantryDetailStorage(storageType) {
-      if (state.activePantryDetailItem) state.activePantryDetailItem.storage = storageType;
-      ['fridge', 'frozen', 'counter', 'shelf'].forEach(s => {
-        const btn = document.getElementById(`btn-pantry-storage-${s}`);
-        if (!btn) return;
-        if (s === storageType) {
-          btn.className = "p-2 rounded-xl border-2 border-pastel-mint bg-pastel-mint/15 text-white font-bold text-center text-xs";
-        } else {
-          btn.className = "p-2 rounded-xl bg-dark-base border border-dark-border text-slate-400 text-center text-xs";
-        }
-      });
-    }
-
     function setPantryDetailUnit(unitVal) {
       if (state.activePantryDetailItem) state.activePantryDetailItem.unit = unitVal;
       const unitInput = document.getElementById('pantry-detail-unit');

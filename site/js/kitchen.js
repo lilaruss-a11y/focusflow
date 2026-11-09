@@ -2519,16 +2519,20 @@
 
     // Pantry Item Detail Modal (Nutritional Summary & Dates)
     state.activePantryDetailItem = null;
+    state.activePantryPortionScale = 1.0;
 
-    function renderMicroBarRow(standardKey, standardDef, value) {
+    function renderMicroBarRow(standardKey, standardDef, value, isVerified = false) {
       const val = (typeof value === 'number' && !isNaN(value)) ? value : 0;
       const pct = Math.min(Math.round((val / standardDef.dv) * 100), 100);
       const formattedVal = val >= 10 ? Math.round(val) : (val > 0 ? parseFloat(val.toFixed(2)) : 0);
+      const indicator = isVerified
+        ? '<span class="text-emerald-400 font-bold mr-1" title="Verified Nutrient">✓</span>'
+        : '<span class="text-amber-400 font-bold mr-1" title="Estimated Nutrient">~</span>';
       
       return `
         <div class="p-1.5 rounded-xl bg-dark-elevated/70 border border-dark-border/40 text-[10px]">
           <div class="flex items-center justify-between mb-0.5">
-            <span class="text-slate-300 font-medium">${standardDef.name}</span>
+            <span class="text-slate-300 font-medium flex items-center">${indicator}${standardDef.name}</span>
             <div class="flex items-center gap-1.5 font-mono">
               <span class="text-white font-bold">${formattedVal} ${standardDef.unit}</span>
               <span class="${standardDef.color} text-[9px] font-bold">(${pct}% DV)</span>
@@ -2539,6 +2543,138 @@
           </div>
         </div>
       `;
+    }
+
+    function renderPantryDetailMacroDonut(nut) {
+      const container = document.getElementById('pantry-detail-macro-donut');
+      if (!container) return;
+      const pG = parseFloat(nut.protein) || 0;
+      const cG = parseFloat(nut.carbs) || 0;
+      const fG = parseFloat(nut.fat) || 0;
+      const pKcal = pG * 4;
+      const cKcal = cG * 4;
+      const fKcal = fG * 9;
+      const totalKcal = Math.round(nut.kcal || (pKcal + cKcal + fKcal));
+      const macroSum = pKcal + cKcal + fKcal;
+
+      if (macroSum <= 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      const pPct = Math.round((pKcal / macroSum) * 100);
+      const cPct = Math.round((cKcal / macroSum) * 100);
+      const fPct = Math.max(0, 100 - pPct - cPct);
+
+      const r = 26;
+      const circ = 2 * Math.PI * r;
+      const pDash = (pPct / 100) * circ;
+      const cDash = (cPct / 100) * circ;
+      const fDash = (fPct / 100) * circ;
+
+      const pOffset = 0;
+      const cOffset = -pDash;
+      const fOffset = -(pDash + cDash);
+
+      container.innerHTML = `
+        <div class="flex items-center gap-3 bg-dark-elevated/70 p-2.5 rounded-2xl border border-dark-border/60 w-full justify-around shadow-sm">
+          <div class="relative w-16 h-16 flex items-center justify-center shrink-0">
+            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 70 70">
+              <circle cx="35" cy="35" r="${r}" fill="none" stroke="#1e293b" stroke-width="7" />
+              <circle cx="35" cy="35" r="${r}" fill="none" stroke="#34d399" stroke-width="7" stroke-dasharray="${pDash} ${circ - pDash}" stroke-dashoffset="${pOffset}" />
+              <circle cx="35" cy="35" r="${r}" fill="none" stroke="#38bdf8" stroke-width="7" stroke-dasharray="${cDash} ${circ - cDash}" stroke-dashoffset="${cOffset}" />
+              <circle cx="35" cy="35" r="${r}" fill="none" stroke="#fb7185" stroke-width="7" stroke-dasharray="${fDash} ${circ - fDash}" stroke-dashoffset="${fOffset}" />
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+              <span class="text-[11px] font-black text-white font-mono leading-none">${totalKcal}</span>
+              <span class="text-[7px] text-slate-400 font-mono">kcal</span>
+            </div>
+          </div>
+          <div class="space-y-0.5 text-[10px] font-mono">
+            <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-pastel-mint"></span><span class="text-slate-300">Protein:</span><strong class="text-white">${pPct}%</strong><span class="text-slate-400">(${Math.round(pG)}g)</span></div>
+            <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-pastel-sky"></span><span class="text-slate-300">Net Carbs:</span><strong class="text-white">${cPct}%</strong><span class="text-slate-400">(${Math.round(cG)}g)</span></div>
+            <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-pastel-coral"></span><span class="text-slate-300">Fat:</span><strong class="text-white">${fPct}%</strong><span class="text-slate-400">(${Math.round(fG)}g)</span></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function scalePantryDetailPortion(scale = 1.0) {
+      state.activePantryPortionScale = scale;
+      if (state.activePantryDetailItem) {
+        renderPantryItemDetailNutrients(state.activePantryDetailItem, scale);
+      }
+    }
+
+    function renderPantryItemDetailNutrients(item, scale = 1.0) {
+      if (!item || !item.nutrition) return;
+      const nut = item.nutrition;
+      const baseGrams = item.servingGrams || (item.unit === 'g' ? (parseFloat(item.amount) || 100) : 100);
+      const viewGrams = Math.round(baseGrams * scale);
+
+      const baseLabel = document.getElementById('pantry-detail-base-serving');
+      if (baseLabel) baseLabel.textContent = `• Base: 1 serving (${baseGrams}g)`;
+      const viewLabel = document.getElementById('pantry-detail-serving-display');
+      if (viewLabel) viewLabel.textContent = `${scale}x serving (${viewGrams}g)`;
+
+      const isVerified = Boolean(item.isVerified || (item.sourceBadge && item.sourceBadge.includes('✓')));
+
+      const kcalEl = document.getElementById('pantry-detail-kcal');
+      const protEl = document.getElementById('pantry-detail-protein');
+      const carbEl = document.getElementById('pantry-detail-carbs');
+      const fatEl = document.getElementById('pantry-detail-fat');
+      const fiberEl = document.getElementById('pantry-detail-fiber');
+      const sugarEl = document.getElementById('pantry-detail-sugar');
+      const satFatEl = document.getElementById('pantry-detail-sat-fat');
+      const sodiumEl = document.getElementById('pantry-detail-sodium');
+
+      const scaledKcal = Math.round((nut.kcal || 0) * scale);
+      const scaledProt = ((nut.protein || 0) * scale).toFixed(1);
+      const scaledCarbs = ((nut.carbs || 0) * scale).toFixed(1);
+      const scaledFat = ((nut.fat || 0) * scale).toFixed(1);
+      const scaledFiber = ((nut.fiber || 0) * scale).toFixed(1);
+      const scaledSugar = ((nut.sugar || 0) * scale).toFixed(1);
+      const scaledSatFat = ((nut.satFat || 0) * scale).toFixed(1);
+      const scaledSodium = Math.round((nut.sodium || 0) * scale);
+
+      const checkPrefix = isVerified ? '<span class="text-emerald-400 font-bold mr-0.5">✓</span>' : '<span class="text-amber-400 font-bold mr-0.5">~</span>';
+
+      if (kcalEl) kcalEl.innerHTML = `${checkPrefix}${scaledKcal}`;
+      if (protEl) protEl.innerHTML = `${checkPrefix}${scaledProt}g`;
+      if (carbEl) carbEl.innerHTML = `${checkPrefix}${scaledCarbs}g`;
+      if (fatEl) fatEl.innerHTML = `${checkPrefix}${scaledFat}g`;
+      if (fiberEl) fiberEl.innerHTML = `${checkPrefix}${scaledFiber}g`;
+      if (sugarEl) sugarEl.innerHTML = `${checkPrefix}${scaledSugar}g`;
+      if (satFatEl) satFatEl.innerHTML = `${checkPrefix}${scaledSatFat}g`;
+      if (sodiumEl) sodiumEl.innerHTML = `${checkPrefix}${scaledSodium}mg`;
+
+      renderPantryDetailMacroDonut({
+        kcal: scaledKcal,
+        protein: scaledProt,
+        carbs: scaledCarbs,
+        fat: scaledFat
+      });
+
+      // Render all 13 vitamins and all 14 minerals scaled proportionally
+      const standards = (typeof window !== 'undefined' && window.DAILY_NUTRITION_STANDARDS) ? window.DAILY_NUTRITION_STANDARDS : (typeof DAILY_NUTRITION_STANDARDS !== 'undefined' ? DAILY_NUTRITION_STANDARDS : null);
+      const micros = nut.micros || {};
+      const vitGrid = document.getElementById('pantry-micro-vitamins-grid');
+      const minGrid = document.getElementById('pantry-micro-minerals-grid');
+
+      if (standards) {
+        if (vitGrid) {
+          vitGrid.innerHTML = Object.keys(standards)
+            .filter(k => standards[k].type === 'vitamin')
+            .map(k => renderMicroBarRow(k, standards[k], (micros[k] || 0) * scale, isVerified))
+            .join('');
+        }
+        if (minGrid) {
+          minGrid.innerHTML = Object.keys(standards)
+            .filter(k => standards[k].type === 'mineral')
+            .map(k => renderMicroBarRow(k, standards[k], (micros[k] || 0) * scale, isVerified))
+            .join('');
+        }
+      }
     }
 
     function switchPantryMicroTab(tab) {
@@ -2591,20 +2727,10 @@
       const item = (state.pantry || []).find(p => p.id === id);
       if (!item) return;
       state.activePantryDetailItem = item;
+      state.activePantryPortionScale = 1.0;
 
       const modal = document.getElementById('pantry-item-detail-modal');
       const nameEl = document.getElementById('pantry-detail-name');
-      const kcalEl = document.getElementById('pantry-detail-kcal');
-      const protEl = document.getElementById('pantry-detail-protein');
-      const carbEl = document.getElementById('pantry-detail-carbs');
-      const fatEl = document.getElementById('pantry-detail-fat');
-      const fiberEl = document.getElementById('pantry-detail-fiber');
-      const sugarEl = document.getElementById('pantry-detail-sugar');
-      const satFatEl = document.getElementById('pantry-detail-sat-fat');
-      const sodiumEl = document.getElementById('pantry-detail-sodium');
-      const microEl = document.getElementById('pantry-detail-micros');
-      const vitGrid = document.getElementById('pantry-micro-vitamins-grid');
-      const minGrid = document.getElementById('pantry-micro-minerals-grid');
       const verifiedBadge = document.getElementById('pantry-detail-verified-badge');
       const freshnessBadge = document.getElementById('pantry-detail-freshness-badge');
       const dateAddedInput = document.getElementById('pantry-detail-date-added');
@@ -2648,41 +2774,23 @@
         }
       }
 
-      const nut = item.nutrition;
-      if (kcalEl) kcalEl.textContent = String(Math.round(nut.kcal || 0));
-      if (protEl) protEl.textContent = `${nut.protein || 0}g`;
-      if (carbEl) carbEl.textContent = `${nut.carbs || 0}g`;
-      if (fatEl) fatEl.textContent = `${nut.fat || 0}g`;
-      if (fiberEl) fiberEl.textContent = `${nut.fiber || 0}g`;
-      if (sugarEl) sugarEl.textContent = `${nut.sugar || 0}g`;
-      if (satFatEl) satFatEl.textContent = `${nut.satFat || 0}g`;
-      if (sodiumEl) sodiumEl.textContent = `${nut.sodium || 0}mg`;
+      // Render scaled nutrients (default 1.0x)
+      renderPantryItemDetailNutrients(item, 1.0);
 
-      // Render all 13 vitamins and all 14 minerals
-      const standards = (typeof window !== 'undefined' && window.DAILY_NUTRITION_STANDARDS) ? window.DAILY_NUTRITION_STANDARDS : (typeof DAILY_NUTRITION_STANDARDS !== 'undefined' ? DAILY_NUTRITION_STANDARDS : null);
-      const micros = nut.micros || {};
-
-      if (standards) {
-        if (vitGrid) {
-          vitGrid.innerHTML = Object.keys(standards)
-            .filter(k => standards[k].type === 'vitamin')
-            .map(k => renderMicroBarRow(k, standards[k], micros[k]))
-            .join('');
-        }
-        if (minGrid) {
-          minGrid.innerHTML = Object.keys(standards)
-            .filter(k => standards[k].type === 'mineral')
-            .map(k => renderMicroBarRow(k, standards[k], micros[k]))
-            .join('');
-        }
-      }
-
+      const microEl = document.getElementById('pantry-detail-micros');
       if (microEl) {
         microEl.textContent = `All 13 essential vitamins & 14 minerals tracked for complete human survival.`;
       }
 
       if (verifiedBadge) {
-        verifiedBadge.textContent = item.sourceBadge || (match ? "✓ Verified USDA Whole Food" : "✓ Verified Clinical Nutrition Profile");
+        const isVerified = Boolean(item.isVerified || (item.sourceBadge && item.sourceBadge.includes('✓')));
+        if (isVerified) {
+          verifiedBadge.textContent = item.sourceBadge || (match ? "✓ Verified USDA Whole Food" : "✓ Verified Clinical Nutrition Profile");
+          verifiedBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/40 text-emerald-300 border border-emerald-400/30";
+        } else {
+          verifiedBadge.textContent = "~ Clinical Estimate";
+          verifiedBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/40 text-amber-300 border border-amber-400/30";
+        }
       }
 
       if (dateAddedInput) dateAddedInput.value = item.dateAdded || new Date().toISOString().split('T')[0];
@@ -2713,7 +2821,8 @@
         }
       }
 
-      setPantryDetailStorage(item.storage || 'fridge');
+      const activeStorage = item.storage || getItemZone(item);
+      setPantryDetailStorage(activeStorage);
 
       if (modal) modal.classList.remove('hidden');
       if (window.lucide) lucide.createIcons();
@@ -2728,13 +2837,14 @@
 
     function setPantryDetailStorage(storageType) {
       if (state.activePantryDetailItem) state.activePantryDetailItem.storage = storageType;
-      ['fridge', 'frozen', 'counter', 'shelf'].forEach(s => {
+      const zones = ['fridge-crisper', 'fridge-main', 'freezer', 'counter', 'cupboard', 'pantry', 'spices'];
+      zones.forEach(s => {
         const btn = document.getElementById(`btn-pantry-storage-${s}`);
         if (!btn) return;
         if (s === storageType) {
-          btn.className = "p-2 rounded-xl border-2 border-pastel-mint bg-pastel-mint/15 text-white font-bold text-center text-xs";
+          btn.className = "p-1.5 rounded-xl border-2 border-pastel-mint bg-pastel-mint/15 text-white font-bold text-center text-[10px] shadow-sm";
         } else {
-          btn.className = "p-2 rounded-xl bg-dark-base border border-dark-border text-slate-400 text-center text-xs";
+          btn.className = "p-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-400 text-center text-[10px]";
         }
       });
     }
@@ -3106,6 +3216,8 @@ function inspectRecipeDetails(idx) {
       window.switchPantryMicroTab = switchPantryMicroTab;
       window.openManualNutritionModalForActivePantryItem = openManualNutritionModalForActivePantryItem;
       window.renderMicroBarRow = renderMicroBarRow;
+      window.scalePantryDetailPortion = scalePantryDetailPortion;
+      window.renderPantryDetailMacroDonut = renderPantryDetailMacroDonut;
     }
   
 

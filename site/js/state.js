@@ -24,6 +24,8 @@
         calendar: 1,
         focus: 1
       },
+      activePantryPortionScale: 1.0,
+      receiptNutritionCatalog: {},
       weightGoal: {
         currentWeightLbs: 175,
         targetWeightLbs: 165,

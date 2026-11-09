@@ -1,10 +1,109 @@
 // ==============================================
 // EXTENDED NUTRITION RENDERING & BIOMARKER LOG
 // ==============================================
+
+    function getNutrientProgressColor(current, target, isUpperLimit = false) {
+      if (!target || target <= 0) return { barClass: 'bg-slate-500', textClass: 'text-slate-300', status: 'neutral' };
+      const pct = (current / target) * 100;
+      if (isUpperLimit) {
+        if (pct > 100) return { barClass: 'bg-rose-500', textClass: 'text-rose-400', status: 'over' };
+        if (pct >= 80) return { barClass: 'bg-amber-400', textClass: 'text-amber-300', status: 'close' };
+        return { barClass: 'bg-emerald-400', textClass: 'text-emerald-300', status: 'optimal' };
+      } else {
+        if (pct > 115) return { barClass: 'bg-rose-500', textClass: 'text-rose-400', status: 'too_much' };
+        if (pct >= 90) return { barClass: 'bg-emerald-400', textClass: 'text-emerald-300', status: 'correct' };
+        return { barClass: 'bg-slate-500', textClass: 'text-slate-400', status: 'need_more' };
+      }
+    }
+
+    function renderCronometerMacroDonut(kcal, pG, cG, fG, targetKcal) {
+      const container = document.getElementById('cronometer-macro-donut-container');
+      if (!container) return;
+
+      const pKcal = pG * 4;
+      const cKcal = cG * 4;
+      const fKcal = fG * 9;
+      const macroSum = pKcal + cKcal + fKcal;
+
+      const pPct = macroSum > 0 ? Math.round((pKcal / macroSum) * 100) : 0;
+      const cPct = macroSum > 0 ? Math.round((cKcal / macroSum) * 100) : 0;
+      const fPct = macroSum > 0 ? Math.max(0, 100 - pPct - cPct) : 0;
+
+      const r = 50;
+      const circ = 2 * Math.PI * r; // ~314.159
+      const pDash = (pPct / 100) * circ;
+      const cDash = (cPct / 100) * circ;
+      const fDash = (fPct / 100) * circ;
+
+      const pOffset = 0;
+      const cOffset = -pDash;
+      const fOffset = -(pDash + cDash);
+
+      const targetVal = targetKcal || 2130;
+      const pctOfTarget = Math.round((kcal / targetVal) * 100);
+      const colorCal = getNutrientProgressColor(kcal, targetVal, false);
+
+      container.innerHTML = `
+        <svg class="w-36 h-36 transform -rotate-90" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="${r}" fill="none" stroke="#1e293b" stroke-width="12" />
+          ${macroSum > 0 ? `
+            <circle cx="60" cy="60" r="${r}" fill="none" stroke="#34d399" stroke-width="12" stroke-dasharray="${pDash} ${circ - pDash}" stroke-dashoffset="${pOffset}" />
+            <circle cx="60" cy="60" r="${r}" fill="none" stroke="#38bdf8" stroke-width="12" stroke-dasharray="${cDash} ${circ - cDash}" stroke-dashoffset="${cOffset}" />
+            <circle cx="60" cy="60" r="${r}" fill="none" stroke="#fb7185" stroke-width="12" stroke-dasharray="${fDash} ${circ - fDash}" stroke-dashoffset="${fOffset}" />
+          ` : ''}
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+          <span class="text-xl font-black text-white font-mono leading-tight">${kcal.toLocaleString()}</span>
+          <span class="text-[10px] text-slate-400 font-mono">/ ${targetVal.toLocaleString()} kcal</span>
+          <span class="text-[11px] font-bold ${colorCal.textClass} font-mono mt-0.5">${pctOfTarget}%</span>
+        </div>
+      `;
+
+      const targetLabel = document.getElementById('donut-target-kcal-label');
+      if (targetLabel) targetLabel.textContent = `${targetVal.toLocaleString()} kcal`;
+      const netStatus = document.getElementById('donut-net-status');
+      if (netStatus) {
+        if (pctOfTarget >= 90 && pctOfTarget <= 115) {
+          netStatus.textContent = `✓ Goal met (${pctOfTarget}%)`;
+          netStatus.className = "text-[11px] font-mono text-emerald-400 font-bold";
+        } else if (pctOfTarget > 115) {
+          netStatus.textContent = `⚠️ Over target (${pctOfTarget}%)`;
+          netStatus.className = "text-[11px] font-mono text-rose-400 font-bold";
+        } else {
+          netStatus.textContent = `${pctOfTarget}% consumed (${Math.max(0, targetVal - kcal)} kcal left)`;
+          netStatus.className = "text-[11px] font-mono text-slate-400";
+        }
+      }
+    }
+
+    function renderWaterIntakeDonut(currentMl, targetMl, unit = 'fl_oz') {
+      const container = document.getElementById('water-donut-container');
+      if (!container) return;
+
+      const tgt = targetMl || 2700;
+      const pct = Math.min(100, Math.round((currentMl / tgt) * 100));
+      const r = 38;
+      const circ = 2 * Math.PI * r;
+      const dash = (pct / 100) * circ;
+
+      const color = (pct >= 90 && pct <= 115) ? '#34d399' : (pct > 115 ? '#fb7185' : '#38bdf8');
+
+      container.innerHTML = `
+        <svg class="w-28 h-28 transform -rotate-90" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="${r}" fill="none" stroke="#1e293b" stroke-width="9" />
+          <circle cx="50" cy="50" r="${r}" fill="none" stroke="${color}" stroke-width="9" stroke-dasharray="${dash} ${circ - dash}" stroke-dashoffset="0" stroke-linecap="round" />
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+          <span class="text-base font-black text-white font-mono leading-none">${pct}%</span>
+          <span class="text-[9px] text-pastel-sky font-semibold mt-0.5">Hydrated</span>
+        </div>
+      `;
+    }
+
 // Extended Nutrition Rendering with All Biomarkers
     function renderNutrition() {
       const totals = calculateDailyNutrientTotals();
-      renderWeightGoalTimeline();
+      if (typeof renderWeightGoalTimeline === 'function') renderWeightGoalTimeline();
       renderSavedRecipesDropdown();
       const list = document.getElementById('nutrition-diary-list');
       if (list) {
@@ -18,7 +117,7 @@
               <div class="flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full ${n.isVerified ? 'bg-pastel-mint' : 'bg-pastel-butter'}"></span>
                 <span class="text-slate-200 font-semibold">${n.name}</span>
-                <span class="text-[10px] px-1.5 py-0.5 rounded ${n.isVerified ? 'bg-pastel-mint/15 text-pastel-mint' : 'bg-pastel-butter/15 text-pastel-butter'}">${n.isVerified ? 'Verified' : 'Estimated'}</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded ${n.isVerified ? 'bg-pastel-mint/15 text-pastel-mint' : 'bg-pastel-butter/15 text-pastel-butter'}">${n.isVerified ? '✓ Verified' : '~ Estimated'}</span>
               </div>
               <div class="text-[11px] text-slate-400 mt-1 font-mono">
                 P: ${n.protein}g | C: ${n.carbs}g | F: ${n.fat}g | Fiber: ${n.fiber || 0}g • <span class="text-pastel-mint underline">Tap for vitamins</span>
@@ -49,10 +148,13 @@
       const btn1 = document.getElementById('water-quick-btn-1');
       const btn2 = document.getElementById('water-quick-btn-2');
 
+      let targetWaterMl = 2700;
       if (waterUnit === 'fl_oz') {
         const curFlOz = Math.round((state.waterLoggedMl || 0) / 29.5735);
         const tgtFlOz = targets.dailyWaterTargetFlOz || 90;
-        if (waterLabelEl) waterLabelEl.textContent = `${curFlOz} / ${tgtFlOz} fl oz (Goal calibrated for energy)`;
+        targetWaterMl = tgtFlOz * 29.5735;
+        const waterPct = Math.round((curFlOz / tgtFlOz) * 100);
+        if (waterLabelEl) waterLabelEl.textContent = `${curFlOz} / ${tgtFlOz} fl oz (${waterPct}%)`;
         if (btn1) {
           btn1.textContent = '+8 fl oz';
           btn1.setAttribute('onclick', 'logQuickWater(8)');
@@ -64,7 +166,9 @@
       } else {
         const curMl = Math.round(state.waterLoggedMl || 0);
         const tgtMl = targets.dailyWaterTargetMl || 2700;
-        if (waterLabelEl) waterLabelEl.textContent = `${curMl} / ${tgtMl} ml (Goal calibrated for energy)`;
+        targetWaterMl = tgtMl;
+        const waterPct = Math.round((curMl / tgtMl) * 100);
+        if (waterLabelEl) waterLabelEl.textContent = `${curMl} / ${tgtMl} ml (${waterPct}%)`;
         if (btn1) {
           btn1.textContent = '+250 ml';
           btn1.setAttribute('onclick', 'logQuickWater(250)');
@@ -75,29 +179,58 @@
         }
       }
 
-      // Macro gauges on main nutrition interface
+      // Render Water Donut Chart
+      renderWaterIntakeDonut(state.waterLoggedMl || 0, targetWaterMl, waterUnit);
+
+      // Macro targets & calculations
       const calTarget = targets.dailyCaloriesTarget || 2130;
       const protTarget = targets.dailyProteinTarget || 135;
       const carbTarget = targets.dailyCarbsTarget || 240;
       const fatTarget = targets.dailyFatTarget || 71;
+
+      // Render Cronometer Calorie & Macro Donut Chart
+      renderCronometerMacroDonut(totals.caloriesKcal, totals.proteinG, totals.carbsG, totals.fatG, calTarget);
+
+      // Color-coding evaluations (green = correct/optimal, red = too much, neutral/slate = need more)
+      const colCal = getNutrientProgressColor(totals.caloriesKcal, calTarget, false);
+      const colProt = getNutrientProgressColor(totals.proteinG, protTarget, false);
+      const colCarb = getNutrientProgressColor(totals.carbsG, carbTarget, false);
+      const colFat = getNutrientProgressColor(totals.fatG, fatTarget, false);
+
+      const setBarColorAndWidth = (id, pct, col) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.style.width = `${Math.min(100, pct)}%`;
+          el.className = `h-full rounded-full transition-all duration-500 ${col.barClass}`;
+        }
+      };
 
       setTxt('macro-calories', `${totals.caloriesKcal} / ${calTarget.toLocaleString()}`);
       setTxt('macro-protein', `${Math.round(totals.proteinG)}g / ${protTarget}g`);
       setTxt('macro-carbs', `${Math.round(totals.carbsG)}g / ${carbTarget}g`);
       setTxt('macro-fats', `${Math.round(totals.fatG)}g / ${fatTarget}g`);
 
-      const pctCal = Math.min(100, Math.round((totals.caloriesKcal / calTarget) * 100));
-      const pctProt = Math.min(100, Math.round((totals.proteinG / protTarget) * 100));
-      const pctCarb = Math.min(100, Math.round((totals.carbsG / carbTarget) * 100));
-      const pctFat = Math.min(100, Math.round((totals.fatG / fatTarget) * 100));
+      const pctCal = Math.round((totals.caloriesKcal / calTarget) * 100);
+      const pctProt = Math.round((totals.proteinG / protTarget) * 100);
+      const pctCarb = Math.round((totals.carbsG / carbTarget) * 100);
+      const pctFat = Math.round((totals.fatG / fatTarget) * 100);
 
-      setWidth('bar-calories', `${pctCal}%`);
-      setTxt('pct-calories', `${pctCal}% • Tap for Micronutrients`);
-      setWidth('bar-protein', `${pctProt}%`);
+      setBarColorAndWidth('bar-calories', pctCal, colCal);
+      setTxt('pct-calories', `${pctCal}% • ${colCal.status === 'correct' ? 'Optimal ✓' : (colCal.status === 'too_much' ? 'Exceeded ⚠️' : 'Need more')}`);
+      setBarColorAndWidth('bar-protein', pctProt, colProt);
       setTxt('pct-protein', `${pctProt}%`);
-      setWidth('bar-carbs', `${pctCarb}%`);
+      setBarColorAndWidth('bar-carbs', pctCarb, colCarb);
       setTxt('pct-carbs', `${pctCarb}%`);
-      setWidth('bar-fats', `${pctFat}%`);
+      setBarColorAndWidth('bar-fats', pctFat, colFat);
+      setTxt('pct-fats', `${pctFat}%`);
+
+      // Donut Legend Progress Bars
+      setBarColorAndWidth('donut-protein-bar', pctProt, colProt);
+      setTxt('donut-protein-stat', `${Math.round(totals.proteinG)}g / ${protTarget}g (${pctProt}%)`);
+      setBarColorAndWidth('donut-carbs-bar', pctCarb, colCarb);
+      setTxt('donut-carbs-stat', `${Math.round(totals.carbsG)}g / ${carbTarget}g (${pctCarb}%)`);
+      setBarColorAndWidth('donut-fat-bar', pctFat, colFat);
+      setTxt('donut-fat-stat', `${Math.round(totals.fatG)}g / ${fatTarget}g (${pctFat}%)`);
       setTxt('pct-fats', `${pctFat}%`);
 
       // View A: Full Day Summary Headline Card inside modal
@@ -3080,6 +3213,8 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
           pItem.satFat = satFat;
           pItem.sodium = sodium;
           pItem.nutrition = product.nutrition;
+          pItem.isVerified = true;
+          pItem.sourceBadge = '✓ Verified Nutrition Facts';
           if (barcode) pItem.barcode = barcode;
 
           saveAppState();
@@ -3091,6 +3226,28 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
           alertBox(`Updated nutritional profile for "${name}" with complete macro and micronutrients!`, "Nutrition Saved");
           return;
         }
+      }
+
+      if (activeManualNutritionContext && activeManualNutritionContext.isReceiptPairing) {
+        const rawCode = activeManualNutritionContext.receiptRawCode || name;
+        if (typeof saveReceiptNutritionCatalogEntry === 'function') {
+          saveReceiptNutritionCatalogEntry(rawCode, product);
+        }
+        if (state.incomingGroceriesApprovalList && state.incomingGroceriesApprovalList[activeManualNutritionContext.receiptIndex]) {
+          const rItem = state.incomingGroceriesApprovalList[activeManualNutritionContext.receiptIndex];
+          rItem.name = name;
+          rItem.nutrition = product.nutrition;
+          rItem.isVerified = true;
+          rItem.sourceBadge = '✓ Exact Label Verified';
+          rItem.nutritionSource = 'Exact Label Verified';
+          if (barcode) rItem.barcode = barcode;
+          if (typeof renderIncomingGroceriesApprovalList === 'function') {
+            renderIncomingGroceriesApprovalList(state.incomingGroceriesApprovalList);
+          }
+        }
+        closeManualNutritionModal();
+        alertBox(`Paired "${name}" to receipt store code! FocusFlow will now auto-fill exact label nutrition whenever this item appears on future receipts.`, "Receipt Code Paired ✓");
+        return;
       }
 
       if (barcode) {

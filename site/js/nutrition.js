@@ -1793,9 +1793,8 @@
     }
 
     // ==============================================
-    // USDA COMMON WHOLE FOODS DATABASE (Reference loaded from data/usda-foods.js)
+    // USDA COMMON WHOLE FOODS DATABASE (Loaded globally from data/usda-foods.js)
     // ==============================================
-    var commonFoodsDatabase = (typeof window !== 'undefined' && window.commonFoodsDatabase) ? window.commonFoodsDatabase : (typeof commonFoodsDatabase !== 'undefined' ? commonFoodsDatabase : []);
 
     function onSearchCommonFoods(query) {
       const resultsContainer = document.getElementById('common-food-search-results');

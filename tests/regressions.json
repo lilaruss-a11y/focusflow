@@ -48,5 +48,13 @@
     "file": "site/index.html",
     "check_type": "file_match",
     "match_file": "index.html"
+  },
+  {
+    "id": "shadowing_common_foods_database",
+    "description": "Never declare var/let/const commonFoodsDatabase in js/nutrition.js (declared as const in data/usda-foods.js)",
+    "file": "js/nutrition.js",
+    "check_type": "forbidden_pattern",
+    "pattern": "(var|let|const)\\s+commonFoodsDatabase\\b",
+    "is_regex": true
   }
 ]

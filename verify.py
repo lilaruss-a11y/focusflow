@@ -157,6 +157,47 @@ for dname, dpath in target_dirs:
         else:
             success(f"{rel_label} loaded ({len(content.splitlines())} lines).")
 
+# --- 2b. Verify Sequential Multi-Script Load Order & Variable Collisions ---
+print("\n2b. Compiling sequential scripts to catch cross-file variable collisions...")
+if os.path.exists(jsc_path) and os.path.exists(index_path):
+    with open(index_path, "r", encoding="utf-8") as f:
+        html_src = f.read()
+    local_scripts = re.findall(r'<script\b[^>]*\bsrc=[\"\']((?:data|js)/[^\"]+\.js)[\"\']', html_src)
+    if local_scripts:
+        load_calls = "\n".join([f"load('{os.path.join(BASE_DIR, s)}');" for s in local_scripts])
+        harness = f"""
+var window = this;
+window.addEventListener = function(){{}};
+window.removeEventListener = function(){{}};
+window.dispatchEvent = function(){{}};
+var document = {{
+  getElementById: function(){{ return null; }},
+  querySelector: function(){{ return null; }},
+  querySelectorAll: function(){{ return []; }},
+  addEventListener: function(){{}},
+  removeEventListener: function(){{}},
+  createElement: function(){{ return {{ setAttribute: function(){{}}, appendChild: function(){{}}, classList: {{ add: function(){{}}, remove: function(){{}} }} }}; }}
+}};
+var localStorage = {{ getItem: function(){{ return null; }}, setItem: function(){{}}, removeItem: function(){{}} }};
+var navigator = {{ userAgent: 'test', serviceWorker: {{ register: function(){{}} }} }};
+var location = {{ reload: function(){{}}, href: '' }};
+var lucide = {{ createIcons: function(){{}} }};
+var ZXing = {{}};
+var bootstrap = {{}};
+try {{
+{load_calls}
+  print('SEQUENTIAL_OK');
+}} catch(e) {{
+  print('SEQ_ERR: ' + e);
+}}
+"""
+        res = subprocess.run([jsc_path, "-e", harness], capture_output=True, text=True)
+        out = res.stdout.strip()
+        if "SEQUENTIAL_OK" in out:
+            success(f"All {len(local_scripts)} scripts evaluated sequentially in global scope with 0 variable clashes.")
+        else:
+            error(f"Sequential script evaluation failed: {out}")
+
 # --- 3. Verify CSS Stylesheet ---
 print("\n3. Checking CSS styles...")
 css_path = os.path.join(BASE_DIR, "css", "styles.css")
@@ -177,6 +218,12 @@ if not os.path.exists(site_dir):
     error("site/ deployment directory is missing!")
 else:
     synced_items = ["index.html", "sw.js", "css/styles.css"]
+    for d in ["js", "data"]:
+        d_full = os.path.join(BASE_DIR, d)
+        if os.path.exists(d_full):
+            for fname in sorted(os.listdir(d_full)):
+                if fname.endswith(".js"):
+                    synced_items.append(os.path.join(d, fname))
     out_of_sync = []
     for item in synced_items:
         root_file = os.path.join(BASE_DIR, item)

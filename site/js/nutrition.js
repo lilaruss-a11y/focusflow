@@ -2931,6 +2931,13 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       activeManualNutritionContext = null;
     }
 
+    function onManualNutritionCategoryChange(cat) {
+      const storEl = document.getElementById('manual-nut-storage');
+      if (storEl) {
+        storEl.value = inferStorageZone(cat, '');
+      }
+    }
+
     function switchManualNutMicroTab(tab) {
       const vSec = document.getElementById('manual-section-vitamins');
       const mSec = document.getElementById('manual-section-minerals');

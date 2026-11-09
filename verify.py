@@ -127,22 +127,23 @@ else:
 # --- 2. Verify JavaScript Modules via Native WebKit JavaScriptCore (jsc) ---
 print("\n2. Compiling JavaScript modules with macOS WebKit JavaScriptCore...")
 jsc_path = "/System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc"
-js_dir = os.path.join(BASE_DIR, "js")
+target_dirs = [("data", os.path.join(BASE_DIR, "data")), ("js", os.path.join(BASE_DIR, "js"))]
 
-if not os.path.exists(js_dir):
-    error("js/ directory is missing!")
-else:
-    js_files = [f for f in sorted(os.listdir(js_dir)) if f.endswith(".js")]
+for dname, dpath in target_dirs:
+    if not os.path.exists(dpath):
+        continue
+    js_files = [f for f in sorted(os.listdir(dpath)) if f.endswith(".js")]
     for jf in js_files:
-        jpath = os.path.join(js_dir, jf)
+        jpath = os.path.join(dpath, jf)
+        rel_label = f"{dname}/{jf}"
         with open(jpath, "r", encoding="utf-8") as f:
             content = f.read()
 
         if "</script>" in content or "<script" in content:
-            error(f"{jf} contains stray <script> tags!")
+            error(f"{rel_label} contains stray <script> tags!")
             continue
         if "<style" in content or "</style>" in content:
-            error(f"{jf} contains stray <style> tags!")
+            error(f"{rel_label} contains stray <style> tags!")
             continue
 
         if os.path.exists(jsc_path):
@@ -150,11 +151,11 @@ else:
             res = subprocess.run(cmd, capture_output=True, text=True)
             out = res.stdout.strip()
             if out == "VALID":
-                success(f"{jf:22} ({len(content.splitlines()):4} lines) — 100% Valid WebKit JS.")
+                success(f"{rel_label:25} ({len(content.splitlines()):4} lines) — 100% Valid WebKit JS.")
             else:
-                error(f"{jf} has JavaScript syntax error: {out}")
+                error(f"{rel_label} has JavaScript syntax error: {out}")
         else:
-            success(f"{jf} loaded ({len(content.splitlines())} lines).")
+            success(f"{rel_label} loaded ({len(content.splitlines())} lines).")
 
 # --- 3. Verify CSS Stylesheet ---
 print("\n3. Checking CSS styles...")
@@ -218,6 +219,15 @@ MODULE_BOUNDARIES = {
             (r'function\s+.*Cardiac', 'cardiac biometrics belong exclusively in js/biometrics.js')
         ]
     },
+    'shopping.js': {
+        'name': 'Shopping List, Groceries & Receipt Scanner',
+        'forbidden': [
+            (r'function\s+.*HourHeight', 'hour height belongs in js/timeline.js'),
+            (r'function\s+.*ReverseChef', 'Reverse Chef belongs in js/chef.js'),
+            (r'function\s+.*AppleHealth', 'Apple Health belongs in js/health.js'),
+            (r'function\s+.*Medication', 'medication belongs in js/biometrics.js')
+        ]
+    },
     'chef.js': {
         'name': 'Reverse Chef Wizard & Receipt Scanner',
         'forbidden': [
@@ -271,6 +281,7 @@ MODULE_BOUNDARIES = {
     }
 }
 
+js_dir = os.path.join(BASE_DIR, "js")
 for mod_file, binfo in MODULE_BOUNDARIES.items():
     mpath = os.path.join(js_dir, mod_file)
     if os.path.exists(mpath):

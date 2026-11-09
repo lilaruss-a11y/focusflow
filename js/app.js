@@ -1083,8 +1083,11 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       try { checkForAppUpdates(); } catch (e) {}
       try {
         updateGoogleCalendarDirectUI();
-        if (localStorage.getItem('focusflow_gcal_oauth_token')) {
-          setTimeout(() => syncGoogleCalendarDirectNow(), 1500);
+        const token = localStorage.getItem('focusflow_gcal_oauth_token');
+        const tokenObtainedAt = Number(localStorage.getItem('focusflow_gcal_token_obtained_at')) || 0;
+        const isFresh = token && tokenObtainedAt && (Date.now() - tokenObtainedAt < 50 * 60 * 1000);
+        if (isFresh) {
+          setTimeout(() => syncGoogleCalendarDirectNow(false), 1500);
         }
       } catch (e) {}
     };

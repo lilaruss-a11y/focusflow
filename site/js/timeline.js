@@ -313,7 +313,9 @@
       ev.lastLocalEdit = Date.now();
             console.log(`[FocusFlow] Successfully pushed update to Google Calendar:`, ev.title);
           } else if (resp.status === 401) {
+            window._gcalSessionExpired = true;
             console.warn('[FocusFlow] Google Calendar token expired; will refresh next sign-in.');
+            if (typeof updateGoogleCalendarDirectUI === 'function') updateGoogleCalendarDirectUI();
           }
         } else if (action === 'create') {
           // Create new event in user's primary Google Calendar
@@ -333,6 +335,10 @@
             ev.lastLocalEdit = Date.now();
             saveAppState();
             console.log(`[FocusFlow] Created event in Google Calendar:`, ev.title);
+          } else if (resp.status === 401) {
+            window._gcalSessionExpired = true;
+            console.warn('[FocusFlow] Google Calendar token expired on event creation.');
+            if (typeof updateGoogleCalendarDirectUI === 'function') updateGoogleCalendarDirectUI();
           }
         }
       } catch (err) {

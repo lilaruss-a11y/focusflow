@@ -428,7 +428,6 @@
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.addScope('https://www.googleapis.com/auth/calendar.events');
         provider.addScope('https://www.googleapis.com/auth/calendar');
-        try { provider.setCustomParameters({ prompt: 'select_account' }); } catch (e) {}
         ffSync.lastErrorText = '';
         try {
           const res = await ffSync.auth.signInWithPopup(provider);
@@ -436,9 +435,11 @@
             window._gcalSessionExpired = false;
             localStorage.setItem('focusflow_gcal_oauth_token', res.credential.accessToken);
             localStorage.setItem('focusflow_gcal_user_email', (res.user && res.user.email) || '');
+            localStorage.setItem('focusflow_gcal_token_obtained_at', String(Date.now()));
+            localStorage.setItem('focusflow_gcal_last_sync_time', String(Date.now()));
             try {
               updateGoogleCalendarDirectUI();
-              syncGoogleCalendarDirectNow();
+              syncGoogleCalendarDirectNow(false);
             } catch (e) {}
           }
         } catch (e) {

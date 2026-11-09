@@ -559,12 +559,21 @@
     function updateGoogleCalendarDirectUI() {
       const token = localStorage.getItem('focusflow_gcal_oauth_token');
       const email = localStorage.getItem('focusflow_gcal_user_email');
+      const lastSync = Number(localStorage.getItem('focusflow_gcal_last_sync_time')) || 0;
       const statusBox = document.getElementById('gcal-direct-status-box');
       const connectBtn = document.getElementById('btn-connect-gcal-direct');
       const syncBtn = document.getElementById('btn-sync-gcal-now');
       const disconnectBtn = document.getElementById('btn-disconnect-gcal');
 
-      if (token && !window._gcalSessionExpired) {
+      if (email || token) {
+        let syncSubtitle = 'Live 2-Way Sync Active';
+        if (lastSync) {
+          const diffMins = Math.round((Date.now() - lastSync) / 60000);
+          if (diffMins < 1) syncSubtitle = 'Synced just now';
+          else if (diffMins < 60) syncSubtitle = `Synced ${diffMins}m ago`;
+          else syncSubtitle = 'Schedule Loaded • Tap to Sync';
+        }
+
         if (statusBox) {
           statusBox.innerHTML = `
             <div class="flex items-center justify-between gap-2">
@@ -572,32 +581,16 @@
                 <span class="w-2 h-2 rounded-full bg-pastel-mint animate-pulse"></span>
                 Connected: ${email || 'Google Account'}
               </span>
-              <span class="text-[10px] text-slate-400">Live 2-Way Sync Active</span>
+              <span class="text-[10px] text-slate-400">${syncSubtitle}</span>
             </div>
           `;
         }
         if (connectBtn) connectBtn.classList.add('hidden');
-        if (syncBtn) syncBtn.classList.remove('hidden');
-        if (disconnectBtn) disconnectBtn.classList.remove('hidden');
-      } else if (email || token) {
-        // Keeps user's account connected even after token expires; enables seamless 1-tap refresh
-        if (statusBox) {
-          statusBox.innerHTML = `
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-pastel-butter font-semibold flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-pastel-butter animate-pulse"></span>
-                Connected: ${email || 'Google Account'} (Session paused)
-              </span>
-              <span class="text-[10px] text-pastel-butter font-semibold">1-Tap Refresh</span>
-            </div>
-          `;
+        if (syncBtn) {
+          syncBtn.classList.remove('hidden');
+          syncBtn.disabled = false;
+          syncBtn.innerHTML = `<span>🔄 Sync Live Events Now</span>`;
         }
-        if (connectBtn) {
-          connectBtn.classList.remove('hidden');
-          const btnText = document.getElementById('btn-connect-gcal-text');
-          if (btnText) btnText.textContent = '🔄 Refresh Google Session';
-        }
-        if (syncBtn) syncBtn.classList.remove('hidden');
         if (disconnectBtn) disconnectBtn.classList.remove('hidden');
       } else {
         const isIp = /^[0-9.]+$/.test(window.location.hostname);
@@ -634,7 +627,6 @@
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.addScope('https://www.googleapis.com/auth/calendar.events');
         provider.addScope('https://www.googleapis.com/auth/calendar');
-        provider.setCustomParameters({ prompt: 'select_account' });
 
         const result = await firebase.auth().signInWithPopup(provider);
         const credential = result.credential;
@@ -652,10 +644,12 @@
           window._gcalSessionExpired = false;
           localStorage.setItem('focusflow_gcal_oauth_token', token);
           localStorage.setItem('focusflow_gcal_user_email', (result.user && result.user.email) || '');
+          localStorage.setItem('focusflow_gcal_token_obtained_at', String(Date.now()));
+          localStorage.setItem('focusflow_gcal_last_sync_time', String(Date.now()));
           playChime('bell');
           updateGoogleCalendarDirectUI();
           alertBox("Connected to your Google Calendar! Fetching your live schedule now...", "Google Connected");
-          await syncGoogleCalendarDirectNow();
+          await syncGoogleCalendarDirectNow(false);
         } else {
           alertBox("Signed in, but Google did not return a calendar access token. Please tap Connect again and ensure calendar permissions are checked.", "Permission Needed");
         }
@@ -696,6 +690,8 @@ https://lilaruss-a11y.github.io/focusflow/`,
         window._gcalSessionExpired = false;
         localStorage.removeItem('focusflow_gcal_oauth_token');
         localStorage.removeItem('focusflow_gcal_user_email');
+        localStorage.removeItem('focusflow_gcal_token_obtained_at');
+        localStorage.removeItem('focusflow_gcal_last_sync_time');
         updateGoogleCalendarDirectUI();
         playChime('bell');
         alertBox("Disconnected Google Calendar direct sync.", "Disconnected");
@@ -704,8 +700,15 @@ https://lilaruss-a11y.github.io/focusflow/`,
 
     async function syncGoogleCalendarDirectNow(isManual = false) {
       let token = localStorage.getItem('focusflow_gcal_oauth_token');
-      if (!token || window._gcalSessionExpired) {
-        if (isManual) connectGoogleCalendarDirect();
+      const tokenObtainedAt = Number(localStorage.getItem('focusflow_gcal_token_obtained_at')) || 0;
+      const isStale = tokenObtainedAt && (Date.now() - tokenObtainedAt > 50 * 60 * 1000);
+
+      if (!token || window._gcalSessionExpired || isStale) {
+        if (isManual) {
+          connectGoogleCalendarDirect();
+        } else {
+          console.log('[FocusFlow] Google Calendar schedule loaded from cache; token will refresh on user sync.');
+        }
         return;
       }
 
@@ -728,7 +731,7 @@ https://lilaruss-a11y.github.io/focusflow/`,
             if (isManual) {
               connectGoogleCalendarDirect();
             } else {
-              console.warn('[FocusFlow] Google Calendar token expired; session kept, ready for 1-tap refresh.');
+              console.log('[FocusFlow] Google Calendar session expired; cached schedule preserved.');
             }
             return;
           }
@@ -912,6 +915,8 @@ Once enabled, tap 'Sync Live Events Now'!`,
             saveAppState();
             renderTimeline();
           }
+
+          localStorage.setItem('focusflow_gcal_last_sync_time', String(Date.now()));
 
           if (isManual) {
             closeGCalSyncModal();

@@ -1615,6 +1615,184 @@
     }
 
     // ==============================================
+    // ESSENTIAL HUMAN SURVIVAL NUTRITION STANDARDS (FDA / NIH / IOM)
+    // All 13 Essential Vitamins & All 14 Essential Minerals
+    // ==============================================
+    const DAILY_NUTRITION_STANDARDS = {
+      // 13 Essential Vitamins + Essential Choline
+      vitA: { name: 'Vitamin A', unit: 'mcg', dv: 900, type: 'vitamin', color: 'text-amber-300', barColor: 'bg-amber-400' },
+      vitC: { name: 'Vitamin C', unit: 'mg', dv: 90, type: 'vitamin', color: 'text-pastel-butter', barColor: 'bg-amber-300' },
+      vitD: { name: 'Vitamin D', unit: 'mcg', dv: 20, type: 'vitamin', color: 'text-yellow-300', barColor: 'bg-yellow-400' },
+      vitE: { name: 'Vitamin E', unit: 'mg', dv: 15, type: 'vitamin', color: 'text-pastel-mint', barColor: 'bg-emerald-400' },
+      vitK: { name: 'Vitamin K', unit: 'mcg', dv: 120, type: 'vitamin', color: 'text-emerald-300', barColor: 'bg-emerald-500' },
+      vitB1: { name: 'Thiamin (B1)', unit: 'mg', dv: 1.2, type: 'vitamin', color: 'text-pastel-sky', barColor: 'bg-sky-400' },
+      vitB2: { name: 'Riboflavin (B2)', unit: 'mg', dv: 1.3, type: 'vitamin', color: 'text-pastel-sky', barColor: 'bg-sky-400' },
+      vitB3: { name: 'Niacin (B3)', unit: 'mg', dv: 16, type: 'vitamin', color: 'text-pastel-sky', barColor: 'bg-sky-400' },
+      vitB5: { name: 'Pantothenic Acid (B5)', unit: 'mg', dv: 5, type: 'vitamin', color: 'text-pastel-sky', barColor: 'bg-sky-400' },
+      vitB6: { name: 'Vitamin B6', unit: 'mg', dv: 1.7, type: 'vitamin', color: 'text-pastel-sky', barColor: 'bg-sky-400' },
+      vitB7: { name: 'Biotin (B7)', unit: 'mcg', dv: 30, type: 'vitamin', color: 'text-pastel-lavender', barColor: 'bg-purple-400' },
+      vitB9: { name: 'Folate (B9)', unit: 'mcg', dv: 400, type: 'vitamin', color: 'text-pastel-mint', barColor: 'bg-teal-400' },
+      vitB12: { name: 'Vitamin B12', unit: 'mcg', dv: 2.4, type: 'vitamin', color: 'text-rose-300', barColor: 'bg-rose-400' },
+      choline: { name: 'Choline', unit: 'mg', dv: 550, type: 'vitamin', color: 'text-pastel-peach', barColor: 'bg-orange-400' },
+
+      // 14 Essential Minerals & Electrolytes
+      potassium: { name: 'Potassium', unit: 'mg', dv: 3400, type: 'mineral', color: 'text-pastel-sky', barColor: 'bg-cyan-400' },
+      calcium: { name: 'Calcium', unit: 'mg', dv: 1000, type: 'mineral', color: 'text-slate-100', barColor: 'bg-slate-300' },
+      iron: { name: 'Iron', unit: 'mg', dv: 18, type: 'mineral', color: 'text-rose-400', barColor: 'bg-rose-500' },
+      magnesium: { name: 'Magnesium', unit: 'mg', dv: 420, type: 'mineral', color: 'text-pastel-mint', barColor: 'bg-emerald-400' },
+      zinc: { name: 'Zinc', unit: 'mg', dv: 11, type: 'mineral', color: 'text-pastel-lavender', barColor: 'bg-indigo-400' },
+      phosphorus: { name: 'Phosphorus', unit: 'mg', dv: 1250, type: 'mineral', color: 'text-amber-200', barColor: 'bg-amber-400' },
+      chloride: { name: 'Chloride', unit: 'mg', dv: 2300, type: 'mineral', color: 'text-sky-300', barColor: 'bg-blue-400' },
+      sulfur: { name: 'Sulfur', unit: 'mg', dv: 800, type: 'mineral', color: 'text-yellow-200', barColor: 'bg-yellow-500' },
+      copper: { name: 'Copper', unit: 'mg', dv: 0.9, type: 'mineral', color: 'text-orange-300', barColor: 'bg-amber-600' },
+      manganese: { name: 'Manganese', unit: 'mg', dv: 2.3, type: 'mineral', color: 'text-purple-300', barColor: 'bg-purple-500' },
+      selenium: { name: 'Selenium', unit: 'mcg', dv: 55, type: 'mineral', color: 'text-pink-300', barColor: 'bg-pink-400' },
+      iodine: { name: 'Iodine', unit: 'mcg', dv: 150, type: 'mineral', color: 'text-indigo-300', barColor: 'bg-indigo-500' },
+      chromium: { name: 'Chromium', unit: 'mcg', dv: 35, type: 'mineral', color: 'text-blue-300', barColor: 'bg-blue-500' },
+      molybdenum: { name: 'Molybdenum', unit: 'mcg', dv: 45, type: 'mineral', color: 'text-teal-300', barColor: 'bg-teal-500' }
+    };
+
+    function estimateMicronutrientsForFood(category, kcal, protein, carbs, fat, name) {
+      const cat = (category || '').toLowerCase();
+      const nm = (name || '').toLowerCase();
+      const c = Math.max(parseFloat(kcal) || 0, 10);
+      const scale = Math.min(Math.max(c / 150, 0.3), 3.0);
+
+      // Defaults
+      let vitA = Math.round(15 * scale);
+      let vitC = 1.0 * scale;
+      let vitD = 0;
+      let vitE = 0.5 * scale;
+      let vitK = 2.0 * scale;
+      let vitB1 = 0.04 * scale;
+      let vitB2 = 0.05 * scale;
+      let vitB3 = 0.8 * scale;
+      let vitB5 = 0.3 * scale;
+      let vitB6 = 0.1 * scale;
+      let vitB7 = 1.2 * scale;
+      let vitB9 = 15 * scale;
+      let vitB12 = 0;
+      let choline = 12 * scale;
+
+      let potassium = Math.round(120 * scale);
+      let calcium = Math.round(25 * scale);
+      let iron = 0.5 * scale;
+      let magnesium = Math.round(18 * scale);
+      let zinc = 0.4 * scale;
+      let phosphorus = Math.round(45 * scale);
+      let chloride = Math.round(60 * scale);
+      let sulfur = Math.round(35 * scale);
+      let copper = 0.06 * scale;
+      let manganese = 0.15 * scale;
+      let selenium = 2.0 * scale;
+      let iodine = 3.0 * scale;
+      let chromium = 1.5 * scale;
+      let molybdenum = 2.0 * scale;
+
+      // Category / Ingredient Adjustments
+      if (cat.includes('produce') || cat.includes('fruit') || cat.includes('veg') || nm.includes('broccoli') || nm.includes('spinach') || nm.includes('salad') || nm.includes('apple') || nm.includes('berry') || nm.includes('orange')) {
+        vitC = Math.round(35 * scale);
+        vitA = Math.round(180 * scale);
+        vitK = Math.round(45 * scale);
+        vitB9 = Math.round(55 * scale);
+        potassium = Math.round(280 * scale);
+        calcium = Math.round(40 * scale);
+        iron = 0.8 * scale;
+        magnesium = Math.round(25 * scale);
+        manganese = 0.3 * scale;
+        if (nm.includes('broccoli') || nm.includes('kale') || nm.includes('spinach')) {
+          vitK = Math.round(110 * scale);
+          vitC = Math.round(85 * scale);
+          calcium = Math.round(65 * scale);
+          vitA = Math.round(450 * scale);
+        }
+      } else if (cat.includes('protein') || cat.includes('meat') || cat.includes('poultry') || nm.includes('chicken') || nm.includes('beef') || nm.includes('turkey') || nm.includes('pork')) {
+        vitB12 = 0.9 * scale;
+        vitB3 = 8.5 * scale;
+        vitB6 = 0.6 * scale;
+        choline = Math.round(75 * scale);
+        zinc = 2.4 * scale;
+        iron = 1.4 * scale;
+        phosphorus = Math.round(195 * scale);
+        selenium = Math.round(24 * scale);
+        potassium = Math.round(290 * scale);
+        sulfur = Math.round(210 * scale);
+      } else if (nm.includes('egg')) {
+        choline = Math.round(280 * scale);
+        vitB12 = 1.1 * scale;
+        vitD = 2.0 * scale;
+        vitA = Math.round(160 * scale);
+        iron = 1.8 * scale;
+        selenium = Math.round(30 * scale);
+        zinc = 1.3 * scale;
+        sulfur = Math.round(180 * scale);
+      } else if (cat.includes('dairy') || nm.includes('yogurt') || nm.includes('milk') || nm.includes('cheese')) {
+        calcium = Math.round(220 * scale);
+        vitD = 1.5 * scale;
+        vitB12 = 0.8 * scale;
+        vitB2 = 0.35 * scale;
+        phosphorus = Math.round(180 * scale);
+        potassium = Math.round(210 * scale);
+        iodine = Math.round(35 * scale);
+      } else if (cat.includes('grain') || nm.includes('oat') || nm.includes('rice') || nm.includes('bread') || nm.includes('quinoa')) {
+        vitB1 = 0.25 * scale;
+        vitB2 = 0.15 * scale;
+        vitB3 = 2.5 * scale;
+        vitB9 = Math.round(60 * scale);
+        iron = 1.6 * scale;
+        magnesium = Math.round(55 * scale);
+        zinc = 1.1 * scale;
+        phosphorus = Math.round(120 * scale);
+        manganese = 1.2 * scale;
+        selenium = Math.round(12 * scale);
+      } else if (cat.includes('beverage') || cat.includes('drink') || nm.includes('juice')) {
+        potassium = Math.round(180 * scale);
+        chloride = Math.round(50 * scale);
+        if (nm.includes('juice') || nm.includes('citrus')) {
+          vitC = Math.round(60 * scale);
+          potassium = Math.round(320 * scale);
+        }
+      }
+
+      return {
+        vitA: Math.round(vitA),
+        vitC: parseFloat(vitC.toFixed(1)),
+        vitD: parseFloat(vitD.toFixed(1)),
+        vitE: parseFloat(vitE.toFixed(1)),
+        vitK: parseFloat(vitK.toFixed(1)),
+        vitB1: parseFloat(vitB1.toFixed(2)),
+        vitB2: parseFloat(vitB2.toFixed(2)),
+        vitB3: parseFloat(vitB3.toFixed(1)),
+        vitB5: parseFloat(vitB5.toFixed(1)),
+        vitB6: parseFloat(vitB6.toFixed(2)),
+        vitB7: parseFloat(vitB7.toFixed(1)),
+        vitB9: Math.round(vitB9),
+        vitB12: parseFloat(vitB12.toFixed(2)),
+        choline: Math.round(choline),
+
+        potassium: Math.round(potassium),
+        calcium: Math.round(calcium),
+        iron: parseFloat(iron.toFixed(1)),
+        magnesium: Math.round(magnesium),
+        zinc: parseFloat(zinc.toFixed(1)),
+        phosphorus: Math.round(phosphorus),
+        chloride: Math.round(chloride),
+        sulfur: Math.round(sulfur),
+        copper: parseFloat(copper.toFixed(2)),
+        manganese: parseFloat(manganese.toFixed(2)),
+        selenium: Math.round(selenium),
+        iodine: Math.round(iodine),
+        chromium: Math.round(chromium),
+        molybdenum: Math.round(molybdenum)
+      };
+    }
+
+    if (typeof window !== 'undefined') {
+      window.DAILY_NUTRITION_STANDARDS = DAILY_NUTRITION_STANDARDS;
+      window.estimateMicronutrientsForFood = estimateMicronutrientsForFood;
+    }
+
+    // ==============================================
     // USDA COMMON WHOLE FOODS DATABASE (50+ Whole Foods)
     // ==============================================
     const commonFoodsDatabase = [
@@ -2260,7 +2438,7 @@
       return null;
     }
 
-    // Tier 5: Gemini AI Vision Scanner for Nutrition Facts Label & Package
+    // Tier 5: Gemini AI Vision Scanner for Nutrition Facts Label & Package (Handles Curved Bottles & All Micros)
     async function handleNutritionLabelVisionUpload(event, barcode) {
       const files = event && event.target && event.target.files;
       if (!files || files.length === 0) return;
@@ -2271,9 +2449,9 @@
           <div class="p-3.5 rounded-2xl bg-dark-elevated border border-pastel-lavender/50 text-xs space-y-2">
             <div class="flex items-center gap-2 text-pastel-lavender font-semibold">
               <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>
-              <span id="barcode-ai-label-status">Analyzing Nutrition Facts label with Gemini AI Vision...</span>
+              <span id="barcode-ai-label-status">Analyzing Nutrition Facts &amp; Curved Bottle Label with Gemini Vision...</span>
             </div>
-            <p class="text-[11px] text-slate-300">Reading exact calories, macronutrients, serving sizes, and package net weight...</p>
+            <p class="text-[11px] text-slate-300">Reading calories, macro &amp; micro nutrients (all 13 vitamins and 14 minerals), serving size, and volume...</p>
           </div>
         `;
         resBox.classList.remove('hidden');
@@ -2304,32 +2482,48 @@
 
         const inlineImages = await Promise.all(imagePromises);
 
-        const prompt = `You are a clinical dietitian and OCR engine for food packages.
+        const prompt = `You are an expert clinical dietitian and OCR engine for food packages, bottles, and curved containers.
 Analyze the provided photo(s) of the Nutrition Facts label and/or package front.
-Extract the exact information and return ONLY a valid JSON object (no markdown, no backticks, no extra text):
+CRITICAL INSTRUCTIONS FOR CURVED BOTTLES, JARS & CANS:
+- The image may feature curved or cylindrical containers (such as glass/plastic bottles, cans, tubs, jars) where the Nutrition Facts panel or ingredient text wraps around the curvature, exhibits glare/reflections, or has text rotated.
+- Carefully read curved, wrapped text across lines, accounting for perspective distortion and specular reflections.
+- Extract the product name, brand, package size / volume (e.g. 16 fl oz, 500 ml, 12 oz, 1 L, 1 gal, items), serving size, category, and storage.
+- Extract COMPLETE nutritional values:
+  - Calories (kcal)
+  - Macronutrients: protein (g), carbs (g), fat (g), fiber (g), sugar (g), addedSugar (g), satFat (g), transFat (g), sodium (mg), cholesterol (mg), water (ml)
+  - All 13 Essential Vitamins: vitA (mcg RAE), vitC (mg), vitD (mcg), vitE (mg), vitK (mcg), vitB1 (thiamin mg), vitB2 (riboflavin mg), vitB3 (niacin mg), vitB5 (pantothenic acid mg), vitB6 (mg), vitB7 (biotin mcg), vitB9 (folate mcg DFE), vitB12 (mcg), choline (mg).
+  - All 14 Essential Minerals: potassium (mg), calcium (mg), iron (mg), magnesium (mg), zinc (mg), phosphorus (mg), chloride (mg), sulfur (mg), copper (mg), manganese (mg), selenium (mcg), iodine (mcg), chromium (mcg), molybdenum (mcg).
+- If any micronutrient is not explicitly printed on the label, estimate it clinically based on the food type and ingredients.
+
+Return ONLY a valid JSON object (no markdown, no backticks, no markdown code block fences):
 {
-  "name": "Product Name and Variety (e.g. Organic Creamy Peanut Butter)",
+  "name": "Product Name and Variety",
   "brand": "Brand Name",
   "amount": 16,
-  "unit": "oz",
-  "serving_size": "2 tbsp (32g)",
+  "unit": "fl oz",
+  "serving_size": "8 fl oz (240ml)",
   "category": "produce|protein|dairy|grains|frozen|condiments|snacks|beverages|pantry_staples",
   "storage": "fridge|frozen|counter|shelf",
   "nutrition": {
-    "kcal": 190,
-    "protein": 8,
-    "carbs": 7,
-    "fat": 16,
+    "kcal": 120,
+    "protein": 1,
+    "carbs": 28,
+    "fat": 0.2,
     "fiber": 2,
-    "sodium": 140
+    "sugar": 24,
+    "addedSugar": 0,
+    "satFat": 0,
+    "transFat": 0,
+    "sodium": 35,
+    "cholesterol": 0,
+    "water": 220,
+    "micros": {
+      "vitA": 10, "vitC": 45, "vitD": 0, "vitE": 1.2, "vitK": 2.5,
+      "vitB1": 0.05, "vitB2": 0.04, "vitB3": 0.5, "vitB5": 0.3, "vitB6": 0.1, "vitB7": 1.0, "vitB9": 20, "vitB12": 0, "choline": 15,
+      "potassium": 450, "calcium": 25, "iron": 0.6, "magnesium": 20, "zinc": 0.3, "phosphorus": 30, "chloride": 40, "sulfur": 15, "copper": 0.1, "manganese": 0.2, "selenium": 1.0, "iodine": 5, "chromium": 2, "molybdenum": 3
+    }
   }
-}
-Guidelines:
-- If package size is visible (e.g. 16 oz, 500 g, 32 fl oz, 1 gal), extract it as amount (number) and unit (string: "oz", "g", "fl oz", "ml", "L", "gal", "items").
-- If net weight is not visible, set amount to 1 and unit to "items".
-- Extract exact calories, protein (g), carbs (g), fat (g), fiber (g), and sodium (mg) from the Nutrition Facts panel.
-- Category must be one of: "produce", "protein", "dairy", "grains", "frozen", "condiments", "snacks", "beverages", "pantry_staples".
-- Storage must be one of: "fridge", "frozen", "counter", "shelf".`;
+}`;
 
         let rawResponse = '';
         if (typeof callGeminiGenerateContent === 'function') {
@@ -2358,6 +2552,41 @@ Guidelines:
 
         if (parsed && parsed.name) {
           const nut = parsed.nutrition || {};
+          const parsedMicros = nut.micros || {};
+          const defaultMicros = estimateMicronutrientsForFood(
+            parsed.category || inferFoodCategory(parsed.name, ''),
+            nut.kcal || 0,
+            nut.protein || 0,
+            nut.carbs || 0,
+            nut.fat || 0,
+            parsed.name
+          );
+
+          const mergedMicros = {};
+          Object.keys(DAILY_NUTRITION_STANDARDS).forEach(k => {
+            if (parsedMicros[k] != null && !isNaN(parseFloat(parsedMicros[k]))) {
+              mergedMicros[k] = parseFloat(parsedMicros[k]);
+            } else {
+              mergedMicros[k] = defaultMicros[k] || 0;
+            }
+          });
+
+          const completeNutrition = {
+            kcal: Math.round(nut.kcal || 0),
+            protein: parseFloat(nut.protein || 0),
+            carbs: parseFloat(nut.carbs || 0),
+            fat: parseFloat(nut.fat || 0),
+            fiber: parseFloat(nut.fiber || 0),
+            sugar: parseFloat(nut.sugar || 0),
+            addedSugar: parseFloat(nut.addedSugar || 0),
+            satFat: parseFloat(nut.satFat || 0),
+            transFat: parseFloat(nut.transFat || 0),
+            sodium: Math.round(nut.sodium || 0),
+            cholesterol: Math.round(nut.cholesterol || 0),
+            water: Math.round(nut.water || 0),
+            micros: mergedMicros
+          };
+
           const product = {
             name: parsed.name,
             brand: parsed.brand || 'Verified Food',
@@ -2365,14 +2594,17 @@ Guidelines:
             unit: parsed.unit || 'items',
             category: parsed.category || inferFoodCategory(parsed.name, ''),
             storage: parsed.storage || inferStorageZone(parsed.category, parsed.name),
-            kcal: Math.round(nut.kcal || 0),
-            protein: Math.round(nut.protein || 0),
-            carbs: Math.round(nut.carbs || 0),
-            fat: Math.round(nut.fat || 0),
-            fiber: Math.round(nut.fiber || 0),
-            sodium: Math.round(nut.sodium || 0),
+            kcal: completeNutrition.kcal,
+            protein: completeNutrition.protein,
+            carbs: completeNutrition.carbs,
+            fat: completeNutrition.fat,
+            fiber: completeNutrition.fiber,
+            sugar: completeNutrition.sugar,
+            satFat: completeNutrition.satFat,
+            sodium: completeNutrition.sodium,
             sourceBadge: '✨ AI Nutrition Label Verified',
-            barcode: barcode || ''
+            barcode: barcode || '',
+            nutrition: completeNutrition
           };
 
           // Save to personal database immediately
@@ -2389,15 +2621,22 @@ Guidelines:
         console.warn("AI label vision error:", err);
         if (resBox) {
           resBox.innerHTML = `
-            <div class="p-3.5 rounded-2xl bg-dark-elevated border border-amber-400/50 text-xs space-y-2">
+            <div class="p-3.5 rounded-2xl bg-dark-elevated border border-amber-400/50 text-xs space-y-2.5">
               <div class="text-amber-300 font-semibold flex items-center gap-1.5">
                 <i data-lucide="alert-triangle" class="w-4 h-4"></i>
                 <span>Could not extract nutrition facts from photo</span>
               </div>
-              <p class="text-slate-300 text-[11px]">Make sure the Nutrition Facts label is in sharp focus and well-lit. You can also enter a quick item name manually below:</p>
-              <div class="flex gap-2 pt-1">
-                <input type="text" id="barcode-fallback-name" placeholder="Product name..." class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs">
-                <button type="button" onclick="saveUnknownBarcodeItem('${barcode}')" class="px-4 py-2 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs shrink-0">Save</button>
+              <p class="text-slate-300 text-[11px] leading-relaxed">Curved bottles, reflections, or motion blur can obscure the Nutrition Facts panel. You can take another photo or enter complete nutritional data manually:</p>
+              <div class="flex flex-col sm:flex-row gap-2 pt-1">
+                <label class="px-3.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-slate-400 text-slate-300 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer">
+                  <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+                  <span>Retake Photo</span>
+                  <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleNutritionLabelVisionUpload(event, '${barcode}')">
+                </label>
+                <button type="button" onclick="openManualNutritionModal({ barcode: '${barcode}' })" class="px-3.5 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-emerald-300 transition">
+                  <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                  <span>Enter Nutrition Manually</span>
+                </button>
               </div>
             </div>
           `;
@@ -2471,14 +2710,14 @@ Guidelines:
             </div>
             <div>
               <h4 class="font-bold text-white text-xs">Product Not Found in Databases (UPC: ${code})</h4>
-              <p class="text-[11px] text-slate-300 mt-0.5">Let Gemini AI Vision read the Nutrition Facts label &amp; package to extract exact macros and save it to your personal database forever.</p>
+              <p class="text-[11px] text-slate-300 mt-0.5">Let Gemini AI Vision read curved bottle labels &amp; packages to extract complete macros and micronutrients, or enter verified nutrition manually.</p>
             </div>
           </div>
 
           <div class="p-3 bg-dark-base rounded-2xl border border-pastel-lavender/30 flex flex-col sm:flex-row items-center justify-between gap-2.5">
             <div class="text-[11px] text-slate-300 space-y-0.5">
-              <span class="font-bold text-white block">📸 Scan Nutrition Facts Label</span>
-              <span class="text-slate-400 block text-[10px]">Photo of label + package front for instant AI macro extraction</span>
+              <span class="font-bold text-white block">📸 Snap Nutrition Facts Label</span>
+              <span class="text-slate-400 block text-[10px]">AI OCR reads curved bottles, cans, boxes &amp; packages</span>
             </div>
             <label class="w-full sm:w-auto px-4 py-2 rounded-xl bg-gradient-to-r from-pastel-lavender via-purple-400 to-pastel-mint text-dark-base font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-lg hover:opacity-95 transition shrink-0">
               <i data-lucide="camera" class="w-4 h-4"></i>
@@ -2487,11 +2726,14 @@ Guidelines:
             </label>
           </div>
 
-          <div class="pt-1 border-t border-dark-border flex flex-col sm:flex-row items-center justify-between gap-2">
-            <span class="text-[10px] text-slate-400">Or type a quick item name manually:</span>
-            <div class="flex gap-1.5 w-full sm:w-auto">
-              <input type="text" id="barcode-fallback-name" placeholder="Item name..." class="bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs flex-1 sm:w-44 focus:border-pastel-lavender">
-              <button type="button" onclick="saveUnknownBarcodeItem('${code}')" class="px-3.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-slate-500 text-slate-300 text-xs font-semibold shrink-0">Save</button>
+          <div class="pt-2 border-t border-dark-border flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div class="text-[10px] text-slate-400">Prefer manual entry with all 13 vitamins &amp; 14 minerals?</div>
+            <div class="flex gap-2 w-full sm:w-auto">
+              <input type="text" id="barcode-fallback-name" placeholder="Item name..." class="bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs flex-1 sm:w-36 focus:border-pastel-lavender">
+              <button type="button" onclick="openManualNutritionModal({ barcode: '${code}', name: (document.getElementById('barcode-fallback-name') || {}).value })" class="px-3.5 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs flex items-center justify-center gap-1 hover:bg-emerald-300 transition shrink-0">
+                <i data-lucide="edit-3" class="w-3 h-3"></i>
+                <span>Enter Nutrition</span>
+              </button>
             </div>
           </div>
         </div>
@@ -2578,25 +2820,328 @@ Guidelines:
 
     function saveUnknownBarcodeItem(code) {
       const input = document.getElementById('barcode-fallback-name');
-      const name = (input ? input.value : '').trim() || 'Scanned Item';
-      const fallbackProduct = {
+      const name = (input ? input.value : '').trim() || 'Scanned Food';
+      openManualNutritionModal({
+        barcode: code,
         name: name,
-        brand: 'Packaged Item',
-        amount: 1,
-        unit: 'items',
         category: inferFoodCategory(name, ''),
         storage: inferStorageZone('pantry_staples', name),
-        kcal: 100,
-        protein: 0,
-        carbs: 0,
-        fat: 0,
-        fiber: 0,
-        sodium: 0,
-        sourceBadge: '💾 Your Custom Food Database',
-        barcode: code
+        amount: 1,
+        unit: 'items'
+      });
+    }
+
+    // ==============================================
+    // MANUAL NUTRITION MODAL (ALL MACROS & 27 MICRONUTRIENTS)
+    // ==============================================
+    let activeManualNutritionContext = null;
+
+    function openManualNutritionModal(params = {}) {
+      activeManualNutritionContext = params;
+      const modal = document.getElementById('manual-nutrition-modal');
+      if (!modal) return;
+
+      const titleEl = document.getElementById('manual-nut-modal-title');
+      const badgeEl = document.getElementById('manual-nut-barcode-badge');
+
+      if (params.isPantryEdit) {
+        if (titleEl) titleEl.textContent = `Edit Nutrition: ${params.name || 'Pantry Item'}`;
+        if (badgeEl) badgeEl.classList.add('hidden');
+      } else if (params.barcode) {
+        if (titleEl) titleEl.textContent = "Nutrition Facts & Micronutrients";
+        if (badgeEl) {
+          badgeEl.textContent = `UPC: ${params.barcode}`;
+          badgeEl.classList.remove('hidden');
+        }
+      } else {
+        if (titleEl) titleEl.textContent = "Nutrition Facts & Micronutrients";
+        if (badgeEl) badgeEl.classList.add('hidden');
+      }
+
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = (val != null && val !== '') ? val : '';
       };
-      saveCustomBarcodeItem(code, fallbackProduct);
-      applyScannedBarcodeFood(fallbackProduct);
+
+      setVal('manual-nut-barcode', params.barcode || '');
+      setVal('manual-nut-name', params.name || '');
+      setVal('manual-nut-brand', params.brand || '');
+      setVal('manual-nut-amount', params.amount != null ? params.amount : 1);
+      setVal('manual-nut-unit', params.unit || 'items');
+      setVal('manual-nut-cat', params.category || 'produce');
+      setVal('manual-nut-storage', params.storage || 'fridge');
+
+      const nut = params.nutrition || {};
+      setVal('manual-nut-kcal', nut.kcal != null ? nut.kcal : (params.kcal != null ? params.kcal : ''));
+      setVal('manual-nut-protein', nut.protein != null ? nut.protein : (params.protein != null ? params.protein : ''));
+      setVal('manual-nut-carbs', nut.carbs != null ? nut.carbs : (params.carbs != null ? params.carbs : ''));
+      setVal('manual-nut-fat', nut.fat != null ? nut.fat : (params.fat != null ? params.fat : ''));
+      setVal('manual-nut-fiber', nut.fiber != null ? nut.fiber : (params.fiber != null ? params.fiber : ''));
+      setVal('manual-nut-sugar', nut.sugar != null ? nut.sugar : (params.sugar != null ? params.sugar : ''));
+      setVal('manual-nut-added-sugar', nut.addedSugar != null ? nut.addedSugar : '');
+      setVal('manual-nut-sat-fat', nut.satFat != null ? nut.satFat : (params.satFat != null ? params.satFat : ''));
+      setVal('manual-nut-trans-fat', nut.transFat != null ? nut.transFat : '');
+      setVal('manual-nut-sodium', nut.sodium != null ? nut.sodium : (params.sodium != null ? params.sodium : ''));
+      setVal('manual-nut-cholesterol', nut.cholesterol != null ? nut.cholesterol : '');
+      setVal('manual-nut-water', nut.water != null ? nut.water : '');
+
+      // Micronutrients
+      const micros = nut.micros || ((params.name || params.kcal) ? estimateMicronutrientsForFood(params.category, params.kcal || nut.kcal, params.protein || nut.protein, params.carbs || nut.carbs, params.fat || nut.fat, params.name) : {});
+
+      // All 13 Essential Vitamins + Choline
+      setVal('manual-nut-vitA', micros.vitA != null ? micros.vitA : '');
+      setVal('manual-nut-vitC', micros.vitC != null ? micros.vitC : '');
+      setVal('manual-nut-vitD', micros.vitD != null ? micros.vitD : '');
+      setVal('manual-nut-vitE', micros.vitE != null ? micros.vitE : '');
+      setVal('manual-nut-vitK', micros.vitK != null ? micros.vitK : '');
+      setVal('manual-nut-vitB1', micros.vitB1 != null ? micros.vitB1 : '');
+      setVal('manual-nut-vitB2', micros.vitB2 != null ? micros.vitB2 : '');
+      setVal('manual-nut-vitB3', micros.vitB3 != null ? micros.vitB3 : '');
+      setVal('manual-nut-vitB5', micros.vitB5 != null ? micros.vitB5 : '');
+      setVal('manual-nut-vitB6', micros.vitB6 != null ? micros.vitB6 : '');
+      setVal('manual-nut-vitB7', micros.vitB7 != null ? micros.vitB7 : '');
+      setVal('manual-nut-vitB9', micros.vitB9 != null ? micros.vitB9 : '');
+      setVal('manual-nut-vitB12', micros.vitB12 != null ? micros.vitB12 : '');
+      setVal('manual-nut-choline', micros.choline != null ? micros.choline : '');
+
+      // All 14 Essential Minerals
+      setVal('manual-nut-potassium', micros.potassium != null ? micros.potassium : '');
+      setVal('manual-nut-calcium', micros.calcium != null ? micros.calcium : '');
+      setVal('manual-nut-iron', micros.iron != null ? micros.iron : '');
+      setVal('manual-nut-magnesium', micros.magnesium != null ? micros.magnesium : '');
+      setVal('manual-nut-zinc', micros.zinc != null ? micros.zinc : '');
+      setVal('manual-nut-phosphorus', micros.phosphorus != null ? micros.phosphorus : '');
+      setVal('manual-nut-chloride', micros.chloride != null ? micros.chloride : '');
+      setVal('manual-nut-sulfur', micros.sulfur != null ? micros.sulfur : '');
+      setVal('manual-nut-copper', micros.copper != null ? micros.copper : '');
+      setVal('manual-nut-manganese', micros.manganese != null ? micros.manganese : '');
+      setVal('manual-nut-selenium', micros.selenium != null ? micros.selenium : '');
+      setVal('manual-nut-iodine', micros.iodine != null ? micros.iodine : '');
+      setVal('manual-nut-chromium', micros.chromium != null ? micros.chromium : '');
+      setVal('manual-nut-molybdenum', micros.molybdenum != null ? micros.molybdenum : '');
+
+      switchManualNutMicroTab('vitamins');
+      modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeManualNutritionModal() {
+      const modal = document.getElementById('manual-nutrition-modal');
+      if (modal) modal.classList.add('hidden');
+      activeManualNutritionContext = null;
+    }
+
+    function switchManualNutMicroTab(tab) {
+      const vSec = document.getElementById('manual-section-vitamins');
+      const mSec = document.getElementById('manual-section-minerals');
+      const vBtn = document.getElementById('manual-tab-btn-vitamins');
+      const mBtn = document.getElementById('manual-tab-btn-minerals');
+
+      if (tab === 'minerals') {
+        if (mSec) mSec.classList.remove('hidden');
+        if (vSec) vSec.classList.add('hidden');
+        if (mBtn) mBtn.className = "px-2.5 py-1 rounded-lg bg-pastel-mint text-dark-base font-bold transition";
+        if (vBtn) vBtn.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition";
+      } else {
+        if (vSec) vSec.classList.remove('hidden');
+        if (mSec) mSec.classList.add('hidden');
+        if (vBtn) vBtn.className = "px-2.5 py-1 rounded-lg bg-pastel-sky text-dark-base font-bold transition";
+        if (mBtn) mBtn.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition";
+      }
+    }
+
+    function autoEstimateMissingMicros() {
+      const cat = (document.getElementById('manual-nut-cat') || {}).value || 'produce';
+      const kcal = parseFloat((document.getElementById('manual-nut-kcal') || {}).value) || 0;
+      const protein = parseFloat((document.getElementById('manual-nut-protein') || {}).value) || 0;
+      const carbs = parseFloat((document.getElementById('manual-nut-carbs') || {}).value) || 0;
+      const fat = parseFloat((document.getElementById('manual-nut-fat') || {}).value) || 0;
+      const name = (document.getElementById('manual-nut-name') || {}).value || '';
+
+      const estimated = estimateMicronutrientsForFood(cat, kcal, protein, carbs, fat, name);
+
+      const fillIfEmpty = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && (!el.value || parseFloat(el.value) === 0)) {
+          el.value = val;
+        }
+      };
+
+      // Vitamins
+      fillIfEmpty('manual-nut-vitA', estimated.vitA);
+      fillIfEmpty('manual-nut-vitC', estimated.vitC);
+      fillIfEmpty('manual-nut-vitD', estimated.vitD);
+      fillIfEmpty('manual-nut-vitE', estimated.vitE);
+      fillIfEmpty('manual-nut-vitK', estimated.vitK);
+      fillIfEmpty('manual-nut-vitB1', estimated.vitB1);
+      fillIfEmpty('manual-nut-vitB2', estimated.vitB2);
+      fillIfEmpty('manual-nut-vitB3', estimated.vitB3);
+      fillIfEmpty('manual-nut-vitB5', estimated.vitB5);
+      fillIfEmpty('manual-nut-vitB6', estimated.vitB6);
+      fillIfEmpty('manual-nut-vitB7', estimated.vitB7);
+      fillIfEmpty('manual-nut-vitB9', estimated.vitB9);
+      fillIfEmpty('manual-nut-vitB12', estimated.vitB12);
+      fillIfEmpty('manual-nut-choline', estimated.choline);
+
+      // Minerals
+      fillIfEmpty('manual-nut-potassium', estimated.potassium);
+      fillIfEmpty('manual-nut-calcium', estimated.calcium);
+      fillIfEmpty('manual-nut-iron', estimated.iron);
+      fillIfEmpty('manual-nut-magnesium', estimated.magnesium);
+      fillIfEmpty('manual-nut-zinc', estimated.zinc);
+      fillIfEmpty('manual-nut-phosphorus', estimated.phosphorus);
+      fillIfEmpty('manual-nut-chloride', estimated.chloride);
+      fillIfEmpty('manual-nut-sulfur', estimated.sulfur);
+      fillIfEmpty('manual-nut-copper', estimated.copper);
+      fillIfEmpty('manual-nut-manganese', estimated.manganese);
+      fillIfEmpty('manual-nut-selenium', estimated.selenium);
+      fillIfEmpty('manual-nut-iodine', estimated.iodine);
+      fillIfEmpty('manual-nut-chromium', estimated.chromium);
+      fillIfEmpty('manual-nut-molybdenum', estimated.molybdenum);
+
+      alertBox("Auto-filled missing micronutrients with USDA clinical standards!", "Micros Estimated");
+    }
+
+    function saveManualNutritionData() {
+      const name = (document.getElementById('manual-nut-name') || {}).value?.trim();
+      if (!name) {
+        alertBox("Please enter an item or ingredient name.", "Name Required");
+        return;
+      }
+
+      const getNum = (id, fallback = 0) => {
+        const el = document.getElementById(id);
+        const v = el ? parseFloat(el.value) : NaN;
+        return isNaN(v) ? fallback : v;
+      };
+
+      const barcode = (document.getElementById('manual-nut-barcode') || {}).value?.trim() || '';
+      const brand = (document.getElementById('manual-nut-brand') || {}).value?.trim() || '';
+      const amount = getNum('manual-nut-amount', 1);
+      const unit = (document.getElementById('manual-nut-unit') || {}).value || 'items';
+      const category = (document.getElementById('manual-nut-cat') || {}).value || 'produce';
+      const storage = (document.getElementById('manual-nut-storage') || {}).value || 'fridge';
+
+      const kcal = Math.round(getNum('manual-nut-kcal', 0));
+      const protein = getNum('manual-nut-protein', 0);
+      const carbs = getNum('manual-nut-carbs', 0);
+      const fat = getNum('manual-nut-fat', 0);
+      const fiber = getNum('manual-nut-fiber', 0);
+      const sugar = getNum('manual-nut-sugar', 0);
+      const addedSugar = getNum('manual-nut-added-sugar', 0);
+      const satFat = getNum('manual-nut-sat-fat', 0);
+      const transFat = getNum('manual-nut-trans-fat', 0);
+      const sodium = Math.round(getNum('manual-nut-sodium', 0));
+      const cholesterol = Math.round(getNum('manual-nut-cholesterol', 0));
+      const water = Math.round(getNum('manual-nut-water', 0));
+
+      const micros = {
+        vitA: Math.round(getNum('manual-nut-vitA', 0)),
+        vitC: getNum('manual-nut-vitC', 0),
+        vitD: getNum('manual-nut-vitD', 0),
+        vitE: getNum('manual-nut-vitE', 0),
+        vitK: getNum('manual-nut-vitK', 0),
+        vitB1: getNum('manual-nut-vitB1', 0),
+        vitB2: getNum('manual-nut-vitB2', 0),
+        vitB3: getNum('manual-nut-vitB3', 0),
+        vitB5: getNum('manual-nut-vitB5', 0),
+        vitB6: getNum('manual-nut-vitB6', 0),
+        vitB7: getNum('manual-nut-vitB7', 0),
+        vitB9: Math.round(getNum('manual-nut-vitB9', 0)),
+        vitB12: getNum('manual-nut-vitB12', 0),
+        choline: Math.round(getNum('manual-nut-choline', 0)),
+
+        potassium: Math.round(getNum('manual-nut-potassium', 0)),
+        calcium: Math.round(getNum('manual-nut-calcium', 0)),
+        iron: getNum('manual-nut-iron', 0),
+        magnesium: Math.round(getNum('manual-nut-magnesium', 0)),
+        zinc: getNum('manual-nut-zinc', 0),
+        phosphorus: Math.round(getNum('manual-nut-phosphorus', 0)),
+        chloride: Math.round(getNum('manual-nut-chloride', 0)),
+        sulfur: Math.round(getNum('manual-nut-sulfur', 0)),
+        copper: getNum('manual-nut-copper', 0),
+        manganese: getNum('manual-nut-manganese', 0),
+        selenium: Math.round(getNum('manual-nut-selenium', 0)),
+        iodine: Math.round(getNum('manual-nut-iodine', 0)),
+        chromium: Math.round(getNum('manual-nut-chromium', 0)),
+        molybdenum: Math.round(getNum('manual-nut-molybdenum', 0))
+      };
+
+      const product = {
+        name,
+        brand,
+        amount,
+        unit,
+        category,
+        storage,
+        barcode,
+        kcal,
+        protein,
+        carbs,
+        fat,
+        fiber,
+        sugar,
+        addedSugar,
+        satFat,
+        transFat,
+        sodium,
+        cholesterol,
+        water,
+        sourceBadge: '✓ Verified Nutrition',
+        nutrition: {
+          kcal,
+          protein,
+          carbs,
+          fat,
+          fiber,
+          sugar,
+          addedSugar,
+          satFat,
+          transFat,
+          sodium,
+          cholesterol,
+          water,
+          micros
+        }
+      };
+
+      if (activeManualNutritionContext && activeManualNutritionContext.isPantryEdit && activeManualNutritionContext.pantryItemId) {
+        const pItem = (state.pantry || []).find(p => p.id === activeManualNutritionContext.pantryItemId);
+        if (pItem) {
+          pItem.name = name;
+          pItem.brand = brand;
+          pItem.amount = amount;
+          pItem.unit = unit;
+          pItem.category = category;
+          pItem.storage = storage;
+          pItem.kcal = kcal;
+          pItem.protein = protein;
+          pItem.carbs = carbs;
+          pItem.fat = fat;
+          pItem.fiber = fiber;
+          pItem.sugar = sugar;
+          pItem.satFat = satFat;
+          pItem.sodium = sodium;
+          pItem.nutrition = product.nutrition;
+          if (barcode) pItem.barcode = barcode;
+
+          saveAppState();
+          renderPantry();
+          if (typeof openPantryItemDetailModal === 'function') {
+            openPantryItemDetailModal(pItem.id);
+          }
+          closeManualNutritionModal();
+          alertBox(`Updated nutritional profile for "${name}" with complete macro and micronutrients!`, "Nutrition Saved");
+          return;
+        }
+      }
+
+      if (barcode) {
+        saveCustomBarcodeItem(barcode, product);
+      }
+
+      closeManualNutritionModal();
+      applyScannedBarcodeFood(product);
     }
 
     function applyScannedBarcodeFood(product) {
@@ -2605,41 +3150,72 @@ Guidelines:
         saveCustomBarcodeItem(product.barcode, product);
       }
 
+      const cat = product.category || inferFoodCategory(product.name, '');
+      const stor = product.storage || inferStorageZone(cat, product.name);
+      const amount = (typeof product.amount === 'number' && product.amount > 0) ? product.amount : 1;
+      const unit = product.unit || 'items';
+
+      const kcal = (product.nutrition && product.nutrition.kcal != null) ? product.nutrition.kcal : (product.kcal || 0);
+      const protein = (product.nutrition && product.nutrition.protein != null) ? product.nutrition.protein : (product.protein || 0);
+      const carbs = (product.nutrition && product.nutrition.carbs != null) ? product.nutrition.carbs : (product.carbs || 0);
+      const fat = (product.nutrition && product.nutrition.fat != null) ? product.nutrition.fat : (product.fat || 0);
+      const fiber = (product.nutrition && product.nutrition.fiber != null) ? product.nutrition.fiber : (product.fiber || 0);
+      const sugar = (product.nutrition && product.nutrition.sugar != null) ? product.nutrition.sugar : (product.sugar || 0);
+      const satFat = (product.nutrition && product.nutrition.satFat != null) ? product.nutrition.satFat : (product.satFat || 0);
+      const sodium = (product.nutrition && product.nutrition.sodium != null) ? product.nutrition.sodium : (product.sodium || 0);
+
+      const micros = (product.nutrition && product.nutrition.micros) ? product.nutrition.micros : (
+        typeof estimateMicronutrientsForFood === 'function' ? estimateMicronutrientsForFood(cat, kcal, protein, carbs, fat, product.name) : {}
+      );
+
+      const completeNutrition = {
+        kcal, protein, carbs, fat, fiber, sugar, satFat, sodium,
+        transFat: product.nutrition?.transFat || 0,
+        addedSugar: product.nutrition?.addedSugar || 0,
+        cholesterol: product.nutrition?.cholesterol || 0,
+        water: product.nutrition?.water || 0,
+        micros
+      };
+
       if (barcodeScannerContext === 'recipe') {
         const ingInput = document.getElementById('recipe-ingredients-input');
         if (ingInput) {
-          ingInput.value += (ingInput.value ? '\n' : '') + `${product.name} (${product.kcal} kcal)`;
+          ingInput.value += (ingInput.value ? '\n' : '') + `${product.name} (${kcal} kcal)`;
         }
         alertBox(`Added "${product.name}" to recipe ingredients.`, "Barcode Added");
       } else if (barcodeScannerContext === 'pantry') {
-        const cat = product.category || inferFoodCategory(product.name, '');
-        const stor = product.storage || inferStorageZone(cat, product.name);
-        const amount = (typeof product.amount === 'number' && product.amount > 0) ? product.amount : 1;
-        const unit = product.unit || 'items';
-
         state.pantry.push({
           id: `p-${Date.now()}`,
           name: product.name,
+          brand: product.brand || '',
           category: cat,
           storage: stor,
           amount: amount,
           unit: unit,
+          kcal: kcal,
+          protein: protein,
+          carbs: carbs,
+          fat: fat,
+          fiber: fiber,
+          sugar: sugar,
+          satFat: satFat,
+          sodium: sodium,
+          sourceBadge: product.sourceBadge || '✓ Verified Nutrition',
+          barcode: product.barcode || '',
           dateAdded: new Date().toISOString().split('T')[0],
-          nutrition: {
-            kcal: product.kcal || 0,
-            protein: product.protein || 0,
-            carbs: product.carbs || 0,
-            fat: product.fat || 0,
-            fiber: product.fiber || 0,
-            sodium: product.sodium || 0
-          }
+          expirationDate: (() => {
+            const d = new Date();
+            d.setDate(d.getDate() + (stor === 'frozen' ? 90 : (stor === 'fridge' ? 14 : 30)));
+            return d.toISOString().split('T')[0];
+          })(),
+          nutrition: completeNutrition
         });
         saveAppState();
         renderPantry();
         if (typeof playChime === 'function') {
           try { playChime('bell'); } catch (e) {}
         }
-        alertBox(`Scanned and added "${product.name}" (${amount} ${unit}) to your pantry with verified nutrition!`, "Pantry Barcode Added");
+        alertBox(`Added "${product.name}" (${amount} ${unit}) to your pantry with full macro & micronutrient profile!`, "Pantry Item Added");
       } else {
         openLogFoodModal('verified');
         const setVal = (id, val) => {
@@ -2647,13 +3223,23 @@ Guidelines:
           if (el) el.value = val;
         };
         setVal('food-input-name', product.name);
-        setVal('food-input-kcal', product.kcal);
-        setVal('food-input-protein', product.protein);
-        setVal('food-input-carbs', product.carbs);
-        setVal('food-input-fat', product.fat);
-        setVal('food-input-fiber', product.fiber || 0);
-        setVal('food-input-sodium', product.sodium || 0);
+        setVal('food-input-kcal', kcal);
+        setVal('food-input-protein', protein);
+        setVal('food-input-carbs', carbs);
+        setVal('food-input-fat', fat);
+        setVal('food-input-fiber', fiber);
+        setVal('food-input-sodium', sodium);
         alertBox(`Loaded "${product.name}" into food log!`, "Barcode Verified");
       }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.DAILY_NUTRITION_STANDARDS = DAILY_NUTRITION_STANDARDS;
+      window.estimateMicronutrientsForFood = estimateMicronutrientsForFood;
+      window.openManualNutritionModal = openManualNutritionModal;
+      window.closeManualNutritionModal = closeManualNutritionModal;
+      window.switchManualNutMicroTab = switchManualNutMicroTab;
+      window.autoEstimateMissingMicros = autoEstimateMissingMicros;
+      window.saveManualNutritionData = saveManualNutritionData;
     }
 

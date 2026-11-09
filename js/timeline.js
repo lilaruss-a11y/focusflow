@@ -2037,6 +2037,8 @@
       playChime('bell');
     }
 
+    const saveMatrixTask = addMatrixTask;
+
     function deleteMatrixTask(id) {
       state.matrixTasks = state.matrixTasks.filter(t => t.id !== id);
       renderMatrix();
@@ -2254,6 +2256,16 @@ function setEditEventAnchorType(isFixed) {
     function closeNewEventModal() {
       const modal = document.getElementById('new-event-modal');
       if (modal) modal.classList.add('hidden');
+    }
+
+    function setNewEventDuration(mins) {
+      const durEl = document.getElementById('new-event-duration');
+      if (durEl) {
+        durEl.value = mins;
+        if (typeof onNewEventTimeChange === 'function') {
+          onNewEventTimeChange('duration');
+        }
+      }
     }
 
     function saveNewCalendarEvent() {

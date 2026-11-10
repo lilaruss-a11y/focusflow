@@ -127,12 +127,12 @@
         const divider = document.getElementById('timeline-now-divider-list');
         const container = document.getElementById('timeline-events-container');
         if (divider && container) {
-          const dividerRect = divider.getBoundingClientRect();
-          const containerRect = container.getBoundingClientRect();
-          const targetScroll = container.scrollTop + (dividerRect.top - containerRect.top) - 50;
-          container.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
+          const targetScroll = (typeof divider.offsetTop === 'number' && divider.offsetTop > 0)
+            ? Math.max(0, divider.offsetTop - 50)
+            : Math.max(0, container.scrollTop + (divider.getBoundingClientRect().top - container.getBoundingClientRect().top) - 50);
+          container.scrollTo({ top: targetScroll, behavior: 'smooth' });
         }
-      }, 80);
+      }, 120);
     }
 
     function changeTimelineWeek(offsetWeeks) {
@@ -192,7 +192,7 @@
             else scrollToCurrentTimeMarker();
           }
         };
-        btn.className = `px-1.5 py-0.5 rounded-lg text-[10px] font-semibold flex flex-col items-center transition ${
+        btn.className = `w-full px-1 py-1 rounded-lg text-[10px] font-semibold flex flex-col items-center justify-center transition ${
           isSelected 
             ? 'bg-pastel-mint text-dark-base font-bold shadow-sm' 
             : isToday 

@@ -806,19 +806,16 @@
       state.showPlanVsReality = !state.showPlanVsReality;
       const btn = document.getElementById('btn-toggle-plan-reality');
       const label = document.getElementById('label-plan-reality');
-      const icon = document.getElementById('icon-plan-reality');
-      if (state.showPlanVsReality) {
-        if (btn) btn.className = "p-1.5 rounded-xl bg-pastel-lavender text-slate-950 border border-pastel-lavender shadow-md shadow-pastel-lavender/30 transition active:scale-95 flex items-center justify-center shrink-0";
-        if (label) label.textContent = "Reality ON";
-        if (icon) {
-          icon.setAttribute('class', 'w-3.5 h-3.5 text-slate-950 stroke-[2.5]');
-        }
-        alertBox("Plan vs Reality view active: Comparing scheduled estimates to actual execution time side-by-side with elasticity delta badges.", "Plan vs Reality");
-      } else {
-        if (btn) btn.className = "p-1.5 rounded-xl bg-dark-base border border-dark-border text-pastel-lavender hover:text-white transition active:scale-95 flex items-center justify-center shrink-0";
-        if (label) label.textContent = "Reality";
-        if (icon) {
-          icon.setAttribute('class', 'w-3.5 h-3.5 text-pastel-lavender stroke-2');
+      if (btn) {
+        if (state.showPlanVsReality) {
+          btn.className = "h-7 w-7 sm:h-8 sm:w-8 rounded-xl bg-pastel-lavender text-slate-950 border border-pastel-lavender shadow-md shadow-pastel-lavender/30 transition active:scale-95 flex items-center justify-center shrink-0";
+          btn.innerHTML = `<i data-lucide="split" class="w-3.5 h-3.5 text-slate-950 stroke-[2.5]" id="icon-plan-reality"></i>`;
+          if (label) label.textContent = "Reality ON";
+          alertBox("Plan vs Reality view active: Comparing scheduled estimates to actual execution time side-by-side with elasticity delta badges.", "Plan vs Reality");
+        } else {
+          btn.className = "h-7 w-7 sm:h-8 sm:w-8 rounded-xl bg-dark-base border border-dark-border text-pastel-lavender hover:text-white transition active:scale-95 flex items-center justify-center shrink-0";
+          btn.innerHTML = `<i data-lucide="split" class="w-3.5 h-3.5 text-pastel-lavender stroke-2" id="icon-plan-reality"></i>`;
+          if (label) label.textContent = "Reality";
         }
       }
       renderStructuredCalendarGrid();

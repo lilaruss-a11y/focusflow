@@ -808,14 +808,18 @@
       const label = document.getElementById('label-plan-reality');
       const icon = document.getElementById('icon-plan-reality');
       if (state.showPlanVsReality) {
-        if (btn) btn.className = "flex items-center gap-1 px-2.5 py-1 rounded-xl bg-pastel-lavender text-dark-base font-bold text-xs shadow-md shadow-pastel-lavender/30 transition active:scale-95";
+        if (btn) btn.className = "p-1.5 rounded-xl bg-pastel-lavender text-slate-950 border border-pastel-lavender shadow-md shadow-pastel-lavender/30 transition active:scale-95 flex items-center justify-center shrink-0";
         if (label) label.textContent = "Reality ON";
-        if (icon) icon.className = "w-3.5 h-3.5 text-dark-base";
+        if (icon) {
+          icon.setAttribute('class', 'w-3.5 h-3.5 text-slate-950 stroke-[2.5]');
+        }
         alertBox("Plan vs Reality view active: Comparing scheduled estimates to actual execution time side-by-side with elasticity delta badges.", "Plan vs Reality");
       } else {
-        if (btn) btn.className = "flex items-center gap-1 px-2 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs transition active:scale-95";
+        if (btn) btn.className = "p-1.5 rounded-xl bg-dark-base border border-dark-border text-pastel-lavender hover:text-white transition active:scale-95 flex items-center justify-center shrink-0";
         if (label) label.textContent = "Reality";
-        if (icon) icon.className = "w-3.5 h-3.5 text-pastel-lavender";
+        if (icon) {
+          icon.setAttribute('class', 'w-3.5 h-3.5 text-pastel-lavender stroke-2');
+        }
       }
       renderStructuredCalendarGrid();
       renderCompactTimelineListView();

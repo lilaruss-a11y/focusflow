@@ -127,8 +127,10 @@
         const divider = document.getElementById('timeline-now-divider-list');
         const container = document.getElementById('timeline-events-container');
         if (divider && container) {
-          const divTop = divider.offsetTop;
-          container.scrollTo({ top: Math.max(0, divTop - 60), behavior: 'smooth' });
+          const dividerRect = divider.getBoundingClientRect();
+          const containerRect = container.getBoundingClientRect();
+          const targetScroll = container.scrollTop + (dividerRect.top - containerRect.top) - 50;
+          container.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
         }
       }, 80);
     }
@@ -150,20 +152,7 @@
       state.selectedTimelineDate = getTodayDateString();
       renderTimeline();
       if (state.timelineViewMode === 'list') {
-        setTimeout(() => {
-          const divider = document.getElementById('timeline-now-divider-list');
-          const container = document.getElementById('timeline-events-container');
-          if (divider && container) {
-            divider.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            let topPos = divider.offsetTop;
-            let el = divider.offsetParent;
-            while (el && el !== container) {
-              topPos += el.offsetTop;
-              el = el.offsetParent;
-            }
-            container.scrollTo({ top: Math.max(0, topPos - 70), behavior: 'smooth' });
-          }
-        }, 100);
+        scrollListToNow();
       } else {
         scrollToCurrentTimeMarker();
       }

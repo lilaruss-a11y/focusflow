@@ -29,8 +29,8 @@
       const cPct = macroSum > 0 ? Math.round((cKcal / macroSum) * 100) : 0;
       const fPct = macroSum > 0 ? Math.max(0, 100 - pPct - cPct) : 0;
 
-      const r = 50;
-      const circ = 2 * Math.PI * r; // ~314.159
+      const r = 38;
+      const circ = 2 * Math.PI * r; // ~238.76
       const pDash = (pPct / 100) * circ;
       const cDash = (cPct / 100) * circ;
       const fDash = (fPct / 100) * circ;
@@ -44,20 +44,27 @@
       const colorCal = getNutrientProgressColor(kcal, targetVal, false);
 
       container.innerHTML = `
-        <svg class="w-36 h-36 transform -rotate-90" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="${r}" fill="none" stroke="#1e293b" stroke-width="12" />
+        <svg class="w-20 h-20 sm:w-28 sm:h-28 transform -rotate-90" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="${r}" fill="none" stroke="#1e293b" stroke-width="9" />
           ${macroSum > 0 ? `
-            <circle cx="60" cy="60" r="${r}" fill="none" stroke="#34d399" stroke-width="12" stroke-dasharray="${pDash} ${circ - pDash}" stroke-dashoffset="${pOffset}" />
-            <circle cx="60" cy="60" r="${r}" fill="none" stroke="#38bdf8" stroke-width="12" stroke-dasharray="${cDash} ${circ - cDash}" stroke-dashoffset="${cOffset}" />
-            <circle cx="60" cy="60" r="${r}" fill="none" stroke="#fb7185" stroke-width="12" stroke-dasharray="${fDash} ${circ - fDash}" stroke-dashoffset="${fOffset}" />
+            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#34d399" stroke-width="9" stroke-dasharray="${pDash} ${circ - pDash}" stroke-dashoffset="${pOffset}" />
+            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#38bdf8" stroke-width="9" stroke-dasharray="${cDash} ${circ - cDash}" stroke-dashoffset="${cOffset}" />
+            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#fb7185" stroke-width="9" stroke-dasharray="${fDash} ${circ - fDash}" stroke-dashoffset="${fOffset}" />
           ` : ''}
         </svg>
         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-          <span class="text-xl font-black text-white font-mono leading-tight">${kcal.toLocaleString()}</span>
-          <span class="text-[10px] text-slate-400 font-mono">/ ${targetVal.toLocaleString()} kcal</span>
-          <span class="text-[11px] font-bold ${colorCal.textClass} font-mono mt-0.5">${pctOfTarget}%</span>
+          <span class="text-xs sm:text-base font-black text-white font-mono leading-none">${kcal.toLocaleString()}</span>
+          <span class="text-[8px] sm:text-[9px] text-slate-400 font-mono mt-0.5">kcal total</span>
+          <span class="text-[8px] sm:text-[9px] font-bold ${colorCal.textClass} font-mono">${pctOfTarget}%</span>
         </div>
       `;
+
+      const pLbl = document.getElementById('donut-p-label');
+      if (pLbl) pLbl.textContent = `${Math.round(pG)}g`;
+      const cLbl = document.getElementById('donut-c-label');
+      if (cLbl) cLbl.textContent = `${Math.round(cG)}g`;
+      const fLbl = document.getElementById('donut-f-label');
+      if (fLbl) fLbl.textContent = `${Math.round(fG)}g`;
 
       const targetLabel = document.getElementById('donut-target-kcal-label');
       if (targetLabel) targetLabel.textContent = `${targetVal.toLocaleString()} kcal`;
@@ -65,13 +72,13 @@
       if (netStatus) {
         if (pctOfTarget >= 90 && pctOfTarget <= 115) {
           netStatus.textContent = `✓ Goal met (${pctOfTarget}%)`;
-          netStatus.className = "text-[11px] font-mono text-emerald-400 font-bold";
+          netStatus.className = "text-[10px] font-mono text-emerald-400 font-bold truncate";
         } else if (pctOfTarget > 115) {
           netStatus.textContent = `⚠️ Over target (${pctOfTarget}%)`;
-          netStatus.className = "text-[11px] font-mono text-rose-400 font-bold";
+          netStatus.className = "text-[10px] font-mono text-rose-400 font-bold truncate";
         } else {
-          netStatus.textContent = `${pctOfTarget}% consumed (${Math.max(0, targetVal - kcal)} kcal left)`;
-          netStatus.className = "text-[11px] font-mono text-slate-400";
+          netStatus.textContent = `${pctOfTarget}% of ${targetVal} kcal`;
+          netStatus.className = "text-[10px] font-mono text-slate-400 truncate";
         }
       }
     }
@@ -87,17 +94,90 @@
       const dash = (pct / 100) * circ;
 
       const color = (pct >= 90 && pct <= 115) ? '#34d399' : (pct > 115 ? '#fb7185' : '#38bdf8');
+      const curOz = Math.round((currentMl || 0) / 29.5735);
 
       container.innerHTML = `
-        <svg class="w-28 h-28 transform -rotate-90" viewBox="0 0 100 100">
+        <svg class="w-20 h-20 sm:w-28 sm:h-28 transform -rotate-90" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="${r}" fill="none" stroke="#1e293b" stroke-width="9" />
           <circle cx="50" cy="50" r="${r}" fill="none" stroke="${color}" stroke-width="9" stroke-dasharray="${dash} ${circ - dash}" stroke-dashoffset="0" stroke-linecap="round" />
         </svg>
         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-          <span class="text-base font-black text-white font-mono leading-none">${pct}%</span>
-          <span class="text-[9px] text-pastel-sky font-semibold mt-0.5">Hydrated</span>
+          <span class="text-xs sm:text-base font-black text-white font-mono leading-none">${pct}%</span>
+          <span class="text-[8px] sm:text-[9px] text-pastel-sky font-semibold mt-0.5">${unit === 'fl_oz' ? `${curOz} oz` : `${Math.round(currentMl)} ml`}</span>
         </div>
       `;
+    }
+
+    function renderRemainingCaloriesDonut(consumedKcal, targetKcal) {
+      const container = document.getElementById('remaining-calories-donut-container');
+      if (!container) return;
+
+      const targetVal = targetKcal || 2130;
+      const consumed = Math.max(0, consumedKcal || 0);
+      const remaining = targetVal - consumed;
+      const isOver = remaining < 0;
+      const overKcal = Math.abs(remaining);
+
+      const r = 38;
+      const circ = 2 * Math.PI * r; // ~238.76
+      const pct = Math.min(100, Math.round((consumed / targetVal) * 100));
+      const dash = (pct / 100) * circ;
+      const color = isOver ? '#fb7185' : (pct >= 90 ? '#34d399' : '#38bdf8');
+
+      container.innerHTML = `
+        <svg class="w-20 h-20 sm:w-28 sm:h-28 transform -rotate-90" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="${r}" fill="none" stroke="#1e293b" stroke-width="9" />
+          <circle cx="50" cy="50" r="${r}" fill="none" stroke="${color}" stroke-width="9" stroke-dasharray="${dash} ${circ - dash}" stroke-dashoffset="0" stroke-linecap="round" />
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+          <span class="text-xs sm:text-base font-black ${isOver ? 'text-rose-400' : 'text-white'} font-mono leading-none">${isOver ? `+${overKcal}` : remaining.toLocaleString()}</span>
+          <span class="text-[8px] sm:text-[9px] ${isOver ? 'text-rose-300' : 'text-slate-400'} font-semibold mt-0.5">${isOver ? 'kcal over' : 'kcal left'}</span>
+          <span class="text-[8px] sm:text-[9px] ${isOver ? 'text-rose-400 font-bold' : 'text-pastel-mint'} font-mono">${pct}%</span>
+        </div>
+      `;
+
+      const statusLbl = document.getElementById('remaining-cal-status-label');
+      if (statusLbl) statusLbl.textContent = `Goal: ${targetVal.toLocaleString()}`;
+      const budgetLbl = document.getElementById('remaining-cal-budget-label');
+      if (budgetLbl) {
+        if (isOver) {
+          budgetLbl.textContent = `${overKcal} kcal over`;
+          budgetLbl.className = "hidden sm:block text-[10px] text-rose-400 font-bold truncate";
+        } else if (remaining === 0) {
+          budgetLbl.textContent = "Goal reached!";
+          budgetLbl.className = "hidden sm:block text-[10px] text-emerald-400 font-bold truncate";
+        } else {
+          budgetLbl.textContent = `${remaining.toLocaleString()} kcal left`;
+          budgetLbl.className = "hidden sm:block text-[10px] text-pastel-mint truncate";
+        }
+      }
+    }
+
+    function inferMealCategory(item) {
+      if (item && item.mealType && ['breakfast', 'lunch', 'dinner', 'snack'].includes(item.mealType)) {
+        return item.mealType;
+      }
+      let hour = 12;
+      if (item && item.id && typeof item.id === 'string' && item.id.startsWith('n-')) {
+        const ts = parseInt(item.id.replace('n-', ''), 10);
+        if (!isNaN(ts) && ts > 1600000000000) {
+          hour = new Date(ts).getHours();
+        }
+      } else if (item && item.time && typeof item.time === 'string') {
+        const parts = item.time.split(':');
+        if (parts.length >= 1) hour = parseInt(parts[0], 10);
+      }
+      if (hour >= 4 && hour < 11) return 'breakfast';
+      if (hour >= 11 && hour < 16) return 'lunch';
+      if (hour >= 16 && hour < 21) return 'dinner';
+      return 'snack';
+    }
+
+    function deleteFoodEntry(foodId, event) {
+      if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
+      state.nutritionLog = (state.nutritionLog || []).filter(n => n.id !== foodId);
+      if (typeof saveAppState === 'function') saveAppState();
+      renderNutrition();
     }
 
 // Extended Nutrition Rendering with All Biomarkers
@@ -108,25 +188,85 @@
       const list = document.getElementById('nutrition-diary-list');
       if (list) {
         list.innerHTML = '';
-        state.nutritionLog.forEach(n => {
-          const row = document.createElement('div');
-          row.className = "p-3 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint/50 cursor-pointer flex items-center justify-between text-xs transition";
-          row.onclick = () => inspectLoggedFood(n.id);
-          row.innerHTML = `
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full ${n.isVerified ? 'bg-pastel-mint' : 'bg-pastel-butter'}"></span>
-                <span class="text-slate-200 font-semibold">${n.name}</span>
-                <span class="text-[10px] px-1.5 py-0.5 rounded ${n.isVerified ? 'bg-pastel-mint/15 text-pastel-mint' : 'bg-pastel-butter/15 text-pastel-butter'}">${n.isVerified ? '✓ Verified' : '~ Estimated'}</span>
+
+        const mealCats = [
+          { key: 'breakfast', label: 'Breakfast', icon: '🌅', color: 'text-pastel-butter' },
+          { key: 'lunch', label: 'Lunch', icon: '☀️', color: 'text-pastel-sky' },
+          { key: 'dinner', label: 'Dinner', icon: '🌙', color: 'text-pastel-coral' },
+          { key: 'snack', label: 'Snacks & Extras', icon: '🍎', color: 'text-pastel-mint' }
+        ];
+
+        const grouped = { breakfast: [], lunch: [], dinner: [], snack: [] };
+        (state.nutritionLog || []).forEach(item => {
+          let cat = item.mealType;
+          if (!cat || !grouped[cat]) {
+            cat = inferMealCategory(item);
+          }
+          grouped[cat].push(item);
+        });
+
+        mealCats.forEach(cat => {
+          const items = grouped[cat.key] || [];
+          const subtotalKcal = items.reduce((sum, x) => sum + (parseInt(x.kcal, 10) || 0), 0);
+
+          const catCard = document.createElement('div');
+          catCard.className = "p-3 rounded-2xl bg-dark-base border border-dark-border space-y-2";
+
+          let itemsHtml = '';
+          if (items.length === 0) {
+            itemsHtml = `
+              <div class="py-1 px-1 flex items-center justify-between text-[11px] text-slate-500 italic">
+                <span>No ${cat.label.toLowerCase()} logged yet</span>
+                <button type="button" onclick="openLogFoodModal('verified', '${cat.key}')" class="text-pastel-mint hover:underline font-normal not-italic text-[10px]">+ Quick log</button>
               </div>
-              <div class="text-[11px] text-slate-400 mt-1 font-mono">
-                P: ${n.protein}g | C: ${n.carbs}g | F: ${n.fat}g | Fiber: ${n.fiber || 0}g • <span class="text-pastel-mint underline">Tap for vitamins</span>
+            `;
+          } else {
+            items.forEach(n => {
+              itemsHtml += `
+                <div class="p-2.5 rounded-xl bg-dark-surface border border-dark-border hover:border-pastel-mint/50 cursor-pointer flex items-center justify-between text-xs transition group" onclick="inspectLoggedFood('${n.id}')">
+                  <div class="flex-1 min-w-0 pr-2">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <span class="w-2 h-2 rounded-full ${n.isVerified ? 'bg-pastel-mint' : 'bg-pastel-butter'} shrink-0"></span>
+                      <span class="text-slate-200 font-semibold truncate">${n.name}</span>
+                      <span class="text-[9.5px] px-1.5 py-0.2 rounded font-mono ${n.isVerified ? 'bg-pastel-mint/15 text-pastel-mint' : 'bg-pastel-butter/15 text-pastel-butter'}">${n.isVerified ? '✓ Verified' : '~ Estimated'}</span>
+                    </div>
+                    <div class="text-[10.5px] text-slate-400 mt-0.5 font-mono truncate">
+                      P: ${n.protein || 0}g | C: ${n.carbs || 0}g | F: ${n.fat || 0}g ${n.fiber ? `| Fib: ${n.fiber}g` : ''} • <span class="text-pastel-mint underline">Micronutrients</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <span class="font-mono font-bold text-white text-xs">${n.kcal} kcal</span>
+                    <button type="button" onclick="deleteFoodEntry('${n.id}', event)" class="text-slate-500 hover:text-rose-400 p-1 rounded transition opacity-60 group-hover:opacity-100" title="Delete entry">
+                      <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                  </div>
+                </div>
+              `;
+            });
+          }
+
+          catCard.innerHTML = `
+            <div class="flex items-center justify-between border-b border-dark-border/60 pb-2">
+              <div class="flex items-center gap-1.5">
+                <span class="text-base">${cat.icon}</span>
+                <span class="text-xs font-bold text-slate-200">${cat.label}</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-dark-elevated text-slate-400 font-mono">${items.length}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-mono font-bold text-white">${subtotalKcal} kcal</span>
+                <button type="button" onclick="openLogFoodModal('verified', '${cat.key}')" class="px-2 py-0.5 rounded-lg bg-dark-elevated hover:bg-slate-700 text-pastel-mint border border-dark-border text-[11px] font-bold transition flex items-center gap-1 active:scale-95" title="Log food to ${cat.label}">
+                  <i data-lucide="plus" class="w-3 h-3"></i>
+                  <span class="hidden sm:inline">Add</span>
+                </button>
               </div>
             </div>
-            <span class="font-mono font-bold text-white text-sm">${n.kcal} kcal</span>
+            <div class="space-y-1.5">
+              ${itemsHtml}
+            </div>
           `;
-          list.appendChild(row);
+          list.appendChild(catCard);
         });
+        if (window.lucide) lucide.createIcons();
       }
 
       const countEl = document.getElementById('nutrition-log-count');
@@ -188,8 +328,9 @@
       const carbTarget = targets.dailyCarbsTarget || 240;
       const fatTarget = targets.dailyFatTarget || 71;
 
-      // Render Cronometer Calorie & Macro Donut Chart
+      // Render 3 Inline Donut Charts (Macros, Hydration, Energy Remaining)
       renderCronometerMacroDonut(totals.caloriesKcal, totals.proteinG, totals.carbsG, totals.fatG, calTarget);
+      renderRemainingCaloriesDonut(totals.caloriesKcal, calTarget);
 
       // Color-coding evaluations (green = correct/optimal, red = too much, neutral/slate = need more)
       const colCal = getNutrientProgressColor(totals.caloriesKcal, calTarget, false);
@@ -1644,8 +1785,20 @@
     }
 
     // Modal: Food Logging Functions
-    function openLogFoodModal(mode = 'verified') {
+    function openLogFoodModal(mode = 'verified', defaultMealType = null) {
       setLogAccuracyMode(mode);
+
+      // Default meal category selection
+      let meal = defaultMealType;
+      if (!meal) {
+        const hour = new Date().getHours();
+        if (hour >= 4 && hour < 11) meal = 'breakfast';
+        else if (hour >= 11 && hour < 16) meal = 'lunch';
+        else if (hour >= 16 && hour < 21) meal = 'dinner';
+        else meal = 'snack';
+      }
+      setLogMealType(meal);
+
       document.getElementById('food-input-name').value = '';
       document.getElementById('food-input-kcal').value = '';
       document.getElementById('food-input-protein').value = '';
@@ -1657,6 +1810,25 @@
       document.getElementById('food-input-iron').value = '';
       document.getElementById('food-input-calcium').value = '';
       document.getElementById('food-log-modal').classList.remove('hidden');
+    }
+
+    function setLogMealType(mealType) {
+      const validMeal = ['breakfast', 'lunch', 'dinner', 'snack'].includes(mealType) ? mealType : 'snack';
+      state.currentFoodMealType = validMeal;
+      const input = document.getElementById('food-input-meal-type');
+      if (input) input.value = validMeal;
+
+      const types = ['breakfast', 'lunch', 'dinner', 'snack'];
+      types.forEach(t => {
+        const btn = document.getElementById(`meal-type-btn-${t}`);
+        if (btn) {
+          if (t === validMeal) {
+            btn.className = "py-1.5 px-1 sm:px-2 rounded-xl font-bold bg-pastel-mint text-dark-base transition flex items-center justify-center gap-1 shadow-sm";
+          } else {
+            btn.className = "py-1.5 px-1 sm:px-2 rounded-xl font-bold bg-dark-base border border-dark-border text-slate-400 hover:text-white transition flex items-center justify-center gap-1";
+          }
+        }
+      });
     }
 
     function closeLogFoodModal() {
@@ -1706,9 +1878,11 @@
       const calcium = parseInt(document.getElementById('food-input-calcium').value, 10) || 0;
 
       if (!name) return;
+      const mealType = document.getElementById('food-input-meal-type')?.value || state.currentFoodMealType || 'snack';
       state.nutritionLog.push({
         id: `n-${Date.now()}`,
         name,
+        mealType,
         kcal,
         protein: prot,
         carbs: carb,
@@ -3355,5 +3529,8 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       window.switchManualNutMicroTab = switchManualNutMicroTab;
       window.autoEstimateMissingMicros = autoEstimateMissingMicros;
       window.saveManualNutritionData = saveManualNutritionData;
+      window.setLogMealType = setLogMealType;
+      window.deleteFoodEntry = deleteFoodEntry;
+      window.renderRemainingCaloriesDonut = renderRemainingCaloriesDonut;
     }
 

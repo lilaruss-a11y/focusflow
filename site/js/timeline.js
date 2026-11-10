@@ -55,13 +55,13 @@
       const listWrap = document.getElementById('timeline-events-container');
 
       if (mode === 'calendar') {
-        if (btnCal) btnCal.className = "flex-1 h-7 sm:h-8 px-2 sm:px-3 rounded-lg font-bold bg-pastel-mint text-dark-base text-xs transition flex items-center justify-center gap-1.5 shadow-sm";
-        if (btnList) btnList.className = "flex-1 h-7 sm:h-8 px-2 sm:px-3 rounded-lg font-medium text-slate-400 hover:text-white text-xs transition flex items-center justify-center gap-1.5";
+        if (btnCal) btnCal.className = "flex-1 h-7 sm:h-8 px-1.5 sm:px-2.5 rounded-lg font-bold bg-pastel-mint text-dark-base text-xs transition flex items-center justify-center gap-1 shadow-sm";
+        if (btnList) btnList.className = "flex-1 h-7 sm:h-8 px-1.5 sm:px-2.5 rounded-lg font-medium text-slate-400 hover:text-white text-xs transition flex items-center justify-center gap-1";
         if (calWrap) calWrap.classList.remove('hidden');
         if (listWrap) listWrap.classList.add('hidden');
       } else {
-        if (btnCal) btnCal.className = "flex-1 h-7 sm:h-8 px-2 sm:px-3 rounded-lg font-medium text-slate-400 hover:text-white text-xs transition flex items-center justify-center gap-1.5";
-        if (btnList) btnList.className = "flex-1 h-7 sm:h-8 px-2 sm:px-3 rounded-lg font-bold bg-pastel-mint text-dark-base text-xs transition flex items-center justify-center gap-1.5 shadow-sm";
+        if (btnCal) btnCal.className = "flex-1 h-7 sm:h-8 px-1.5 sm:px-2.5 rounded-lg font-medium text-slate-400 hover:text-white text-xs transition flex items-center justify-center gap-1";
+        if (btnList) btnList.className = "flex-1 h-7 sm:h-8 px-1.5 sm:px-2.5 rounded-lg font-bold bg-pastel-mint text-dark-base text-xs transition flex items-center justify-center gap-1 shadow-sm";
         if (calWrap) calWrap.classList.add('hidden');
         if (listWrap) listWrap.classList.remove('hidden');
       }
@@ -1051,18 +1051,17 @@
         const redoBtn = document.getElementById('calendar-redo-btn');
         if (undoBtn) {
           const canUndo = this.undoStack.length > 0;
-          undoBtn.disabled = !canUndo;
-          undoBtn.classList.toggle('opacity-30', !canUndo);
-          undoBtn.classList.toggle('cursor-not-allowed', !canUndo);
+          undoBtn.classList.toggle('opacity-40', !canUndo);
+          undoBtn.classList.toggle('opacity-100', canUndo);
         }
         if (redoBtn) {
           const canRedo = this.redoStack.length > 0;
-          redoBtn.disabled = !canRedo;
-          redoBtn.classList.toggle('opacity-30', !canRedo);
-          redoBtn.classList.toggle('cursor-not-allowed', !canRedo);
+          redoBtn.classList.toggle('opacity-40', !canRedo);
+          redoBtn.classList.toggle('opacity-100', canRedo);
         }
       }
     };
+    window.calendarHistory = calendarHistory;
 
     // Keyboard shortcut listener for Undo (⌘Z / Ctrl+Z) and Redo (⌘⇧Z / Ctrl+Y)
     window.addEventListener('keydown', (e) => {

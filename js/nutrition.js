@@ -43,13 +43,14 @@
       const pctOfTarget = Math.round((kcal / targetVal) * 100);
       const colorCal = getNutrientProgressColor(kcal, targetVal, false);
 
+      // Protein = Red (#ef4444), Carbs = Green (#10b981), Fat = Yellow (#facc15)
       container.innerHTML = `
         <svg class="w-20 h-20 sm:w-28 sm:h-28 transform -rotate-90" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="${r}" fill="none" stroke="#1e293b" stroke-width="9" />
           ${macroSum > 0 ? `
-            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#34d399" stroke-width="9" stroke-dasharray="${pDash} ${circ - pDash}" stroke-dashoffset="${pOffset}" />
-            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#38bdf8" stroke-width="9" stroke-dasharray="${cDash} ${circ - cDash}" stroke-dashoffset="${cOffset}" />
-            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#fb7185" stroke-width="9" stroke-dasharray="${fDash} ${circ - fDash}" stroke-dashoffset="${fOffset}" />
+            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#ef4444" stroke-width="9" stroke-dasharray="${pDash} ${circ - pDash}" stroke-dashoffset="${pOffset}" />
+            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#10b981" stroke-width="9" stroke-dasharray="${cDash} ${circ - cDash}" stroke-dashoffset="${cOffset}" />
+            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#facc15" stroke-width="9" stroke-dasharray="${fDash} ${circ - fDash}" stroke-dashoffset="${fOffset}" />
           ` : ''}
         </svg>
         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
@@ -93,7 +94,8 @@
       const circ = 2 * Math.PI * r;
       const dash = (pct / 100) * circ;
 
-      const color = (pct >= 90 && pct <= 115) ? '#34d399' : (pct > 115 ? '#fb7185' : '#38bdf8');
+      // Water = Blue (#38bdf8)
+      const color = '#38bdf8';
       const curOz = Math.round((currentMl || 0) / 29.5735);
 
       container.innerHTML = `
@@ -122,7 +124,8 @@
       const circ = 2 * Math.PI * r; // ~238.76
       const pct = Math.min(100, Math.round((consumed / targetVal) * 100));
       const dash = (pct / 100) * circ;
-      const color = isOver ? '#fb7185' : (pct >= 90 ? '#34d399' : '#38bdf8');
+      // Energy = Purple (#a78bfa), switches to Red (#ef4444) when over budget
+      const color = isOver ? '#ef4444' : (pct >= 90 ? '#a78bfa' : '#8b5cf6');
 
       container.innerHTML = `
         <svg class="w-20 h-20 sm:w-28 sm:h-28 transform -rotate-90" viewBox="0 0 100 100">
@@ -132,7 +135,7 @@
         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
           <span class="text-xs sm:text-base font-black ${isOver ? 'text-rose-400' : 'text-white'} font-mono leading-none">${isOver ? `+${overKcal}` : remaining.toLocaleString()}</span>
           <span class="text-[8px] sm:text-[9px] ${isOver ? 'text-rose-300' : 'text-slate-400'} font-semibold mt-0.5">${isOver ? 'kcal over' : 'kcal left'}</span>
-          <span class="text-[8px] sm:text-[9px] ${isOver ? 'text-rose-400 font-bold' : 'text-pastel-mint'} font-mono">${pct}%</span>
+          <span class="text-[8px] sm:text-[9px] ${isOver ? 'text-rose-400 font-bold' : 'text-purple-300'} font-mono">${pct}%</span>
         </div>
       `;
 
@@ -148,7 +151,7 @@
           budgetLbl.className = "hidden sm:block text-[10px] text-emerald-400 font-bold truncate";
         } else {
           budgetLbl.textContent = `${remaining.toLocaleString()} kcal left`;
-          budgetLbl.className = "hidden sm:block text-[10px] text-pastel-mint truncate";
+          budgetLbl.className = "hidden sm:block text-[10px] text-pastel-lavender truncate";
         }
       }
     }
@@ -231,7 +234,7 @@
                       <span class="text-[9.5px] px-1.5 py-0.2 rounded font-mono ${n.isVerified ? 'bg-pastel-mint/15 text-pastel-mint' : 'bg-pastel-butter/15 text-pastel-butter'}">${n.isVerified ? '✓ Verified' : '~ Estimated'}</span>
                     </div>
                     <div class="text-[10.5px] text-slate-400 mt-0.5 font-mono truncate">
-                      P: ${n.protein || 0}g | C: ${n.carbs || 0}g | F: ${n.fat || 0}g ${n.fiber ? `| Fib: ${n.fiber}g` : ''} • <span class="text-pastel-mint underline">Micronutrients</span>
+                      <span class="text-rose-400 font-semibold">P: ${n.protein || 0}g</span> | <span class="text-emerald-400 font-semibold">C: ${n.carbs || 0}g</span> | <span class="text-yellow-400 font-semibold">F: ${n.fat || 0}g</span> ${n.fiber ? `| Fib: ${n.fiber}g` : ''} • <span class="text-pastel-mint underline">Micronutrients</span>
                     </div>
                   </div>
                   <div class="flex items-center gap-2 shrink-0">

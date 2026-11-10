@@ -9,9 +9,9 @@
         if (view) view.classList.toggle('hidden', t !== subTab);
         if (btn) {
           if (t === subTab) {
-            btn.className = "px-3.5 py-2 rounded-xl font-bold bg-pastel-butter text-dark-base transition flex items-center gap-1.5 shadow-sm";
+            btn.className = "flex-1 min-w-0 px-2 sm:px-3.5 py-2 rounded-xl font-bold bg-pastel-butter text-dark-base transition flex items-center justify-center gap-1 shadow-sm";
           } else {
-            btn.className = "px-3.5 py-2 rounded-xl font-semibold text-slate-400 hover:text-white transition flex items-center gap-1.5";
+            btn.className = "flex-1 min-w-0 px-2 sm:px-3.5 py-2 rounded-xl font-semibold text-slate-400 hover:text-white transition flex items-center justify-center gap-1";
           }
         }
       });

@@ -55,13 +55,13 @@
       const listWrap = document.getElementById('timeline-events-container');
 
       if (mode === 'calendar') {
-        if (btnCal) btnCal.className = "p-1.5 rounded-lg font-bold bg-pastel-mint text-dark-base transition flex items-center justify-center shadow-sm";
-        if (btnList) btnList.className = "p-1.5 rounded-lg font-medium text-slate-400 hover:text-white transition flex items-center justify-center";
+        if (btnCal) btnCal.className = "h-7 sm:h-8 px-2 sm:px-2.5 rounded-lg font-bold bg-pastel-mint text-dark-base text-xs transition flex items-center justify-center gap-1 shadow-sm";
+        if (btnList) btnList.className = "h-7 sm:h-8 px-2 sm:px-2.5 rounded-lg font-medium text-slate-400 hover:text-white text-xs transition flex items-center justify-center gap-1";
         if (calWrap) calWrap.classList.remove('hidden');
         if (listWrap) listWrap.classList.add('hidden');
       } else {
-        if (btnCal) btnCal.className = "p-1.5 rounded-lg font-medium text-slate-400 hover:text-white transition flex items-center justify-center";
-        if (btnList) btnList.className = "p-1.5 rounded-lg font-bold bg-pastel-mint text-dark-base transition flex items-center justify-center shadow-sm";
+        if (btnCal) btnCal.className = "h-7 sm:h-8 px-2 sm:px-2.5 rounded-lg font-medium text-slate-400 hover:text-white text-xs transition flex items-center justify-center gap-1";
+        if (btnList) btnList.className = "h-7 sm:h-8 px-2 sm:px-2.5 rounded-lg font-bold bg-pastel-mint text-dark-base text-xs transition flex items-center justify-center gap-1 shadow-sm";
         if (calWrap) calWrap.classList.add('hidden');
         if (listWrap) listWrap.classList.remove('hidden');
       }

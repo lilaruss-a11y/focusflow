@@ -837,32 +837,26 @@
             <p class="text-xs text-slate-400 mt-1">Inventory your pantry, plan balanced meals for the week, and auto-generate your grocery shopping list.</p>
           </div>
 
-          <!-- Global Action Buttons -->
-          <div class="flex flex-wrap items-center gap-2">
-            <button type="button" onclick="openReverseChefFromKitchen()" class="flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl bg-gradient-to-r from-pastel-coral to-pastel-peach hover:opacity-90 text-dark-base font-bold text-xs shadow-lg shadow-pastel-coral/20 transition active:scale-95">
-              <i data-lucide="chef-hat" class="w-4 h-4 text-dark-base"></i>
-              <span>Launch Reverse Chef</span>
+          <!-- Global Action Buttons (Condense into one line of icon-only buttons) -->
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <button type="button" onclick="openReverseChefFromKitchen()" class="h-10 w-10 sm:h-9 sm:w-9 flex items-center justify-center rounded-xl bg-gradient-to-r from-pastel-coral to-pastel-peach hover:opacity-90 text-dark-base shadow-md shadow-pastel-coral/20 transition active:scale-95 shrink-0" title="Launch Reverse Chef">
+              <i data-lucide="chef-hat" class="w-4 h-4 text-dark-base shrink-0"></i>
             </button>
-            <button type="button" onclick="openWalmartGroceryImportModal()" class="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-sky/40 text-pastel-sky font-semibold text-xs transition active:scale-95" title="Import Walmart or grocery receipt items with 1-by-1 approval">
-              <i data-lucide="shopping-cart" class="w-4 h-4"></i>
-              <span class="hidden sm:inline">Receipt Import</span>
-              <span class="sm:hidden">Import</span>
+            <button type="button" onclick="openWalmartGroceryImportModal()" class="h-10 w-10 sm:h-9 sm:w-9 flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-sky/40 text-pastel-sky transition active:scale-95 shrink-0" title="Import Walmart or grocery receipt items with 1-by-1 approval">
+              <i data-lucide="shopping-cart" class="w-4 h-4 shrink-0"></i>
             </button>
-            <button type="button" onclick="openBarcodeScannerModal('pantry')" class="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender font-semibold text-xs transition" title="Scan Barcode into Pantry">
-              <i data-lucide="scan-barcode" class="w-4 h-4"></i>
-              <span>Barcode</span>
+            <button type="button" onclick="openBarcodeScannerModal('pantry')" class="h-10 w-10 sm:h-9 sm:w-9 flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender transition shrink-0" title="Scan Barcode into Pantry">
+              <i data-lucide="scan-barcode" class="w-4 h-4 shrink-0"></i>
             </button>
-            <label class="cursor-pointer flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender font-semibold text-xs transition">
-              <i data-lucide="camera" class="w-4 h-4"></i>
-              <span class="hidden sm:inline">Scan Fridge</span>
-              <span class="sm:hidden">Photo</span>
+            <label class="cursor-pointer h-10 w-10 sm:h-9 sm:w-9 flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender transition shrink-0 m-0" title="Scan Fridge Photo with AI Vision">
+              <i data-lucide="camera" class="w-4 h-4 shrink-0"></i>
               <input type="file" accept="image/*" class="hidden" onchange="handlePantryPhotoUpload(event)">
             </label>
-            <button type="button" onclick="openAddPantryItemModal()" class="px-2.5 py-2.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-300 hover:text-white text-xs" title="Add Ingredient Manually">
-              <i data-lucide="plus" class="w-4 h-4"></i>
+            <button type="button" onclick="openAddPantryItemModal()" class="h-10 w-10 sm:h-9 sm:w-9 flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-300 hover:text-white transition shrink-0" title="Add Ingredient Manually">
+              <i data-lucide="plus" class="w-4 h-4 shrink-0"></i>
             </button>
-            <button type="button" onclick="clearDemoPantryItems()" class="px-2.5 py-2.5 rounded-xl bg-dark-elevated hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-dark-border text-xs transition" title="Clear Demo Items (Start Fresh with Real Pantry)">
-              <i data-lucide="trash" class="w-4 h-4"></i>
+            <button type="button" onclick="clearDemoPantryItems()" class="h-10 w-10 sm:h-9 sm:w-9 flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-dark-border transition shrink-0" title="Clear Demo Items (Start Fresh with Real Pantry)">
+              <i data-lucide="trash" class="w-4 h-4 shrink-0"></i>
             </button>
           </div>
         </div>
@@ -914,7 +908,7 @@
 
           <!-- Top View Mode & Multi-Filter Control Panel -->
           <div class="space-y-3 pt-2 border-t border-dark-border/60 text-xs">
-            <!-- Row 1: Dual View Mode Switcher -->
+            <!-- Row 1: Dual View Mode Switcher + Multi-Filter Toggle -->
             <div class="flex items-center justify-between flex-wrap gap-2">
               <div class="flex items-center gap-1 bg-dark-base p-1 rounded-2xl border border-dark-border">
                 <button type="button" onclick="switchPantryViewGroup('zone')" id="btn-pantry-view-zone" class="px-3 py-1.5 rounded-xl font-bold bg-pastel-mint text-dark-base shadow-sm transition flex items-center gap-1.5 text-xs">
@@ -925,39 +919,46 @@
                   <i data-lucide="utensils" class="w-3.5 h-3.5"></i>
                   <span>By Food Type</span>
                 </button>
+                <button type="button" onclick="switchPantryViewGroup('multifilter')" id="btn-pantry-view-multifilter" class="px-3 py-1.5 rounded-xl font-semibold text-slate-300 hover:text-white transition flex items-center gap-1.5 text-xs" title="Toggle multi-filter combination panel">
+                  <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
+                  <span>Multi-Filter</span>
+                </button>
               </div>
 
-              <div class="text-[11px] text-slate-400 font-mono">
-                💡 Combine zone &amp; food type filters below
+              <div id="pantry-view-hint" class="text-[11px] text-slate-400 font-mono">
+                💡 Tap Multi-Filter to combine zone &amp; food filters
               </div>
             </div>
 
-            <!-- Row 2: Physical Kitchen Zone Filter Pills -->
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-slate-400 font-semibold text-[11px] mr-1">Zone:</span>
-              <button type="button" onclick="setPantryZoneFilter('all')" id="btn-pzone-all" class="px-2.5 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition text-[11px]">All Zones</button>
-              <button type="button" onclick="setPantryZoneFilter('fridge')" id="btn-pzone-fridge" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">❄️ Fridge</button>
-              <button type="button" onclick="setPantryZoneFilter('freezer')" id="btn-pzone-freezer" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧊 Freezer</button>
-              <button type="button" onclick="setPantryZoneFilter('counter')" id="btn-pzone-counter" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧺 Counter</button>
-              <button type="button" onclick="setPantryZoneFilter('cupboard')" id="btn-pzone-cupboard" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🚪 Cupboard</button>
-              <button type="button" onclick="setPantryZoneFilter('pantry')" id="btn-pzone-pantry" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥫 Dry Pantry</button>
-              <button type="button" onclick="setPantryZoneFilter('spices')" id="btn-pzone-spices" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧂 Spices</button>
-            </div>
+            <!-- Collapsible Multi-Filter Codex Panel (Hidden unless in Multi-Filter mode) -->
+            <div id="pantry-multifilter-panel" class="hidden space-y-2.5 pt-2 border-t border-dark-border/40">
+              <!-- Row 2: Physical Kitchen Zone Filter Pills -->
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-slate-400 font-semibold text-[11px] mr-1">Zone:</span>
+                <button type="button" onclick="setPantryZoneFilter('all')" id="btn-pzone-all" class="px-2.5 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition text-[11px]">All Zones</button>
+                <button type="button" onclick="setPantryZoneFilter('fridge')" id="btn-pzone-fridge" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥶 Fridge</button>
+                <button type="button" onclick="setPantryZoneFilter('freezer')" id="btn-pzone-freezer" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧊 Freezer</button>
+                <button type="button" onclick="setPantryZoneFilter('counter')" id="btn-pzone-counter" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧺 Counter</button>
+                <button type="button" onclick="setPantryZoneFilter('cupboard')" id="btn-pzone-cupboard" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🚪 Cupboard</button>
+                <button type="button" onclick="setPantryZoneFilter('pantry')" id="btn-pzone-pantry" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥫 Dry Pantry</button>
+                <button type="button" onclick="setPantryZoneFilter('spices')" id="btn-pzone-spices" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧂 Spices</button>
+              </div>
 
-            <!-- Row 3: Food Type Filter Pills -->
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-slate-400 font-semibold text-[11px] mr-1">Food:</span>
-              <button type="button" onclick="setPantryTypeFilter('all')" id="btn-ptype-all" class="px-2.5 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition text-[11px]">All Types</button>
-              <button type="button" onclick="setPantryTypeFilter('protein')" id="btn-ptype-protein" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥩 Protein</button>
-              <button type="button" onclick="setPantryTypeFilter('dairy')" id="btn-ptype-dairy" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥛 Dairy</button>
-              <button type="button" onclick="setPantryTypeFilter('vegetables')" id="btn-ptype-vegetables" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥦 Veggies</button>
-              <button type="button" onclick="setPantryTypeFilter('fruits')" id="btn-ptype-fruits" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🍎 Fruits</button>
-              <button type="button" onclick="setPantryTypeFilter('grains')" id="btn-ptype-grains" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🌾 Grains</button>
-              <button type="button" onclick="setPantryTypeFilter('canned')" id="btn-ptype-canned" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥫 Canned</button>
-              <button type="button" onclick="setPantryTypeFilter('baking')" id="btn-ptype-baking" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧂 Spices &amp; Oils</button>
-              <button type="button" onclick="setPantryTypeFilter('snacks')" id="btn-ptype-snacks" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🍿 Snacks</button>
-              <button type="button" onclick="setPantryTypeFilter('leftovers')" id="btn-ptype-leftovers" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-amber-300 hover:text-white transition text-[11px]">🍲 Leftovers</button>
-              <button type="button" onclick="setPantryTypeFilter('expiring')" id="btn-ptype-expiring" class="px-2.5 py-1 rounded-xl bg-dark-base border border-rose-500/40 text-rose-300 hover:text-white transition text-[11px]">⚠️ Expiring</button>
+              <!-- Row 3: Food Type Filter Pills -->
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-slate-400 font-semibold text-[11px] mr-1">Food:</span>
+                <button type="button" onclick="setPantryTypeFilter('all')" id="btn-ptype-all" class="px-2.5 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition text-[11px]">All Types</button>
+                <button type="button" onclick="setPantryTypeFilter('protein')" id="btn-ptype-protein" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥩 Protein</button>
+                <button type="button" onclick="setPantryTypeFilter('dairy')" id="btn-ptype-dairy" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥛 Dairy</button>
+                <button type="button" onclick="setPantryTypeFilter('vegetables')" id="btn-ptype-vegetables" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥦 Veggies</button>
+                <button type="button" onclick="setPantryTypeFilter('fruits')" id="btn-ptype-fruits" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🍎 Fruits</button>
+                <button type="button" onclick="setPantryTypeFilter('grains')" id="btn-ptype-grains" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🌾 Grains</button>
+                <button type="button" onclick="setPantryTypeFilter('canned')" id="btn-ptype-canned" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥫 Canned</button>
+                <button type="button" onclick="setPantryTypeFilter('baking')" id="btn-ptype-baking" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧂 Spices &amp; Oils</button>
+                <button type="button" onclick="setPantryTypeFilter('snacks')" id="btn-ptype-snacks" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🍿 Snacks</button>
+                <button type="button" onclick="setPantryTypeFilter('leftovers')" id="btn-ptype-leftovers" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-amber-300 hover:text-white transition text-[11px]">🍲 Leftovers</button>
+                <button type="button" onclick="setPantryTypeFilter('expiring')" id="btn-ptype-expiring" class="px-2.5 py-1 rounded-xl bg-dark-base border border-rose-500/40 text-rose-300 hover:text-white transition text-[11px]">⚠️ Expiring</button>
+              </div>
             </div>
           </div>
         </div>
@@ -984,13 +985,13 @@
           </div>
         </div>
 
-        <!-- VIEW CONTAINER 1: BY KITCHEN ZONE (6 Zones) -->
+        <!-- VIEW CONTAINER 1: BY KITCHEN ZONE (7 Zones) -->
         <div id="pantry-grid-zone" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <!-- 1. Fridge: Fresh Crisper -->
           <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
             <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
               <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                <span>❄️</span> Fridge: Fresh Crisper
+                <span>🥬</span> Fridge: Fresh Crisper
               </span>
               <span class="text-xs text-slate-400 font-mono font-bold" id="count-zone-fridge-crisper">0</span>
             </div>
@@ -1001,7 +1002,7 @@
           <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
             <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
               <span class="text-xs font-bold text-pastel-mint flex items-center gap-1.5">
-                <span>🧀</span> Fridge: Main &amp; Deli
+                <span>🥶</span> Fridge: Main &amp; Deli
               </span>
               <span class="text-xs text-slate-400 font-mono font-bold" id="count-zone-fridge-main">0</span>
             </div>
@@ -5207,8 +5208,8 @@
       <div class="space-y-1.5 text-xs">
         <label class="font-semibold text-slate-300">Kitchen Storage Zone:</label>
         <div class="grid grid-cols-4 sm:grid-cols-7 gap-1">
-          <button type="button" onclick="setPantryDetailStorage('fridge-crisper')" id="btn-pantry-storage-fridge-crisper" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Crisper Drawer">❄️ Crisper</button>
-          <button type="button" onclick="setPantryDetailStorage('fridge-main')" id="btn-pantry-storage-fridge-main" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Main Fridge & Deli">🥛 Fridge</button>
+          <button type="button" onclick="setPantryDetailStorage('fridge-crisper')" id="btn-pantry-storage-fridge-crisper" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Crisper Drawer">🥬 Crisper</button>
+          <button type="button" onclick="setPantryDetailStorage('fridge-main')" id="btn-pantry-storage-fridge-main" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Main Fridge & Deli">🥶 Fridge</button>
           <button type="button" onclick="setPantryDetailStorage('freezer')" id="btn-pantry-storage-freezer" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Deep Freeze">🧊 Freezer</button>
           <button type="button" onclick="setPantryDetailStorage('counter')" id="btn-pantry-storage-counter" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Countertop">🧺 Counter</button>
           <button type="button" onclick="setPantryDetailStorage('cupboard')" id="btn-pantry-storage-cupboard" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Cupboard">🚪 Cupboard</button>
@@ -5300,9 +5301,10 @@
           <div>
             <label class="font-semibold text-slate-300 block mb-1">Storage</label>
             <select id="manual-nut-storage" class="w-full bg-dark-base border border-dark-border rounded-xl px-2 py-1.5 text-white text-xs">
-              <option value="fridge">❄️ Fridge</option>
+              <option value="fridge">🥶 Fridge</option>
               <option value="frozen">🧊 Freezer</option>
               <option value="counter">🧺 Counter</option>
+              <option value="cupboard">🚪 Cupboard</option>
               <option value="shelf">🥫 Pantry Shelf</option>
             </select>
           </div>
@@ -6106,7 +6108,7 @@
               <label class="flex items-center gap-2 p-2 rounded-xl bg-dark-elevated border border-dark-border cursor-pointer">
                 <input type="radio" name="wrapup-leftover-dest" value="fridge" checked class="text-pastel-sky">
                 <div>
-                  <span class="block font-semibold text-slate-200">❄️ Fridge</span>
+                  <span class="block font-semibold text-slate-200">🥶 Fridge</span>
                   <span class="text-[9px] text-slate-400">Eat within 3 days</span>
                 </div>
               </label>

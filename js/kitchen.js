@@ -43,19 +43,36 @@
       state.pantryViewGroup = mode;
       const btnZone = document.getElementById('btn-pantry-view-zone');
       const btnType = document.getElementById('btn-pantry-view-type');
+      const btnMulti = document.getElementById('btn-pantry-view-multifilter');
       const gridZone = document.getElementById('pantry-grid-zone');
       const gridType = document.getElementById('pantry-grid-type');
+      const panelMulti = document.getElementById('pantry-multifilter-panel');
+
+      const activeBtnClass = "px-3 py-1.5 rounded-xl font-bold bg-pastel-mint text-dark-base shadow-sm transition flex items-center gap-1.5 text-xs";
+      const inactiveBtnClass = "px-3 py-1.5 rounded-xl font-semibold text-slate-300 hover:text-white transition flex items-center gap-1.5 text-xs";
+
+      if (btnZone) btnZone.className = (mode === 'zone') ? activeBtnClass : inactiveBtnClass;
+      if (btnType) btnType.className = (mode === 'type') ? activeBtnClass : inactiveBtnClass;
+      if (btnMulti) btnMulti.className = (mode === 'multifilter') ? activeBtnClass : inactiveBtnClass;
+
+      // In multi-filter mode, show the multi-filter codex panel; otherwise hide it to save space
+      if (panelMulti) {
+        if (mode === 'multifilter') {
+          panelMulti.classList.remove('hidden');
+        } else {
+          panelMulti.classList.add('hidden');
+        }
+      }
+
       if (mode === 'type') {
-        if (btnType) btnType.className = "px-3 py-1.5 rounded-xl font-bold bg-pastel-mint text-dark-base shadow-sm transition flex items-center gap-1.5 text-xs";
-        if (btnZone) btnZone.className = "px-3 py-1.5 rounded-xl font-semibold text-slate-300 hover:text-white transition flex items-center gap-1.5 text-xs";
         if (gridZone) gridZone.classList.add('hidden');
         if (gridType) gridType.classList.remove('hidden');
       } else {
-        if (btnZone) btnZone.className = "px-3 py-1.5 rounded-xl font-bold bg-pastel-mint text-dark-base shadow-sm transition flex items-center gap-1.5 text-xs";
-        if (btnType) btnType.className = "px-3 py-1.5 rounded-xl font-semibold text-slate-300 hover:text-white transition flex items-center gap-1.5 text-xs";
+        // zone or multifilter defaults to the zone grid
         if (gridZone) gridZone.classList.remove('hidden');
         if (gridType) gridType.classList.add('hidden');
       }
+
       saveAppState();
       renderPantry();
     }

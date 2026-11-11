@@ -107,17 +107,46 @@ html, body {
   }
 }
 
-/* Universal Modal Safe-Area & Header Clearance across all screens */
+/* ==========================================================================
+   Universal Modal Dialog Bounds & Framing
+   - Confined strictly below the top header and above the bottom edge
+   - Internal card scrolls so content never bleeds behind the top frosted glass
+   ========================================================================== */
 div[id$="-modal"] {
-  padding-top: max(84px, calc(env(safe-area-inset-top, 0px) + 64px)) !important;
-  padding-bottom: max(32px, calc(env(safe-area-inset-bottom, 0px) + 24px)) !important;
+  position: fixed !important;
+  top: max(64px, calc(env(safe-area-inset-top, 0px) + 52px)) !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
   z-index: 100 !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  padding: 8px 12px 16px 12px !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+}
+
+div[id$="-modal"].hidden {
+  display: none !important;
+}
+
+/* Modal Inner Card: bounded height so title and close button stay framed */
+div[id$="-modal"] > div {
+  max-height: calc(100dvh - max(84px, calc(env(safe-area-inset-top, 0px) + 72px))) !important;
+  overflow-y: auto !important;
+  margin-top: 4px !important;
+  margin-bottom: 8px !important;
+  box-sizing: border-box !important;
 }
 
 @media (min-width: 640px) {
   div[id$="-modal"] {
-    padding-top: 4.5rem !important;
-    padding-bottom: 3.5rem !important;
+    top: 60px !important;
+    padding: 16px 20px 24px 20px !important;
+  }
+  div[id$="-modal"] > div {
+    max-height: calc(100dvh - 100px) !important;
   }
 }
 
@@ -128,8 +157,10 @@ div[id$="-modal"] {
   }
 }
 
+/* Bottom Navigation Bar: Snug fit with zero dead empty bar */
 .safe-bottom-nav {
-  padding-bottom: max(0.4rem, env(safe-area-inset-bottom, 0.4rem));
+  padding-bottom: max(6px, env(safe-area-inset-bottom, 0px)) !important;
+  padding-top: 6px !important;
 }
 
 /* Clean custom scrollbars */

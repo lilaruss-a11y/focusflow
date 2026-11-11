@@ -18,17 +18,22 @@
     }
 
     function forceAppUpdateAndRefresh() {
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(regs => {
-          for (const reg of regs) {
-            reg.update();
-          }
-        }).catch(() => {});
-      }
       try {
         if (typeof playChime === 'function') playChime('bell');
       } catch (e) {}
-      window.location.reload(true);
+      if ('caches' in window) {
+        caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).catch(() => {});
+      }
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          for (const reg of regs) {
+            reg.unregister().catch(() => {});
+          }
+        }).catch(() => {});
+      }
+      setTimeout(() => {
+        window.location.reload(true);
+      }, 150);
     }
     if (typeof window !== 'undefined') {
       window.forceAppUpdateAndRefresh = forceAppUpdateAndRefresh;

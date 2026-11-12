@@ -36,6 +36,7 @@ html, body {
   overflow: hidden;
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
+  background-color: var(--color-dark-surface);
 }
 
 #main-content-scroll {
@@ -163,8 +164,8 @@ div[id$="-modal"] > div {
 
 /* Bottom Navigation Bar: Anchored flush to bottom display */
 .safe-bottom-nav {
-  padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
-  padding-top: 6px !important;
+  padding-bottom: max(4px, env(safe-area-inset-bottom, 0px)) !important;
+  padding-top: 4px !important;
 }
 
 /* Clean custom scrollbars */

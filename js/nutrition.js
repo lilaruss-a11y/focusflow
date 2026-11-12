@@ -2698,20 +2698,79 @@
       return null;
     }
 
-    // Tier 5: Gemini AI Vision Scanner for Nutrition Facts Label & Package (Handles Curved Bottles & All Micros)
-    async function handleNutritionLabelVisionUpload(event, barcode) {
-      const files = event && event.target && event.target.files;
-      if (!files || files.length === 0) return;
+    // Tier 5: Gemini AI Vision Scanner for Nutrition Facts Label & Package (Dual-Photo Front + Nutrition Facts)
+    window.stagedPackagePhotos = {
+      barcode: { front: null, nutrition: null },
+      manual: { front: null, nutrition: null }
+    };
+
+    function stagePackagePhoto(event, type, context = 'barcode') {
+      const file = event && event.target && event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        const mimeType = file.type || 'image/jpeg';
+        const base64Data = dataUrl.split(',')[1];
+
+        if (!window.stagedPackagePhotos[context]) {
+          window.stagedPackagePhotos[context] = { front: null, nutrition: null };
+        }
+        window.stagedPackagePhotos[context][type] = { base64Data, mimeType, fileName: file.name };
+
+        // Update UI badge
+        const badgeId = `${context}-${type}-badge`;
+        const badgeEl = document.getElementById(badgeId);
+        if (badgeEl) {
+          badgeEl.textContent = '✓ Ready (' + (type === 'front' ? 'Front' : 'Label') + ')';
+          badgeEl.className = 'text-[9px] text-pastel-mint font-bold';
+        }
+
+        const labelId = `${context}-${type}-stage-label`;
+        const labelEl = document.getElementById(labelId);
+        if (labelEl) {
+          labelEl.classList.remove('border-dashed');
+          labelEl.classList.add('border-solid', 'border-pastel-mint');
+        }
+
+        // Notification sound / toast
+        if (typeof playChime === 'function') playChime('pop');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function runDualPackageAiScan(barcode = '', context = 'barcode') {
+      const staged = window.stagedPackagePhotos[context] || {};
+      const inlineImages = [];
+
+      if (staged.front && staged.front.base64Data) {
+        inlineImages.push({
+          base64Data: staged.front.base64Data,
+          mimeType: staged.front.mimeType || 'image/jpeg'
+        });
+      }
+      if (staged.nutrition && staged.nutrition.base64Data) {
+        inlineImages.push({
+          base64Data: staged.nutrition.base64Data,
+          mimeType: staged.nutrition.mimeType || 'image/jpeg'
+        });
+      }
+
+      if (inlineImages.length === 0) {
+        alertBox("Please snap at least one photo (Front of package or Nutrition Facts label) before scanning.", "Photo Needed");
+        return;
+      }
 
       const resBox = document.getElementById('barcode-lookup-result');
-      if (resBox) {
+      if (resBox && context === 'barcode') {
         resBox.innerHTML = `
           <div class="p-3.5 rounded-2xl bg-dark-elevated border border-pastel-lavender/50 text-xs space-y-2">
             <div class="flex items-center gap-2 text-pastel-lavender font-semibold">
               <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>
-              <span id="barcode-ai-label-status">Analyzing Nutrition Facts &amp; Curved Bottle Label with Gemini Vision...</span>
+              <span id="barcode-ai-label-status">Analyzing ${inlineImages.length === 2 ? 'Front & Label Photos' : 'Package Photo'} with Gemini Vision...</span>
             </div>
-            <p class="text-[11px] text-slate-300">Reading calories, macro &amp; micro nutrients (all 13 vitamins and 14 minerals), serving size, and volume...</p>
+            <p class="text-[11px] text-slate-300">Reading product name, package net weight, calories, macro &amp; micro nutrients (all 13 vitamins and 14 minerals), serving size, and volume...</p>
           </div>
         `;
         resBox.classList.remove('hidden');
@@ -2726,22 +2785,6 @@
       }
 
       try {
-        const imagePromises = Array.from(files).slice(0, 2).map(file => {
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              const dataUrl = e.target.result;
-              const mimeType = file.type || 'image/jpeg';
-              const base64Data = dataUrl.split(',')[1];
-              resolve({ base64Data, mimeType });
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-        });
-
-        const inlineImages = await Promise.all(imagePromises);
-
         const prompt = `You are an expert clinical dietitian and OCR engine for food packages, containers, and product labels.
 Analyze the provided photo(s). These photos may include:
 1. FRONT OF PACKAGE: Look closely for the exact product name, brand name, variety, and the net weight or volume printed on the front (e.g. "16 fl oz", "1 lb", "500 g", "12 oz", "1 gal", "32 fl oz", "6 count").
@@ -2871,32 +2914,42 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
             nutrition: completeNutrition
           };
 
-          // Save to personal database immediately
+          // Save to personal database immediately if barcode present
           if (barcode) {
             saveCustomBarcodeItem(barcode, product);
           }
 
-          renderBarcodeProductResult(product);
-          playChime('bell');
+          if (context === 'manual') {
+            openManualNutritionModal({
+              ...product,
+              barcode: barcode || (document.getElementById('manual-nut-barcode') || {}).value || '',
+              isReceiptPairing: activeManualNutritionContext ? activeManualNutritionContext.isReceiptPairing : false,
+              receiptIndex: activeManualNutritionContext ? activeManualNutritionContext.receiptIndex : null,
+              receiptRawCode: activeManualNutritionContext ? activeManualNutritionContext.receiptRawCode : null
+            });
+            alertBox(`Successfully extracted all nutrition data & package size for "${product.name}"!`, "AI Nutrition Extracted ✓");
+          } else {
+            renderBarcodeProductResult(product);
+          }
+          if (typeof playChime === 'function') playChime('bell');
         } else {
-          throw new Error("Unable to parse nutrition data from label photo");
+          throw new Error("Unable to parse nutrition data from photos");
         }
       } catch (err) {
         console.warn("AI label vision error:", err);
-        if (resBox) {
+        if (resBox && context === 'barcode') {
           resBox.innerHTML = `
             <div class="p-3.5 rounded-2xl bg-dark-elevated border border-amber-400/50 text-xs space-y-2.5">
               <div class="text-amber-300 font-semibold flex items-center gap-1.5">
                 <i data-lucide="alert-triangle" class="w-4 h-4"></i>
-                <span>Could not extract nutrition facts from photo</span>
+                <span>Could not extract nutrition facts from photo(s)</span>
               </div>
-              <p class="text-slate-300 text-[11px] leading-relaxed">Curved bottles, reflections, or motion blur can obscure the Nutrition Facts panel. You can take another photo or enter complete nutritional data manually:</p>
+              <p class="text-slate-300 text-[11px] leading-relaxed">Curved surfaces, reflections, or motion blur can obscure the text. You can take clearer photos or enter complete nutritional data manually:</p>
               <div class="flex flex-col sm:flex-row gap-2 pt-1">
-                <label class="px-3.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-slate-400 text-slate-300 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer">
-                  <i data-lucide="camera" class="w-3.5 h-3.5"></i>
-                  <span>Retake Photo</span>
-                  <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleNutritionLabelVisionUpload(event, '${barcode}')">
-                </label>
+                <button type="button" onclick="runDualPackageAiScan('${barcode}')" class="px-3.5 py-1.5 rounded-xl bg-dark-base border border-dark-border hover:border-slate-400 text-slate-300 text-xs font-semibold flex items-center justify-center gap-1.5">
+                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                  <span>Retry AI Scan</span>
+                </button>
                 <button type="button" onclick="openManualNutritionModal({ barcode: '${barcode}' })" class="px-3.5 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-emerald-300 transition">
                   <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                   <span>Enter Nutrition Manually</span>
@@ -2905,8 +2958,27 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
             </div>
           `;
           if (window.lucide) lucide.createIcons();
+        } else {
+          alertBox("Could not extract nutrition facts from photo. Please ensure good lighting and clear text, or enter values manually.", "AI Extraction Notice");
         }
       }
+    }
+
+    // Backward compatibility wrapper for single input events
+    async function handleNutritionLabelVisionUpload(event, barcode) {
+      const files = event && event.target && event.target.files;
+      if (!files || files.length === 0) return;
+
+      const file = files[0];
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const dataUrl = e.target.result;
+        const mimeType = file.type || 'image/jpeg';
+        const base64Data = dataUrl.split(',')[1];
+        window.stagedPackagePhotos.barcode.nutrition = { base64Data, mimeType, fileName: file.name };
+        await runDualPackageAiScan(barcode, 'barcode');
+      };
+      reader.readAsDataURL(file);
       if (event && event.target) event.target.value = '';
     }
 
@@ -2915,11 +2987,12 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       if (!resBox) return;
 
       const qParsed = (product.amount && product.unit) ? { amount: product.amount, unit: product.unit } : parsePackageQuantity(product.quantity);
-      const safeProductJson = JSON.stringify({
+      const fullProduct = {
         ...product,
         amount: qParsed.amount,
         unit: qParsed.unit
-      }).replace(/"/g, '&quot;');
+      };
+      const safeProductJson = JSON.stringify(fullProduct).replace(/"/g, '&quot;');
 
       resBox.innerHTML = `
         <div class="space-y-3 text-xs bg-dark-elevated p-3.5 rounded-2xl border border-pastel-lavender/40 shadow-xl">
@@ -2945,7 +3018,19 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
             <div><span class="text-slate-400 block text-[9px]">FIBER</span><span class="text-pastel-mint font-bold">${product.fiber || 0}g</span></div>
           </div>
 
-          <!-- Action button based on context -->
+          <!-- Detailed Micronutrients & Inspection Action -->
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-pastel-lavender/10 border border-pastel-lavender/30 text-[11px]">
+            <div class="text-slate-300">
+              <span class="font-bold text-white block">Detailed Nutritional Analysis</span>
+              <span class="text-slate-400 text-[10px]">Vitamins, Minerals, Sugars, Sodium, Serving Size</span>
+            </div>
+            <button type="button" onclick="openManualNutritionModal(${safeProductJson})" class="px-3 py-1.5 rounded-xl bg-pastel-lavender text-dark-base font-bold text-xs flex items-center gap-1.5 hover:bg-purple-300 transition shrink-0 shadow-sm">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+              <span>Inspect Full Details</span>
+            </button>
+          </div>
+
+          <!-- Action buttons based on context -->
           <div class="pt-1 flex flex-col sm:flex-row gap-2 justify-end">
             <button type="button" onclick="startBarcodeCamera()" class="px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs flex items-center justify-center gap-1.5">
               <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>

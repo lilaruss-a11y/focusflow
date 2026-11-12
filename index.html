@@ -5231,7 +5231,7 @@
   <!-- ============================================== -->
   <!-- MODAL: COMPREHENSIVE MANUAL NUTRITION FACTS & INGREDIENT EDITOR -->
   <!-- ============================================== -->
-  <div id="manual-nutrition-modal" class="hidden fixed inset-0 z-[75] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
+  <div id="manual-nutrition-modal" class="hidden fixed inset-0 z-[130] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-mint/50 rounded-3xl w-full max-w-lg p-5 sm:p-6 space-y-4 shadow-2xl my-4">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -5253,23 +5253,36 @@
 
       <!-- Basic Item Identification -->
       <div class="space-y-2.5 text-xs">
-        <!-- Quick AI Camera & Barcode Helpers for Fast Capture -->
-        <div class="p-3 rounded-2xl bg-dark-base border border-pastel-lavender/30 flex flex-col sm:flex-row items-center justify-between gap-2.5 shadow-inner">
-          <div class="text-[11px] text-slate-300">
-            <span class="font-bold text-white block">📸 Dual-Side AI Package Scan</span>
-            <span class="text-slate-400 block text-[10px]">Snap front of package (name &amp; weight) + back Nutrition Facts panel</span>
-          </div>
-          <div class="flex items-center gap-1.5 w-full sm:w-auto shrink-0">
-            <label class="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-pastel-lavender text-dark-base font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer hover:bg-purple-300 transition shadow-sm">
-              <i data-lucide="camera" class="w-3.5 h-3.5"></i>
-              <span>Snap Package Photos</span>
-              <input type="file" id="manual-nut-package-photos-input" accept="image/*" capture="environment" multiple class="hidden" onchange="handleNutritionLabelVisionUpload(event, (document.getElementById('manual-nut-barcode') || {}).value || '')">
-            </label>
-            <button type="button" onclick="triggerBarcodeScannerFromManualModal()" class="px-2.5 py-1.5 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-200 border border-dark-border text-xs font-semibold flex items-center gap-1 transition" title="Scan product barcode">
-              <i data-lucide="scan-barcode" class="w-3.5 h-3.5"></i>
-              <span class="hidden sm:inline">Barcode</span>
+        <!-- Quick AI Camera & Barcode Helpers for Fast Capture (Separate Front & Label Slots) -->
+        <div class="p-3 rounded-2xl bg-dark-base border border-pastel-lavender/40 space-y-2 text-xs shadow-inner">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="font-bold text-white block text-[11px]">📸 AI Package Auto-Fill</span>
+              <span class="text-slate-400 block text-[10px]">Snap front (name/size) and Nutrition Facts separately</span>
+            </div>
+            <button type="button" onclick="triggerBarcodeScannerFromManualModal()" class="px-2.5 py-1 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-200 border border-dark-border text-[11px] font-semibold flex items-center gap-1 transition" title="Scan product barcode">
+              <i data-lucide="scan-barcode" class="w-3.5 h-3.5 text-pastel-lavender"></i>
+              <span>Barcode</span>
             </button>
           </div>
+          <div class="grid grid-cols-2 gap-2">
+            <label id="manual-front-stage-label" class="cursor-pointer p-2 rounded-xl bg-dark-elevated border border-dashed border-pastel-sky/50 hover:border-pastel-sky text-center flex flex-col items-center justify-center gap-1 transition shadow-sm">
+              <i data-lucide="camera" class="w-4 h-4 text-pastel-sky"></i>
+              <span class="text-[10px] font-bold text-white">1. Front of Package</span>
+              <span id="manual-front-badge" class="text-[9px] text-slate-400">Name &amp; Size</span>
+              <input type="file" id="manual-front-input" accept="image/*" capture="environment" class="hidden" onchange="stagePackagePhoto(event, 'front', 'manual')">
+            </label>
+            <label id="manual-nutrition-stage-label" class="cursor-pointer p-2 rounded-xl bg-dark-elevated border border-dashed border-pastel-mint/50 hover:border-pastel-mint text-center flex flex-col items-center justify-center gap-1 transition shadow-sm">
+              <i data-lucide="clipboard-list" class="w-4 h-4 text-pastel-mint"></i>
+              <span class="text-[10px] font-bold text-white">2. Nutrition Facts</span>
+              <span id="manual-nutrition-badge" class="text-[9px] text-slate-400">Nutrition Panel</span>
+              <input type="file" id="manual-nutrition-input" accept="image/*" capture="environment" class="hidden" onchange="stagePackagePhoto(event, 'nutrition', 'manual')">
+            </label>
+          </div>
+          <button type="button" id="manual-ai-scan-btn" onclick="runDualPackageAiScan((document.getElementById('manual-nut-barcode') || {}).value || '', 'manual')" class="w-full py-1.5 px-3 rounded-xl bg-gradient-to-r from-pastel-lavender to-pastel-mint text-dark-base font-extrabold text-xs shadow-md flex items-center justify-center gap-1.5 hover:opacity-95 transition">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+            <span>Auto-Fill Form with Gemini AI</span>
+          </button>
         </div>
 
         <input type="hidden" id="manual-nut-barcode" value="">
@@ -5558,7 +5571,7 @@
   </div>
 
   <!-- MODAL: BARCODE SCANNER (CHROME CAMERA + LIVE OPEN FOOD FACTS) -->
-  <div id="barcode-scanner-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
+  <div id="barcode-scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-lavender/50 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div class="flex items-center gap-2.5">
@@ -5600,19 +5613,38 @@
         </div>
       </div>
 
-      <!-- Live Guidance & Snap / AI Label Scan Actions -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-        <span class="text-[11px] text-slate-400">💡 Hold barcode 6-8 inches away in steady light</span>
-        <div class="flex items-center gap-1.5 shrink-0">
-          <label class="cursor-pointer px-2.5 py-1.5 rounded-xl bg-dark-base border border-pastel-lavender/40 hover:border-pastel-lavender text-pastel-lavender text-[11px] font-semibold flex items-center gap-1 transition shadow-sm" title="Snap or upload a clear photo of the barcode lines">
-            <i data-lucide="camera" class="w-3.5 h-3.5"></i>
-            <span>Snap Barcode</span>
-            <input type="file" id="barcode-photo-file-input" accept="image/*" capture="environment" class="hidden" onchange="handleBarcodePhotoUpload(event)">
+      <!-- Dual-Photo Package Staging & AI Extraction (Front of Package + Nutrition Facts Label) -->
+      <div class="p-3 rounded-2xl bg-dark-base border border-pastel-lavender/40 space-y-2.5 text-xs">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5 text-pastel-lavender font-bold text-[11px]">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+            <span>AI Dual-Photo Label Extractor</span>
+          </div>
+          <span class="text-[10px] text-slate-400">Snap front &amp; label separately</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <label id="barcode-front-stage-label" class="cursor-pointer p-2 rounded-xl bg-dark-elevated border border-dashed border-pastel-sky/50 hover:border-pastel-sky text-center flex flex-col items-center justify-center gap-1 transition shadow-sm">
+            <i data-lucide="camera" class="w-4 h-4 text-pastel-sky"></i>
+            <span class="text-[10px] font-bold text-white">1. Front of Package</span>
+            <span id="barcode-front-badge" class="text-[9px] text-slate-400">Name &amp; Size / Oz</span>
+            <input type="file" id="barcode-front-input" accept="image/*" capture="environment" class="hidden" onchange="stagePackagePhoto(event, 'front', 'barcode')">
           </label>
-          <label class="cursor-pointer px-2.5 py-1.5 rounded-xl bg-pastel-lavender/15 hover:bg-pastel-lavender/25 border border-pastel-lavender/40 text-pastel-lavender text-[11px] font-bold flex items-center gap-1 transition shadow-sm" title="Snap photos of Front of package (name &amp; size) + Nutrition Facts label for instant AI macro extraction">
-            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-pastel-lavender"></i>
-            <span>Snap Front &amp; Label (AI)</span>
-            <input type="file" id="barcode-direct-label-input" accept="image/*" capture="environment" multiple class="hidden" onchange="handleNutritionLabelVisionUpload(event, '')">
+          <label id="barcode-nutrition-stage-label" class="cursor-pointer p-2 rounded-xl bg-dark-elevated border border-dashed border-pastel-mint/50 hover:border-pastel-mint text-center flex flex-col items-center justify-center gap-1 transition shadow-sm">
+            <i data-lucide="clipboard-list" class="w-4 h-4 text-pastel-mint"></i>
+            <span class="text-[10px] font-bold text-white">2. Nutrition Facts</span>
+            <span id="barcode-nutrition-badge" class="text-[9px] text-slate-400">Macros &amp; Micros</span>
+            <input type="file" id="barcode-nutrition-input" accept="image/*" capture="environment" class="hidden" onchange="stagePackagePhoto(event, 'nutrition', 'barcode')">
+          </label>
+        </div>
+        <div class="flex items-center gap-2 pt-0.5">
+          <button type="button" id="barcode-ai-scan-btn" onclick="runDualPackageAiScan((document.getElementById('barcode-manual-input') || {}).value || '')" class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-pastel-lavender to-pastel-mint text-dark-base font-extrabold text-xs shadow-md flex items-center justify-center gap-1.5 hover:opacity-95 transition">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+            <span>Scan Selected Photo(s) with AI</span>
+          </button>
+          <label class="cursor-pointer px-2.5 py-2 rounded-xl bg-dark-elevated border border-dark-border hover:border-slate-400 text-slate-300 text-[11px] font-semibold shrink-0 flex items-center gap-1" title="Snap barcode lines directly">
+            <i data-lucide="scan" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">Snap Barcode</span>
+            <input type="file" id="barcode-photo-file-input" accept="image/*" capture="environment" class="hidden" onchange="handleBarcodePhotoUpload(event)">
           </label>
         </div>
       </div>

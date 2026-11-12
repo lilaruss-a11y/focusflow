@@ -152,11 +152,21 @@ After the user approves your plan and you make the changes:
 4. **Provide a Testing Checklist:**
    Give the user a simple, 1-2-3 checklist of what to tap in Google Chrome on their computer or phone to verify the change.
 
-### Rule 3: Auto-Sync to `site/` and Push to GitHub
+### Rule 3: Auto-Sync, Version Bump & GitHub Pages Deployment Verification
 After your tests pass:
-1. Synchronize the modified files from the root into the `site/` folder.
-2. Commit the changes to Git with a concise, descriptive message.
-3. Push to `origin main` so the user's Chrome app updates immediately.
+1. **Synchronize & Version Bump:**
+   - Synchronize all modified files from root into the `site/` folder.
+   - Whenever CSS, JS, HTML, or assets are modified, ALWAYS bump `CACHE_VERSION` in `sw.js` and `site/sw.js`, and increment the cache-buster query on stylesheets (e.g. `css/styles.css?v=XX`) in `index.html` and `site/index.html`.
+2. **Commit & Push:**
+   - Commit the changes to Git with a concise, descriptive message.
+   - Push to `origin main`.
+3. **MANDATORY Deployment Gate (Never Claim "Live" Before Verifying GitHub Pages):**
+   - You are **STRICTLY FORBIDDEN** from telling the user that changes are live or ready to test immediately after pushing.
+   - You MUST poll GitHub's deployment status via the API:
+     ```bash
+     curl -s "https://api.github.com/repos/lilaruss-a11y/focusflow/actions/runs?per_page=1" | grep -E '"status"|"conclusion"'
+     ```
+   - Only after the build reports `"status": "completed"` and `"conclusion": "success"` may you conclude your turn and invite the user to refresh their app.
 
 ### Rule 4: Thrash Prevention (Circuit Breaker)
 - If an issue is not resolved after **2 attempts**, STOP editing.

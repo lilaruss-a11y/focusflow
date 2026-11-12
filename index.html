@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=52">
+  <link rel="stylesheet" href="css/styles.css?v=53">
   <script>
     function resetViewportZoom() {
       try {
@@ -5253,6 +5253,25 @@
 
       <!-- Basic Item Identification -->
       <div class="space-y-2.5 text-xs">
+        <!-- Quick AI Camera & Barcode Helpers for Fast Capture -->
+        <div class="p-3 rounded-2xl bg-dark-base border border-pastel-lavender/30 flex flex-col sm:flex-row items-center justify-between gap-2.5 shadow-inner">
+          <div class="text-[11px] text-slate-300">
+            <span class="font-bold text-white block">📸 Dual-Side AI Package Scan</span>
+            <span class="text-slate-400 block text-[10px]">Snap front of package (name &amp; weight) + back Nutrition Facts panel</span>
+          </div>
+          <div class="flex items-center gap-1.5 w-full sm:w-auto shrink-0">
+            <label class="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-pastel-lavender text-dark-base font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer hover:bg-purple-300 transition shadow-sm">
+              <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+              <span>Snap Package Photos</span>
+              <input type="file" id="manual-nut-package-photos-input" accept="image/*" capture="environment" multiple class="hidden" onchange="handleNutritionLabelVisionUpload(event, (document.getElementById('manual-nut-barcode') || {}).value || '')">
+            </label>
+            <button type="button" onclick="triggerBarcodeScannerFromManualModal()" class="px-2.5 py-1.5 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-200 border border-dark-border text-xs font-semibold flex items-center gap-1 transition" title="Scan product barcode">
+              <i data-lucide="scan-barcode" class="w-3.5 h-3.5"></i>
+              <span class="hidden sm:inline">Barcode</span>
+            </button>
+          </div>
+        </div>
+
         <input type="hidden" id="manual-nut-barcode" value="">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
@@ -5590,9 +5609,9 @@
             <span>Snap Barcode</span>
             <input type="file" id="barcode-photo-file-input" accept="image/*" capture="environment" class="hidden" onchange="handleBarcodePhotoUpload(event)">
           </label>
-          <label class="cursor-pointer px-2.5 py-1.5 rounded-xl bg-pastel-lavender/15 hover:bg-pastel-lavender/25 border border-pastel-lavender/40 text-pastel-lavender text-[11px] font-bold flex items-center gap-1 transition shadow-sm" title="Snap photo of Nutrition Facts label & package for instant AI macro extraction">
+          <label class="cursor-pointer px-2.5 py-1.5 rounded-xl bg-pastel-lavender/15 hover:bg-pastel-lavender/25 border border-pastel-lavender/40 text-pastel-lavender text-[11px] font-bold flex items-center gap-1 transition shadow-sm" title="Snap photos of Front of package (name &amp; size) + Nutrition Facts label for instant AI macro extraction">
             <i data-lucide="sparkles" class="w-3.5 h-3.5 text-pastel-lavender"></i>
-            <span>Scan Label (AI)</span>
+            <span>Snap Front &amp; Label (AI)</span>
             <input type="file" id="barcode-direct-label-input" accept="image/*" capture="environment" multiple class="hidden" onchange="handleNutritionLabelVisionUpload(event, '')">
           </label>
         </div>

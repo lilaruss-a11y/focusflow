@@ -688,7 +688,18 @@ function resolveReceiptItemNutrition(item) {
 function pairReceiptItemWithLabelOrBarcode(idx) {
   const item = (state.incomingGroceriesApprovalList || [])[idx];
   if (!item) return;
-  if (typeof openManualNutritionModal === 'function') {
+
+  // Set context for receipt pairing
+  window.activeReceiptPairingItem = {
+    receiptIndex: idx,
+    receiptRawCode: item.rawName || item.name,
+    name: item.name
+  };
+
+  // Open the Barcode Scanner modal directly in receipt-pairing context
+  if (typeof openBarcodeScannerModal === 'function') {
+    openBarcodeScannerModal('receipt_pair');
+  } else if (typeof openManualNutritionModal === 'function') {
     openManualNutritionModal({
       barcode: '',
       name: item.name,

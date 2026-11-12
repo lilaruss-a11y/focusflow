@@ -2742,12 +2742,16 @@
 
         const inlineImages = await Promise.all(imagePromises);
 
-        const prompt = `You are an expert clinical dietitian and OCR engine for food packages, bottles, and curved containers.
-Analyze the provided photo(s) of the Nutrition Facts label and/or package front.
-CRITICAL INSTRUCTIONS FOR CURVED BOTTLES, JARS & CANS:
-- The image may feature curved or cylindrical containers (such as glass/plastic bottles, cans, tubs, jars) where the Nutrition Facts panel or ingredient text wraps around the curvature, exhibits glare/reflections, or has text rotated.
-- Carefully read curved, wrapped text across lines, accounting for perspective distortion and specular reflections.
-- Extract the product name, brand, package size / volume (e.g. 16 fl oz, 500 ml, 12 oz, 1 L, 1 gal, items), serving size, category, and storage.
+        const prompt = `You are an expert clinical dietitian and OCR engine for food packages, containers, and product labels.
+Analyze the provided photo(s). These photos may include:
+1. FRONT OF PACKAGE: Look closely for the exact product name, brand name, variety, and the net weight or volume printed on the front (e.g. "16 fl oz", "1 lb", "500 g", "12 oz", "1 gal", "32 fl oz", "6 count").
+2. NUTRITION FACTS PANEL / BACK OF PACKAGE: Look for calories, serving size, macronutrients, and vitamins/minerals.
+3. CURVED BOTTLES, JARS, TUBS & CANS: Text may wrap around curved surfaces or have glare. Account for perspective distortion and specular reflections.
+
+CRITICAL EXTRACTION GOALS:
+- Extract the exact product name and brand from the package front.
+- Extract the exact total package size/weight (e.g. 16, 32, 500, 1) and unit (e.g. "fl oz", "oz", "g", "lb", "ml", "items").
+- Extract the serving size description (e.g. "1 cup (240ml)", "2 tbsp (30g)", "1 pouch").
 - Extract COMPLETE nutritional values:
   - Calories (kcal)
   - Macronutrients: protein (g), carbs (g), fat (g), fiber (g), sugar (g), addedSugar (g), satFat (g), transFat (g), sodium (mg), cholesterol (mg), water (ml)
@@ -2949,7 +2953,7 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
             </button>
             <button type="button" onclick="applyScannedBarcodeFood(${safeProductJson})" class="px-4 py-2 rounded-xl bg-gradient-to-r from-pastel-mint to-emerald-400 text-dark-base font-extrabold text-xs shadow-md shadow-pastel-mint/20 flex items-center justify-center gap-1.5 hover:opacity-95 transition">
               <i data-lucide="plus-circle" class="w-4 h-4"></i>
-              <span>${barcodeScannerContext === 'pantry' ? 'Add Item to Pantry' : (barcodeScannerContext === 'recipe' ? 'Add to Recipe' : 'Log Food')}</span>
+              <span>${barcodeScannerContext === 'receipt_pair' ? 'Pair to Receipt Item' : (barcodeScannerContext === 'pantry' ? 'Add Item to Pantry' : (barcodeScannerContext === 'recipe' ? 'Add to Recipe' : 'Log Food'))}</span>
             </button>
           </div>
         </div>
@@ -3089,6 +3093,11 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
         amount: 1,
         unit: 'items'
       });
+    }
+
+    function triggerBarcodeScannerFromManualModal() {
+      const currentName = (document.getElementById('manual-nut-name') || {}).value || '';
+      openBarcodeScannerModal('manual_modal');
     }
 
     // ==============================================
@@ -3468,6 +3477,66 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
         micros
       };
 
+      if (barcodeScannerContext === 'receipt_pair' && window.activeReceiptPairingItem) {
+        const pairingInfo = window.activeReceiptPairingItem;
+        const rawCode = pairingInfo.receiptRawCode || product.name;
+        if (typeof saveReceiptNutritionCatalogEntry === 'function') {
+          saveReceiptNutritionCatalogEntry(rawCode, product);
+        }
+        if (state.incomingGroceriesApprovalList && state.incomingGroceriesApprovalList[pairingInfo.receiptIndex]) {
+          const rItem = state.incomingGroceriesApprovalList[pairingInfo.receiptIndex];
+          rItem.name = product.name;
+          if (product.amount && !isNaN(product.amount)) rItem.amount = product.amount;
+          if (product.unit) rItem.unit = product.unit;
+          if (product.storage) rItem.storage = product.storage;
+          if (product.category) rItem.category = product.category;
+          rItem.nutrition = completeNutrition;
+          rItem.isVerified = true;
+          rItem.sourceBadge = '✓ Exact Label Verified';
+          rItem.nutritionSource = 'Exact Label Verified';
+          if (product.barcode) rItem.barcode = product.barcode;
+          if (typeof renderIncomingGroceriesApprovalList === 'function') {
+            renderIncomingGroceriesApprovalList(state.incomingGroceriesApprovalList);
+          }
+        }
+        window.activeReceiptPairingItem = null;
+        alertBox(`Paired "${product.name}" to receipt store code! FocusFlow learned exact nutrition and package size.`, "Receipt Code Paired ✓");
+        return;
+      }
+
+      if (barcodeScannerContext === 'manual_modal') {
+        const setVal = (id, val) => {
+          const el = document.getElementById(id);
+          if (el && val != null && val !== '') el.value = val;
+        };
+        setVal('manual-nut-barcode', product.barcode || '');
+        setVal('manual-nut-name', product.name);
+        setVal('manual-nut-brand', product.brand || '');
+        setVal('manual-nut-amount', product.amount || 1);
+        setVal('manual-nut-unit', product.unit || 'items');
+        setVal('manual-nut-cat', cat);
+        setVal('manual-nut-storage', stor);
+        setVal('manual-nut-kcal', kcal);
+        setVal('manual-nut-protein', protein);
+        setVal('manual-nut-carbs', carbs);
+        setVal('manual-nut-fat', fat);
+        setVal('manual-nut-fiber', fiber);
+        setVal('manual-nut-sugar', sugar);
+        setVal('manual-nut-sat-fat', satFat);
+        setVal('manual-nut-sodium', sodium);
+
+        const bBadge = document.getElementById('manual-nut-barcode-badge');
+        if (bBadge && product.barcode) {
+          bBadge.textContent = `UPC: ${product.barcode}`;
+          bBadge.classList.remove('hidden');
+        }
+
+        const modal = document.getElementById('manual-nutrition-modal');
+        if (modal) modal.classList.remove('hidden');
+        alertBox(`Auto-filled nutrition & package facts for "${product.name}"!`, "Scanned Info Loaded");
+        return;
+      }
+
       if (barcodeScannerContext === 'recipe') {
         const ingInput = document.getElementById('recipe-ingredients-input');
         if (ingInput) {
@@ -3535,5 +3604,6 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       window.setLogMealType = setLogMealType;
       window.deleteFoodEntry = deleteFoodEntry;
       window.renderRemainingCaloriesDonut = renderRemainingCaloriesDonut;
+      window.triggerBarcodeScannerFromManualModal = triggerBarcodeScannerFromManualModal;
     }
 

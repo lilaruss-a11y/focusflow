@@ -56,5 +56,13 @@
     "check_type": "forbidden_pattern",
     "pattern": "(var|let|const)\\s+commonFoodsDatabase\\b",
     "is_regex": true
+  },
+  {
+    "id": "bottom_bar_viewport_docking",
+    "description": "Never use position:fixed with conflicting h-[100dvh] on body for bottom docks; use natural flex flow with min-height: -webkit-fill-available and verify GitHub Pages deployment build before notifying user",
+    "file": "css/styles.css",
+    "check_type": "forbidden_pattern",
+    "pattern": "bottom_bar_viewport_docking",
+    "is_regex": false
   }
 ]

@@ -17,23 +17,30 @@
       }
     }
 
-    function forceAppUpdateAndRefresh() {
+    async function forceAppUpdateAndRefresh() {
       try {
         if (typeof playChime === 'function') playChime('bell');
       } catch (e) {}
-      if ('caches' in window) {
-        caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).catch(() => {});
-      }
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(regs => {
-          for (const reg of regs) {
-            reg.unregister().catch(() => {});
-          }
-        }).catch(() => {});
-      }
-      setTimeout(() => {
-        window.location.reload(true);
-      }, 150);
+
+      // Cleanly evict all service worker caches
+      try {
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+      } catch (e) {}
+
+      // Unregister active service worker registrations
+      try {
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        }
+      } catch (e) {}
+
+      // Hard reload with cache-bust param to defeat any lingering HTTP disk cache
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.location.replace(cleanUrl + '?v=' + Date.now());
     }
     if (typeof window !== 'undefined') {
       window.forceAppUpdateAndRefresh = forceAppUpdateAndRefresh;

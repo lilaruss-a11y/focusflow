@@ -345,6 +345,44 @@ for mod_file, binfo in MODULE_BOUNDARIES.items():
             success(f"{mod_file:22} strictly confined to {binfo['name']}.")
 
 # --- 6. Run Learned Regression Suite (tests/regressions.json) ---
+print("\n5b. Verifying all button and link click handlers for dead code...")
+with open(os.path.join(BASE_DIR, "index.html"), "r", encoding="utf-8") as f:
+    index_html = f.read()
+
+all_js = ""
+for js_dir in ["js", "data"]:
+    full_d = os.path.join(BASE_DIR, js_dir)
+    if os.path.exists(full_d):
+        for jname in sorted(os.listdir(full_d)):
+            if jname.endswith(".js"):
+                with open(os.path.join(full_d, jname), "r", encoding="utf-8") as jf:
+                    all_js += jf.read() + "\n"
+
+declared_fns = set(re.findall(r'function\s+([a-zA-Z0-9_$]+)\s*\(', all_js))
+declared_fns.update(re.findall(r'(?:window\.)([a-zA-Z0-9_$]+)\s*=', all_js))
+declared_fns.update(re.findall(r'(?:const|let|var)\s+([a-zA-Z0-9_$]+)\s*=\s*(?:function|\()', all_js))
+
+standard_builtins = {
+    'if', 'for', 'switch', 'alert', 'confirm', 'parseInt', 'parseFloat',
+    'Boolean', 'String', 'stopPropagation', 'preventDefault', 'close',
+    'focus', 'blur', 'submit', 'reset', 'scroll', 'scrollTo', 'open', 'print'
+}
+
+raw_onclicks = re.findall(r'onclick=["\']([^"\']+)["\']', index_html)
+dead_calls = set()
+for raw in raw_onclicks:
+    calls = re.findall(r'([a-zA-Z0-9_$]+)\s*\(', raw)
+    for c in calls:
+        if c not in standard_builtins and c not in declared_fns:
+            if not any(f"{obj}.{c}" in raw or f"{c}." in raw for obj in ['Math', 'event', 'this', 'target', 'document', 'window', 'calendarHistory', 'state']):
+                dead_calls.add(c)
+
+if dead_calls:
+    for dc in sorted(dead_calls):
+        error(f"Dead button click handler detected: function '{dc}()' called in index.html is not declared in any JavaScript file!")
+else:
+    success(f"All {len(raw_onclicks)} onclick handlers in index.html resolve to valid functions.")
+
 print("\n6. Testing against known past mistakes...")
 if not os.path.exists(REGRESSIONS_FILE):
     print("  ℹ️ No learned regressions registered yet.")

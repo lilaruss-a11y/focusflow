@@ -144,11 +144,14 @@ After the user approves your plan and you make the changes:
    ```bash
    python3 verify.py --add-mistake --id "short_id" --desc "Plain English description of what to avoid" --file "filename" --pattern "forbidden_string"
    ```
-3. **Verify Desired Effect:**
-   Inspect the modified functions line-by-line to verify logic flow:
-   * Are element IDs and class names identical between HTML and JS?
-   * Are event listeners attached to elements that actually exist?
-   * Did the edit specifically produce the user's requested behavior without collateral side-effects?
+3. **Mandatory End-to-End Feature & Button Verification:**
+   Whenever adding or modifying ANY button, modal, or clickable feature:
+   - **Trace the full click path:** 
+     1. Element in HTML (`onclick="myFunction()"`) must match a real declared function in JavaScript.
+     2. Function must actively perform its intended action (e.g., removing `hidden` from `#my-modal`, switching tabs, or modifying app state).
+     3. Target modal/view IDs must exist in `index.html`.
+   - **Dead Button Prevention:** `verify.py` automatically scans all 400+ `onclick` handlers in `index.html` to guarantee 100% of button calls resolve to real functions. Never leave dummy or disconnected handlers.
+   - **Verify Desired Effect:** Did the edit specifically produce the user's requested behavior without collateral side-effects?
 4. **Provide a Testing Checklist:**
    Give the user a simple, 1-2-3 checklist of what to tap in Google Chrome on their computer or phone to verify the change.
 

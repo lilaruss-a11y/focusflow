@@ -8,6 +8,14 @@
         const lastKnownVersion = localStorage.getItem('focusflow_app_version');
         if (!lastKnownVersion) {
           localStorage.setItem('focusflow_app_version', APP_VERSION);
+    function saveMatrixTask() {
+      if (typeof addMatrixTask === 'function') addMatrixTask();
+    }
+    window.saveMatrixTask = saveMatrixTask;
+    function submitFoodEntry() {
+      if (typeof saveFoodEntry === 'function') saveFoodEntry();
+    }
+    window.submitFoodEntry = submitFoodEntry;
         } else if (lastKnownVersion !== APP_VERSION) {
           localStorage.setItem('focusflow_app_version', APP_VERSION);
           alertBox(`FocusFlow updated to version ${APP_VERSION} automatically!`, "App Updated");

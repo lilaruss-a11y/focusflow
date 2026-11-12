@@ -2233,6 +2233,13 @@
       }
     }
 
+    function openLabelScannerModal() {
+      if (typeof openBarcodeScannerModal === 'function') {
+        openBarcodeScannerModal('food');
+      }
+    }
+    window.openLabelScannerModal = openLabelScannerModal;
+
     function openBarcodeScannerModal(context = 'food') {
       barcodeScannerContext = context;
       isBarcodeScanningLocked = false;

@@ -772,7 +772,7 @@
           }
         });
 
-        navigator.serviceWorker.register('./sw.js?v=48').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=51').then((reg) => {
           if (!reg) return;
 
           if (reg.waiting) {

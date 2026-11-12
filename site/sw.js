@@ -2,7 +2,7 @@
 // - The app page (index.html): network-first, falls back to the cached copy when offline.
 // - Libraries from CDNs (Tailwind, Lucide, Firebase SDK, fonts): cache-first.
 // - Google sign-in, Firestore and other API traffic is never touched (always goes to the network).
-const CACHE_VERSION = 'focusflow-v48-multifilter-fresh';
+const CACHE_VERSION = 'focusflow-v49-live-pages-trigger';
 const APP_SHELL = [
   './',
   './index.html',

@@ -150,12 +150,51 @@
       const val = (input.value || '').trim();
       if (!val) return;
 
+      // 1. Check if unified food or recipe database has a close match (e.g. "Apple", "German Pancakes", "Rolled Oats")
+      const unifiedMatches = (typeof getUnifiedFoodOrMeal === 'function') ? getUnifiedFoodOrMeal(val) : [];
+      const match = (typeof findClosestUsdaFood === 'function') ? findClosestUsdaFood(val) : null;
+      const refItem = unifiedMatches[0] || null;
+
+      if (refItem) {
+        addFoodMatchToPantry(refItem);
+        return;
+      }
+
+      if (match) {
+        addFoodMatchToPantry({
+          name: match.name,
+          category: match.category || 'produce',
+          kcal: match.kcal,
+          protein: match.protein,
+          carbs: match.carbs,
+          fat: match.fat,
+          fiber: match.fiber || 0,
+          sugar: match.sugar || 0,
+          satFat: match.satFat || 0,
+          sodium: match.sodium || 0,
+          water: match.water || 0,
+          serving: match.serving || '1 serving',
+          servingGrams: match.servingGrams || 100,
+          verifiedNutrients: match.verifiedNutrients || {},
+          micros: match.micros || {},
+          isVerified: Boolean(match.isVerified),
+          source: 'USDA'
+        });
+        return;
+      }
+
+      // 2. Fallback to smart categorization if no direct database match
       let cat = 'produce';
       if (/chicken|beef|meat|egg|salmon|fish|protein|yogurt|milk|cheese|tofu|turkey|bacon/i.test(val)) cat = 'protein';
       else if (/rice|oat|quinoa|bread|pasta|cereal|flour|noodle|tortilla|bagel/i.test(val)) cat = 'grains';
       else if (/oil|sauce|dressing|condiment|nut|seed|spice|salt|pepper|vinegar|honey|syrup|butter/i.test(val)) cat = 'condiments';
 
       const storage = (cat === 'protein' || cat === 'produce') ? 'fridge' : 'shelf';
+      const defaultGrams = (cat === 'protein') ? 112 : ((cat === 'produce') ? 150 : 50);
+
+      const estMicros = (typeof estimateMicronutrientsForFood === 'function')
+        ? estimateMicronutrientsForFood(cat, 120, 5, 15, 3, val, defaultGrams)
+        : {};
 
       if (!Array.isArray(state.pantry)) state.pantry = [];
       state.pantry.push({
@@ -165,7 +204,36 @@
         storage: storage,
         amount: 1,
         unit: 'item',
-        dateAdded: new Date().toISOString().split('T')[0]
+        serving: '1 serving',
+        servingGrams: defaultGrams,
+        dateAdded: new Date().toISOString().split('T')[0],
+        kcal: cat === 'protein' ? 180 : (cat === 'produce' ? 50 : 130),
+        protein: cat === 'protein' ? 24 : 1.5,
+        carbs: cat === 'grains' ? 26 : (cat === 'produce' ? 12 : 2),
+        fat: cat === 'condiments' ? 14 : (cat === 'protein' ? 6 : 0.5),
+        fiber: cat === 'produce' ? 3 : (cat === 'grains' ? 2 : 0),
+        sugar: cat === 'produce' ? 8 : 1,
+        satFat: cat === 'protein' ? 2 : 0.2,
+        sodium: 45,
+        water: cat === 'produce' ? 85 : 10,
+        verifiedNutrients: {},
+        isVerified: false,
+        sourceBadge: '~ Clinical Estimate',
+        nutrition: {
+          kcal: cat === 'protein' ? 180 : (cat === 'produce' ? 50 : 130),
+          protein: cat === 'protein' ? 24 : 1.5,
+          carbs: cat === 'grains' ? 26 : (cat === 'produce' ? 12 : 2),
+          fat: cat === 'condiments' ? 14 : (cat === 'protein' ? 6 : 0.5),
+          fiber: cat === 'produce' ? 3 : (cat === 'grains' ? 2 : 0),
+          sugar: cat === 'produce' ? 8 : 1,
+          satFat: cat === 'protein' ? 2 : 0.2,
+          sodium: 45,
+          water: cat === 'produce' ? 85 : 10,
+          serving: '1 serving',
+          servingGrams: defaultGrams,
+          verifiedNutrients: {},
+          micros: estMicros
+        }
       });
 
       input.value = '';
@@ -2389,26 +2457,38 @@
       const item = (state.pantry || []).find(p => p.id === id);
       if (!item) return;
       const u = (item.unit || 'items').toLowerCase().trim();
+      const currentAmt = parseFloat(item.amount) || 1;
 
-      // Cycle through: oz -> g -> fl oz -> ml -> items -> servings -> oz
+      // Cycle with sensible amount conversions:
+      // items (1) -> servings (1) -> oz (3.5) -> g (100) -> fl oz (8) -> ml (240) -> items (1)
       let nextUnit = 'oz';
-      if (u === 'oz' || u.includes('ounce')) {
-        nextUnit = 'g';
-      } else if (u === 'g' || u.includes('gram')) {
-        nextUnit = 'fl oz';
-      } else if (u.includes('fl') || u === 'fluid oz') {
-        nextUnit = 'ml';
-      } else if (u === 'ml' || u.includes('milli')) {
-        nextUnit = 'items';
-      } else if (u === 'item' || u === 'items' || u === 'each' || u === 'ea' || u === 'count' || u.includes('pc')) {
+      let nextAmt = currentAmt;
+
+      if (u === 'item' || u === 'items' || u === 'each' || u === 'ea' || u === 'count' || u.includes('pc')) {
         nextUnit = 'servings';
+        nextAmt = currentAmt;
       } else if (u.includes('serv')) {
         nextUnit = 'oz';
+        nextAmt = Math.round((item.servingGrams ? item.servingGrams * 0.035274 * currentAmt : currentAmt * 3.5) * 10) / 10;
+      } else if (u === 'oz' || u.includes('ounce')) {
+        nextUnit = 'g';
+        nextAmt = Math.round(currentAmt * 28.3495);
+      } else if (u === 'g' || u.includes('gram')) {
+        nextUnit = 'fl oz';
+        nextAmt = Math.round((currentAmt / 29.5735) * 10) / 10 || 1;
+      } else if (u.includes('fl') || u === 'fluid oz') {
+        nextUnit = 'ml';
+        nextAmt = Math.round(currentAmt * 29.5735);
+      } else if (u === 'ml' || u.includes('milli')) {
+        nextUnit = 'items';
+        nextAmt = 1;
       } else {
-        nextUnit = 'oz';
+        nextUnit = 'items';
+        nextAmt = 1;
       }
 
       item.unit = nextUnit;
+      item.amount = Math.max(0.1, nextAmt);
       saveAppState();
       renderPantry();
       playChime('bell');
@@ -2447,6 +2527,21 @@
       `;
     }
 
+    function setPantrySortOrder(order) {
+      state.pantrySortOrder = order;
+      ['expiring', 'name', 'recent'].forEach(o => {
+        const btn = document.getElementById(`btn-psort-${o}`);
+        if (!btn) return;
+        if (o === order) {
+          btn.className = "px-2 py-0.5 rounded-lg bg-pastel-butter text-dark-base font-bold text-[10.5px] shadow-sm transition";
+        } else {
+          btn.className = "px-2 py-0.5 rounded-lg text-slate-400 hover:text-white text-[10.5px] transition";
+        }
+      });
+      saveAppState();
+      renderPantry();
+    }
+
     function renderPantry() {
       // 1. Zone Lists (7 Zones)
       const zoneLists = {
@@ -2481,8 +2576,23 @@
       const zoneFilter = state.pantryZoneFilter || 'all';
       const typeFilter = state.pantryTypeFilter || 'all';
       const viewMode = state.pantryViewGroup || 'zone';
+      const sortOrder = state.pantrySortOrder || 'expiring';
 
-      (state.pantry || []).forEach(item => {
+      // Sort pantry items according to chosen sortOrder
+      const sortedItems = [...(state.pantry || [])].sort((a, b) => {
+        if (sortOrder === 'name') {
+          return (a.name || '').localeCompare(b.name || '');
+        } else if (sortOrder === 'recent') {
+          return (b.dateAdded || '').localeCompare(a.dateAdded || '');
+        } else {
+          // 'expiring' soonest first; items without exp date go to the bottom
+          const aExp = a.expirationDate ? new Date(a.expirationDate).getTime() : Infinity;
+          const bExp = b.expirationDate ? new Date(b.expirationDate).getTime() : Infinity;
+          return aExp - bExp;
+        }
+      });
+
+      sortedItems.forEach(item => {
         if (!item.storage) {
           const z = getItemZone(item);
           item.storage = z.startsWith('fridge') ? 'fridge' : (z === 'counter' ? 'counter' : (z === 'freezer' ? 'frozen' : (z === 'cupboard' ? 'cupboard' : 'shelf')));

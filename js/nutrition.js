@@ -2711,40 +2711,92 @@
       manual: { front: null, nutrition: null }
     };
 
-    function stagePackagePhoto(event, type, context = 'barcode') {
+    function compressImageForVision(file, maxDimension = 1600, quality = 0.85) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onerror = () => resolve(null);
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onerror = () => {
+            const rawDataUrl = ev.target.result;
+            const b64 = (rawDataUrl.indexOf(',') !== -1) ? rawDataUrl.split(',')[1] : rawDataUrl;
+            resolve({ base64Data: b64, mimeType: file.type || 'image/jpeg' });
+          };
+          img.onload = () => {
+            try {
+              let width = img.width;
+              let height = img.height;
+              if (width > maxDimension || height > maxDimension) {
+                if (width > height) {
+                  height = Math.round((height * maxDimension) / width);
+                  width = maxDimension;
+                } else {
+                  width = Math.round((width * maxDimension) / height);
+                  height = maxDimension;
+                }
+              }
+              const canvas = document.createElement('canvas');
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+              const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+              const b64 = compressedDataUrl.split(',')[1];
+              resolve({ base64Data: b64, mimeType: 'image/jpeg' });
+            } catch (e) {
+              const rawDataUrl = ev.target.result;
+              const b64 = (rawDataUrl.indexOf(',') !== -1) ? rawDataUrl.split(',')[1] : rawDataUrl;
+              resolve({ base64Data: b64, mimeType: file.type || 'image/jpeg' });
+            }
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function stagePackagePhoto(event, type, context = 'barcode') {
       const file = event && event.target && event.target.files && event.target.files[0];
       if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUrl = e.target.result;
-        const mimeType = file.type || 'image/jpeg';
-        const base64Data = dataUrl.split(',')[1];
+      const badgeId = `${context}-${type}-badge`;
+      const badgeEl = document.getElementById(badgeId);
+      if (badgeEl) {
+        badgeEl.textContent = '⏳ Compressing...';
+        badgeEl.className = 'text-[9px] text-pastel-lavender font-bold animate-pulse';
+      }
 
-        if (!window.stagedPackagePhotos[context]) {
-          window.stagedPackagePhotos[context] = { front: null, nutrition: null };
-        }
-        window.stagedPackagePhotos[context][type] = { base64Data, mimeType, fileName: file.name };
-
-        // Update UI badge
-        const badgeId = `${context}-${type}-badge`;
-        const badgeEl = document.getElementById(badgeId);
+      const compressed = await compressImageForVision(file);
+      if (!compressed || !compressed.base64Data) {
         if (badgeEl) {
-          badgeEl.textContent = '✓ Ready (' + (type === 'front' ? 'Front' : 'Label') + ')';
-          badgeEl.className = 'text-[9px] text-pastel-mint font-bold';
+          badgeEl.textContent = '⚠️ Photo error';
+          badgeEl.className = 'text-[9px] text-rose-400 font-bold';
         }
+        return;
+      }
 
-        const labelId = `${context}-${type}-stage-label`;
-        const labelEl = document.getElementById(labelId);
-        if (labelEl) {
-          labelEl.classList.remove('border-dashed');
-          labelEl.classList.add('border-solid', 'border-pastel-mint');
-        }
-
-        // Notification sound / toast
-        if (typeof playChime === 'function') playChime('pop');
+      if (!window.stagedPackagePhotos[context]) {
+        window.stagedPackagePhotos[context] = { front: null, nutrition: null };
+      }
+      window.stagedPackagePhotos[context][type] = {
+        base64Data: compressed.base64Data,
+        mimeType: compressed.mimeType || 'image/jpeg',
+        fileName: file.name
       };
-      reader.readAsDataURL(file);
+
+      if (badgeEl) {
+        badgeEl.textContent = '✓ Ready (' + (type === 'front' ? 'Front' : 'Label') + ')';
+        badgeEl.className = 'text-[9px] text-pastel-mint font-bold';
+      }
+
+      const labelId = `${context}-${type}-stage-label`;
+      const labelEl = document.getElementById(labelId);
+      if (labelEl) {
+        labelEl.classList.remove('border-dashed');
+        labelEl.classList.add('border-solid', 'border-pastel-mint');
+      }
+
+      if (typeof playChime === 'function') playChime('pop');
     }
 
     async function runDualPackageAiScan(barcode = '', context = 'barcode') {
@@ -2855,12 +2907,18 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
           throw new Error("Gemini Vision caller not loaded");
         }
 
+        // Handle both string return and { text: '...', modelUsed: '...' } return
+        const responseText = (rawResponse && typeof rawResponse === 'object' && rawResponse.text) ? rawResponse.text : (rawResponse || '');
+        if (!responseText || typeof responseText !== 'string') {
+          throw new Error("Empty response received from Gemini Vision");
+        }
+
         let parsed = null;
         try {
-          const cleanJson = rawResponse.replace(/```json/gi, '').replace(/```/g, '').trim();
+          const cleanJson = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
           parsed = JSON.parse(cleanJson);
         } catch (e) {
-          const match = rawResponse.match(/\{[\s\S]*\}/);
+          const match = responseText.match(/\{[\s\S]*\}/);
           if (match) parsed = JSON.parse(match[0]);
         }
 
@@ -2957,7 +3015,7 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
                   <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                   <span>Retry AI Scan</span>
                 </button>
-                <button type="button" onclick="openManualNutritionModal({ barcode: '${barcode}' })" class="px-3.5 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-emerald-300 transition">
+                <button type="button" onclick="openManualNutritionFromScanner('${barcode}')" class="px-3.5 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-emerald-300 transition">
                   <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                   <span>Enter Nutrition Manually</span>
                 </button>
@@ -2989,6 +3047,36 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       if (event && event.target) event.target.value = '';
     }
 
+    // Global product caching for reliable inspection & manual entry without string escaping issues
+    window.lastScannedBarcodeProduct = null;
+
+    function openManualNutritionFromScanner(barcode = '') {
+      const activeCode = barcode || (document.getElementById('barcode-manual-input') || {}).value || '';
+      closeBarcodeScannerModal();
+      
+      let initialData = { barcode: activeCode };
+      if (window.activeReceiptPairingItem) {
+        initialData.isReceiptPairing = true;
+        initialData.receiptIndex = window.activeReceiptPairingItem.receiptIndex;
+        initialData.receiptRawCode = window.activeReceiptPairingItem.receiptRawCode;
+        initialData.name = window.activeReceiptPairingItem.name;
+      }
+      openManualNutritionModal(initialData);
+    }
+
+    function inspectScannedProductFullDetails() {
+      if (!window.lastScannedBarcodeProduct) return;
+      const product = window.lastScannedBarcodeProduct;
+      closeBarcodeScannerModal();
+      
+      let modalParams = { ...product };
+      if (barcodeScannerContext === 'receipt_pair' && window.activeReceiptPairingItem) {
+        modalParams.isReceiptPairing = true;
+        modalParams.receiptIndex = window.activeReceiptPairingItem.receiptIndex;
+        modalParams.receiptRawCode = window.activeReceiptPairingItem.receiptRawCode;
+      }
+      openManualNutritionModal(modalParams);
+    }
     function renderBarcodeProductResult(product) {
       const resBox = document.getElementById('barcode-lookup-result');
       if (!resBox) return;
@@ -2999,6 +3087,7 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
         amount: qParsed.amount,
         unit: qParsed.unit
       };
+      window.lastScannedBarcodeProduct = fullProduct;
       const safeProductJson = JSON.stringify(fullProduct).replace(/"/g, '&quot;');
 
       resBox.innerHTML = `
@@ -3031,7 +3120,7 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
               <span class="font-bold text-white block">Detailed Nutritional Analysis</span>
               <span class="text-slate-400 text-[10px]">Vitamins, Minerals, Sugars, Sodium, Serving Size</span>
             </div>
-            <button type="button" onclick="openManualNutritionModal(${safeProductJson})" class="px-3 py-1.5 rounded-xl bg-pastel-lavender text-dark-base font-bold text-xs flex items-center gap-1.5 hover:bg-purple-300 transition shrink-0 shadow-sm">
+            <button type="button" onclick="inspectScannedProductFullDetails()" class="px-3 py-1.5 rounded-xl bg-pastel-lavender text-dark-base font-bold text-xs flex items-center gap-1.5 hover:bg-purple-300 transition shrink-0 shadow-sm">
               <i data-lucide="eye" class="w-3.5 h-3.5"></i>
               <span>Inspect Full Details</span>
             </button>
@@ -3043,7 +3132,7 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
               <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
               <span>Scan Next Barcode</span>
             </button>
-            <button type="button" onclick="applyScannedBarcodeFood(${safeProductJson})" class="px-4 py-2 rounded-xl bg-gradient-to-r from-pastel-mint to-emerald-400 text-dark-base font-extrabold text-xs shadow-md shadow-pastel-mint/20 flex items-center justify-center gap-1.5 hover:opacity-95 transition">
+            <button type="button" onclick="applyScannedBarcodeFood(window.lastScannedBarcodeProduct)" class="px-4 py-2 rounded-xl bg-gradient-to-r from-pastel-mint to-emerald-400 text-dark-base font-extrabold text-xs shadow-md shadow-pastel-mint/20 flex items-center justify-center gap-1.5 hover:opacity-95 transition">
               <i data-lucide="plus-circle" class="w-4 h-4"></i>
               <span>${barcodeScannerContext === 'receipt_pair' ? 'Pair to Receipt Item' : (barcodeScannerContext === 'pantry' ? 'Add Item to Pantry' : (barcodeScannerContext === 'recipe' ? 'Add to Recipe' : 'Log Food'))}</span>
             </button>
@@ -3086,7 +3175,7 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
             <div class="text-[10px] text-slate-400">Prefer manual entry with all 13 vitamins &amp; 14 minerals?</div>
             <div class="flex gap-2 w-full sm:w-auto">
               <input type="text" id="barcode-fallback-name" placeholder="Item name..." class="bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs flex-1 sm:w-36 focus:border-pastel-lavender">
-              <button type="button" onclick="openManualNutritionModal({ barcode: '${code}', name: (document.getElementById('barcode-fallback-name') || {}).value })" class="px-3.5 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs flex items-center justify-center gap-1 hover:bg-emerald-300 transition shrink-0">
+              <button type="button" onclick="closeBarcodeScannerModal(); openManualNutritionModal({ barcode: '${code}', name: (document.getElementById('barcode-fallback-name') || {}).value })" class="px-3.5 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs flex items-center justify-center gap-1 hover:bg-emerald-300 transition shrink-0">
                 <i data-lucide="edit-3" class="w-3 h-3"></i>
                 <span>Enter Nutrition</span>
               </button>
@@ -3688,6 +3777,8 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
     if (typeof window !== 'undefined') {
       window.DAILY_NUTRITION_STANDARDS = DAILY_NUTRITION_STANDARDS;
       window.estimateMicronutrientsForFood = estimateMicronutrientsForFood;
+      window.inspectScannedProductFullDetails = inspectScannedProductFullDetails;
+      window.openManualNutritionFromScanner = openManualNutritionFromScanner;
       window.openManualNutritionModal = openManualNutritionModal;
       window.closeManualNutritionModal = closeManualNutritionModal;
       window.switchManualNutMicroTab = switchManualNutMicroTab;

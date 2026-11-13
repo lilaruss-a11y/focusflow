@@ -64,5 +64,13 @@
     "check_type": "forbidden_pattern",
     "pattern": "bottom_bar_viewport_docking",
     "is_regex": false
+  },
+  {
+    "id": "auto_estimate_micros_on_modal_open",
+    "description": "Never automatically run estimateMicronutrientsForFood when opening openManualNutritionModal; only supplement nutrients after user approves USDA supplementation prompt",
+    "file": "js/nutrition.js",
+    "check_type": "forbidden_pattern",
+    "pattern": "const micros = nut\\.micros \\|\\| \\(\\(params\\.name \\|\\| params\\.kcal\\) \\? estimateMicronutrientsForFood",
+    "is_regex": true
   }
 ]

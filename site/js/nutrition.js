@@ -1866,6 +1866,8 @@
       document.getElementById('food-input-potassium').value = potassium;
       document.getElementById('food-input-iron').value = iron;
       document.getElementById('food-input-calcium').value = calcium;
+      const matched = (typeof getUnifiedFoodOrMeal === 'function') ? getUnifiedFoodOrMeal(name.split('(')[0].trim())[0] : null;
+      window.selectedLogFoodReference = matched || null;
     }
 
     function saveFoodEntry() {
@@ -1882,21 +1884,57 @@
 
       if (!name) return;
       const mealType = document.getElementById('food-input-meal-type')?.value || state.currentFoodMealType || 'snack';
+      const ref = window.selectedLogFoodReference || ((typeof getUnifiedFoodOrMeal === 'function') ? getUnifiedFoodOrMeal(name.replace(/\s*\(1 serving\)/i, '').trim())[0] : null);
+      const isVerified = state.currentFoodAccuracyMode === 'verified';
+      const serving = ref?.serving || '1 serving';
+      const servingGrams = ref?.servingGrams || 100;
+      const micros = ref?.micros || ref?.nutrition?.micros || estimateMicronutrientsForFood(ref?.category || 'produce', kcal, prot, carb, fat, name, servingGrams);
+      if (potassium) micros.potassium = potassium;
+      if (iron) micros.iron = iron;
+      if (calcium) micros.calcium = calcium;
+
+      const verifiedNutrients = ref?.verifiedNutrients || (isVerified ? { kcal: true, protein: true, carbs: true, fat: true, fiber: true, sodium: true } : {});
+
       state.nutritionLog.push({
         id: `n-${Date.now()}`,
         name,
+        recipeId: ref?.recipeId || null,
+        pantryItemId: ref?.pantryItemId || null,
         mealType,
+        serving,
+        servingGrams,
         kcal,
         protein: prot,
         carbs: carb,
         fat,
         fiber,
+        sugar: ref?.sugar || ref?.nutrition?.sugar || 0,
+        satFat: ref?.satFat || ref?.nutrition?.satFat || 0,
         sodium,
-        potassium,
-        iron,
-        calcium,
-        isVerified: state.currentFoodAccuracyMode === 'verified'
+        potassium: micros.potassium || potassium,
+        iron: micros.iron || iron,
+        calcium: micros.calcium || calcium,
+        water: ref?.water || ref?.nutrition?.water || 0,
+        micros,
+        verifiedNutrients,
+        nutrition: {
+          kcal,
+          protein: prot,
+          carbs: carb,
+          fat,
+          fiber,
+          sugar: ref?.sugar || ref?.nutrition?.sugar || 0,
+          satFat: ref?.satFat || ref?.nutrition?.satFat || 0,
+          sodium,
+          water: ref?.water || ref?.nutrition?.water || 0,
+          serving,
+          servingGrams,
+          micros,
+          verifiedNutrients
+        },
+        isVerified
       });
+      window.selectedLogFoodReference = null;
       closeLogFoodModal();
       if (typeof saveAppState === 'function') saveAppState();
       renderNutrition();
@@ -1962,7 +2000,377 @@
       molybdenum: { name: 'Molybdenum', unit: 'mcg', dv: 45, type: 'mineral', color: 'text-teal-300', barColor: 'bg-teal-500' }
     };
 
-    function estimateMicronutrientsForFood(category, kcal, protein, carbs, fat, name) {
+    // ==============================================
+    // CENTRAL UNIFIED FOOD & RECIPE MASTER CATALOG
+    // Single source of truth across Kitchen, Recipes, and Nutrition
+    // ==============================================
+    function estimateRecipeServingGrams(recipeTitle = '', ingredients = []) {
+      const titleLower = (recipeTitle || '').toLowerCase();
+      if (titleLower.includes('german pancake')) {
+        return { serving: '1 slice (1/5 pan)', servingGrams: 215 };
+      }
+      if (titleLower.includes('smoothie')) {
+        return { serving: '1 glass (12 fl oz)', servingGrams: 355 };
+      }
+      if (titleLower.includes('soup') || titleLower.includes('stew') || titleLower.includes('chili')) {
+        return { serving: '1 bowl (1.5 cups)', servingGrams: 360 };
+      }
+      if (titleLower.includes('salad') || titleLower.includes('bowl')) {
+        return { serving: '1 bowl (2 cups)', servingGrams: 310 };
+      }
+      if (titleLower.includes('sandwich') || titleLower.includes('wrap')) {
+        return { serving: '1 sandwich', servingGrams: 245 };
+      }
+      const ingCount = Array.isArray(ingredients) ? ingredients.length : 4;
+      const estGrams = Math.min(420, Math.max(180, ingCount * 45));
+      return { serving: '1 serving (1 cup)', servingGrams: estGrams };
+    }
+
+    function buildRecipeUnifiedNutrition(r) {
+      const kcal = r.kcal || 380;
+      const protein = r.protein != null ? r.protein : Math.round((kcal * 0.22) / 4);
+      const carbs = r.carbs != null ? r.carbs : Math.round((kcal * 0.45) / 4);
+      const fat = r.fat != null ? r.fat : Math.round((kcal * 0.33) / 9);
+      const fiber = r.fiber != null ? r.fiber : 3.5;
+      const sugar = r.sugar != null ? r.sugar : 6.0;
+      const satFat = r.satFat != null ? r.satFat : Math.round(fat * 0.3 * 10) / 10;
+      const sodium = r.sodium != null ? r.sodium : 340;
+      const water = r.water != null ? r.water : 140;
+      const { serving, servingGrams } = estimateRecipeServingGrams(r.title || r.name || '', r.ingredients || []);
+
+      if (r.nutrition && r.nutrition.micros) {
+        return {
+          serving: r.serving || r.nutrition.serving || serving,
+          servingGrams: r.servingGrams || r.nutrition.servingGrams || servingGrams,
+          nutrition: {
+            ...r.nutrition,
+            serving: r.serving || r.nutrition.serving || serving,
+            servingGrams: r.servingGrams || r.nutrition.servingGrams || servingGrams
+          }
+        };
+      }
+
+      const micros = estimateMicronutrientsForFood(r.familyCategory || r.format || 'meal', kcal, protein, carbs, fat, r.title || r.name || '');
+      return {
+        serving: r.serving || serving,
+        servingGrams: r.servingGrams || servingGrams,
+        nutrition: {
+          kcal,
+          protein,
+          carbs,
+          fat,
+          fiber,
+          sugar,
+          addedSugar: 0,
+          satFat,
+          transFat: 0,
+          sodium,
+          cholesterol: (r.title || '').toLowerCase().includes('german pancake') ? 185 : 45,
+          water,
+          serving: r.serving || serving,
+          servingGrams: r.servingGrams || servingGrams,
+          micros,
+          verifiedNutrients: r.verifiedNutrients || {}
+        }
+      };
+    }
+
+    function getUnifiedFoodOrMeal(query = '') {
+      const q = (query || '').toLowerCase().trim();
+      const results = [];
+      const seenKeys = new Set();
+
+      const addResult = (entry) => {
+        const key = `${(entry.name || '').toLowerCase()}|${entry.type || 'food'}`;
+        if (seenKeys.has(key)) return;
+        seenKeys.add(key);
+        results.push(entry);
+      };
+
+      // 1. Check Active Pantry & Leftovers (so leftovers like German Pancakes in fridge share the exact reference)
+      if (window.state && Array.isArray(window.state.pantry)) {
+        for (const p of window.state.pantry) {
+          const nameLower = (p.name || '').toLowerCase();
+          if (!q || nameLower.includes(q)) {
+            const nut = p.nutrition || {};
+            const serving = p.serving || nut.serving || (p.unit && p.unit !== 'g' ? `1 ${p.unit}` : '1 serving');
+            const servingGrams = p.servingGrams || nut.servingGrams || (p.unit === 'g' ? (parseFloat(p.amount) || 100) : 100);
+            addResult({
+              id: p.id,
+              pantryItemId: p.id,
+              name: p.name,
+              brand: p.brand || '',
+              type: p.category === 'leftovers' ? 'leftover' : 'pantry_item',
+              source: 'Kitchen Pantry',
+              serving,
+              servingGrams,
+              category: p.category || 'produce',
+              storage: p.storage || 'fridge',
+              kcal: nut.kcal != null ? nut.kcal : (p.kcal || 120),
+              protein: nut.protein != null ? nut.protein : (p.protein || 4),
+              carbs: nut.carbs != null ? nut.carbs : (p.carbs || 15),
+              fat: nut.fat != null ? nut.fat : (p.fat || 3),
+              fiber: nut.fiber != null ? nut.fiber : (p.fiber || 2),
+              sugar: nut.sugar != null ? nut.sugar : (p.sugar || 2),
+              satFat: nut.satFat != null ? nut.satFat : (p.satFat || 0.5),
+              sodium: nut.sodium != null ? nut.sodium : (p.sodium || 45),
+              water: nut.water || 0,
+              micros: nut.micros || {},
+              verifiedNutrients: p.verifiedNutrients || nut.verifiedNutrients || {},
+              nutrition: {
+                kcal: nut.kcal != null ? nut.kcal : (p.kcal || 120),
+                protein: nut.protein != null ? nut.protein : (p.protein || 4),
+                carbs: nut.carbs != null ? nut.carbs : (p.carbs || 15),
+                fat: nut.fat != null ? nut.fat : (p.fat || 3),
+                fiber: nut.fiber != null ? nut.fiber : (p.fiber || 2),
+                sugar: nut.sugar != null ? nut.sugar : (p.sugar || 2),
+                satFat: nut.satFat != null ? nut.satFat : (p.satFat || 0.5),
+                sodium: nut.sodium != null ? nut.sodium : (p.sodium || 45),
+                water: nut.water || 0,
+                serving,
+                servingGrams,
+                micros: nut.micros || {},
+                verifiedNutrients: p.verifiedNutrients || nut.verifiedNutrients || {}
+              },
+              isVerified: Boolean(p.isVerified)
+            });
+          }
+        }
+      }
+
+      // 2. Check Custom & Family Recipes in state.recipes & familyCookbookDatabase (e.g. German Pancakes)
+      const allRecipesPool = [
+        ...((window.state && Array.isArray(window.state.recipes)) ? window.state.recipes : []),
+        ...((typeof familyCookbookDatabase !== 'undefined' && Array.isArray(familyCookbookDatabase)) ? familyCookbookDatabase : []),
+        ...((typeof FAMILY_RECIPES !== 'undefined' && Array.isArray(FAMILY_RECIPES)) ? FAMILY_RECIPES : [])
+      ];
+      for (const r of allRecipesPool) {
+        const titleLower = (r.title || '').toLowerCase();
+        if (!q || titleLower.includes(q)) {
+          const built = buildRecipeUnifiedNutrition(r);
+          addResult({
+            id: r.id,
+            recipeId: r.id,
+            name: r.title,
+            type: 'recipe',
+            source: r.origin === 'family' ? 'Heirloom Cookbook' : 'Recipe Codex',
+            serving: built.serving,
+            servingGrams: built.servingGrams,
+            category: 'leftovers',
+            storage: 'fridge',
+            kcal: built.nutrition.kcal,
+            protein: built.nutrition.protein,
+            carbs: built.nutrition.carbs,
+            fat: built.nutrition.fat,
+            fiber: built.nutrition.fiber,
+            sugar: built.nutrition.sugar,
+            satFat: built.nutrition.satFat,
+            sodium: built.nutrition.sodium,
+            water: built.nutrition.water,
+            micros: built.nutrition.micros,
+            verifiedNutrients: built.nutrition.verifiedNutrients || {},
+            nutrition: built.nutrition,
+            ingredients: r.ingredients || [],
+            instructions: r.instructions || '',
+            cookTime: r.cookTime || 25,
+            servings: r.servings || '4-6',
+            isVerified: Boolean(r.isVerified)
+          });
+        }
+      }
+
+      // 3. Check USDA Foundation Whole Foods (e.g. Apple, Banana, Salmon)
+      if (typeof commonFoodsDatabase !== 'undefined' && Array.isArray(commonFoodsDatabase)) {
+        for (const cf of commonFoodsDatabase) {
+          const nameLower = (cf.name || '').toLowerCase();
+          if (!q || nameLower.includes(q) || (cf.category && cf.category.toLowerCase().includes(q))) {
+            const verifiedMap = {
+              kcal: true, protein: true, carbs: true, fat: true, fiber: true,
+              sugar: true, satFat: true, sodium: true, water: true
+            };
+            if (cf.micros) {
+              Object.keys(cf.micros).forEach(mk => { verifiedMap[mk] = true; });
+            }
+            const serving = cf.serving || '1 serving';
+            const servingGrams = cf.servingGrams || 100;
+            addResult({
+              id: cf.id,
+              name: cf.name,
+              type: 'whole_food',
+              source: 'USDA Foundation',
+              serving,
+              servingGrams,
+              category: cf.category || 'produce',
+              storage: cf.storage || 'fridge',
+              kcal: cf.kcal,
+              protein: cf.protein,
+              carbs: cf.carbs,
+              fat: cf.fat,
+              fiber: cf.fiber || 0,
+              sugar: cf.sugar || 0,
+              satFat: cf.satFat || 0,
+              sodium: cf.sodium || 0,
+              water: cf.water || 0,
+              potassium: cf.potassium || cf.micros?.potassium || 0,
+              calcium: cf.calcium || cf.micros?.calcium || 0,
+              iron: cf.iron || cf.micros?.iron || 0,
+              micros: cf.micros || {},
+              verifiedNutrients: verifiedMap,
+              nutrition: {
+                kcal: cf.kcal,
+                protein: cf.protein,
+                carbs: cf.carbs,
+                fat: cf.fat,
+                fiber: cf.fiber || 0,
+                sugar: cf.sugar || 0,
+                satFat: cf.satFat || 0,
+                sodium: cf.sodium || 0,
+                water: cf.water || 0,
+                serving,
+                servingGrams,
+                micros: cf.micros || {},
+                verifiedNutrients: verifiedMap
+              },
+              isVerified: true
+            });
+          }
+        }
+      }
+
+      // 4. Check Custom Barcode & Verified Scanned Database
+      const customDb = (typeof getCustomBarcodeDb === 'function') ? getCustomBarcodeDb() : {};
+      Object.keys(customDb).forEach(code => {
+        const item = customDb[code];
+        if (item && item.name && (!q || item.name.toLowerCase().includes(q))) {
+          const serving = item.serving || item.nutrition?.serving || '1 serving';
+          const servingGrams = item.servingGrams || item.nutrition?.servingGrams || 100;
+          addResult({
+            id: `barcode-${code}`,
+            name: item.name,
+            brand: item.brand,
+            type: 'packaged_food',
+            source: 'Verified Barcode Catalog',
+            barcode: code,
+            serving,
+            servingGrams,
+            category: item.category || 'pantry_staples',
+            storage: item.storage || 'shelf',
+            kcal: item.kcal,
+            protein: item.protein,
+            carbs: item.carbs,
+            fat: item.fat,
+            fiber: item.fiber || 0,
+            sugar: item.sugar || 0,
+            satFat: item.satFat || 0,
+            sodium: item.sodium || 0,
+            micros: item.nutrition?.micros || {},
+            verifiedNutrients: item.verifiedNutrients || item.nutrition?.verifiedNutrients || {},
+            nutrition: item.nutrition || {
+              kcal: item.kcal,
+              protein: item.protein,
+              carbs: item.carbs,
+              fat: item.fat,
+              fiber: item.fiber || 0,
+              sugar: item.sugar || 0,
+              satFat: item.satFat || 0,
+              sodium: item.sodium || 0,
+              serving,
+              servingGrams,
+              micros: {}
+            },
+            isVerified: true
+          });
+        }
+      });
+
+      return results;
+    }
+
+    // Shield checkmark icon generator for verified nutrients
+    function renderVerifiedShieldIcon(titleText = '100% Verified by Nutrition Facts Label') {
+      return `<span class="inline-flex items-center text-emerald-400 align-middle mx-0.5 shrink-0" title="${titleText}"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="rgba(16,185,129,0.18)" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="inline"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></span>`;
+    }
+
+    function renderEstimatedTildeIcon(titleText = 'Estimated based on USDA reference food') {
+      return `<span class="inline-flex items-center justify-center px-1 rounded bg-amber-400/15 text-amber-300 font-bold font-mono text-[11px] leading-none align-middle mx-0.5 shrink-0" title="${titleText}">~</span>`;
+    }
+
+    function renderNutrientVerificationBadge(isVerified = false, titleText = '') {
+      return isVerified ? renderVerifiedShieldIcon(titleText) : renderEstimatedTildeIcon(titleText);
+    }
+
+    // Specific-Food USDA Matcher (matches exact food like "Apple" -> USDA "Medium Apple", never generic fruit unless no match)
+    function findClosestUsdaFood(name = '', category = '') {
+      if (typeof commonFoodsDatabase === 'undefined' || !Array.isArray(commonFoodsDatabase) || commonFoodsDatabase.length === 0) {
+        return null;
+      }
+      const clean = (name || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim();
+      const tokens = clean.split(/\s+/).filter(t => t.length >= 2 && !['organic', 'fresh', 'raw', 'cooked', 'large', 'medium', 'small', 'whole', 'sliced', 'diced', 'cup', 'oz', 'grams', 'serving', 'leftover'].includes(t));
+
+      let bestMatch = null;
+      let bestScore = 0;
+
+      for (const food of commonFoodsDatabase) {
+        const fName = (food.name || '').toLowerCase();
+        const fId = (food.id || '').replace('cf-', '').toLowerCase();
+        let score = 0;
+
+        if (clean && (fName === clean || fId === clean)) {
+          score += 100;
+        }
+        if (clean && (fName.includes(clean) || clean.includes(fId))) {
+          score += 55;
+        }
+        for (const tok of tokens) {
+          const singular = tok.endsWith('es') ? tok.slice(0, -2) : (tok.endsWith('s') ? tok.slice(0, -1) : tok);
+          if (fId === tok || fId === singular) score += 50;
+          if (new RegExp(`\\b${singular}`, 'i').test(fName)) score += 35;
+          else if (fName.includes(singular)) score += 15;
+        }
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = food;
+        }
+      }
+
+      if (bestMatch && bestScore >= 15) {
+        return bestMatch;
+      }
+
+      // Secondary fallback by category so user always sees which USDA food reference is proposed
+      const catLower = (category || '').toLowerCase();
+      if (catLower.includes('fruit')) return commonFoodsDatabase.find(f => f.id === 'cf-apple') || commonFoodsDatabase[0];
+      if (catLower.includes('produce') || catLower.includes('veg')) return commonFoodsDatabase.find(f => f.id === 'cf-broccoli') || commonFoodsDatabase[0];
+      if (catLower.includes('dairy')) return commonFoodsDatabase.find(f => f.id === 'cf-milk-whole') || commonFoodsDatabase[0];
+      if (catLower.includes('protein') || catLower.includes('meat')) return commonFoodsDatabase.find(f => f.id === 'cf-chicken-breast') || commonFoodsDatabase[0];
+      if (catLower.includes('grain')) return commonFoodsDatabase.find(f => f.id === 'cf-oats') || commonFoodsDatabase[0];
+      return commonFoodsDatabase[0];
+    }
+
+    function estimateMicronutrientsForFood(category, kcal, protein, carbs, fat, name, servingGramsOverride = null) {
+      // 1. Prioritize specific USDA food match first (e.g. Apple uses USDA Apple, not generic fruit)
+      const matchedFood = findClosestUsdaFood(name, category);
+      if (matchedFood && matchedFood.micros) {
+        const targetKcal = parseFloat(kcal) || 0;
+        const targetGrams = parseFloat(servingGramsOverride) || 0;
+        let ratio = 1.0;
+        if (targetGrams > 0 && matchedFood.servingGrams > 0) {
+          ratio = targetGrams / matchedFood.servingGrams;
+        } else if (targetKcal > 0 && matchedFood.kcal > 0) {
+          ratio = targetKcal / matchedFood.kcal;
+        }
+        ratio = Math.min(Math.max(ratio, 0.15), 4.0);
+
+        const scaledMicros = {};
+        Object.keys(DAILY_NUTRITION_STANDARDS).forEach(k => {
+          const baseVal = parseFloat(matchedFood.micros[k]) || 0;
+          const rawScaled = baseVal * ratio;
+          scaledMicros[k] = rawScaled >= 10 ? Math.round(rawScaled) : parseFloat(rawScaled.toFixed(2));
+        });
+        return scaledMicros;
+      }
+
       const cat = (category || '').toLowerCase();
       const nm = (name || '').toLowerCase();
       const c = Math.max(parseFloat(kcal) || 0, 10);
@@ -2099,6 +2507,7 @@
 
     if (typeof window !== 'undefined') {
       window.DAILY_NUTRITION_STANDARDS = DAILY_NUTRITION_STANDARDS;
+      window.getUnifiedFoodOrMeal = getUnifiedFoodOrMeal;
       window.estimateMicronutrientsForFood = estimateMicronutrientsForFood;
     }
 
@@ -2117,24 +2526,31 @@
         return;
       }
 
-      const matches = commonFoodsDatabase.filter(f => f.name.toLowerCase().includes(q) || f.category.toLowerCase().includes(q));
+      const matches = getUnifiedFoodOrMeal(q);
       if (matches.length === 0) {
-        resultsContainer.innerHTML = '<div class="text-[11px] text-slate-400 p-2">No matching foods found. You can enter values manually or scan a barcode.</div>';
+        resultsContainer.innerHTML = '<div class="text-[11px] text-slate-400 p-2">No matching foods or recipes found. You can enter values manually or scan a barcode.</div>';
         resultsContainer.classList.remove('hidden');
         return;
       }
 
       resultsContainer.innerHTML = '';
-      matches.slice(0, 8).forEach(item => {
+      matches.slice(0, 10).forEach(item => {
         const row = document.createElement('div');
-        row.className = "p-2 rounded-lg bg-dark-elevated hover:bg-slate-700 cursor-pointer flex items-center justify-between text-xs transition border border-transparent hover:border-pastel-mint/40";
+        row.className = "p-2 rounded-lg bg-dark-elevated hover:bg-slate-700 cursor-pointer flex items-center justify-between text-xs transition border border-transparent hover:border-pastel-mint/40 gap-2";
         row.onclick = () => selectCommonFood(item);
+        const badgeIcon = item.isVerified ? renderVerifiedShieldIcon('Verified Food') : renderEstimatedTildeIcon('Estimated Food');
+        const srvText = `1 serving = ${item.serving || '1 serving'} (${item.servingGrams || 100} g)`;
         row.innerHTML = `
-          <div>
-            <span class="font-semibold text-slate-200 block truncate">${item.name}</span>
-            <span class="text-[10px] text-slate-400 font-mono">P: ${item.protein}g | C: ${item.carbs}g | F: ${item.fat}g | Fiber: ${item.fiber || 0}g</span>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-1 flex-wrap">
+              <span class="font-semibold text-slate-200 truncate">${item.name}</span>
+              ${badgeIcon}
+              <span class="text-[9px] px-1.5 py-0.2 rounded bg-dark-base text-slate-400 font-mono">${item.source || 'Catalog'}</span>
+            </div>
+            <span class="text-[10px] text-pastel-sky font-mono block">${srvText}</span>
+            <span class="text-[10px] font-mono"><span class="text-pastel-coral font-bold">P: ${item.protein}g</span> | <span class="text-pastel-mint font-bold">C: ${item.carbs}g</span> | <span class="text-pastel-butter font-bold">F: ${item.fat}g</span> | Fib: ${item.fiber || 0}g</span>
           </div>
-          <span class="font-mono font-bold text-pastel-mint text-xs shrink-0">${item.kcal} kcal</span>
+          <span class="font-mono font-bold text-pastel-lavender text-xs shrink-0">${item.kcal} kcal</span>
         `;
         resultsContainer.appendChild(row);
       });
@@ -2142,6 +2558,7 @@
     }
 
     function selectCommonFood(item) {
+      window.selectedLogFoodReference = item;
       document.getElementById('food-input-name').value = item.name;
       document.getElementById('food-input-kcal').value = item.kcal;
       document.getElementById('food-input-protein').value = item.protein;
@@ -2149,18 +2566,18 @@
       document.getElementById('food-input-fat').value = item.fat;
       document.getElementById('food-input-fiber').value = item.fiber || 0;
       document.getElementById('food-input-sodium').value = item.sodium || 0;
-      document.getElementById('food-input-potassium').value = item.potassium || 0;
-      document.getElementById('food-input-iron').value = item.iron || 0;
-      document.getElementById('food-input-calcium').value = item.calcium || 0;
+      document.getElementById('food-input-potassium').value = item.potassium || item.micros?.potassium || 0;
+      document.getElementById('food-input-iron').value = item.iron || item.micros?.iron || 0;
+      document.getElementById('food-input-calcium').value = item.calcium || item.micros?.calcium || 0;
 
       const resultsContainer = document.getElementById('common-food-search-results');
       if (resultsContainer) resultsContainer.classList.add('hidden');
       const searchInput = document.getElementById('common-food-search-input');
       if (searchInput) searchInput.value = '';
 
-      setLogAccuracyMode('verified');
+      setLogAccuracyMode(item.isVerified ? 'verified' : 'estimated');
       playChime('bell');
-      alertBox(`Selected "${item.name}"! Facts auto-populated.`, "Verified Whole Food");
+      alertBox(`Selected "${item.name}" — 1 serving = ${item.serving || '1 serving'} (${item.servingGrams || 100} g)!`, item.source || "Food Selected");
     }
 
     function fillFromSavedRecipe(recipeId) {
@@ -2168,21 +2585,43 @@
       const recipe = state.recipes.find(r => r.id === recipeId);
       if (!recipe) return;
 
-      const kcal = recipe.kcal || 450;
-      const prot = recipe.protein || Math.round((kcal * 0.25) / 4);
-      const carb = recipe.carbs || Math.round((kcal * 0.45) / 4);
-      const fat = recipe.fat || Math.round((kcal * 0.30) / 9);
+      const built = buildRecipeUnifiedNutrition(recipe);
+      const nut = built.nutrition;
+      window.selectedLogFoodReference = {
+        ...recipe,
+        recipeId: recipe.id,
+        name: recipe.title,
+        serving: built.serving,
+        servingGrams: built.servingGrams,
+        kcal: nut.kcal,
+        protein: nut.protein,
+        carbs: nut.carbs,
+        fat: nut.fat,
+        fiber: nut.fiber,
+        sugar: nut.sugar,
+        satFat: nut.satFat,
+        sodium: nut.sodium,
+        water: nut.water,
+        micros: nut.micros,
+        verifiedNutrients: nut.verifiedNutrients,
+        nutrition: nut,
+        isVerified: Boolean(recipe.isVerified)
+      };
 
-      document.getElementById('food-input-name').value = `${recipe.title} (1 serving)`;
-      document.getElementById('food-input-kcal').value = kcal;
-      document.getElementById('food-input-protein').value = prot;
-      document.getElementById('food-input-carbs').value = carb;
-      document.getElementById('food-input-fat').value = fat;
-      document.getElementById('food-input-fiber').value = 5;
+      document.getElementById('food-input-name').value = `${recipe.title} (1 serving = ${built.serving}, ${built.servingGrams} g)`;
+      document.getElementById('food-input-kcal').value = nut.kcal;
+      document.getElementById('food-input-protein').value = nut.protein;
+      document.getElementById('food-input-carbs').value = nut.carbs;
+      document.getElementById('food-input-fat').value = nut.fat;
+      document.getElementById('food-input-fiber').value = nut.fiber || 0;
+      document.getElementById('food-input-sodium').value = nut.sodium || 0;
+      document.getElementById('food-input-potassium').value = nut.micros?.potassium || 0;
+      document.getElementById('food-input-iron').value = nut.micros?.iron || 0;
+      document.getElementById('food-input-calcium').value = nut.micros?.calcium || 0;
 
-      setLogAccuracyMode('verified');
+      setLogAccuracyMode(recipe.isVerified ? 'verified' : 'estimated');
       playChime('bell');
-      alertBox(`Populated "${recipe.title}" from your Recipe Codex.`, "Recipe Selected");
+      alertBox(`Populated "${recipe.title}" — 1 serving = ${built.serving} (${built.servingGrams} g).`, "Recipe Selected");
     }
 
     function renderSavedRecipesDropdown() {
@@ -3090,6 +3529,9 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       window.lastScannedBarcodeProduct = fullProduct;
       const safeProductJson = JSON.stringify(fullProduct).replace(/"/g, '&quot;');
 
+      const servingDesc = product.serving || product.nutrition?.serving || '1 serving';
+      const servingGrams = product.servingGrams || product.nutrition?.servingGrams || 100;
+
       resBox.innerHTML = `
         <div class="space-y-3 text-xs bg-dark-elevated p-3.5 rounded-2xl border border-pastel-lavender/40 shadow-xl">
           <div class="flex items-start justify-between gap-2">
@@ -3099,18 +3541,18 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
                 ${product.brand ? `<span class="text-[10px] text-slate-400 font-semibold">• ${product.brand}</span>` : ''}
               </div>
               <h4 class="font-bold text-white text-sm leading-tight">${product.name}</h4>
-              <span class="text-[11px] text-slate-300 font-mono mt-0.5 block">Package Size: <strong>${qParsed.amount} ${qParsed.unit}</strong></span>
+              <span class="text-[11px] text-slate-300 font-mono mt-0.5 block">1 serving = <strong>${servingDesc} (${servingGrams} g)</strong> • Pkg: ${qParsed.amount} ${qParsed.unit}</span>
             </div>
             <div class="text-right shrink-0">
-              <span class="px-2.5 py-1.5 rounded-xl bg-pastel-mint/15 text-pastel-mint font-mono font-bold text-sm block">${product.kcal} kcal</span>
+              <span class="px-2.5 py-1.5 rounded-xl bg-pastel-lavender/15 text-pastel-lavender font-mono font-bold text-sm block">${product.kcal} kcal</span>
             </div>
           </div>
 
           <!-- Macros Breakdown -->
           <div class="grid grid-cols-4 gap-1.5 p-2 rounded-xl bg-dark-base border border-dark-border text-center font-mono text-[11px]">
-            <div><span class="text-slate-400 block text-[9px]">PROTEIN</span><span class="text-pastel-sky font-bold">${product.protein}g</span></div>
-            <div><span class="text-slate-400 block text-[9px]">CARBS</span><span class="text-pastel-butter font-bold">${product.carbs}g</span></div>
-            <div><span class="text-slate-400 block text-[9px]">FAT</span><span class="text-pastel-peach font-bold">${product.fat}g</span></div>
+            <div><span class="text-slate-400 block text-[9px]">PROTEIN</span><span class="text-pastel-coral font-bold">${product.protein}g</span></div>
+            <div><span class="text-slate-400 block text-[9px]">CARBS</span><span class="text-pastel-mint font-bold">${product.carbs}g</span></div>
+            <div><span class="text-slate-400 block text-[9px]">FAT</span><span class="text-pastel-butter font-bold">${product.fat}g</span></div>
             <div><span class="text-slate-400 block text-[9px]">FIBER</span><span class="text-pastel-mint font-bold">${product.fiber || 0}g</span></div>
           </div>
 
@@ -3285,6 +3727,133 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
     // MANUAL NUTRITION MODAL (ALL MACROS & 27 MICRONUTRIENTS)
     // ==============================================
     let activeManualNutritionContext = null;
+    window.activeManualVerifiedMap = {};
+    window.pendingUsdaSupplementFood = null;
+
+    const MANUAL_NUTRITION_FIELD_MAP = [
+      { id: 'manual-nut-kcal', key: 'kcal', targetKey: 'dailyCaloriesTarget', defaultTarget: 2130, isUpper: false },
+      { id: 'manual-nut-protein', key: 'protein', targetKey: 'dailyProteinTarget', defaultTarget: 135, isUpper: false },
+      { id: 'manual-nut-carbs', key: 'carbs', targetKey: 'dailyCarbsTarget', defaultTarget: 240, isUpper: false },
+      { id: 'manual-nut-fat', key: 'fat', targetKey: 'dailyFatTarget', defaultTarget: 71, isUpper: false },
+      { id: 'manual-nut-fiber', key: 'fiber', targetKey: 'dailyFiberTarget', defaultTarget: 30, isUpper: false },
+      { id: 'manual-nut-sugar', key: 'sugar', defaultTarget: 50, isUpper: true },
+      { id: 'manual-nut-added-sugar', key: 'addedSugar', defaultTarget: 25, isUpper: true },
+      { id: 'manual-nut-sat-fat', key: 'satFat', defaultTarget: 20, isUpper: true },
+      { id: 'manual-nut-trans-fat', key: 'transFat', defaultTarget: 2, isUpper: true },
+      { id: 'manual-nut-sodium', key: 'sodium', targetKey: 'dailySodiumTarget', defaultTarget: 2300, isUpper: true },
+      { id: 'manual-nut-cholesterol', key: 'cholesterol', defaultTarget: 300, isUpper: true },
+      { id: 'manual-nut-water', key: 'water', defaultTarget: 2700, isUpper: false },
+      { id: 'manual-nut-vitA', key: 'vitA', isMicro: true },
+      { id: 'manual-nut-vitC', key: 'vitC', isMicro: true },
+      { id: 'manual-nut-vitD', key: 'vitD', isMicro: true },
+      { id: 'manual-nut-vitE', key: 'vitE', isMicro: true },
+      { id: 'manual-nut-vitK', key: 'vitK', isMicro: true },
+      { id: 'manual-nut-vitB1', key: 'vitB1', isMicro: true },
+      { id: 'manual-nut-vitB2', key: 'vitB2', isMicro: true },
+      { id: 'manual-nut-vitB3', key: 'vitB3', isMicro: true },
+      { id: 'manual-nut-vitB5', key: 'vitB5', isMicro: true },
+      { id: 'manual-nut-vitB6', key: 'vitB6', isMicro: true },
+      { id: 'manual-nut-vitB7', key: 'vitB7', isMicro: true },
+      { id: 'manual-nut-vitB9', key: 'vitB9', isMicro: true },
+      { id: 'manual-nut-vitB12', key: 'vitB12', isMicro: true },
+      { id: 'manual-nut-choline', key: 'choline', isMicro: true },
+      { id: 'manual-nut-potassium', key: 'potassium', isMicro: true },
+      { id: 'manual-nut-calcium', key: 'calcium', isMicro: true },
+      { id: 'manual-nut-iron', key: 'iron', isMicro: true },
+      { id: 'manual-nut-magnesium', key: 'magnesium', isMicro: true },
+      { id: 'manual-nut-zinc', key: 'zinc', isMicro: true },
+      { id: 'manual-nut-phosphorus', key: 'phosphorus', isMicro: true },
+      { id: 'manual-nut-chloride', key: 'chloride', isMicro: true },
+      { id: 'manual-nut-sulfur', key: 'sulfur', isMicro: true },
+      { id: 'manual-nut-copper', key: 'copper', isMicro: true },
+      { id: 'manual-nut-manganese', key: 'manganese', isMicro: true },
+      { id: 'manual-nut-selenium', key: 'selenium', isMicro: true },
+      { id: 'manual-nut-iodine', key: 'iodine', isMicro: true },
+      { id: 'manual-nut-chromium', key: 'chromium', isMicro: true },
+      { id: 'manual-nut-molybdenum', key: 'molybdenum', isMicro: true }
+    ];
+
+    function toggleManualNutrientVerified(key) {
+      if (!window.activeManualVerifiedMap) window.activeManualVerifiedMap = {};
+      const fieldDef = MANUAL_NUTRITION_FIELD_MAP.find(f => f.key === key);
+      const inputEl = fieldDef ? document.getElementById(fieldDef.id) : null;
+      const hasVal = inputEl && inputEl.value !== '' && inputEl.value != null;
+      if (!hasVal && !window.activeManualVerifiedMap[key]) {
+        // Confirming 0 on an empty field sets it to verified 0
+        if (inputEl) inputEl.value = '0';
+        window.activeManualVerifiedMap[key] = true;
+      } else {
+        window.activeManualVerifiedMap[key] = !window.activeManualVerifiedMap[key];
+      }
+      syncManualNutritionInteractiveBadges();
+    }
+
+    function syncManualNutritionInteractiveBadges() {
+      const profile = (typeof state !== 'undefined' && state.userProfile) ? state.userProfile : {};
+      MANUAL_NUTRITION_FIELD_MAP.forEach(field => {
+        const inputEl = document.getElementById(field.id);
+        if (!inputEl) return;
+        const wrapper = inputEl.parentElement;
+        if (!wrapper) return;
+
+        // Bind input listener once so typing marks the nutrient as verified or clears verification if emptied
+        if (!inputEl.dataset.boundVerifyListener) {
+          inputEl.dataset.boundVerifyListener = '1';
+          inputEl.addEventListener('input', () => {
+            if (!window.activeManualVerifiedMap) window.activeManualVerifiedMap = {};
+            if (inputEl.value !== '' && inputEl.value != null) {
+              window.activeManualVerifiedMap[field.key] = true;
+            } else {
+              delete window.activeManualVerifiedMap[field.key];
+            }
+            syncManualNutritionInteractiveBadges();
+          });
+        }
+
+        const rawStr = (inputEl.value ?? '').toString().trim();
+        const hasVal = rawStr !== '';
+        const numVal = hasVal ? parseFloat(rawStr) : NaN;
+        const isVerified = Boolean(window.activeManualVerifiedMap && window.activeManualVerifiedMap[field.key]) && hasVal;
+
+        let target = field.defaultTarget || 100;
+        let isUpper = Boolean(field.isUpper);
+        if (field.isMicro && DAILY_NUTRITION_STANDARDS[field.key]) {
+          target = DAILY_NUTRITION_STANDARDS[field.key].dv || 100;
+          isUpper = Boolean(DAILY_NUTRITION_STANDARDS[field.key].isUpperLimit);
+        } else if (field.targetKey && profile[field.targetKey]) {
+          target = profile[field.targetKey];
+        }
+
+        let badgeContainer = wrapper.querySelector('.manual-nut-live-meta');
+        if (!badgeContainer) {
+          badgeContainer = document.createElement('div');
+          badgeContainer.className = 'manual-nut-live-meta flex items-center justify-between gap-1 mt-1 text-[9.5px] font-mono';
+          wrapper.appendChild(badgeContainer);
+        }
+
+        if (!hasVal || isNaN(numVal)) {
+          inputEl.placeholder = '—';
+          badgeContainer.innerHTML = `
+            <button type="button" onclick="toggleManualNutrientVerified('${field.key}')" class="inline-flex items-center gap-1 text-slate-500 hover:text-slate-300 transition" title="No data entered yet (click to confirm as 0)">
+              <span>— Unentered</span>
+            </button>
+            <span class="text-slate-600">—</span>
+          `;
+        } else {
+          const col = getNutrientProgressColor(numVal, target, isUpper);
+          const pct = target > 0 ? Math.round((numVal / target) * 100) : 0;
+          const badgeHtml = isVerified
+            ? `${renderVerifiedShieldIcon('Verified by Nutrition Label (click to toggle)')} <span class="text-emerald-400 font-bold">Verified</span>`
+            : `${renderEstimatedTildeIcon('Estimated value (click to mark verified)')} <span class="text-amber-300 font-bold">Estimated</span>`;
+          badgeContainer.innerHTML = `
+            <button type="button" onclick="toggleManualNutrientVerified('${field.key}')" class="inline-flex items-center gap-0.5 hover:opacity-80 transition">
+              ${badgeHtml}
+            </button>
+            <span class="${col.textClass} font-bold" title="${pct}% of daily target (${target})">${pct}% DV</span>
+          `;
+        }
+      });
+    }
 
     function openManualNutritionModal(params = {}) {
       activeManualNutritionContext = params;
@@ -3297,6 +3866,12 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       if (params.isPantryEdit) {
         if (titleEl) titleEl.textContent = `Edit Nutrition: ${params.name || 'Pantry Item'}`;
         if (badgeEl) badgeEl.classList.add('hidden');
+      } else if (params.isFoodLogEdit) {
+        if (titleEl) titleEl.textContent = `Edit Logged Food: ${params.name || 'Food Entry'}`;
+        if (badgeEl) badgeEl.classList.add('hidden');
+      } else if (params.isRecipeEdit) {
+        if (titleEl) titleEl.textContent = `Edit Recipe Nutrition: ${params.name || 'Recipe'}`;
+        if (badgeEl) badgeEl.classList.add('hidden');
       } else if (params.barcode) {
         if (titleEl) titleEl.textContent = "Nutrition Facts & Micronutrients";
         if (badgeEl) {
@@ -3308,9 +3883,55 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
         if (badgeEl) badgeEl.classList.add('hidden');
       }
 
+      const confirmCard = document.getElementById('usda-supplement-confirm-card');
+      if (confirmCard) confirmCard.classList.add('hidden');
+      const undoBtn = document.getElementById('btn-undo-auto-estimate-micros');
+      if (undoBtn) undoBtn.classList.add('hidden');
+
+      const nut = params.nutrition || {};
+      const matchedUsda = findClosestUsdaFood(params.name || '', params.category || '');
+      const sourcePill = document.getElementById('usda-source-attribution-pill');
+      const sourceText = document.getElementById('usda-source-attribution-text');
+      const savedUsdaSource = params.usdaSupplementSource || nut.usdaSupplementSource || '';
+      if (sourcePill && sourceText) {
+        if (savedUsdaSource) {
+          sourceText.textContent = `Nutrient information supplemented by USDA "${savedUsdaSource}"`;
+          sourcePill.classList.remove('hidden');
+        } else {
+          sourcePill.classList.add('hidden');
+        }
+      }
+
+      // Initialize per-nutrient verification map
+      const incomingVerified = params.verifiedNutrients || nut.verifiedNutrients || {};
+      window.activeManualVerifiedMap = { ...incomingVerified };
+      if (params.isVerified && Object.keys(window.activeManualVerifiedMap).length === 0) {
+        ['kcal', 'protein', 'carbs', 'fat', 'fiber', 'sugar', 'satFat', 'sodium'].forEach(k => {
+          const v = nut[k] != null ? nut[k] : params[k];
+          if (v != null && v !== '') window.activeManualVerifiedMap[k] = true;
+        });
+      }
+
       const setVal = (id, val) => {
         const el = document.getElementById(id);
         if (el) el.value = (val != null && val !== '') ? val : '';
+      };
+
+      // Differentiate confirmed 0 vs unentered empty nutrient values
+      const setNutrientVal = (id, key, val) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const isConfirmed = Boolean(window.activeManualVerifiedMap[key]);
+        if (val === null || val === undefined || val === '') {
+          el.value = '';
+          return;
+        }
+        const num = parseFloat(val);
+        if (!isNaN(num) && num === 0 && !isConfirmed) {
+          el.value = '';
+        } else {
+          el.value = val;
+        }
       };
 
       setVal('manual-nut-barcode', params.barcode || '');
@@ -3321,55 +3942,62 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       setVal('manual-nut-cat', params.category || 'produce');
       setVal('manual-nut-storage', params.storage || 'fridge');
 
-      const nut = params.nutrition || {};
-      setVal('manual-nut-kcal', nut.kcal != null ? nut.kcal : (params.kcal != null ? params.kcal : ''));
-      setVal('manual-nut-protein', nut.protein != null ? nut.protein : (params.protein != null ? params.protein : ''));
-      setVal('manual-nut-carbs', nut.carbs != null ? nut.carbs : (params.carbs != null ? params.carbs : ''));
-      setVal('manual-nut-fat', nut.fat != null ? nut.fat : (params.fat != null ? params.fat : ''));
-      setVal('manual-nut-fiber', nut.fiber != null ? nut.fiber : (params.fiber != null ? params.fiber : ''));
-      setVal('manual-nut-sugar', nut.sugar != null ? nut.sugar : (params.sugar != null ? params.sugar : ''));
-      setVal('manual-nut-added-sugar', nut.addedSugar != null ? nut.addedSugar : '');
-      setVal('manual-nut-sat-fat', nut.satFat != null ? nut.satFat : (params.satFat != null ? params.satFat : ''));
-      setVal('manual-nut-trans-fat', nut.transFat != null ? nut.transFat : '');
-      setVal('manual-nut-sodium', nut.sodium != null ? nut.sodium : (params.sodium != null ? params.sodium : ''));
-      setVal('manual-nut-cholesterol', nut.cholesterol != null ? nut.cholesterol : '');
-      setVal('manual-nut-water', nut.water != null ? nut.water : '');
+      const servingDesc = params.serving || nut.serving || matchedUsda?.serving || '1 serving';
+      const servingGrams = params.servingGrams || nut.servingGrams || matchedUsda?.servingGrams || 100;
+      const servingsPerContainer = params.servingsPerContainer || nut.servingsPerContainer || 1;
+      setVal('manual-nut-serving-desc', servingDesc);
+      setVal('manual-nut-serving-grams', servingGrams);
+      setVal('manual-nut-servings-per-container', servingsPerContainer);
 
-      // Micronutrients
-      const micros = nut.micros || ((params.name || params.kcal) ? estimateMicronutrientsForFood(params.category, params.kcal || nut.kcal, params.protein || nut.protein, params.carbs || nut.carbs, params.fat || nut.fat, params.name) : {});
+      setNutrientVal('manual-nut-kcal', 'kcal', nut.kcal != null ? nut.kcal : params.kcal);
+      setNutrientVal('manual-nut-protein', 'protein', nut.protein != null ? nut.protein : params.protein);
+      setNutrientVal('manual-nut-carbs', 'carbs', nut.carbs != null ? nut.carbs : params.carbs);
+      setNutrientVal('manual-nut-fat', 'fat', nut.fat != null ? nut.fat : params.fat);
+      setNutrientVal('manual-nut-fiber', 'fiber', nut.fiber != null ? nut.fiber : params.fiber);
+      setNutrientVal('manual-nut-sugar', 'sugar', nut.sugar != null ? nut.sugar : params.sugar);
+      setNutrientVal('manual-nut-added-sugar', 'addedSugar', nut.addedSugar != null ? nut.addedSugar : params.addedSugar);
+      setNutrientVal('manual-nut-sat-fat', 'satFat', nut.satFat != null ? nut.satFat : params.satFat);
+      setNutrientVal('manual-nut-trans-fat', 'transFat', nut.transFat != null ? nut.transFat : params.transFat);
+      setNutrientVal('manual-nut-sodium', 'sodium', nut.sodium != null ? nut.sodium : params.sodium);
+      setNutrientVal('manual-nut-cholesterol', 'cholesterol', nut.cholesterol != null ? nut.cholesterol : params.cholesterol);
+      setNutrientVal('manual-nut-water', 'water', nut.water != null ? nut.water : params.water);
+
+      // Micronutrients: only populate explicitly saved/provided values (do NOT auto-estimate without user approval!)
+      const micros = nut.micros || params.micros || {};
 
       // All 13 Essential Vitamins + Choline
-      setVal('manual-nut-vitA', micros.vitA != null ? micros.vitA : '');
-      setVal('manual-nut-vitC', micros.vitC != null ? micros.vitC : '');
-      setVal('manual-nut-vitD', micros.vitD != null ? micros.vitD : '');
-      setVal('manual-nut-vitE', micros.vitE != null ? micros.vitE : '');
-      setVal('manual-nut-vitK', micros.vitK != null ? micros.vitK : '');
-      setVal('manual-nut-vitB1', micros.vitB1 != null ? micros.vitB1 : '');
-      setVal('manual-nut-vitB2', micros.vitB2 != null ? micros.vitB2 : '');
-      setVal('manual-nut-vitB3', micros.vitB3 != null ? micros.vitB3 : '');
-      setVal('manual-nut-vitB5', micros.vitB5 != null ? micros.vitB5 : '');
-      setVal('manual-nut-vitB6', micros.vitB6 != null ? micros.vitB6 : '');
-      setVal('manual-nut-vitB7', micros.vitB7 != null ? micros.vitB7 : '');
-      setVal('manual-nut-vitB9', micros.vitB9 != null ? micros.vitB9 : '');
-      setVal('manual-nut-vitB12', micros.vitB12 != null ? micros.vitB12 : '');
-      setVal('manual-nut-choline', micros.choline != null ? micros.choline : '');
+      setNutrientVal('manual-nut-vitA', 'vitA', micros.vitA);
+      setNutrientVal('manual-nut-vitC', 'vitC', micros.vitC);
+      setNutrientVal('manual-nut-vitD', 'vitD', micros.vitD);
+      setNutrientVal('manual-nut-vitE', 'vitE', micros.vitE);
+      setNutrientVal('manual-nut-vitK', 'vitK', micros.vitK);
+      setNutrientVal('manual-nut-vitB1', 'vitB1', micros.vitB1);
+      setNutrientVal('manual-nut-vitB2', 'vitB2', micros.vitB2);
+      setNutrientVal('manual-nut-vitB3', 'vitB3', micros.vitB3);
+      setNutrientVal('manual-nut-vitB5', 'vitB5', micros.vitB5);
+      setNutrientVal('manual-nut-vitB6', 'vitB6', micros.vitB6);
+      setNutrientVal('manual-nut-vitB7', 'vitB7', micros.vitB7);
+      setNutrientVal('manual-nut-vitB9', 'vitB9', micros.vitB9);
+      setNutrientVal('manual-nut-vitB12', 'vitB12', micros.vitB12);
+      setNutrientVal('manual-nut-choline', 'choline', micros.choline);
 
       // All 14 Essential Minerals
-      setVal('manual-nut-potassium', micros.potassium != null ? micros.potassium : '');
-      setVal('manual-nut-calcium', micros.calcium != null ? micros.calcium : '');
-      setVal('manual-nut-iron', micros.iron != null ? micros.iron : '');
-      setVal('manual-nut-magnesium', micros.magnesium != null ? micros.magnesium : '');
-      setVal('manual-nut-zinc', micros.zinc != null ? micros.zinc : '');
-      setVal('manual-nut-phosphorus', micros.phosphorus != null ? micros.phosphorus : '');
-      setVal('manual-nut-chloride', micros.chloride != null ? micros.chloride : '');
-      setVal('manual-nut-sulfur', micros.sulfur != null ? micros.sulfur : '');
-      setVal('manual-nut-copper', micros.copper != null ? micros.copper : '');
-      setVal('manual-nut-manganese', micros.manganese != null ? micros.manganese : '');
-      setVal('manual-nut-selenium', micros.selenium != null ? micros.selenium : '');
-      setVal('manual-nut-iodine', micros.iodine != null ? micros.iodine : '');
-      setVal('manual-nut-chromium', micros.chromium != null ? micros.chromium : '');
-      setVal('manual-nut-molybdenum', micros.molybdenum != null ? micros.molybdenum : '');
+      setNutrientVal('manual-nut-potassium', 'potassium', micros.potassium);
+      setNutrientVal('manual-nut-calcium', 'calcium', micros.calcium);
+      setNutrientVal('manual-nut-iron', 'iron', micros.iron);
+      setNutrientVal('manual-nut-magnesium', 'magnesium', micros.magnesium);
+      setNutrientVal('manual-nut-zinc', 'zinc', micros.zinc);
+      setNutrientVal('manual-nut-phosphorus', 'phosphorus', micros.phosphorus);
+      setNutrientVal('manual-nut-chloride', 'chloride', micros.chloride);
+      setNutrientVal('manual-nut-sulfur', 'sulfur', micros.sulfur);
+      setNutrientVal('manual-nut-copper', 'copper', micros.copper);
+      setNutrientVal('manual-nut-manganese', 'manganese', micros.manganese);
+      setNutrientVal('manual-nut-selenium', 'selenium', micros.selenium);
+      setNutrientVal('manual-nut-iodine', 'iodine', micros.iodine);
+      setNutrientVal('manual-nut-chromium', 'chromium', micros.chromium);
+      setNutrientVal('manual-nut-molybdenum', 'molybdenum', micros.molybdenum);
 
+      syncManualNutritionInteractiveBadges();
       switchManualNutMicroTab('vitamins');
       modal.classList.remove('hidden');
       if (window.lucide) lucide.createIcons();
@@ -3419,7 +4047,40 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       'manual-nut-chromium', 'manual-nut-molybdenum'
     ];
 
-    function autoEstimateMissingMicros() {
+    function requestUsdaFoodSupplementation() {
+      const cat = (document.getElementById('manual-nut-cat') || {}).value || 'produce';
+      const name = (document.getElementById('manual-nut-name') || {}).value || '';
+      const matched = findClosestUsdaFood(name, cat);
+      if (!matched) {
+        alertBox("Could not locate a matching USDA reference food.", "USDA Match");
+        return;
+      }
+      window.pendingUsdaSupplementFood = matched;
+      const titleEl = document.getElementById('usda-supplement-prompt-title');
+      if (titleEl) {
+        titleEl.textContent = `Supplement nutrients with info from USDA "${matched.name}"?`;
+      }
+      const cardEl = document.getElementById('usda-supplement-confirm-card');
+      if (cardEl) {
+        cardEl.classList.remove('hidden');
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function cancelUsdaSupplementation() {
+      window.pendingUsdaSupplementFood = null;
+      const cardEl = document.getElementById('usda-supplement-confirm-card');
+      if (cardEl) cardEl.classList.add('hidden');
+    }
+
+    function confirmUsdaSupplementation() {
+      const matched = window.pendingUsdaSupplementFood;
+      const cardEl = document.getElementById('usda-supplement-confirm-card');
+      if (cardEl) cardEl.classList.add('hidden');
+      autoEstimateMissingMicros(matched);
+    }
+
+    function autoEstimateMissingMicros(preMatchedFood = null) {
       const cat = (document.getElementById('manual-nut-cat') || {}).value || 'produce';
       const kcal = parseFloat((document.getElementById('manual-nut-kcal') || {}).value) || 0;
       const protein = parseFloat((document.getElementById('manual-nut-protein') || {}).value) || 0;
@@ -3427,74 +4088,141 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       const fat = parseFloat((document.getElementById('manual-nut-fat') || {}).value) || 0;
       const name = (document.getElementById('manual-nut-name') || {}).value || '';
 
-      // Save snapshot of all micronutrient inputs before auto-filling
-      window.preEstimateMicrosSnapshot = {};
-      ALL_MICRONUTRIENT_INPUT_IDS.forEach(id => {
+      const matchedFood = preMatchedFood || findClosestUsdaFood(name, cat);
+
+      // Save full snapshot of all macro & micro inputs, serving size, and verification map before supplementing
+      const allFieldIds = MANUAL_NUTRITION_FIELD_MAP.map(f => f.id).concat(['manual-nut-serving-desc', 'manual-nut-serving-grams']);
+      window.preEstimateMicrosSnapshot = {
+        values: {},
+        verifiedMap: { ...(window.activeManualVerifiedMap || {}) },
+        usdaSupplementSource: (activeManualNutritionContext && activeManualNutritionContext.usdaSupplementSource) || ''
+      };
+      allFieldIds.forEach(id => {
         const el = document.getElementById(id);
-        window.preEstimateMicrosSnapshot[id] = el ? el.value : '';
+        window.preEstimateMicrosSnapshot.values[id] = el ? el.value : '';
       });
 
-      const estimated = estimateMicronutrientsForFood(cat, kcal, protein, carbs, fat, name);
+      const srvDescEl = document.getElementById('manual-nut-serving-desc');
+      const srvGramsEl = document.getElementById('manual-nut-serving-grams');
+      if (matchedFood) {
+        if (srvDescEl && (!srvDescEl.value || srvDescEl.value === '1 serving')) {
+          srvDescEl.value = matchedFood.serving || '1 serving';
+        }
+        if (srvGramsEl && (!srvGramsEl.value || parseFloat(srvGramsEl.value) === 100)) {
+          srvGramsEl.value = matchedFood.servingGrams || 100;
+        }
+      }
 
-      const fillIfEmpty = (id, val) => {
+      const targetGrams = parseFloat(srvGramsEl ? srvGramsEl.value : 0) || matchedFood?.servingGrams || 100;
+      let scaleRatio = 1.0;
+      if (matchedFood && matchedFood.servingGrams > 0 && targetGrams > 0) {
+        scaleRatio = targetGrams / matchedFood.servingGrams;
+      } else if (matchedFood && matchedFood.kcal > 0 && kcal > 0) {
+        scaleRatio = kcal / matchedFood.kcal;
+      }
+      scaleRatio = Math.min(Math.max(scaleRatio, 0.15), 4.0);
+
+      // Supplement unverified/empty macros from matched USDA food
+      const fillNutrientIfUnverified = (id, key, val) => {
+        if (val == null || isNaN(val)) return;
         const el = document.getElementById(id);
-        if (el && (!el.value || parseFloat(el.value) === 0)) {
-          el.value = val;
+        if (!el) return;
+        const isCurrentlyVerified = Boolean(window.activeManualVerifiedMap && window.activeManualVerifiedMap[key]) && el.value !== '';
+        if (!isCurrentlyVerified) {
+          el.value = val >= 10 ? Math.round(val) : parseFloat(Number(val).toFixed(2));
+          if (window.activeManualVerifiedMap) delete window.activeManualVerifiedMap[key];
         }
       };
 
+      if (matchedFood) {
+        fillNutrientIfUnverified('manual-nut-kcal', 'kcal', matchedFood.kcal * scaleRatio);
+        fillNutrientIfUnverified('manual-nut-protein', 'protein', (matchedFood.protein || 0) * scaleRatio);
+        fillNutrientIfUnverified('manual-nut-carbs', 'carbs', (matchedFood.carbs || 0) * scaleRatio);
+        fillNutrientIfUnverified('manual-nut-fat', 'fat', (matchedFood.fat || 0) * scaleRatio);
+        fillNutrientIfUnverified('manual-nut-fiber', 'fiber', (matchedFood.fiber || 0) * scaleRatio);
+        fillNutrientIfUnverified('manual-nut-sugar', 'sugar', (matchedFood.sugar || 0) * scaleRatio);
+        fillNutrientIfUnverified('manual-nut-sat-fat', 'satFat', (matchedFood.satFat || 0) * scaleRatio);
+        fillNutrientIfUnverified('manual-nut-sodium', 'sodium', (matchedFood.sodium || 0) * scaleRatio);
+        fillNutrientIfUnverified('manual-nut-water', 'water', (matchedFood.water || 0) * scaleRatio);
+      }
+
+      const estimated = estimateMicronutrientsForFood(cat, kcal || matchedFood?.kcal, protein || matchedFood?.protein, carbs || matchedFood?.carbs, fat || matchedFood?.fat, matchedFood?.name || name, targetGrams);
+
       // Vitamins
-      fillIfEmpty('manual-nut-vitA', estimated.vitA);
-      fillIfEmpty('manual-nut-vitC', estimated.vitC);
-      fillIfEmpty('manual-nut-vitD', estimated.vitD);
-      fillIfEmpty('manual-nut-vitE', estimated.vitE);
-      fillIfEmpty('manual-nut-vitK', estimated.vitK);
-      fillIfEmpty('manual-nut-vitB1', estimated.vitB1);
-      fillIfEmpty('manual-nut-vitB2', estimated.vitB2);
-      fillIfEmpty('manual-nut-vitB3', estimated.vitB3);
-      fillIfEmpty('manual-nut-vitB5', estimated.vitB5);
-      fillIfEmpty('manual-nut-vitB6', estimated.vitB6);
-      fillIfEmpty('manual-nut-vitB7', estimated.vitB7);
-      fillIfEmpty('manual-nut-vitB9', estimated.vitB9);
-      fillIfEmpty('manual-nut-vitB12', estimated.vitB12);
-      fillIfEmpty('manual-nut-choline', estimated.choline);
+      fillNutrientIfUnverified('manual-nut-vitA', 'vitA', estimated.vitA);
+      fillNutrientIfUnverified('manual-nut-vitC', 'vitC', estimated.vitC);
+      fillNutrientIfUnverified('manual-nut-vitD', 'vitD', estimated.vitD);
+      fillNutrientIfUnverified('manual-nut-vitE', 'vitE', estimated.vitE);
+      fillNutrientIfUnverified('manual-nut-vitK', 'vitK', estimated.vitK);
+      fillNutrientIfUnverified('manual-nut-vitB1', 'vitB1', estimated.vitB1);
+      fillNutrientIfUnverified('manual-nut-vitB2', 'vitB2', estimated.vitB2);
+      fillNutrientIfUnverified('manual-nut-vitB3', 'vitB3', estimated.vitB3);
+      fillNutrientIfUnverified('manual-nut-vitB5', 'vitB5', estimated.vitB5);
+      fillNutrientIfUnverified('manual-nut-vitB6', 'vitB6', estimated.vitB6);
+      fillNutrientIfUnverified('manual-nut-vitB7', 'vitB7', estimated.vitB7);
+      fillNutrientIfUnverified('manual-nut-vitB9', 'vitB9', estimated.vitB9);
+      fillNutrientIfUnverified('manual-nut-vitB12', 'vitB12', estimated.vitB12);
+      fillNutrientIfUnverified('manual-nut-choline', 'choline', estimated.choline);
 
       // Minerals
-      fillIfEmpty('manual-nut-potassium', estimated.potassium);
-      fillIfEmpty('manual-nut-calcium', estimated.calcium);
-      fillIfEmpty('manual-nut-iron', estimated.iron);
-      fillIfEmpty('manual-nut-magnesium', estimated.magnesium);
-      fillIfEmpty('manual-nut-zinc', estimated.zinc);
-      fillIfEmpty('manual-nut-phosphorus', estimated.phosphorus);
-      fillIfEmpty('manual-nut-chloride', estimated.chloride);
-      fillIfEmpty('manual-nut-sulfur', estimated.sulfur);
-      fillIfEmpty('manual-nut-copper', estimated.copper);
-      fillIfEmpty('manual-nut-manganese', estimated.manganese);
-      fillIfEmpty('manual-nut-selenium', estimated.selenium);
-      fillIfEmpty('manual-nut-iodine', estimated.iodine);
-      fillIfEmpty('manual-nut-chromium', estimated.chromium);
-      fillIfEmpty('manual-nut-molybdenum', estimated.molybdenum);
+      fillNutrientIfUnverified('manual-nut-potassium', 'potassium', estimated.potassium);
+      fillNutrientIfUnverified('manual-nut-calcium', 'calcium', estimated.calcium);
+      fillNutrientIfUnverified('manual-nut-iron', 'iron', estimated.iron);
+      fillNutrientIfUnverified('manual-nut-magnesium', 'magnesium', estimated.magnesium);
+      fillNutrientIfUnverified('manual-nut-zinc', 'zinc', estimated.zinc);
+      fillNutrientIfUnverified('manual-nut-phosphorus', 'phosphorus', estimated.phosphorus);
+      fillNutrientIfUnverified('manual-nut-chloride', 'chloride', estimated.chloride);
+      fillNutrientIfUnverified('manual-nut-sulfur', 'sulfur', estimated.sulfur);
+      fillNutrientIfUnverified('manual-nut-copper', 'copper', estimated.copper);
+      fillNutrientIfUnverified('manual-nut-manganese', 'manganese', estimated.manganese);
+      fillNutrientIfUnverified('manual-nut-selenium', 'selenium', estimated.selenium);
+      fillNutrientIfUnverified('manual-nut-iodine', 'iodine', estimated.iodine);
+      fillNutrientIfUnverified('manual-nut-chromium', 'chromium', estimated.chromium);
+      fillNutrientIfUnverified('manual-nut-molybdenum', 'molybdenum', estimated.molybdenum);
 
       const undoBtn = document.getElementById('btn-undo-auto-estimate-micros');
       if (undoBtn) undoBtn.classList.remove('hidden');
 
+      const sourceName = matchedFood ? matchedFood.name : (name || 'USDA Reference');
+      if (activeManualNutritionContext) {
+        activeManualNutritionContext.usdaSupplementSource = sourceName;
+      }
+      const sourcePill = document.getElementById('usda-source-attribution-pill');
+      const sourceText = document.getElementById('usda-source-attribution-text');
+      if (sourcePill && sourceText) {
+        sourceText.textContent = `Nutrient information supplemented by USDA "${sourceName}"`;
+        sourcePill.classList.remove('hidden');
+      }
+
+      syncManualNutritionInteractiveBadges();
       if (typeof playChime === 'function') playChime('pop');
-      alertBox("Auto-filled missing micronutrients with USDA clinical standards!", "Micros Estimated");
     }
 
     function undoAutoEstimateMicros() {
       if (!window.preEstimateMicrosSnapshot) return;
-      Object.keys(window.preEstimateMicrosSnapshot).forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = window.preEstimateMicrosSnapshot[id] || '';
-      });
+      const snap = window.preEstimateMicrosSnapshot;
+      if (snap.values) {
+        Object.keys(snap.values).forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = snap.values[id] ?? '';
+        });
+      }
+      window.activeManualVerifiedMap = { ...(snap.verifiedMap || {}) };
+      if (activeManualNutritionContext) {
+        activeManualNutritionContext.usdaSupplementSource = snap.usdaSupplementSource || '';
+      }
 
       window.preEstimateMicrosSnapshot = null;
       const undoBtn = document.getElementById('btn-undo-auto-estimate-micros');
       if (undoBtn) undoBtn.classList.add('hidden');
+      const sourcePill = document.getElementById('usda-source-attribution-pill');
+      if (sourcePill && !(activeManualNutritionContext && activeManualNutritionContext.usdaSupplementSource)) {
+        sourcePill.classList.add('hidden');
+      }
 
+      syncManualNutritionInteractiveBadges();
       if (typeof playChime === 'function') playChime('pop');
-      alertBox("Restored original micronutrient amounts.", "Undo Complete");
+      alertBox("Restored original nutrient amounts.", "Undo Complete");
     }
 
     function saveManualNutritionData() {
@@ -3509,6 +4237,13 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
         const v = el ? parseFloat(el.value) : NaN;
         return isNaN(v) ? fallback : v;
       };
+      const getNullableNum = (id, roundInt = false) => {
+        const el = document.getElementById(id);
+        if (!el || el.value === '' || el.value == null) return null;
+        const v = parseFloat(el.value);
+        if (isNaN(v)) return null;
+        return roundInt ? Math.round(v) : v;
+      };
 
       const barcode = (document.getElementById('manual-nut-barcode') || {}).value?.trim() || '';
       const brand = (document.getElementById('manual-nut-brand') || {}).value?.trim() || '';
@@ -3516,6 +4251,10 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       const unit = (document.getElementById('manual-nut-unit') || {}).value || 'items';
       const category = (document.getElementById('manual-nut-cat') || {}).value || 'produce';
       const storage = (document.getElementById('manual-nut-storage') || {}).value || 'fridge';
+
+      const serving = (document.getElementById('manual-nut-serving-desc') || {}).value?.trim() || '1 serving';
+      const servingGrams = getNum('manual-nut-serving-grams', 100);
+      const servingsPerContainer = getNum('manual-nut-servings-per-container', 1);
 
       const kcal = Math.round(getNum('manual-nut-kcal', 0));
       const protein = getNum('manual-nut-protein', 0);
@@ -3530,43 +4269,65 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       const cholesterol = Math.round(getNum('manual-nut-cholesterol', 0));
       const water = Math.round(getNum('manual-nut-water', 0));
 
-      const micros = {
-        vitA: Math.round(getNum('manual-nut-vitA', 0)),
-        vitC: getNum('manual-nut-vitC', 0),
-        vitD: getNum('manual-nut-vitD', 0),
-        vitE: getNum('manual-nut-vitE', 0),
-        vitK: getNum('manual-nut-vitK', 0),
-        vitB1: getNum('manual-nut-vitB1', 0),
-        vitB2: getNum('manual-nut-vitB2', 0),
-        vitB3: getNum('manual-nut-vitB3', 0),
-        vitB5: getNum('manual-nut-vitB5', 0),
-        vitB6: getNum('manual-nut-vitB6', 0),
-        vitB7: getNum('manual-nut-vitB7', 0),
-        vitB9: Math.round(getNum('manual-nut-vitB9', 0)),
-        vitB12: getNum('manual-nut-vitB12', 0),
-        choline: Math.round(getNum('manual-nut-choline', 0)),
+      const rawMicros = {
+        vitA: getNullableNum('manual-nut-vitA', true),
+        vitC: getNullableNum('manual-nut-vitC'),
+        vitD: getNullableNum('manual-nut-vitD'),
+        vitE: getNullableNum('manual-nut-vitE'),
+        vitK: getNullableNum('manual-nut-vitK'),
+        vitB1: getNullableNum('manual-nut-vitB1'),
+        vitB2: getNullableNum('manual-nut-vitB2'),
+        vitB3: getNullableNum('manual-nut-vitB3'),
+        vitB5: getNullableNum('manual-nut-vitB5'),
+        vitB6: getNullableNum('manual-nut-vitB6'),
+        vitB7: getNullableNum('manual-nut-vitB7'),
+        vitB9: getNullableNum('manual-nut-vitB9', true),
+        vitB12: getNullableNum('manual-nut-vitB12'),
+        choline: getNullableNum('manual-nut-choline', true),
 
-        potassium: Math.round(getNum('manual-nut-potassium', 0)),
-        calcium: Math.round(getNum('manual-nut-calcium', 0)),
-        iron: getNum('manual-nut-iron', 0),
-        magnesium: Math.round(getNum('manual-nut-magnesium', 0)),
-        zinc: getNum('manual-nut-zinc', 0),
-        phosphorus: Math.round(getNum('manual-nut-phosphorus', 0)),
-        chloride: Math.round(getNum('manual-nut-chloride', 0)),
-        sulfur: Math.round(getNum('manual-nut-sulfur', 0)),
-        copper: getNum('manual-nut-copper', 0),
-        manganese: getNum('manual-nut-manganese', 0),
-        selenium: Math.round(getNum('manual-nut-selenium', 0)),
-        iodine: Math.round(getNum('manual-nut-iodine', 0)),
-        chromium: Math.round(getNum('manual-nut-chromium', 0)),
-        molybdenum: Math.round(getNum('manual-nut-molybdenum', 0))
+        potassium: getNullableNum('manual-nut-potassium', true),
+        calcium: getNullableNum('manual-nut-calcium', true),
+        iron: getNullableNum('manual-nut-iron'),
+        magnesium: getNullableNum('manual-nut-magnesium', true),
+        zinc: getNullableNum('manual-nut-zinc'),
+        phosphorus: getNullableNum('manual-nut-phosphorus', true),
+        chloride: getNullableNum('manual-nut-chloride', true),
+        sulfur: getNullableNum('manual-nut-sulfur', true),
+        copper: getNullableNum('manual-nut-copper'),
+        manganese: getNullableNum('manual-nut-manganese'),
+        selenium: getNullableNum('manual-nut-selenium', true),
+        iodine: getNullableNum('manual-nut-iodine', true),
+        chromium: getNullableNum('manual-nut-chromium', true),
+        molybdenum: getNullableNum('manual-nut-molybdenum', true)
       };
+
+      const micros = {};
+      Object.keys(rawMicros).forEach(k => {
+        if (rawMicros[k] !== null) {
+          micros[k] = rawMicros[k];
+        }
+      });
+
+      const verifiedNutrients = {};
+      MANUAL_NUTRITION_FIELD_MAP.forEach(f => {
+        const el = document.getElementById(f.id);
+        const hasVal = el && el.value !== '' && el.value != null;
+        if (hasVal && window.activeManualVerifiedMap && window.activeManualVerifiedMap[f.key]) {
+          verifiedNutrients[f.key] = true;
+        }
+      });
+
+      const usdaSupplementSource = (activeManualNutritionContext && activeManualNutritionContext.usdaSupplementSource) || '';
+      const hasAnyVerified = Object.keys(verifiedNutrients).length > 0;
 
       const product = {
         name,
         brand,
         amount,
         unit,
+        serving,
+        servingGrams,
+        servingsPerContainer,
         category,
         storage,
         barcode,
@@ -3582,7 +4343,9 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
         sodium,
         cholesterol,
         water,
-        sourceBadge: '✓ Verified Nutrition',
+        verifiedNutrients,
+        usdaSupplementSource,
+        sourceBadge: hasAnyVerified ? '✓ Verified Nutrition' : '~ USDA Estimated',
         nutrition: {
           kcal,
           protein,
@@ -3596,9 +4359,49 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
           sodium,
           cholesterol,
           water,
+          serving,
+          servingGrams,
+          servingsPerContainer,
+          verifiedNutrients,
+          usdaSupplementSource,
           micros
         }
       };
+
+      if (activeManualNutritionContext && activeManualNutritionContext.isFoodLogEdit && activeManualNutritionContext.foodLogId) {
+        const logEntry = (state.nutritionLog || []).find(n => n.id === activeManualNutritionContext.foodLogId);
+        if (logEntry) {
+          logEntry.name = name;
+          logEntry.serving = serving;
+          logEntry.servingGrams = servingGrams;
+          logEntry.kcal = kcal;
+          logEntry.protein = protein;
+          logEntry.carbs = carbs;
+          logEntry.fat = fat;
+          logEntry.fiber = fiber;
+          logEntry.sugar = sugar;
+          logEntry.satFat = satFat;
+          logEntry.sodium = sodium;
+          logEntry.water = water;
+          logEntry.potassium = micros.potassium || 0;
+          logEntry.iron = micros.iron || 0;
+          logEntry.calcium = micros.calcium || 0;
+          logEntry.micros = micros;
+          logEntry.verifiedNutrients = verifiedNutrients;
+          logEntry.usdaSupplementSource = usdaSupplementSource;
+          logEntry.nutrition = product.nutrition;
+          logEntry.isVerified = hasAnyVerified;
+
+          saveAppState();
+          renderNutrition();
+          if (typeof inspectLoggedFood === 'function') {
+            inspectLoggedFood(logEntry.id);
+          }
+          closeManualNutritionModal();
+          alertBox(`Updated nutritional profile for "${name}"!`, "Nutrition Saved");
+          return;
+        }
+      }
 
       if (activeManualNutritionContext && activeManualNutritionContext.isPantryEdit && activeManualNutritionContext.pantryItemId) {
         const pItem = (state.pantry || []).find(p => p.id === activeManualNutritionContext.pantryItemId);
@@ -3607,6 +4410,9 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
           pItem.brand = brand;
           pItem.amount = amount;
           pItem.unit = unit;
+          pItem.serving = serving;
+          pItem.servingGrams = servingGrams;
+          pItem.servingsPerContainer = servingsPerContainer;
           pItem.category = category;
           pItem.storage = storage;
           pItem.kcal = kcal;
@@ -3617,9 +4423,12 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
           pItem.sugar = sugar;
           pItem.satFat = satFat;
           pItem.sodium = sodium;
+          pItem.water = water;
+          pItem.verifiedNutrients = verifiedNutrients;
+          pItem.usdaSupplementSource = usdaSupplementSource;
           pItem.nutrition = product.nutrition;
-          pItem.isVerified = true;
-          pItem.sourceBadge = '✓ Verified Nutrition Facts';
+          pItem.isVerified = hasAnyVerified;
+          pItem.sourceBadge = hasAnyVerified ? '✓ Verified Nutrition Facts' : '~ USDA Supplemented';
           if (barcode) pItem.barcode = barcode;
 
           saveAppState();
@@ -3641,10 +4450,14 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
         if (state.incomingGroceriesApprovalList && state.incomingGroceriesApprovalList[activeManualNutritionContext.receiptIndex]) {
           const rItem = state.incomingGroceriesApprovalList[activeManualNutritionContext.receiptIndex];
           rItem.name = name;
+          rItem.serving = serving;
+          rItem.servingGrams = servingGrams;
+          rItem.verifiedNutrients = verifiedNutrients;
+          rItem.usdaSupplementSource = usdaSupplementSource;
           rItem.nutrition = product.nutrition;
-          rItem.isVerified = true;
-          rItem.sourceBadge = '✓ Exact Label Verified';
-          rItem.nutritionSource = 'Exact Label Verified';
+          rItem.isVerified = hasAnyVerified;
+          rItem.sourceBadge = hasAnyVerified ? '✓ Exact Label Verified' : '~ USDA Supplemented';
+          rItem.nutritionSource = hasAnyVerified ? 'Exact Label Verified' : 'USDA Supplemented';
           if (barcode) rItem.barcode = barcode;
           if (typeof renderIncomingGroceriesApprovalList === 'function') {
             renderIncomingGroceriesApprovalList(state.incomingGroceriesApprovalList);
@@ -3814,6 +4627,12 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
 
     if (typeof window !== 'undefined') {
       window.DAILY_NUTRITION_STANDARDS = DAILY_NUTRITION_STANDARDS;
+      window.getUnifiedFoodOrMeal = getUnifiedFoodOrMeal;
+      window.buildRecipeUnifiedNutrition = buildRecipeUnifiedNutrition;
+      window.estimateRecipeServingGrams = estimateRecipeServingGrams;
+      window.renderVerifiedShieldIcon = renderVerifiedShieldIcon;
+      window.renderEstimatedTildeIcon = renderEstimatedTildeIcon;
+      window.renderNutrientVerificationBadge = renderNutrientVerificationBadge;
       window.estimateMicronutrientsForFood = estimateMicronutrientsForFood;
       window.inspectScannedProductFullDetails = inspectScannedProductFullDetails;
       window.openManualNutritionFromScanner = openManualNutritionFromScanner;
@@ -3825,6 +4644,8 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       window.requestUsdaFoodSupplementation = requestUsdaFoodSupplementation;
       window.confirmUsdaSupplementation = confirmUsdaSupplementation;
       window.cancelUsdaSupplementation = cancelUsdaSupplementation;
+      window.toggleManualNutrientVerified = toggleManualNutrientVerified;
+      window.syncManualNutritionInteractiveBadges = syncManualNutritionInteractiveBadges;
       window.findClosestUsdaFood = findClosestUsdaFood;
       window.saveManualNutritionData = saveManualNutritionData;
       window.setLogMealType = setLogMealType;

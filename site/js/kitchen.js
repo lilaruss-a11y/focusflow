@@ -1789,33 +1789,59 @@
     }
 
     function quickLogRecipeToDiary(recipeId) {
-      const recipe = state.recipes.find(r => r.id === recipeId);
+      const allRecipes = (state.recipes || []).concat(typeof familyCookbookDatabase !== 'undefined' ? familyCookbookDatabase : []);
+      const recipe = allRecipes.find(r => r.id === recipeId);
       if (!recipe) return;
 
-      const kcal = recipe.kcal || 450;
-      const prot = recipe.protein || Math.round((kcal * 0.25) / 4);
-      const carb = recipe.carbs || Math.round((kcal * 0.45) / 4);
-      const fat = recipe.fat || Math.round((kcal * 0.30) / 9);
+      const built = (typeof buildRecipeUnifiedNutrition === 'function')
+        ? buildRecipeUnifiedNutrition(recipe)
+        : {
+            serving: recipe.serving || '1 serving',
+            servingGrams: recipe.servingGrams || 250,
+            nutrition: {
+              kcal: recipe.kcal || 450,
+              protein: recipe.protein || Math.round(((recipe.kcal || 450) * 0.25) / 4),
+              carbs: recipe.carbs || Math.round(((recipe.kcal || 450) * 0.45) / 4),
+              fat: recipe.fat || Math.round(((recipe.kcal || 450) * 0.30) / 9),
+              fiber: 5,
+              sugar: 6,
+              satFat: 3,
+              sodium: 320,
+              water: 95,
+              micros: {}
+            }
+          };
+
+      const nut = built.nutrition;
 
       state.nutritionLog.push({
         id: `n-${Date.now()}`,
         name: recipe.title,
         recipeId: recipe.id,
-        kcal,
-        protein: prot,
-        carbs: carb,
-        fat,
-        fiber: 5,
-        sodium: 320,
-        potassium: 450,
-        iron: 2.2,
-        calcium: 120,
-        isVerified: true
+        serving: built.serving,
+        servingGrams: built.servingGrams,
+        kcal: nut.kcal,
+        protein: nut.protein,
+        carbs: nut.carbs,
+        fat: nut.fat,
+        fiber: nut.fiber || 5,
+        sugar: nut.sugar || 0,
+        satFat: nut.satFat || 0,
+        sodium: nut.sodium || 320,
+        water: nut.water || 0,
+        potassium: nut.micros?.potassium || 450,
+        iron: nut.micros?.iron || 2.2,
+        calcium: nut.micros?.calcium || 120,
+        micros: nut.micros || {},
+        verifiedNutrients: nut.verifiedNutrients || {},
+        nutrition: nut,
+        isVerified: Boolean(recipe.isVerified)
       });
 
+      if (typeof saveAppState === 'function') saveAppState();
       renderNutrition();
       playChime('bell');
-      alertBox(`Logged 1 serving of "${recipe.title}" (${kcal} kcal) to today's diary!`, "Nutrition Diary");
+      alertBox(`Logged 1 serving = ${built.serving} (${built.servingGrams} g) of "${recipe.title}" (${nut.kcal} kcal) to today's diary!`, "Nutrition Diary");
     }
 
     function openAddRecipeModal() {
@@ -2069,70 +2095,141 @@
       if (!food) return;
       state.selectedFoodForDetail = food;
 
+      // Cross-reference unified food & recipe database if serving or micros are missing
+      const unifiedRef = (typeof getUnifiedFoodOrMeal === 'function')
+        ? getUnifiedFoodOrMeal(food.name.replace(/\s*\(1 serving\)/i, '').trim())[0]
+        : null;
+
+      const servingDesc = food.serving || food.nutrition?.serving || unifiedRef?.serving || '1 serving';
+      const servingGrams = food.servingGrams || food.nutrition?.servingGrams || unifiedRef?.servingGrams || 100;
+      const verifiedMap = food.verifiedNutrients || food.nutrition?.verifiedNutrients || (food.isVerified ? { kcal: true, protein: true, carbs: true, fat: true, fiber: true, sodium: true } : {});
+      const isOverallVerified = Boolean(food.isVerified || Object.keys(verifiedMap).length > 0);
+
       document.getElementById('detail-food-name').textContent = food.name;
       document.getElementById('detail-food-kcal').textContent = `${food.kcal} kcal`;
+      const srvEl = document.getElementById('detail-food-serving');
+      if (srvEl) {
+        srvEl.textContent = `1 serving = ${servingDesc} (${servingGrams} g)`;
+      }
 
       const badge = document.getElementById('detail-food-badge');
-      badge.textContent = food.isVerified ? '✓ Verified Fact' : '~ AI Estimated';
-      badge.className = food.isVerified 
-        ? "px-2 py-0.5 rounded text-[10px] font-bold bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30"
-        : "px-2 py-0.5 rounded text-[10px] font-bold bg-pastel-butter/20 text-pastel-butter border border-pastel-butter/30";
+      if (badge) {
+        badge.innerHTML = isOverallVerified
+          ? `${typeof renderVerifiedShieldIcon === 'function' ? renderVerifiedShieldIcon() : '✓'} Verified Label`
+          : `${typeof renderEstimatedTildeIcon === 'function' ? renderEstimatedTildeIcon() : '~'} Estimated`;
+        badge.className = isOverallVerified
+          ? "px-2 py-0.5 rounded text-[10px] font-bold bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30 inline-flex items-center gap-0.5"
+          : "px-2 py-0.5 rounded text-[10px] font-bold bg-pastel-butter/20 text-pastel-butter border border-pastel-butter/30 inline-flex items-center gap-0.5";
+      }
 
-      document.getElementById('detail-macro-protein').textContent = `${food.protein || 0}g`;
-      document.getElementById('detail-macro-carbs').textContent = `${food.carbs || 0}g`;
-      document.getElementById('detail-macro-fats').textContent = `${food.fat || 0}g`;
-      document.getElementById('detail-macro-fiber').textContent = `${food.fiber || 0}g`;
+      const badgeFor = (key) => {
+        const v = Boolean(verifiedMap[key]);
+        return (typeof renderNutrientVerificationBadge === 'function')
+          ? renderNutrientVerificationBadge(v)
+          : (v ? '<span class="text-emerald-400 font-bold mr-0.5">✓</span>' : '<span class="text-amber-300 font-bold mr-0.5">~</span>');
+      };
+
+      const protEl = document.getElementById('detail-macro-protein');
+      const carbEl = document.getElementById('detail-macro-carbs');
+      const fatEl = document.getElementById('detail-macro-fats');
+      const fibEl = document.getElementById('detail-macro-fiber');
+      if (protEl) protEl.innerHTML = `${badgeFor('protein')}${food.protein || 0}g`;
+      if (carbEl) carbEl.innerHTML = `${badgeFor('carbs')}${food.carbs || 0}g`;
+      if (fatEl) fatEl.innerHTML = `${badgeFor('fat')}${food.fat || 0}g`;
+      if (fibEl) fibEl.innerHTML = `${badgeFor('fiber')}${food.fiber || 0}g`;
+
+      const profile = state.userProfile || {};
+      const macroDefs = [
+        { key: 'kcal', name: 'Energy (Calories)', unit: 'kcal', dv: profile.dailyCaloriesTarget || 2130, val: food.kcal },
+        { key: 'protein', name: 'Protein', unit: 'g', dv: profile.dailyProteinTarget || 135, val: food.protein },
+        { key: 'carbs', name: 'Total Carbohydrates', unit: 'g', dv: profile.dailyCarbsTarget || 240, val: food.carbs },
+        { key: 'fat', name: 'Total Fat', unit: 'g', dv: profile.dailyFatTarget || 71, val: food.fat },
+        { key: 'fiber', name: 'Dietary Fiber', unit: 'g', dv: profile.dailyFiberTarget || 30, val: food.fiber },
+        { key: 'water', name: 'Water / Moisture', unit: 'ml', dv: profile.dailyWaterTargetMl || 2700, val: food.water ?? food.nutrition?.water ?? unifiedRef?.water },
+        { key: 'sugar', name: 'Total Sugars', unit: 'g', dv: 50, isUpperLimit: true, val: food.sugar ?? food.nutrition?.sugar ?? unifiedRef?.sugar },
+        { key: 'satFat', name: 'Saturated Fat', unit: 'g', dv: 20, isUpperLimit: true, val: food.satFat ?? food.saturated ?? food.nutrition?.satFat ?? unifiedRef?.satFat },
+        { key: 'sodium', name: 'Sodium', unit: 'mg', dv: profile.dailySodiumTarget || 2300, isUpperLimit: true, val: food.sodium }
+      ];
+
+      const micros = food.micros || food.nutrition?.micros || unifiedRef?.micros || {};
+      const standards = window.DAILY_NUTRITION_STANDARDS || {};
+
+      const macroRowsHtml = macroDefs.map(m => renderMicroBarRow(m.key, m, m.val, Boolean(verifiedMap[m.key]))).join('');
+      const vitRowsHtml = Object.keys(standards)
+        .filter(k => standards[k].type === 'vitamin')
+        .map(k => renderMicroBarRow(k, standards[k], micros[k] ?? food[k], Boolean(verifiedMap[k])))
+        .join('');
+      const minRowsHtml = Object.keys(standards)
+        .filter(k => standards[k].type === 'mineral')
+        .map(k => renderMicroBarRow(k, standards[k], micros[k] ?? food[k], Boolean(verifiedMap[k])))
+        .join('');
+
+      const usdaSource = food.usdaSupplementSource || food.nutrition?.usdaSupplementSource || '';
+      const usdaBannerHtml = usdaSource ? `
+        <div class="p-2 rounded-xl bg-pastel-sky/10 border border-pastel-sky/30 text-[11px] text-pastel-sky flex items-center gap-1.5">
+          <i data-lucide="info" class="w-3.5 h-3.5 shrink-0"></i>
+          <span>Nutrient information supplemented by USDA "${usdaSource}"</span>
+        </div>
+      ` : '';
 
       const specs = document.getElementById('detail-nutrient-specs');
       specs.innerHTML = `
+        ${usdaBannerHtml}
         <div class="bg-dark-base p-3 rounded-xl border border-dark-border space-y-1.5">
-          <span class="text-pastel-butter font-bold block text-[11px] uppercase tracking-wider">Carbohydrate Fractions</span>
-          <div class="grid grid-cols-3 gap-2 text-slate-300">
-            <div>Dietary Fiber: <strong class="text-white">${food.fiber || 0}g</strong></div>
-            <div>Sugars: <strong class="text-white">${food.sugar || 0}g</strong></div>
-            <div>Starch: <strong class="text-white">${food.starch || 0}g</strong></div>
+          <div class="flex items-center justify-between">
+            <span class="text-pastel-lavender font-bold text-[11px] uppercase tracking-wider">Macronutrients &amp; Daily Goal Contribution</span>
+            <span class="text-[10px] text-slate-400 font-mono">1 serving = ${servingDesc} (${servingGrams} g)</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+            ${macroRowsHtml}
           </div>
         </div>
 
         <div class="bg-dark-base p-3 rounded-xl border border-dark-border space-y-1.5">
-          <span class="text-pastel-sky font-bold block text-[11px] uppercase tracking-wider">Fat & Fatty Acid Profile</span>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-slate-300">
-            <div>Saturated: <strong class="text-white">${food.saturated || 0}g</strong></div>
-            <div>Monounsat (MUFA): <strong class="text-white">${food.mufa || 0}g</strong></div>
-            <div>Polyunsat (PUFA): <strong class="text-white">${food.pufa || 0}g</strong></div>
-            <div>Omega-3: <strong class="text-pastel-sky">${food.omega3 || 0}g</strong></div>
+          <span class="text-pastel-sky font-bold block text-[11px] uppercase tracking-wider">Essential Vitamins (13 + Choline)</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1">
+            ${vitRowsHtml}
           </div>
         </div>
 
         <div class="bg-dark-base p-3 rounded-xl border border-dark-border space-y-1.5">
-          <span class="text-pastel-mint font-bold block text-[11px] uppercase tracking-wider">Vitamins & Minerals</span>
-          <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 text-slate-300">
-            <div>Sodium: <strong class="text-white">${food.sodium || 0}mg</strong></div>
-            <div>Potassium: <strong class="text-white">${food.potassium || 0}mg</strong></div>
-            <div>Iron: <strong class="text-pastel-sky">${food.iron || 0}mg</strong></div>
-            <div>Calcium: <strong class="text-white">${food.calcium || 0}mg</strong></div>
-            <div>Magnesium: <strong class="text-white">${food.magnesium || 0}mg</strong></div>
-            <div>Zinc: <strong class="text-white">${food.zinc || 0}mg</strong></div>
-            <div>Vit D3: <strong class="text-white">${food.vitD || 0} IU</strong></div>
-            <div>Vit C: <strong class="text-white">${food.vitC || 0}mg</strong></div>
-          </div>
-        </div>
-
-        <div class="bg-dark-base p-3 rounded-xl border border-dark-border space-y-1.5">
-          <span class="text-pastel-peach font-bold block text-[11px] uppercase tracking-wider">Amino Acids & Dopamine Bases</span>
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-slate-300">
-            <div>Tyrosine (Dopamine): <strong class="text-pastel-peach">${food.tyrosine || 0}mg</strong></div>
-            <div>Tryptophan (Serotonin): <strong class="text-white">${food.tryptophan || 0}mg</strong></div>
-            <div>Leucine (BCAA): <strong class="text-white">${food.leucine || 0}mg</strong></div>
-            <div>Lysine: <strong class="text-white">${food.lysine || 0}mg</strong></div>
-            <div>Choline: <strong class="text-white">${food.choline || 0}mg</strong></div>
+          <span class="text-pastel-mint font-bold block text-[11px] uppercase tracking-wider">Essential Minerals (14)</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1">
+            ${minRowsHtml}
           </div>
         </div>
       `;
 
       document.getElementById('food-detail-modal').classList.remove('hidden');
-      lucide.createIcons();
+      if (window.lucide) lucide.createIcons();
       playChime('bell');
+    }
+
+    function openManualNutritionForLoggedFood() {
+      const food = state.selectedFoodForDetail;
+      if (!food || typeof openManualNutritionModal !== 'function') return;
+      closeFoodDetailModal();
+      openManualNutritionModal({
+        name: food.name,
+        serving: food.serving || food.nutrition?.serving || '1 serving',
+        servingGrams: food.servingGrams || food.nutrition?.servingGrams || 100,
+        kcal: food.kcal,
+        protein: food.protein,
+        carbs: food.carbs,
+        fat: food.fat,
+        fiber: food.fiber,
+        sugar: food.sugar,
+        satFat: food.satFat,
+        sodium: food.sodium,
+        water: food.water,
+        micros: food.micros || food.nutrition?.micros || {},
+        verifiedNutrients: food.verifiedNutrients || food.nutrition?.verifiedNutrients || {},
+        usdaSupplementSource: food.usdaSupplementSource || food.nutrition?.usdaSupplementSource || '',
+        nutrition: food.nutrition || {},
+        isVerified: food.isVerified,
+        isFoodLogEdit: true,
+        foodLogId: food.id
+      });
     }
 
     function closeFoodDetailModal() {
@@ -2539,24 +2636,56 @@
     state.activePantryPortionScale = 1.0;
 
     function renderMicroBarRow(standardKey, standardDef, value, isVerified = false) {
-      const val = (typeof value === 'number' && !isNaN(value)) ? value : 0;
-      const pct = Math.min(Math.round((val / standardDef.dv) * 100), 100);
-      const formattedVal = val >= 10 ? Math.round(val) : (val > 0 ? parseFloat(val.toFixed(2)) : 0);
+      const hasExplicitValue = value !== null && value !== undefined && value !== '' && !isNaN(parseFloat(value));
+      const numVal = hasExplicitValue ? parseFloat(value) : 0;
+
+      // Differentiate confirmed 0 vs unentered empty nutrient values
+      if (!hasExplicitValue || (numVal === 0 && !isVerified)) {
+        const tildeIcon = (typeof renderEstimatedTildeIcon === 'function')
+          ? renderEstimatedTildeIcon('No confirmed nutrition facts yet')
+          : '<span class="text-amber-300 font-bold mr-1">~</span>';
+        return `
+          <div class="p-1.5 rounded-xl bg-dark-elevated/50 border border-dark-border/40 text-[10px] opacity-80">
+            <div class="flex items-center justify-between mb-0.5">
+              <span class="text-slate-400 font-medium flex items-center gap-0.5">${tildeIcon}${standardDef.name}</span>
+              <div class="flex items-center gap-1.5 font-mono">
+                <span class="text-slate-500 font-bold">—</span>
+                <span class="text-slate-600 text-[9px]">(No data)</span>
+              </div>
+            </div>
+            <div class="w-full bg-dark-base rounded-full h-1 overflow-hidden">
+              <div class="bg-slate-700/40 h-1 rounded-full" style="width: 0%"></div>
+            </div>
+          </div>
+        `;
+      }
+
+      const dv = standardDef.dv || 100;
+      const pct = Math.min(Math.round((numVal / dv) * 100), 100);
+      const rawPct = Math.round((numVal / dv) * 100);
+      const formattedVal = numVal >= 10 ? Math.round(numVal) : (numVal > 0 ? parseFloat(numVal.toFixed(2)) : 0);
+
       const indicator = isVerified
-        ? '<span class="text-emerald-400 font-bold mr-1" title="Verified Nutrient">✓</span>'
-        : '<span class="text-amber-400 font-bold mr-1" title="Estimated Nutrient">~</span>';
-      
+        ? ((typeof renderVerifiedShieldIcon === 'function') ? renderVerifiedShieldIcon() : '<span class="text-emerald-400 font-bold mr-1">✓</span>')
+        : ((typeof renderEstimatedTildeIcon === 'function') ? renderEstimatedTildeIcon() : '<span class="text-amber-300 font-bold mr-1">~</span>');
+
+      const col = (typeof getNutrientProgressColor === 'function')
+        ? getNutrientProgressColor(numVal, dv, Boolean(standardDef.isUpperLimit))
+        : { textClass: standardDef.color || 'text-slate-300', barClass: standardDef.barColor || 'bg-pastel-mint', status: 'need_more' };
+
+      const statusTag = col.status === 'correct' ? '✓ Optimal' : (col.status === 'too_much' ? '⚠️ High' : '');
+
       return `
         <div class="p-1.5 rounded-xl bg-dark-elevated/70 border border-dark-border/40 text-[10px]">
           <div class="flex items-center justify-between mb-0.5">
-            <span class="text-slate-300 font-medium flex items-center">${indicator}${standardDef.name}</span>
-            <div class="flex items-center gap-1.5 font-mono">
+            <span class="text-slate-200 font-medium flex items-center gap-0.5 truncate pr-1">${indicator}${standardDef.name}</span>
+            <div class="flex items-center gap-1.5 font-mono shrink-0">
               <span class="text-white font-bold">${formattedVal} ${standardDef.unit}</span>
-              <span class="${standardDef.color} text-[9px] font-bold">(${pct}% DV)</span>
+              <span class="${col.textClass} text-[9px] font-bold">(${rawPct}% DV${statusTag ? ' ' + statusTag : ''})</span>
             </div>
           </div>
           <div class="w-full bg-dark-base rounded-full h-1 overflow-hidden">
-            <div class="${standardDef.barColor} h-1 rounded-full transition-all duration-300" style="width: ${pct}%"></div>
+            <div class="${col.barClass} h-1 rounded-full transition-all duration-300" style="width: ${pct}%"></div>
           </div>
         </div>
       `;
@@ -2598,19 +2727,19 @@
           <div class="relative w-16 h-16 flex items-center justify-center shrink-0">
             <svg class="w-full h-full transform -rotate-90" viewBox="0 0 70 70">
               <circle cx="35" cy="35" r="${r}" fill="none" stroke="#1e293b" stroke-width="7" />
-              <circle cx="35" cy="35" r="${r}" fill="none" stroke="#34d399" stroke-width="7" stroke-dasharray="${pDash} ${circ - pDash}" stroke-dashoffset="${pOffset}" />
-              <circle cx="35" cy="35" r="${r}" fill="none" stroke="#38bdf8" stroke-width="7" stroke-dasharray="${cDash} ${circ - cDash}" stroke-dashoffset="${cOffset}" />
-              <circle cx="35" cy="35" r="${r}" fill="none" stroke="#fb7185" stroke-width="7" stroke-dasharray="${fDash} ${circ - fDash}" stroke-dashoffset="${fOffset}" />
+              <circle cx="35" cy="35" r="${r}" fill="none" stroke="#fca5a5" stroke-width="7" stroke-dasharray="${pDash} ${circ - pDash}" stroke-dashoffset="${pOffset}" />
+              <circle cx="35" cy="35" r="${r}" fill="none" stroke="#6ee7b7" stroke-width="7" stroke-dasharray="${cDash} ${circ - cDash}" stroke-dashoffset="${cOffset}" />
+              <circle cx="35" cy="35" r="${r}" fill="none" stroke="#fde047" stroke-width="7" stroke-dasharray="${fDash} ${circ - fDash}" stroke-dashoffset="${fOffset}" />
             </svg>
             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-              <span class="text-[11px] font-black text-white font-mono leading-none">${totalKcal}</span>
+              <span class="text-[11px] font-black text-pastel-lavender font-mono leading-none">${totalKcal}</span>
               <span class="text-[7px] text-slate-400 font-mono">kcal</span>
             </div>
           </div>
           <div class="space-y-0.5 text-[10px] font-mono">
-            <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-pastel-mint"></span><span class="text-slate-300">Protein:</span><strong class="text-white">${pPct}%</strong><span class="text-slate-400">(${Math.round(pG)}g)</span></div>
-            <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-pastel-sky"></span><span class="text-slate-300">Net Carbs:</span><strong class="text-white">${cPct}%</strong><span class="text-slate-400">(${Math.round(cG)}g)</span></div>
-            <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-pastel-coral"></span><span class="text-slate-300">Fat:</span><strong class="text-white">${fPct}%</strong><span class="text-slate-400">(${Math.round(fG)}g)</span></div>
+            <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-pastel-coral"></span><span class="text-slate-300">Protein:</span><strong class="text-pastel-coral">${pPct}%</strong><span class="text-slate-400">(${Math.round(pG)}g)</span></div>
+            <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-pastel-mint"></span><span class="text-slate-300">Net Carbs:</span><strong class="text-pastel-mint">${cPct}%</strong><span class="text-slate-400">(${Math.round(cG)}g)</span></div>
+            <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-pastel-butter"></span><span class="text-slate-300">Fat:</span><strong class="text-pastel-butter">${fPct}%</strong><span class="text-slate-400">(${Math.round(fG)}g)</span></div>
           </div>
         </div>
       `;
@@ -2626,15 +2755,17 @@
     function renderPantryItemDetailNutrients(item, scale = 1.0) {
       if (!item || !item.nutrition) return;
       const nut = item.nutrition;
-      const baseGrams = item.servingGrams || (item.unit === 'g' ? (parseFloat(item.amount) || 100) : 100);
+      const servingDesc = item.serving || nut.serving || '1 serving';
+      const baseGrams = item.servingGrams || nut.servingGrams || (item.unit === 'g' ? (parseFloat(item.amount) || 100) : 100);
       const viewGrams = Math.round(baseGrams * scale);
 
       const baseLabel = document.getElementById('pantry-detail-base-serving');
-      if (baseLabel) baseLabel.textContent = `• Base: 1 serving (${baseGrams}g)`;
+      if (baseLabel) baseLabel.textContent = `• Base: 1 serving = ${servingDesc} (${baseGrams} g)`;
       const viewLabel = document.getElementById('pantry-detail-serving-display');
-      if (viewLabel) viewLabel.textContent = `${scale}x serving (${viewGrams}g)`;
+      if (viewLabel) viewLabel.textContent = `${scale}x serving = ${servingDesc} (${viewGrams} g)`;
 
       const isVerified = Boolean(item.isVerified || (item.sourceBadge && item.sourceBadge.includes('✓')));
+      const verifiedMap = item.verifiedNutrients || nut.verifiedNutrients || (isVerified ? { kcal: true, protein: true, carbs: true, fat: true, fiber: true, sugar: true, satFat: true, sodium: true } : {});
 
       const kcalEl = document.getElementById('pantry-detail-kcal');
       const protEl = document.getElementById('pantry-detail-protein');
@@ -2653,17 +2784,23 @@
       const scaledSugar = ((nut.sugar || 0) * scale).toFixed(1);
       const scaledSatFat = ((nut.satFat || 0) * scale).toFixed(1);
       const scaledSodium = Math.round((nut.sodium || 0) * scale);
+      const scaledWater = Math.round((nut.water || item.water || 0) * scale);
 
-      const checkPrefix = isVerified ? '<span class="text-emerald-400 font-bold mr-0.5">✓</span>' : '<span class="text-amber-400 font-bold mr-0.5">~</span>';
+      const badgeFor = (key) => {
+        const v = Boolean(verifiedMap[key]);
+        return (typeof renderNutrientVerificationBadge === 'function')
+          ? renderNutrientVerificationBadge(v)
+          : (v ? '<span class="text-emerald-400 font-bold mr-0.5">✓</span>' : '<span class="text-amber-300 font-bold mr-0.5">~</span>');
+      };
 
-      if (kcalEl) kcalEl.innerHTML = `${checkPrefix}${scaledKcal}`;
-      if (protEl) protEl.innerHTML = `${checkPrefix}${scaledProt}g`;
-      if (carbEl) carbEl.innerHTML = `${checkPrefix}${scaledCarbs}g`;
-      if (fatEl) fatEl.innerHTML = `${checkPrefix}${scaledFat}g`;
-      if (fiberEl) fiberEl.innerHTML = `${checkPrefix}${scaledFiber}g`;
-      if (sugarEl) sugarEl.innerHTML = `${checkPrefix}${scaledSugar}g`;
-      if (satFatEl) satFatEl.innerHTML = `${checkPrefix}${scaledSatFat}g`;
-      if (sodiumEl) sodiumEl.innerHTML = `${checkPrefix}${scaledSodium}mg`;
+      if (kcalEl) kcalEl.innerHTML = `${badgeFor('kcal')}${scaledKcal}`;
+      if (protEl) protEl.innerHTML = `${badgeFor('protein')}${scaledProt}g`;
+      if (carbEl) carbEl.innerHTML = `${badgeFor('carbs')}${scaledCarbs}g`;
+      if (fatEl) fatEl.innerHTML = `${badgeFor('fat')}${scaledFat}g`;
+      if (fiberEl) fiberEl.innerHTML = `${badgeFor('fiber')}${scaledFiber}g`;
+      if (sugarEl) sugarEl.innerHTML = `${badgeFor('sugar')}${scaledSugar}g`;
+      if (satFatEl) satFatEl.innerHTML = `${badgeFor('satFat')}${scaledSatFat}g`;
+      if (sodiumEl) sodiumEl.innerHTML = `${badgeFor('sodium')}${scaledSodium}mg`;
 
       renderPantryDetailMacroDonut({
         kcal: scaledKcal,
@@ -2671,6 +2808,24 @@
         carbs: scaledCarbs,
         fat: scaledFat
       });
+
+      // Render unified macro bars in the same bar format as micronutrients
+      const profile = state.userProfile || {};
+      const macroGrid = document.getElementById('pantry-macro-bars-grid');
+      if (macroGrid) {
+        const macroDefs = [
+          { key: 'kcal', name: 'Energy (Calories)', unit: 'kcal', dv: profile.dailyCaloriesTarget || 2130, val: scaledKcal },
+          { key: 'protein', name: 'Protein', unit: 'g', dv: profile.dailyProteinTarget || 135, val: parseFloat(scaledProt) },
+          { key: 'carbs', name: 'Total Carbohydrates', unit: 'g', dv: profile.dailyCarbsTarget || 240, val: parseFloat(scaledCarbs) },
+          { key: 'fat', name: 'Total Fat', unit: 'g', dv: profile.dailyFatTarget || 71, val: parseFloat(scaledFat) },
+          { key: 'fiber', name: 'Dietary Fiber', unit: 'g', dv: profile.dailyFiberTarget || 30, val: parseFloat(scaledFiber) },
+          { key: 'water', name: 'Water / Moisture', unit: 'ml', dv: profile.dailyWaterTargetMl || 2700, val: scaledWater },
+          { key: 'sugar', name: 'Total Sugars', unit: 'g', dv: 50, isUpperLimit: true, val: parseFloat(scaledSugar) },
+          { key: 'satFat', name: 'Saturated Fat', unit: 'g', dv: 20, isUpperLimit: true, val: parseFloat(scaledSatFat) },
+          { key: 'sodium', name: 'Sodium', unit: 'mg', dv: profile.dailySodiumTarget || 2300, isUpperLimit: true, val: scaledSodium }
+        ];
+        macroGrid.innerHTML = macroDefs.map(m => renderMicroBarRow(m.key, m, m.val, Boolean(verifiedMap[m.key]))).join('');
+      }
 
       // Render all 13 vitamins and all 14 minerals scaled proportionally
       const standards = (typeof window !== 'undefined' && window.DAILY_NUTRITION_STANDARDS) ? window.DAILY_NUTRITION_STANDARDS : (typeof DAILY_NUTRITION_STANDARDS !== 'undefined' ? DAILY_NUTRITION_STANDARDS : null);
@@ -2682,13 +2837,13 @@
         if (vitGrid) {
           vitGrid.innerHTML = Object.keys(standards)
             .filter(k => standards[k].type === 'vitamin')
-            .map(k => renderMicroBarRow(k, standards[k], (micros[k] || 0) * scale, isVerified))
+            .map(k => renderMicroBarRow(k, standards[k], micros[k] != null ? micros[k] * scale : null, Boolean(verifiedMap[k])))
             .join('');
         }
         if (minGrid) {
           minGrid.innerHTML = Object.keys(standards)
             .filter(k => standards[k].type === 'mineral')
-            .map(k => renderMicroBarRow(k, standards[k], (micros[k] || 0) * scale, isVerified))
+            .map(k => renderMicroBarRow(k, standards[k], micros[k] != null ? micros[k] * scale : null, Boolean(verifiedMap[k])))
             .join('');
         }
       }
@@ -2731,8 +2886,14 @@
           brand: item.brand || '',
           amount: item.amount != null ? item.amount : 1,
           unit: item.unit || 'items',
+          serving: item.serving || item.nutrition?.serving || '1 serving',
+          servingGrams: item.servingGrams || item.nutrition?.servingGrams || 100,
+          servingsPerContainer: item.servingsPerContainer || item.nutrition?.servingsPerContainer || 1,
           category: item.category || 'produce',
           storage: item.storage || 'fridge',
+          verifiedNutrients: item.verifiedNutrients || item.nutrition?.verifiedNutrients || {},
+          usdaSupplementSource: item.usdaSupplementSource || item.nutrition?.usdaSupplementSource || '',
+          isVerified: item.isVerified,
           nutrition: item.nutrition,
           isPantryEdit: true,
           pantryItemId: item.id
@@ -2759,20 +2920,25 @@
       if (amtInput) amtInput.value = item.amount != null ? item.amount : 1;
       setPantryDetailUnit(item.unit || 'items');
 
-      // Find match in whole foods database or estimate
-      const match = (typeof commonFoodsDatabase !== 'undefined') ? commonFoodsDatabase.find(cf => item.name.toLowerCase().includes(cf.name.toLowerCase().split(' ')[0])) : null;
+      // Find unified match across recipes, USDA whole foods, or barcode catalog
+      const unifiedMatches = (typeof getUnifiedFoodOrMeal === 'function') ? getUnifiedFoodOrMeal(item.name) : [];
+      const unifiedRef = unifiedMatches.find(u => u.pantryItemId !== item.id) || unifiedMatches[0] || null;
+      const match = (typeof findClosestUsdaFood === 'function') ? findClosestUsdaFood(item.name, item.category) : null;
+
+      if (!item.serving) item.serving = item.nutrition?.serving || unifiedRef?.serving || match?.serving || '1 serving';
+      if (!item.servingGrams) item.servingGrams = item.nutrition?.servingGrams || unifiedRef?.servingGrams || match?.servingGrams || 100;
 
       if (!item.nutrition) {
-        const estKcal = match ? match.kcal : (item.kcal || (item.category === 'protein' ? 180 : (item.category === 'produce' ? 45 : 120)));
-        const estProt = match ? match.protein : (item.protein || (item.category === 'protein' ? 24 : 2));
-        const estCarbs = match ? match.carbs : (item.carbs || (item.category === 'produce' ? 8 : (item.category === 'grains' ? 28 : 2)));
-        const estFat = match ? match.fat : (item.fat || (item.category === 'protein' ? 6 : 0.5));
-        const estFiber = match ? match.fiber : (item.fiber || (item.category === 'produce' ? 3 : 0));
-        const estSodium = match?.sodium || item.sodium || 45;
+        const estKcal = unifiedRef?.kcal ?? match?.kcal ?? (item.kcal || (item.category === 'protein' ? 180 : (item.category === 'produce' ? 45 : 120)));
+        const estProt = unifiedRef?.protein ?? match?.protein ?? (item.protein || (item.category === 'protein' ? 24 : 2));
+        const estCarbs = unifiedRef?.carbs ?? match?.carbs ?? (item.carbs || (item.category === 'produce' ? 8 : (item.category === 'grains' ? 28 : 2)));
+        const estFat = unifiedRef?.fat ?? match?.fat ?? (item.fat || (item.category === 'protein' ? 6 : 0.5));
+        const estFiber = unifiedRef?.fiber ?? match?.fiber ?? (item.fiber || (item.category === 'produce' ? 3 : 0));
+        const estSodium = unifiedRef?.sodium ?? match?.sodium ?? item.sodium ?? 45;
 
-        const estMicros = (typeof estimateMicronutrientsForFood === 'function')
-          ? estimateMicronutrientsForFood(item.category, estKcal, estProt, estCarbs, estFat, item.name)
-          : {};
+        const estMicros = unifiedRef?.micros || match?.micros || ((typeof estimateMicronutrientsForFood === 'function')
+          ? estimateMicronutrientsForFood(item.category, estKcal, estProt, estCarbs, estFat, item.name, item.servingGrams)
+          : {});
 
         item.nutrition = {
           kcal: estKcal,
@@ -2780,14 +2946,20 @@
           carbs: estCarbs,
           fat: estFat,
           fiber: estFiber,
-          sugar: item.sugar || (item.category === 'produce' ? 2.5 : 0),
-          satFat: item.satFat || (item.category === 'protein' ? 1.5 : 0.1),
+          sugar: item.sugar ?? unifiedRef?.sugar ?? match?.sugar ?? (item.category === 'produce' ? 2.5 : 0),
+          satFat: item.satFat ?? unifiedRef?.satFat ?? match?.satFat ?? (item.category === 'protein' ? 1.5 : 0.1),
           sodium: estSodium,
+          water: item.water ?? unifiedRef?.water ?? match?.water ?? 0,
+          serving: item.serving,
+          servingGrams: item.servingGrams,
+          verifiedNutrients: item.verifiedNutrients || unifiedRef?.verifiedNutrients || {},
           micros: estMicros
         };
       } else if (!item.nutrition.micros || Object.keys(item.nutrition.micros).length === 0) {
-        if (typeof estimateMicronutrientsForFood === 'function') {
-          item.nutrition.micros = estimateMicronutrientsForFood(item.category, item.nutrition.kcal, item.nutrition.protein, item.nutrition.carbs, item.nutrition.fat, item.name);
+        if (unifiedRef?.micros && Object.keys(unifiedRef.micros).length > 0) {
+          item.nutrition.micros = unifiedRef.micros;
+        } else if (typeof estimateMicronutrientsForFood === 'function') {
+          item.nutrition.micros = estimateMicronutrientsForFood(item.category, item.nutrition.kcal, item.nutrition.protein, item.nutrition.carbs, item.nutrition.fat, item.name, item.servingGrams);
         }
       }
 
@@ -2802,11 +2974,13 @@
       if (verifiedBadge) {
         const isVerified = Boolean(item.isVerified || (item.sourceBadge && item.sourceBadge.includes('✓')));
         if (isVerified) {
-          verifiedBadge.textContent = item.sourceBadge || (match ? "✓ Verified USDA Whole Food" : "✓ Verified Clinical Nutrition Profile");
-          verifiedBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/40 text-emerald-300 border border-emerald-400/30";
+          const shield = (typeof renderVerifiedShieldIcon === 'function') ? renderVerifiedShieldIcon() : '✓';
+          verifiedBadge.innerHTML = `${shield} ${(item.sourceBadge || (match ? "Verified USDA Whole Food" : "Verified Clinical Nutrition Profile")).replace(/^✓\s*/, '')}`;
+          verifiedBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/40 text-emerald-300 border border-emerald-400/30 inline-flex items-center gap-0.5";
         } else {
-          verifiedBadge.textContent = "~ Clinical Estimate";
-          verifiedBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/40 text-amber-300 border border-amber-400/30";
+          const tilde = (typeof renderEstimatedTildeIcon === 'function') ? renderEstimatedTildeIcon() : '~';
+          verifiedBadge.innerHTML = `${tilde} Clinical Estimate`;
+          verifiedBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/40 text-amber-300 border border-amber-400/30 inline-flex items-center gap-0.5";
         }
       }
 
@@ -2931,7 +3105,7 @@
       closePantryItemDetailModal();
     }
 
-    // Manual Instant Whole Food Search Bar
+    // Manual Instant Whole Food & Recipe Search Bar (Unified Reference Continuity)
     function searchWholeFoodsForPantry(query) {
       const box = document.getElementById('kitchen-search-suggestions');
       if (!box) return;
@@ -2942,20 +3116,32 @@
         return;
       }
 
-      // Load custom foods from localStorage
+      // Query centralized food & recipe database first (e.g. "German Pancakes", "Apple", etc.)
+      const unifiedMatches = (typeof getUnifiedFoodOrMeal === 'function')
+        ? getUnifiedFoodOrMeal(q)
+        : [];
+
       let customFoods = [];
       try {
         const savedCustom = localStorage.getItem('focusflow_custom_foods');
         if (savedCustom) customFoods = JSON.parse(savedCustom);
       } catch(e) {}
 
-      const pool = [
-        ...(typeof commonFoodsDatabase !== 'undefined' ? commonFoodsDatabase : []),
+      const extraPool = [
         ...(typeof brandedGroceriesDatabase !== 'undefined' ? brandedGroceriesDatabase : []),
         ...customFoods
-      ];
+      ].filter(cf => cf.name && cf.name.toLowerCase().includes(q));
 
-      const matches = pool.filter(cf => cf.name.toLowerCase().includes(q)).slice(0, 6);
+      const seenNames = new Set();
+      const matches = [];
+      unifiedMatches.concat(extraPool).forEach(item => {
+        const key = (item.name || '').toLowerCase();
+        if (key && !seenNames.has(key) && matches.length < 7) {
+          seenNames.add(key);
+          matches.push(item);
+        }
+      });
+
       if (matches.length === 0) {
         box.innerHTML = `
           <div class="p-2.5 text-xs text-slate-300 flex items-center justify-between gap-2">
@@ -2969,15 +3155,25 @@
 
       box.innerHTML = '';
       matches.forEach(m => {
+        const srv = m.serving || m.nutrition?.serving || '1 serving';
+        const srvG = m.servingGrams || m.nutrition?.servingGrams || 100;
+        const badgeIcon = m.isVerified
+          ? ((typeof renderVerifiedShieldIcon === 'function') ? renderVerifiedShieldIcon() : '✓')
+          : ((typeof renderEstimatedTildeIcon === 'function') ? renderEstimatedTildeIcon() : '~');
+        const sourceTag = m.source || (m.type === 'recipe' ? 'Recipe' : 'USDA');
         const row = document.createElement('div');
         row.className = "p-2 rounded-xl bg-dark-base hover:bg-slate-700 cursor-pointer flex items-center justify-between text-xs transition";
         row.onclick = () => addFoodMatchToPantry(m);
         row.innerHTML = `
-          <div>
-            <span class="font-bold text-white block">${m.name}</span>
-            <span class="text-[10px] text-slate-400 font-mono">${m.kcal} kcal • P: ${m.protein}g • C: ${m.carbs}g • F: ${m.fat}g</span>
+          <div class="min-w-0 pr-2">
+            <div class="flex items-center gap-1 flex-wrap">
+              ${badgeIcon}
+              <span class="font-bold text-white truncate">${m.name}</span>
+              <span class="text-[9px] px-1.5 py-0.2 rounded bg-dark-elevated text-slate-400 font-mono">${sourceTag}</span>
+            </div>
+            <span class="text-[10px] text-slate-400 font-mono block mt-0.5">1 serving = ${srv} (${srvG} g) • <span class="text-pastel-lavender font-bold">${m.kcal} kcal</span> • <span class="text-pastel-coral">P:${m.protein}g</span> <span class="text-pastel-mint">C:${m.carbs}g</span> <span class="text-pastel-butter">F:${m.fat}g</span></span>
           </div>
-          <button type="button" class="px-2 py-1 rounded-lg bg-pastel-mint text-dark-base font-bold text-[10px] shrink-0">+ Add</button>
+          <button type="button" class="px-2.5 py-1 rounded-lg bg-pastel-mint text-dark-base font-bold text-[10px] shrink-0">+ Add</button>
         `;
         box.appendChild(row);
       });
@@ -2986,21 +3182,57 @@
 
     function addFoodMatchToPantry(m) {
       const cleanName = m.name.replace(/\s*\([0-9]+[^)]*\)/g, '').trim();
-      let cat = 'produce';
-      if (/chicken|beef|meat|egg|salmon|fish|protein|yogurt|milk|cheese|tofu/i.test(cleanName)) cat = 'protein';
-      else if (/rice|oat|quinoa|bread|pasta|cereal|flour/i.test(cleanName)) cat = 'grains';
+      let cat = m.category || 'produce';
+      if (m.type === 'recipe') cat = 'leftovers';
+      else if (/chicken|beef|meat|egg|salmon|fish|protein|yogurt|milk|cheese|tofu/i.test(cleanName)) cat = 'protein';
+      else if (/rice|oat|quinoa|bread|pasta|cereal|flour|pancake/i.test(cleanName)) cat = 'grains';
       else if (/oil|sauce|dressing|condiment|nut|seed/i.test(cleanName)) cat = 'condiments';
+
+      const serving = m.serving || m.nutrition?.serving || '1 serving';
+      const servingGrams = m.servingGrams || m.nutrition?.servingGrams || 100;
+      const verifiedNutrients = m.verifiedNutrients || m.nutrition?.verifiedNutrients || (m.isVerified ? { kcal: true, protein: true, carbs: true, fat: true, fiber: true, sodium: true } : {});
+      const micros = m.micros || m.nutrition?.micros || ((typeof estimateMicronutrientsForFood === 'function')
+        ? estimateMicronutrientsForFood(cat, m.kcal, m.protein, m.carbs, m.fat, cleanName, servingGrams)
+        : {});
 
       state.pantry.push({
         id: `p-${Date.now()}`,
         name: cleanName,
+        recipeId: m.recipeId || null,
         category: cat,
-        storage: cat === 'protein' || cat === 'produce' ? 'fridge' : 'shelf',
+        storage: m.storage || (cat === 'protein' || cat === 'produce' || cat === 'leftovers' ? 'fridge' : 'shelf'),
+        amount: 1,
+        unit: m.type === 'recipe' ? 'servings' : 'items',
+        serving,
+        servingGrams,
         dateAdded: new Date().toISOString().split('T')[0],
         kcal: m.kcal,
         protein: m.protein,
         carbs: m.carbs,
-        fat: m.fat
+        fat: m.fat,
+        fiber: m.fiber || 0,
+        sugar: m.sugar || 0,
+        satFat: m.satFat || 0,
+        sodium: m.sodium || 0,
+        water: m.water || 0,
+        verifiedNutrients,
+        isVerified: Boolean(m.isVerified),
+        sourceBadge: m.isVerified ? '✓ Verified Reference' : '~ Recipe / USDA Estimate',
+        nutrition: m.nutrition || {
+          kcal: m.kcal,
+          protein: m.protein,
+          carbs: m.carbs,
+          fat: m.fat,
+          fiber: m.fiber || 0,
+          sugar: m.sugar || 0,
+          satFat: m.satFat || 0,
+          sodium: m.sodium || 0,
+          water: m.water || 0,
+          serving,
+          servingGrams,
+          verifiedNutrients,
+          micros
+        }
       });
 
       saveAppState();
@@ -3010,7 +3242,7 @@
       const input = document.getElementById('kitchen-food-search-input');
       if (box) box.classList.add('hidden');
       if (input) input.value = '';
-      alertBox(`Added verified "${cleanName}" to your pantry!`, "Pantry Updated");
+      alertBox(`Added "${cleanName}" (1 serving = ${serving}, ${servingGrams} g) to your kitchen with complete nutritional continuity!`, "Pantry Updated");
     }
 
     function addCustomPantryItemFromSearch(name) {
@@ -3105,6 +3337,102 @@
 // ==============================================
 // RECIPE INSPECT & DETAIL MODAL CONTROLLER
 // ==============================================
+    function renderRecipeInspectNutritionPanel(recipeObj) {
+      const panel = document.getElementById('inspect-recipe-nutrition-panel');
+      if (!panel) return;
+
+      const built = (typeof buildRecipeUnifiedNutrition === 'function')
+        ? buildRecipeUnifiedNutrition(recipeObj)
+        : {
+            serving: recipeObj.serving || '1 serving',
+            servingGrams: recipeObj.servingGrams || 250,
+            nutrition: {
+              kcal: recipeObj.kcal || 450,
+              protein: recipeObj.protein || Math.round(((recipeObj.kcal || 450) * 0.25) / 4),
+              carbs: recipeObj.carbs || Math.round(((recipeObj.kcal || 450) * 0.45) / 4),
+              fat: recipeObj.fat || Math.round(((recipeObj.kcal || 450) * 0.30) / 9),
+              fiber: 5,
+              sugar: 6,
+              satFat: 3,
+              sodium: 320,
+              water: 95,
+              verifiedNutrients: {},
+              micros: {}
+            }
+          };
+
+      const nut = built.nutrition;
+      const verifiedMap = nut.verifiedNutrients || {};
+      const profile = state.userProfile || {};
+      const standards = window.DAILY_NUTRITION_STANDARDS || {};
+
+      const macroDefs = [
+        { key: 'kcal', name: 'Energy (Calories)', unit: 'kcal', dv: profile.dailyCaloriesTarget || 2130, val: nut.kcal },
+        { key: 'protein', name: 'Protein', unit: 'g', dv: profile.dailyProteinTarget || 135, val: nut.protein },
+        { key: 'carbs', name: 'Total Carbohydrates', unit: 'g', dv: profile.dailyCarbsTarget || 240, val: nut.carbs },
+        { key: 'fat', name: 'Total Fat', unit: 'g', dv: profile.dailyFatTarget || 71, val: nut.fat },
+        { key: 'fiber', name: 'Dietary Fiber', unit: 'g', dv: profile.dailyFiberTarget || 30, val: nut.fiber },
+        { key: 'water', name: 'Water / Moisture', unit: 'ml', dv: profile.dailyWaterTargetMl || 2700, val: nut.water },
+        { key: 'sugar', name: 'Total Sugars', unit: 'g', dv: 50, isUpperLimit: true, val: nut.sugar },
+        { key: 'satFat', name: 'Saturated Fat', unit: 'g', dv: 20, isUpperLimit: true, val: nut.satFat },
+        { key: 'sodium', name: 'Sodium', unit: 'mg', dv: profile.dailySodiumTarget || 2300, isUpperLimit: true, val: nut.sodium }
+      ];
+
+      const macroRowsHtml = macroDefs.map(m => renderMicroBarRow(m.key, m, m.val, Boolean(verifiedMap[m.key]))).join('');
+      const vitRowsHtml = Object.keys(standards)
+        .filter(k => standards[k].type === 'vitamin')
+        .map(k => renderMicroBarRow(k, standards[k], nut.micros ? nut.micros[k] : null, Boolean(verifiedMap[k])))
+        .join('');
+      const minRowsHtml = Object.keys(standards)
+        .filter(k => standards[k].type === 'mineral')
+        .map(k => renderMicroBarRow(k, standards[k], nut.micros ? nut.micros[k] : null, Boolean(verifiedMap[k])))
+        .join('');
+
+      panel.innerHTML = `
+        <div class="flex items-center justify-between flex-wrap gap-1 border-b border-dark-border/60 pb-2">
+          <span class="font-bold text-white text-xs flex items-center gap-1.5">
+            <i data-lucide="pie-chart" class="w-3.5 h-3.5 text-pastel-lavender"></i>
+            Nutritional Profile &amp; Daily Goal Impact
+          </span>
+          <span class="text-[10.5px] font-mono text-pastel-sky font-bold">1 serving = ${built.serving} (${built.servingGrams} g)</span>
+        </div>
+
+        <div class="grid grid-cols-4 gap-1.5 text-center font-mono">
+          <div class="p-2 rounded-xl bg-dark-elevated">
+            <span class="text-[9px] text-pastel-lavender font-bold block">ENERGY</span>
+            <span class="text-xs font-bold text-white">${nut.kcal} kcal</span>
+          </div>
+          <div class="p-2 rounded-xl bg-dark-elevated">
+            <span class="text-[9px] text-pastel-coral font-bold block">PROTEIN</span>
+            <span class="text-xs font-bold text-white">${nut.protein}g</span>
+          </div>
+          <div class="p-2 rounded-xl bg-dark-elevated">
+            <span class="text-[9px] text-pastel-mint font-bold block">CARBS</span>
+            <span class="text-xs font-bold text-white">${nut.carbs}g</span>
+          </div>
+          <div class="p-2 rounded-xl bg-dark-elevated">
+            <span class="text-[9px] text-pastel-butter font-bold block">FAT</span>
+            <span class="text-xs font-bold text-white">${nut.fat}g</span>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <span class="text-[10px] font-bold text-pastel-lavender uppercase tracking-wider block">Macronutrients (Goal Range Color-Coded)</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto pr-1">
+            ${macroRowsHtml}
+          </div>
+        </div>
+
+        <div class="space-y-1.5 pt-1 border-t border-dark-border/50">
+          <span class="text-[10px] font-bold text-pastel-sky uppercase tracking-wider block">Vitamins &amp; Minerals (Per 1 Serving = ${built.servingGrams} g)</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto pr-1">
+            ${vitRowsHtml}
+            ${minRowsHtml}
+          </div>
+        </div>
+      `;
+    }
+
 function inspectRecipeDetails(idx) {
       const opt = (state.currentMealOptions && state.currentMealOptions[idx]) || (state.currentMealOptions && state.currentMealOptions[0]);
       if (!opt) return;
@@ -3116,8 +3444,10 @@ function inspectRecipeDetails(idx) {
       const stepsListEl = document.getElementById('inspect-recipe-steps');
       const cookBtn = document.getElementById('inspect-recipe-cook-btn');
 
+      const built = (typeof buildRecipeUnifiedNutrition === 'function') ? buildRecipeUnifiedNutrition(opt) : { serving: '1 serving', servingGrams: 250 };
+
       if (titleEl) titleEl.textContent = opt.title;
-      if (metaEl) metaEl.textContent = `${opt.cookTime}m • ${opt.kcal} kcal • 2 Servings`;
+      if (metaEl) metaEl.textContent = `${opt.cookTime}m • ${opt.kcal} kcal • 1 serving = ${built.serving} (${built.servingGrams} g)`;
       if (descEl) descEl.textContent = opt.description;
 
       if (ingListEl) {
@@ -3149,6 +3479,8 @@ function inspectRecipeDetails(idx) {
         });
       }
 
+      renderRecipeInspectNutritionPanel(opt);
+
       if (cookBtn) {
         cookBtn.onclick = () => {
           closeRecipeInspectModal();
@@ -3158,6 +3490,7 @@ function inspectRecipeDetails(idx) {
 
       const modal = document.getElementById('recipe-inspect-modal');
       if (modal) modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
     }
 
     function closeRecipeInspectModal() {
@@ -3166,7 +3499,8 @@ function inspectRecipeDetails(idx) {
     }
 
     function viewRecipeDetails(recipeId) {
-      const recipe = state.recipes.find(r => r.id === recipeId);
+      const allRecipes = (state.recipes || []).concat(typeof familyCookbookDatabase !== 'undefined' ? familyCookbookDatabase : []);
+      const recipe = allRecipes.find(r => r.id === recipeId);
       if (!recipe) return;
 
       const modal = document.getElementById('recipe-inspect-modal');
@@ -3177,10 +3511,12 @@ function inspectRecipeDetails(idx) {
       const stepsListEl = document.getElementById('inspect-recipe-steps');
       const cookBtn = document.getElementById('inspect-recipe-cook-btn');
 
+      const built = (typeof buildRecipeUnifiedNutrition === 'function') ? buildRecipeUnifiedNutrition(recipe) : { serving: '1 serving', servingGrams: 250, nutrition: { kcal: recipe.kcal || 450 } };
+
       if (titleEl) titleEl.textContent = recipe.title;
       if (metaEl) {
         const authorPart = recipe.author ? ` • by ${recipe.author}` : '';
-        metaEl.textContent = `${recipe.cookTime || 25}m • ${recipe.kcal || 450} kcal • ${recipe.servings || '4-6 Servings'}${authorPart}`;
+        metaEl.textContent = `${recipe.cookTime || 25}m • ${built.nutrition.kcal} kcal • 1 serving = ${built.serving} (${built.servingGrams} g)${authorPart}`;
       }
       if (descEl) {
         descEl.textContent = recipe.origin === 'family' 
@@ -3215,6 +3551,8 @@ function inspectRecipeDetails(idx) {
         });
       }
 
+      renderRecipeInspectNutritionPanel(recipe);
+
       if (cookBtn) {
         cookBtn.onclick = () => {
           closeRecipeInspectModal();
@@ -3230,6 +3568,8 @@ function inspectRecipeDetails(idx) {
     if (typeof window !== 'undefined') {
       window.viewRecipeDetails = viewRecipeDetails;
       window.closeRecipeInspectModal = closeRecipeInspectModal;
+      window.renderRecipeInspectNutritionPanel = renderRecipeInspectNutritionPanel;
+      window.openManualNutritionForLoggedFood = openManualNutritionForLoggedFood;
       window.switchPantryMicroTab = switchPantryMicroTab;
       window.openManualNutritionModalForActivePantryItem = openManualNutritionModalForActivePantryItem;
       window.renderMicroBarRow = renderMicroBarRow;

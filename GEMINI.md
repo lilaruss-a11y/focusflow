@@ -78,7 +78,7 @@ Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN
   * **Forbidden:** ❌ Calendar timeline rendering, daily schedules, macro charts.
 
 * **`js/nutrition.js`** (Nutrition, Macros & Whole Foods):
-  * Exclusively owns: `renderNutrition()`, macro dials, macronutrient calculations & adjustments, USDA whole foods database, and barcode scanner.
+  * Exclusively owns: `renderNutrition()`, macro dials, macronutrient calculations & adjustments, centralized food & recipe master reference (`getUnifiedFoodOrMeal`, `buildRecipeUnifiedNutrition`), USDA specific-food matcher & approval workflow (`findClosestUsdaFood`, `requestUsdaFoodSupplementation`), green shield / yellow tilde verification icons, and barcode scanner.
   * **Forbidden:** ❌ Calendar drag-and-drop, cooking timers, Firebase cloud sync.
 
 * **`js/health.js`** (Wellbeing Correlations & Apple Health):

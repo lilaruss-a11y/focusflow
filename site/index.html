@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=58">
+  <link rel="stylesheet" href="css/styles.css?v=59">
   <script>
     function resetViewportZoom() {
       try {
@@ -1895,6 +1895,11 @@
         </div>
       </div>
 
+      <!-- Complete Recipe Nutritional Profile (Serving Mass, Macros & Micronutrients) -->
+      <div id="inspect-recipe-nutrition-panel" class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-2.5 text-xs">
+        <!-- Dynamically populated -->
+      </div>
+
       <div class="pt-2 flex justify-between items-center border-t border-dark-border">
         <button type="button" onclick="closeRecipeInspectModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs">Close</button>
         <button type="button" id="inspect-recipe-cook-btn" class="px-5 py-2 rounded-xl bg-pastel-coral text-dark-base font-bold text-xs hover:opacity-95 transition shadow-md">🚀 Cook This Recipe</button>
@@ -2681,29 +2686,36 @@
     <div class="bg-dark-elevated border border-pastel-mint/40 rounded-3xl w-full max-w-xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
         <div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
             <span id="detail-food-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30">Verified Fact</span>
-            <span class="text-xs text-slate-400 font-mono" id="detail-food-kcal">250 kcal</span>
+            <span class="text-xs text-pastel-lavender font-mono font-bold" id="detail-food-kcal">250 kcal</span>
+            <span class="text-[11px] text-pastel-sky font-mono" id="detail-food-serving">1 serving = 100 g</span>
           </div>
           <h3 class="text-lg font-bold text-white mt-1" id="detail-food-name">Food Name</h3>
         </div>
-        <button onclick="closeFoodDetailModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="openManualNutritionForLoggedFood()" class="px-2.5 py-1 rounded-xl bg-dark-base border border-pastel-mint/40 text-pastel-mint hover:bg-pastel-mint/15 text-[11px] font-bold flex items-center gap-1 transition">
+            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+            <span>Edit Nutrition</span>
+          </button>
+          <button onclick="closeFoodDetailModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
       </div>
 
       <!-- Macros Summary Bar -->
       <div class="grid grid-cols-4 gap-2 text-center text-xs">
         <div class="bg-dark-base p-2.5 rounded-xl border border-dark-border">
-          <span class="text-[10px] text-pastel-peach uppercase font-bold">Protein</span>
+          <span class="text-[10px] text-pastel-coral uppercase font-bold">Protein</span>
           <div class="text-sm font-bold text-white font-mono" id="detail-macro-protein">0g</div>
         </div>
         <div class="bg-dark-base p-2.5 rounded-xl border border-dark-border">
-          <span class="text-[10px] text-pastel-butter uppercase font-bold">Carbs</span>
+          <span class="text-[10px] text-pastel-mint uppercase font-bold">Carbs</span>
           <div class="text-sm font-bold text-white font-mono" id="detail-macro-carbs">0g</div>
         </div>
         <div class="bg-dark-base p-2.5 rounded-xl border border-dark-border">
-          <span class="text-[10px] text-pastel-sky uppercase font-bold">Fats</span>
+          <span class="text-[10px] text-pastel-butter uppercase font-bold">Fats</span>
           <div class="text-sm font-bold text-white font-mono" id="detail-macro-fats">0g</div>
         </div>
         <div class="bg-dark-base p-2.5 rounded-xl border border-dark-border">
@@ -4194,11 +4206,11 @@
           <!-- 4 Macronutrients Interactive Grid (Editable % and Grams) -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <!-- 1. Protein Card -->
-            <div class="p-2.5 rounded-xl bg-dark-elevated border border-pastel-peach/30 space-y-2">
+            <div class="p-2.5 rounded-xl bg-dark-elevated border border-pastel-coral/30 space-y-2">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-1.5">
-                  <div class="w-2.5 h-2.5 rounded-full bg-pastel-peach shrink-0"></div>
-                  <span class="text-xs font-bold text-pastel-peach">Protein</span>
+                  <div class="w-2.5 h-2.5 rounded-full bg-pastel-coral shrink-0"></div>
+                  <span class="text-xs font-bold text-pastel-coral">Protein</span>
                 </div>
                 <span class="text-[9px] font-mono text-slate-400" id="macro-calc-prot-kcal">538 kcal (4 kcal/g)</span>
               </div>
@@ -4206,14 +4218,14 @@
                 <div>
                   <label class="block text-[9px] text-slate-400 font-semibold mb-0.5">Percentage (%)</label>
                   <div class="relative">
-                    <input type="number" id="macro-input-prot-pct" min="5" max="70" step="1" value="25" oninput="onMacroPercentInput('protein', this.value)" class="w-full bg-dark-base border border-dark-border focus:border-pastel-peach rounded-lg px-2.5 py-1.5 text-white font-mono text-xs pr-6">
+                    <input type="number" id="macro-input-prot-pct" min="5" max="70" step="1" value="25" oninput="onMacroPercentInput('protein', this.value)" class="w-full bg-dark-base border border-dark-border focus:border-pastel-coral rounded-lg px-2.5 py-1.5 text-white font-mono text-xs pr-6">
                     <span class="absolute right-2 top-1.5 text-[11px] text-slate-400 font-mono">%</span>
                   </div>
                 </div>
                 <div>
                   <label class="block text-[9px] text-slate-400 font-semibold mb-0.5">Weight (Grams)</label>
                   <div class="relative">
-                    <input type="number" id="macro-input-prot-g" min="30" max="400" step="1" value="135" oninput="onMacroGramInput('protein', this.value)" class="w-full bg-dark-base border border-dark-border focus:border-pastel-peach rounded-lg px-2.5 py-1.5 text-pastel-peach font-mono font-bold text-xs pr-6">
+                    <input type="number" id="macro-input-prot-g" min="30" max="400" step="1" value="135" oninput="onMacroGramInput('protein', this.value)" class="w-full bg-dark-base border border-dark-border focus:border-pastel-coral rounded-lg px-2.5 py-1.5 text-pastel-coral font-mono font-bold text-xs pr-6">
                     <span class="absolute right-2 top-1.5 text-[11px] text-slate-400 font-mono">g</span>
                   </div>
                 </div>
@@ -4222,11 +4234,11 @@
             </div>
 
             <!-- 2. Carbohydrates Card -->
-            <div class="p-2.5 rounded-xl bg-dark-elevated border border-pastel-butter/30 space-y-2">
+            <div class="p-2.5 rounded-xl bg-dark-elevated border border-pastel-mint/30 space-y-2">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-1.5">
-                  <div class="w-2.5 h-2.5 rounded-full bg-pastel-butter shrink-0"></div>
-                  <span class="text-xs font-bold text-pastel-butter">Carbohydrates</span>
+                  <div class="w-2.5 h-2.5 rounded-full bg-pastel-mint shrink-0"></div>
+                  <span class="text-xs font-bold text-pastel-mint">Carbohydrates</span>
                 </div>
                 <span class="text-[9px] font-mono text-slate-400" id="macro-calc-carb-kcal">968 kcal (4 kcal/g)</span>
               </div>
@@ -4234,14 +4246,14 @@
                 <div>
                   <label class="block text-[9px] text-slate-400 font-semibold mb-0.5">Percentage (%)</label>
                   <div class="relative">
-                    <input type="number" id="macro-input-carb-pct" min="5" max="80" step="1" value="45" oninput="onMacroPercentInput('carbs', this.value)" class="w-full bg-dark-base border border-dark-border focus:border-pastel-butter rounded-lg px-2.5 py-1.5 text-white font-mono text-xs pr-6">
+                    <input type="number" id="macro-input-carb-pct" min="5" max="80" step="1" value="45" oninput="onMacroPercentInput('carbs', this.value)" class="w-full bg-dark-base border border-dark-border focus:border-pastel-mint rounded-lg px-2.5 py-1.5 text-white font-mono text-xs pr-6">
                     <span class="absolute right-2 top-1.5 text-[11px] text-slate-400 font-mono">%</span>
                   </div>
                 </div>
                 <div>
                   <label class="block text-[9px] text-slate-400 font-semibold mb-0.5">Weight (Grams)</label>
                   <div class="relative">
-                    <input type="number" id="macro-input-carb-g" min="20" max="600" step="1" value="240" oninput="onMacroGramInput('carbs', this.value)" class="w-full bg-dark-base border border-dark-border focus:border-pastel-butter rounded-lg px-2.5 py-1.5 text-pastel-butter font-mono font-bold text-xs pr-6">
+                    <input type="number" id="macro-input-carb-g" min="20" max="600" step="1" value="240" oninput="onMacroGramInput('carbs', this.value)" class="w-full bg-dark-base border border-dark-border focus:border-pastel-mint rounded-lg px-2.5 py-1.5 text-pastel-mint font-mono font-bold text-xs pr-6">
                     <span class="absolute right-2 top-1.5 text-[11px] text-slate-400 font-mono">g</span>
                   </div>
                 </div>
@@ -4250,11 +4262,11 @@
             </div>
 
             <!-- 3. Healthy Fats Card -->
-            <div class="p-2.5 rounded-xl bg-dark-elevated border border-pastel-sky/30 space-y-2">
+            <div class="p-2.5 rounded-xl bg-dark-elevated border border-pastel-butter/30 space-y-2">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-1.5">
-                  <div class="w-2.5 h-2.5 rounded-full bg-pastel-sky shrink-0"></div>
-                  <span class="text-xs font-bold text-pastel-sky">Healthy Fats</span>
+                  <div class="w-2.5 h-2.5 rounded-full bg-pastel-butter shrink-0"></div>
+                  <span class="text-xs font-bold text-pastel-butter">Healthy Fats</span>
                 </div>
                 <span class="text-[9px] font-mono text-slate-400" id="macro-calc-fat-kcal">645 kcal (9 kcal/g)</span>
               </div>
@@ -4262,14 +4274,14 @@
                 <div>
                   <label class="block text-[9px] text-slate-400 font-semibold mb-0.5">Percentage (%)</label>
                   <div class="relative">
-                    <input type="number" id="macro-input-fat-pct" min="10" max="75" step="1" value="30" oninput="onMacroPercentInput('fat', this.value)" class="w-full bg-dark-base border border-dark-border focus:border-pastel-sky rounded-lg px-2.5 py-1.5 text-white font-mono text-xs pr-6">
+                    <input type="number" id="macro-input-fat-pct" min="10" max="75" step="1" value="30" oninput="onMacroPercentInput('fat', this.value)" class="w-full bg-dark-base border border-dark-border focus:border-pastel-butter rounded-lg px-2.5 py-1.5 text-white font-mono text-xs pr-6">
                     <span class="absolute right-2 top-1.5 text-[11px] text-slate-400 font-mono">%</span>
                   </div>
                 </div>
                 <div>
                   <label class="block text-[9px] text-slate-400 font-semibold mb-0.5">Weight (Grams)</label>
                   <div class="relative">
-                    <input type="number" id="macro-input-fat-g" min="15" max="300" step="1" value="71" oninput="onMacroGramInput('fat', this.value)" class="w-full bg-dark-base border border-dark-border focus:border-pastel-sky rounded-lg px-2.5 py-1.5 text-pastel-sky font-mono font-bold text-xs pr-6">
+                    <input type="number" id="macro-input-fat-g" min="15" max="300" step="1" value="71" oninput="onMacroGramInput('fat', this.value)" class="w-full bg-dark-base border border-dark-border focus:border-pastel-butter rounded-lg px-2.5 py-1.5 text-pastel-butter font-mono font-bold text-xs pr-6">
                     <span class="absolute right-2 top-1.5 text-[11px] text-slate-400 font-mono">g</span>
                   </div>
                 </div>
@@ -5077,19 +5089,19 @@
 
         <div class="grid grid-cols-4 gap-1.5 text-center font-mono">
           <div class="p-2 rounded-xl bg-dark-elevated">
-            <span class="text-[9.5px] text-slate-400 block">Kcal</span>
+            <span class="text-[9.5px] text-pastel-lavender block font-bold">Energy</span>
             <span class="text-sm font-bold text-white" id="pantry-detail-kcal">45</span>
           </div>
           <div class="p-2 rounded-xl bg-dark-elevated">
-            <span class="text-[9.5px] text-pastel-mint block">Protein</span>
+            <span class="text-[9.5px] text-pastel-coral block font-bold">Protein</span>
             <span class="text-sm font-bold text-white" id="pantry-detail-protein">3.5g</span>
           </div>
           <div class="p-2 rounded-xl bg-dark-elevated">
-            <span class="text-[9.5px] text-pastel-sky block">Carbs</span>
+            <span class="text-[9.5px] text-pastel-mint block font-bold">Carbs</span>
             <span class="text-sm font-bold text-white" id="pantry-detail-carbs">8.0g</span>
           </div>
           <div class="p-2 rounded-xl bg-dark-elevated">
-            <span class="text-[9.5px] text-pastel-coral block">Fat</span>
+            <span class="text-[9.5px] text-pastel-butter block font-bold">Fat</span>
             <span class="text-sm font-bold text-white" id="pantry-detail-fat">0.4g</span>
           </div>
         </div>
@@ -5112,6 +5124,15 @@
             <span class="text-slate-400 block text-[9px]">Sodium</span>
             <span class="font-bold text-slate-200" id="pantry-detail-sodium">45mg</span>
           </div>
+        </div>
+
+        <!-- Unified Macronutrient Daily Goal Contribution Bars -->
+        <div class="pt-2 border-t border-dark-border/60 space-y-1.5">
+          <span class="text-[10.5px] font-bold text-white flex items-center gap-1">
+            <i data-lucide="activity" class="w-3.5 h-3.5 text-pastel-lavender"></i>
+            Macronutrients &amp; Daily Goal Contribution
+          </span>
+          <div id="pantry-macro-bars-grid" class="space-y-1"></div>
         </div>
 
         <!-- Essential Human Survival Micronutrients Tabbed Section -->
@@ -5381,26 +5402,26 @@
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono">
           <div>
-            <span class="text-[9.5px] text-slate-400 block mb-0.5">Calories (kcal)</span>
-            <input type="number" id="manual-nut-kcal" placeholder="0" min="0" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-bold text-xs focus:border-pastel-mint">
+            <span class="text-[9.5px] text-pastel-lavender font-bold block mb-0.5">Calories (kcal)</span>
+            <input type="number" id="manual-nut-kcal" placeholder="0" min="0" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-bold text-xs focus:border-pastel-lavender">
           </div>
           <div>
-            <span class="text-[9.5px] text-pastel-mint block mb-0.5">Protein (g)</span>
-            <input type="number" id="manual-nut-protein" placeholder="0" min="0" step="any" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-bold text-xs focus:border-pastel-mint">
+            <span class="text-[9.5px] text-pastel-coral font-bold block mb-0.5">Protein (g)</span>
+            <input type="number" id="manual-nut-protein" placeholder="0" min="0" step="any" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-bold text-xs focus:border-pastel-coral">
           </div>
           <div>
-            <span class="text-[9.5px] text-pastel-sky block mb-0.5">Total Carbs (g)</span>
+            <span class="text-[9.5px] text-pastel-mint font-bold block mb-0.5">Total Carbs (g)</span>
             <input type="number" id="manual-nut-carbs" placeholder="0" min="0" step="any" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-bold text-xs focus:border-pastel-mint">
           </div>
           <div>
-            <span class="text-[9.5px] text-pastel-coral block mb-0.5">Total Fat (g)</span>
-            <input type="number" id="manual-nut-fat" placeholder="0" min="0" step="any" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-bold text-xs focus:border-pastel-mint">
+            <span class="text-[9.5px] text-pastel-butter font-bold block mb-0.5">Total Fat (g)</span>
+            <input type="number" id="manual-nut-fat" placeholder="0" min="0" step="any" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-bold text-xs focus:border-pastel-butter">
           </div>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono pt-1 border-t border-dark-border/40">
           <div>
-            <span class="text-[9.5px] text-slate-400 block mb-0.5">Dietary Fiber (g)</span>
+            <span class="text-[9.5px] text-pastel-mint block mb-0.5">Dietary Fiber (g)</span>
             <input type="number" id="manual-nut-fiber" placeholder="0" min="0" step="any" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2 py-1 text-white text-xs">
           </div>
           <div>
@@ -5431,30 +5452,27 @@
             <input type="number" id="manual-nut-cholesterol" placeholder="0" min="0" step="any" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2 py-1 text-white text-xs">
           </div>
           <div>
-            <span class="text-[9.5px] text-slate-400 block mb-0.5">Water / Moisture (ml)</span>
+            <span class="text-[9.5px] text-pastel-sky font-bold block mb-0.5">Water / Moisture (ml)</span>
             <input type="number" id="manual-nut-water" placeholder="0" min="0" step="any" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2 py-1 text-white text-xs">
           </div>
         </div>
       </div>
 
-      <!-- USDA Specific-Food Confirmation Prompt (Appears on request) -->
-      <div id="usda-supplement-confirm-card" class="hidden p-3 rounded-2xl bg-amber-950/40 border border-amber-400/50 space-y-2 text-xs shadow-lg animate-in fade-in">
-        <div class="flex items-start gap-2.5">
-          <div class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shrink-0 mt-0.5">
-            <i data-lucide="help-circle" class="w-4 h-4"></i>
+      <!-- USDA Specific-Food Confirmation Prompt (Clean, No Explanation) -->
+      <div id="usda-supplement-confirm-card" class="hidden p-3 rounded-2xl bg-amber-950/40 border border-amber-400/50 space-y-2 text-xs shadow-lg">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <i data-lucide="help-circle" class="w-4 h-4 text-amber-300 shrink-0"></i>
+            <span class="font-bold text-white text-xs truncate" id="usda-supplement-prompt-title">Supplement nutrients with info from USDA?</span>
           </div>
-          <div class="flex-1">
-            <span class="font-bold text-white block text-[11px]" id="usda-supplement-prompt-title">Supplement missing nutrients with info from USDA?</span>
-            <span class="text-slate-300 block text-[10px] mt-0.5" id="usda-supplement-prompt-desc">This uses clinical lab measurements for this specific food. Any supplemented values will be marked with a yellow ~ tilde.</span>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button type="button" onclick="cancelUsdaSupplementation()" class="px-2.5 py-1 rounded-lg bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs font-semibold">
+              Cancel
+            </button>
+            <button type="button" id="btn-confirm-usda-supplement" onclick="confirmUsdaSupplementation()" class="px-3 py-1 rounded-lg bg-pastel-mint text-dark-base font-bold text-xs hover:bg-emerald-300 shadow-sm transition">
+              ✓ Supplement Nutrients
+            </button>
           </div>
-        </div>
-        <div class="flex items-center justify-end gap-2 pt-1 border-t border-amber-500/20">
-          <button type="button" onclick="cancelUsdaSupplementation()" class="px-3 py-1 rounded-lg bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs">
-            Cancel
-          </button>
-          <button type="button" id="btn-confirm-usda-supplement" onclick="confirmUsdaSupplementation()" class="px-3.5 py-1 rounded-lg bg-pastel-mint text-dark-base font-bold text-xs hover:bg-emerald-300 shadow-sm transition">
-            ✓ Supplement Nutrients
-          </button>
         </div>
       </div>
 
@@ -6259,7 +6277,7 @@
 
   <!-- Reference Data Collections -->
   <script src="data/family-cookbook.js?v=48"></script>
-  <script src="data/usda-foods.js?v=58"></script>
+  <script src="data/usda-foods.js?v=59"></script>
 
   <!-- Audio Synthesis Script -->
   <script src="js/audio.js?v=48"></script>
@@ -6269,10 +6287,10 @@
   <script src="js/sync.js?v=48"></script>
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
-  <script src="js/kitchen.js?v=48"></script>
+  <script src="js/kitchen.js?v=59"></script>
   <script src="js/shopping.js?v=58"></script>
   <script src="js/chef.js?v=58"></script>
-  <script src="js/nutrition.js?v=48"></script>
+  <script src="js/nutrition.js?v=59"></script>
   <script src="js/health.js?v=48"></script>
   <script src="js/biometrics.js?v=48"></script>
   <script src="js/app.js?v=48"></script>

@@ -491,6 +491,22 @@ else:
                 else:
                     success(f"[Guarded: {rid}] {desc}")
 
+# --- Cheat Sheet File Check (AGENTS.md Section 1b) ---
+try:
+    _agents = open(os.path.join(BASE_DIR, "AGENTS.md"), encoding="utf-8").read()
+    _m = re.search(r"## 1b\..*?(?=\n---)", _agents, re.S)
+    if not _m:
+        error("[Cheat Sheet] Section '## 1b.' not found in AGENTS.md")
+    else:
+        _paths = set(re.findall(r"`((?:js|css|data|scripts|tests|assets)/[^`]+|[\w-]+\.(?:html|js|py))`", _m.group(0)))
+        _missing = [x for x in sorted(_paths) if not os.path.exists(os.path.join(BASE_DIR, x))]
+        if _missing:
+            error(f"[Cheat Sheet] AGENTS.md cheat sheet points to missing files: {', '.join(_missing)}")
+        else:
+            success(f"[Cheat Sheet] All {len(_paths)} referenced files exist")
+except Exception as _e:
+    error(f"[Cheat Sheet] Check failed: {_e}")
+
 # --- Summary & Execution Time ---
 elapsed = time.time() - start_time
 print("\n" + "="*50)

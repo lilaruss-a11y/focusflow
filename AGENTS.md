@@ -227,7 +227,7 @@ After your tests pass:
 - NEVER stack speculative edits on top of previously broken code. Every new attempt must start from a clean, working baseline.
 
 ### Rule 7: Mandatory Code Map & Table of Contents Maintenance
-- Whenever you add, rename, delete, or split any files, modals, or architectural subsystems in FocusFlow, you MUST update Section 1 (Code Map & Table of Contents) in `AGENTS.md` within the same commit (`GEMINI.md` is only a pointer and must not be edited).
+- Whenever you add, rename, delete, or split any files, modals, or architectural subsystems in FocusFlow, you MUST update BOTH Section 1 (Code Map & Table of Contents) AND Section 1b (Common Tasks Cheat Sheet) in `AGENTS.md` within the same commit (`GEMINI.md` is only a pointer and must not be edited).
 - Never leave new files, modules, or major components undocumented. Neglecting to update the Code Map is a strict protocol violation.
 
 ---

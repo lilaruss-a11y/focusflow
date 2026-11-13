@@ -251,7 +251,7 @@ MODULE_BOUNDARIES = {
         'name': 'Calendar & Day Grid Timeline',
         'forbidden': [
             (r'function\s+.*Pantry', 'pantry functions belong exclusively in js/kitchen.js'),
-            (r'function\s+.*Recipe', 'recipe functions belong exclusively in js/kitchen.js or js/chef.js'),
+            (r'function\s+.*Recipe', 'recipe functions belong exclusively in js/recipes.js or js/chef.js'),
             (r'function\s+.*MealPlan', 'meal planning belongs exclusively in js/kitchen.js'),
             (r'function\s+.*ShoppingList', 'shopping list belongs exclusively in js/kitchen.js'),
             (r'function\s+.*ReverseChef', 'Reverse Chef belongs exclusively in js/chef.js'),
@@ -259,6 +259,16 @@ MODULE_BOUNDARIES = {
             (r'function\s+.*Barcode', 'barcode scanner belongs exclusively in js/barcode.js'),
             (r'function\s+.*Medication', 'medication tracking belongs exclusively in js/biometrics.js'),
             (r'function\s+.*Cardiac', 'cardiac biometrics belong exclusively in js/biometrics.js')
+        ]
+    },
+    'recipes.js': {
+        'name': 'Recipe Book, Cookbooks, Codex & Recipe Inspection',
+        'forbidden': [
+            (r'function\s+.*TimelineView', 'timeline views belong in js/timeline.js'),
+            (r'function\s+.*HourHeight', 'hour height belongs in js/timeline.js'),
+            (r'function\s+.*AppleHealth', 'Apple Health belongs in js/health.js'),
+            (r'function\s+.*Medication', 'medication belongs in js/biometrics.js'),
+            (r'function\s+.*Cardiac', 'cardiac biometrics belong in js/biometrics.js')
         ]
     },
     'kitchen.js': {
@@ -330,7 +340,7 @@ MODULE_BOUNDARIES = {
         'name': 'Wellbeing Correlations & Apple Health',
         'forbidden': [
             (r'function\s+.*Pantry', 'pantry belongs in js/kitchen.js'),
-            (r'function\s+.*Recipe', 'recipes belong in js/kitchen.js or js/chef.js'),
+            (r'function\s+.*Recipe', 'recipes belong in js/recipes.js or js/chef.js'),
             (r'function\s+.*HourHeight', 'hour height belongs in js/timeline.js'),
             (r'function\s+.*TimelineView', 'timeline view belongs in js/timeline.js')
         ]
@@ -339,7 +349,7 @@ MODULE_BOUNDARIES = {
         'name': 'Biometrics & Cardiac Tracking',
         'forbidden': [
             (r'function\s+.*Pantry', 'pantry belongs in js/kitchen.js'),
-            (r'function\s+.*Recipe', 'recipes belong in js/kitchen.js or js/chef.js'),
+            (r'function\s+.*Recipe', 'recipes belong in js/recipes.js or js/chef.js'),
             (r'function\s+.*MealPlan', 'meal planning belongs in js/kitchen.js'),
             (r'function\s+.*HourHeight', 'hour height belongs in js/timeline.js'),
             (r'function\s+.*Macro', 'macro calculations belong in js/nutrition.js')

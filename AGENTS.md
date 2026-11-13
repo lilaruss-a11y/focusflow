@@ -80,8 +80,12 @@ Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN
   * **Forbidden:** ❌ Kitchen, recipes, macro calculations.
 
 * **`js/kitchen.js`** (Smart Pantry, Kitchen & Meal Planning):
-  * Exclusively owns: Smart pantry, kitchen zones, food types, weekly meal planner, recipe book, and recipe inspect modal.
+  * Exclusively owns: Smart pantry, kitchen zones, food types, and weekly meal planner.
   * **Forbidden:** ❌ Calendar day grid math, event dragging, biometrics, Apple Health.
+
+* **`js/recipes.js`** (Recipe Book, Cookbooks & Codex):
+  * Exclusively owns: Thematic cookbooks, recipe search & multi-filter Codex, recipe cards, add/share recipe modals, and recipe inspection modal (`viewRecipeDetails`, `closeRecipeInspectModal`).
+  * **Forbidden:** ❌ Physical pantry zones, food expiration tracking, calendar day math, cardiac health.
 
 * **`js/shopping.js`** (Grocery Shopping List & Receipt Scanner):
   * Exclusively owns: Grocery shopping list, item checking, store categories, and adding items imported from receipts (the receipt photo scanner & OCR parser itself lives in `js/chef.js`).
@@ -154,7 +158,8 @@ Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN
 * Add a button, screen, or modal → `index.html` (+ its handler in the matching `js/` file)
 * Calendar / timeline / dragging events → `js/timeline.js`
 * Google Calendar or iCal sync, category colors → `js/calendar-categories.js`
-* Pantry, meal planner, recipe book → `js/kitchen.js`
+* Pantry & meal planner → `js/kitchen.js`
+* Recipe book, cookbooks & recipe inspection → `js/recipes.js`
 * Shopping list → `js/shopping.js`; receipt photo scanning → `js/chef.js`
 * Body profile, BMI, TDEE & weight goal timeline → `js/body-profile.js`
 * Macros, USDA matching, shields → `js/nutrition.js`

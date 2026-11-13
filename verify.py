@@ -237,6 +237,12 @@ else:
     else:
         success("site/ deployment files are 100% in sync with root.")
 
+    if os.path.exists(os.path.join(site_dir, "verify.py")):
+        error("Stray verify.py found inside site/ folder! Remove site/verify.py.")
+    downloads_index = os.path.expanduser("~/Downloads/index.html")
+    if os.path.exists(downloads_index):
+        error("Accidental index.html found in ~/Downloads! All project files belong in ~/Documents/FocusFlow.")
+
 # --- 5. Strict Universal Architectural Module Boundaries Enforcement ---
 print("\n5. Enforcing Strict Architectural Module Boundaries...")
 

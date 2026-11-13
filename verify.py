@@ -256,7 +256,7 @@ MODULE_BOUNDARIES = {
             (r'function\s+.*ShoppingList', 'shopping list belongs exclusively in js/kitchen.js'),
             (r'function\s+.*ReverseChef', 'Reverse Chef belongs exclusively in js/chef.js'),
             (r'function\s+.*Macro', 'macro calculations belong exclusively in js/nutrition.js'),
-            (r'function\s+.*Barcode', 'barcode scanner belongs exclusively in js/nutrition.js'),
+            (r'function\s+.*Barcode', 'barcode scanner belongs exclusively in js/barcode.js'),
             (r'function\s+.*Medication', 'medication tracking belongs exclusively in js/biometrics.js'),
             (r'function\s+.*Cardiac', 'cardiac biometrics belong exclusively in js/biometrics.js')
         ]
@@ -289,6 +289,17 @@ MODULE_BOUNDARIES = {
             (r'function\s+.*DayGrid', 'day grid rendering belongs in js/timeline.js'),
             (r'function\s+.*AppleHealth', 'Apple Health belongs in js/health.js'),
             (r'function\s+.*Medication', 'medication belongs in js/biometrics.js')
+        ]
+    },
+    'barcode.js': {
+        'name': 'Barcode Scanner & Package Lookup',
+        'forbidden': [
+            (r'function\s+.*Timeline', 'timeline belongs in js/timeline.js'),
+            (r'function\s+.*HourHeight', 'hour height belongs in js/timeline.js'),
+            (r'function\s+.*Medication', 'medication belongs in js/biometrics.js'),
+            (r'function\s+.*Cardiac', 'cardiac biometrics belong in js/biometrics.js'),
+            (r'function\s+renderNutrition', 'nutrition rendering belongs in js/nutrition.js'),
+            (r'function\s+renderTimeline', 'timeline rendering belongs in js/timeline.js')
         ]
     },
     'nutrition.js': {

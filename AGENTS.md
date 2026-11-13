@@ -92,8 +92,12 @@ Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN
   * **Forbidden:** ❌ Calendar timeline rendering, daily schedules, macro charts.
 
 * **`js/nutrition.js`** (Nutrition, Macros & Whole Foods):
-  * Exclusively owns: `renderNutrition()`, macro dials, macronutrient calculations & adjustments, centralized food & recipe master reference (`getUnifiedFoodOrMeal`, `buildRecipeUnifiedNutrition`), USDA specific-food matcher & approval workflow (`findClosestUsdaFood`, `requestUsdaFoodSupplementation`), green shield / yellow tilde verification icons, and barcode scanner.
-  * **Forbidden:** ❌ Calendar drag-and-drop, cooking timers, Firebase cloud sync.
+  * Exclusively owns: `renderNutrition()`, macro dials, macronutrient calculations & adjustments, centralized food & recipe master reference (`getUnifiedFoodOrMeal`, `buildRecipeUnifiedNutrition`), USDA specific-food matcher & approval workflow (`findClosestUsdaFood`, `requestUsdaFoodSupplementation`), and green shield / yellow tilde verification icons.
+  * **Forbidden:** ❌ Barcode camera scanning, calendar drag-and-drop, cooking timers, Firebase cloud sync.
+
+* **`js/barcode.js`** (Barcode Scanner & Product Lookup):
+  * Exclusively owns: Camera stream & ZXing barcode engine (`openBarcodeScannerModal`, `initZXingReader`), OpenFoodFacts & USDA product lookups, packaging photo OCR/vision, and applying scanned items to pantry or food log (`applyScannedBarcodeFood`).
+  * **Forbidden:** ❌ Calendar day grid math, cardiac biometrics, medication tracking.
 
 * **`js/health.js`** (Wellbeing Correlations & Apple Health):
   * Exclusively owns: Wellbeing correlation charts, 7-day health averages, 30-day skill growth graphs, and Apple Health sync & export modal.
@@ -148,7 +152,8 @@ Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN
 * Google Calendar or iCal sync, category colors → `js/calendar-categories.js`
 * Pantry, meal planner, recipe book → `js/kitchen.js`
 * Shopping list → `js/shopping.js`; receipt photo scanning → `js/chef.js`
-* Macros, USDA matching, barcode scanner, shields → `js/nutrition.js`
+* Macros, USDA matching, shields → `js/nutrition.js`
+* Barcode scanner & product packaging lookup → `js/barcode.js`
 * Health charts / Apple Health → `js/health.js`; blood pressure, heart rate, meds → `js/biometrics.js`
 * Cloud sync, sign-in, update toast → `js/sync.js`
 * Tab switching, saving/loading app state, startup → `js/app.js`

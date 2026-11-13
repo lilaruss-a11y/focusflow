@@ -3822,6 +3822,10 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       window.switchManualNutMicroTab = switchManualNutMicroTab;
       window.autoEstimateMissingMicros = autoEstimateMissingMicros;
       window.undoAutoEstimateMicros = undoAutoEstimateMicros;
+      window.requestUsdaFoodSupplementation = requestUsdaFoodSupplementation;
+      window.confirmUsdaSupplementation = confirmUsdaSupplementation;
+      window.cancelUsdaSupplementation = cancelUsdaSupplementation;
+      window.findClosestUsdaFood = findClosestUsdaFood;
       window.saveManualNutritionData = saveManualNutritionData;
       window.setLogMealType = setLogMealType;
       window.deleteFoodEntry = deleteFoodEntry;

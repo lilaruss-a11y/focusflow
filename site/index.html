@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=57">
+  <link rel="stylesheet" href="css/styles.css?v=58">
   <script>
     function resetViewportZoom() {
       try {
@@ -5297,13 +5297,39 @@
           </div>
         </div>
 
+        <!-- Package Dimensions & Serving Size Definition -->
+        <div class="p-3 rounded-2xl bg-dark-base border border-pastel-sky/30 space-y-2 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white text-[11px] flex items-center gap-1.5">
+              <i data-lucide="scale" class="w-3.5 h-3.5 text-pastel-sky"></i>
+              Serving Measurement &amp; Mass
+            </span>
+            <span class="text-[10px] text-pastel-sky font-mono font-semibold">1 Serving Reference</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div>
+              <label class="text-[10.5px] text-slate-300 block mb-0.5 font-medium">Serving Size / Portion</label>
+              <input type="text" id="manual-nut-serving-desc" placeholder="e.g. 1 cup, 1 medium, 2 tbsp" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-sky">
+            </div>
+            <div>
+              <label class="text-[10.5px] text-pastel-mint block mb-0.5 font-bold">Serving Mass in Grams <span class="text-slate-400 font-normal">(g)</span></label>
+              <input type="number" id="manual-nut-serving-grams" placeholder="e.g. 240" step="any" min="0" class="w-full bg-dark-elevated border border-pastel-mint/40 rounded-xl px-2.5 py-1.5 text-white font-mono font-bold text-xs focus:border-pastel-mint" title="Mass in grams for 1 serving">
+            </div>
+            <div>
+              <label class="text-[10.5px] text-slate-300 block mb-0.5 font-medium">Servings per Container</label>
+              <input type="number" id="manual-nut-servings-per-container" placeholder="e.g. 4" step="any" min="0.1" value="1" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-sky">
+            </div>
+          </div>
+        </div>
+
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <div>
-            <label class="font-semibold text-slate-300 block mb-1">Package Size</label>
+            <label class="font-semibold text-slate-300 block mb-1">Total Package Size</label>
             <input type="number" id="manual-nut-amount" step="any" min="0" value="1" class="w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-mint">
           </div>
           <div>
-            <label class="font-semibold text-slate-300 block mb-1">Unit</label>
+            <label class="font-semibold text-slate-300 block mb-1">Package Unit</label>
             <select id="manual-nut-unit" class="w-full bg-dark-base border border-dark-border rounded-xl px-2 py-1.5 text-white text-xs">
               <option value="items">items</option>
               <option value="fl oz">fl oz</option>
@@ -5411,18 +5437,56 @@
         </div>
       </div>
 
-      <!-- Quick Auto-Estimate Helper with Undo Support -->
+      <!-- USDA Specific-Food Confirmation Prompt (Appears on request) -->
+      <div id="usda-supplement-confirm-card" class="hidden p-3 rounded-2xl bg-amber-950/40 border border-amber-400/50 space-y-2 text-xs shadow-lg animate-in fade-in">
+        <div class="flex items-start gap-2.5">
+          <div class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shrink-0 mt-0.5">
+            <i data-lucide="help-circle" class="w-4 h-4"></i>
+          </div>
+          <div class="flex-1">
+            <span class="font-bold text-white block text-[11px]" id="usda-supplement-prompt-title">Supplement missing nutrients with info from USDA?</span>
+            <span class="text-slate-300 block text-[10px] mt-0.5" id="usda-supplement-prompt-desc">This uses clinical lab measurements for this specific food. Any supplemented values will be marked with a yellow ~ tilde.</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-1 border-t border-amber-500/20">
+          <button type="button" onclick="cancelUsdaSupplementation()" class="px-3 py-1 rounded-lg bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs">
+            Cancel
+          </button>
+          <button type="button" id="btn-confirm-usda-supplement" onclick="confirmUsdaSupplementation()" class="px-3.5 py-1 rounded-lg bg-pastel-mint text-dark-base font-bold text-xs hover:bg-emerald-300 shadow-sm transition">
+            ✓ Supplement Nutrients
+          </button>
+        </div>
+      </div>
+
+      <!-- Sourced Info Attribution Badge -->
+      <div id="usda-source-attribution-pill" class="hidden p-2 rounded-xl bg-pastel-sky/10 border border-pastel-sky/30 text-xs flex items-center justify-between gap-2">
+        <div class="flex items-center gap-1.5 text-pastel-sky text-[11px]">
+          <i data-lucide="info" class="w-3.5 h-3.5 shrink-0"></i>
+          <span id="usda-source-attribution-text">Nutrient information supplemented by USDA</span>
+        </div>
+        <button type="button" onclick="undoAutoEstimateMicros()" class="text-[10px] font-semibold text-slate-400 hover:text-rose-300 transition">
+          Revert to original
+        </button>
+      </div>
+
+      <!-- Quick Auto-Estimate Helper with Undo Support & Accuracy Legend -->
       <div class="flex items-center justify-between p-2.5 rounded-xl bg-pastel-mint/10 border border-pastel-mint/30 text-xs flex-wrap gap-2">
         <div class="flex items-center gap-2">
           <i data-lucide="sparkles" class="w-4 h-4 text-pastel-mint shrink-0"></i>
-          <span class="text-[11px] text-slate-300">Auto-fill missing vitamins &amp; minerals using USDA averages:</span>
+          <div class="text-[10.5px] text-slate-300">
+            <span class="font-bold text-white block">Nutritional Accuracy Legend:</span>
+            <span class="flex items-center gap-2 mt-0.5 text-[10px]">
+              <span class="inline-flex items-center gap-0.5 text-emerald-400 font-bold"><i data-lucide="shield-check" class="w-3 h-3 inline"></i> Verified Label</span>
+              <span class="inline-flex items-center gap-0.5 text-amber-300 font-bold font-mono">~ Estimated</span>
+            </span>
+          </div>
         </div>
         <div class="flex items-center gap-1.5 shrink-0">
           <button type="button" id="btn-undo-auto-estimate-micros" onclick="undoAutoEstimateMicros()" class="hidden px-2.5 py-1 rounded-lg bg-dark-base border border-dark-border text-slate-300 hover:text-white font-semibold text-[11px] transition" title="Revert to original micronutrient values">
             ↺ Undo Auto-Fill
           </button>
-          <button type="button" onclick="autoEstimateMissingMicros()" class="px-3 py-1 rounded-lg bg-pastel-mint text-dark-base font-bold text-[11px] hover:bg-emerald-300 transition">
-            Auto-Estimate Micros
+          <button type="button" onclick="requestUsdaFoodSupplementation()" class="px-3 py-1 rounded-lg bg-pastel-mint text-dark-base font-bold text-[11px] hover:bg-emerald-300 transition">
+            Auto-Estimate with USDA
           </button>
         </div>
       </div>
@@ -6195,7 +6259,7 @@
 
   <!-- Reference Data Collections -->
   <script src="data/family-cookbook.js?v=48"></script>
-  <script src="data/usda-foods.js?v=48"></script>
+  <script src="data/usda-foods.js?v=58"></script>
 
   <!-- Audio Synthesis Script -->
   <script src="js/audio.js?v=48"></script>
@@ -6206,8 +6270,8 @@
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
   <script src="js/kitchen.js?v=48"></script>
-  <script src="js/shopping.js?v=48"></script>
-  <script src="js/chef.js?v=48"></script>
+  <script src="js/shopping.js?v=58"></script>
+  <script src="js/chef.js?v=58"></script>
   <script src="js/nutrition.js?v=48"></script>
   <script src="js/health.js?v=48"></script>
   <script src="js/biometrics.js?v=48"></script>

@@ -19,6 +19,7 @@ Before touching any code:
 > **Table of Contents**
 > - 0. User Preferences & Environment
 > - 1. Project Directory Structure (Code Map)
+> - 1b. Common Tasks Cheat Sheet
 > - 2. Mandatory Rules for the Agent (Rules 1–8)
 > - 3. Permanent Code Hygiene & Organization Rules
 
@@ -124,7 +125,7 @@ Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN
 
 ### Testing & Verification (`tests/` & `verify.py`)
 * **`verify.py`** (Universal Boundary Enforcer & Test Suite):
-  * Automated testing script that verifies HTML tags, local asset links, compiles all JS with macOS WebKit JavaScriptCore, validates `site/` deployment sync, and **strictly enforces module domain boundaries** in ~0.25s.
+  * Automated testing script that verifies HTML tags, local asset links, compiles all JS with macOS WebKit JavaScriptCore, validates `site/` deployment sync, and **strictly enforces module domain boundaries** in under 1 second.
 
 * **`tests/regressions.json`** (Known Mistakes Database):
   * Automatically loaded and tested by `verify.py` on every run. Stores all past bugs and mistakes to prevent them from ever recurring.
@@ -135,6 +136,23 @@ Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN
 
 * **`backups/`** (Historical Backups & Archives):
   * All safety backups, archive copies, or temporary exported files MUST live here. Never leave backups in the root folder.
+
+---
+
+## 1b. Common Tasks Cheat Sheet (Where Do I Edit?)
+* Add or edit a preloaded recipe → `data/family-cookbook.js`
+* Add or fix a raw food's macros → `data/usda-foods.js`
+* Change colors, spacing, animations → `css/styles.css`
+* Add a button, screen, or modal → `index.html` (+ its handler in the matching `js/` file)
+* Calendar / timeline / dragging events → `js/timeline.js`
+* Google Calendar or iCal sync, category colors → `js/calendar-categories.js`
+* Pantry, meal planner, recipe book → `js/kitchen.js`
+* Shopping list → `js/shopping.js`; receipt photo scanning → `js/chef.js`
+* Macros, USDA matching, barcode scanner, shields → `js/nutrition.js`
+* Health charts / Apple Health → `js/health.js`; blood pressure, heart rate, meds → `js/biometrics.js`
+* Cloud sync, sign-in, update toast → `js/sync.js`
+* Tab switching, saving/loading app state, startup → `js/app.js`
+* Offline caching / version bump → `sw.js`
 
 ---
 
@@ -157,7 +175,7 @@ After the user approves your plan and you make the changes:
    ```bash
    python3 verify.py
    ```
-   Verify that all checks pass with zero errors in ~0.25s, including domain boundary checks.
+   Verify that all checks pass with zero errors in under 1 second, including domain boundary checks.
 2. **Automatically Register Fixed Bugs / Mistakes:**
    Whenever you fix a bug, you MUST register it into the regression database so it is tested forever:
    ```bash

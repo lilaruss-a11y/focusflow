@@ -11,6 +11,19 @@ Before touching any code:
 
 ---
 
+> **🔎 READ THIS FIRST**
+> 1️⃣ Read the Table of Contents below to find what you need — don't read the whole project.
+> 2️⃣ Follow Rule 1 (plan + approval) before touching anything.
+> 3️⃣ Follow Rule 8 (token conservation).
+>
+> **Table of Contents**
+> - 0. User Preferences & Environment
+> - 1. Project Directory Structure (Code Map)
+> - 2. Mandatory Rules for the Agent (Rules 1–8)
+> - 3. Permanent Code Hygiene & Organization Rules
+
+---
+
 # FocusFlow Project & Agent Behavior Guide
 
 You are working on the **FocusFlow** web application for a non-technical user. Follow these mandatory rules, user preferences, and project architectural layout:
@@ -70,11 +83,11 @@ Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN
   * **Forbidden:** ❌ Calendar day grid math, event dragging, biometrics, Apple Health.
 
 * **`js/shopping.js`** (Grocery Shopping List & Receipt Scanner):
-  * Exclusively owns: Grocery shopping list, item checking, store categories, receipt OCR import.
+  * Exclusively owns: Grocery shopping list, item checking, store categories, and adding items imported from receipts (the receipt photo scanner & OCR parser itself lives in `js/chef.js`).
   * **Forbidden:** ❌ Calendar day grid math, timeline views, cardiac health.
 
 * **`js/chef.js`** (Reverse Chef Wizard & Kitchen Scale):
-  * Exclusively owns: Reverse Chef 3-step wizard, kitchen scale mode, recipe step timers, Walmart & grocery receipt photo scanner & OCR parser.
+  * Exclusively owns: Reverse Chef 3-step wizard, kitchen scale mode, recipe step timers, Walmart & grocery receipt photo scanner & OCR parser (sole owner of receipt scanning).
   * **Forbidden:** ❌ Calendar timeline rendering, daily schedules, macro charts.
 
 * **`js/nutrition.js`** (Nutrition, Macros & Whole Foods):
@@ -101,7 +114,13 @@ Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN
 
 ### Assets & Icons (`assets/`)
 * **`assets/icons/`** (PWA Icons & Favicon):
-  * Canonical location for `apple-touch-icon.png`, `apple-touch-icon-precomposed.png`, and `favicon.ico`. Loose duplicates in root are forbidden.
+  * Canonical location for `apple-touch-icon.png`, `apple-touch-icon-precomposed.png`, `favicon.ico`, `favicon-64.png`, and the PWA icons `icon-192.png` & `icon-512.png`. Loose duplicates in root are forbidden.
+
+### Scripts & Docs
+* **`scripts/poll_deploy.sh`** (Deployment Poller):
+  * Polls the GitHub Actions API every 10s until the latest Pages deployment reports `completed` + `success` (used for the Rule 3 deployment gate).
+* **`README.md`** (Project Overview):
+  * Human-facing project description. Agent rules live in `AGENTS.md` / `GEMINI.md` (keep these two files identical).
 
 ### Testing & Verification (`tests/` & `verify.py`)
 * **`verify.py`** (Universal Boundary Enforcer & Test Suite):
@@ -170,6 +189,7 @@ After your tests pass:
      ```bash
      curl -s "https://api.github.com/repos/lilaruss-a11y/focusflow/actions/runs?per_page=1" | grep -E '"status"|"conclusion"'
      ```
+   - Or simply run `zsh scripts/poll_deploy.sh`, which repeats this check until the deployment succeeds.
    - Only after the build reports `"status": "completed"` and `"conclusion": "success"` may you conclude your turn and invite the user to refresh their app.
 
 ### Rule 4: Thrash Prevention (Circuit Breaker)
@@ -208,3 +228,11 @@ To ensure the project never degenerates into a monolithic mess again, you MUST o
    * Cross-domain function declarations will cause `verify.py` to fail and block your commit.
 4. **Keep `verify.py` Green:**
    * Any change you make must keep `python3 verify.py` passing with 0 errors.
+
+---
+### Rule 8 – Token & Step Conservation
+1. **Code‑Map First:** Always consult the Table of Contents in `GEMINI.md` to locate the exact file before any search.
+2. **Targeted Line Reads:** Use `grep -n` to find line numbers, then read only the 30‑60 lines surrounding the target.
+3. **Batch Execution After Approval:** After you approve, combine file copies, version bump, `python3 verify.py`, and `git commit && git push` into a single command to minimise tool calls.
+4. **Prompt Compaction Before Model Switches:** Run the `/compact` slash command before changing AI models to keep context size minimal.
+---

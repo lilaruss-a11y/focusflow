@@ -120,7 +120,7 @@ Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN
 * **`scripts/poll_deploy.sh`** (Deployment Poller):
   * Polls the GitHub Actions API every 10s until the latest Pages deployment reports `completed` + `success` (used for the Rule 3 deployment gate).
 * **`README.md`** (Project Overview):
-  * Human-facing project description. Agent rules live in `AGENTS.md` / `GEMINI.md` (keep these two files identical).
+  * Human-facing project description. Agent rules live ONLY in `AGENTS.md`. `GEMINI.md` is a one-line pointer to this file — never copy rules into it.
 
 ### Testing & Verification (`tests/` & `verify.py`)
 * **`verify.py`** (Universal Boundary Enforcer & Test Suite):
@@ -143,7 +143,7 @@ Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN
 ### Rule 1: MANDATORY Plan & Approval Gate (Look Before You Leap)
 **You are STRICTLY FORBIDDEN from editing or creating files upon receiving a user prompt without prior approval.**
 Before changing ANY code:
-1. **Inspect & Diagnose:** Read the relevant file(s) and locate the exact functions/lines involved.
+1. **Inspect & Diagnose:** Read the relevant file(s) and locate the exact functions/lines involved. *Read-only actions (reading files, `grep`, `git status`/`git log`, running `python3 verify.py`) NEVER require approval — only edits, file creation/deletion, commits, and pushes do.*
 2. **Formulate a Plan:** Determine the root cause and the exact step-by-step changes needed.
 3. **Explain to the User in Plain English:** Explain what is causing the issue or how the feature will work without technical jargon.
 4. **ASK FOR APPROVAL:** End your response by asking the user:
@@ -177,6 +177,7 @@ After the user approves your plan and you make the changes:
 
 ### Rule 3: Auto-Sync, Version Bump & GitHub Pages Deployment Verification
 After your tests pass:
+0. **Docs-Only Exception:** If the change touches ONLY `AGENTS.md`, `GEMINI.md`, `README.md`, `scripts/`, or `tests/`, skip the `site/` sync and version bump — just run `python3 verify.py`, commit, and push.
 1. **Synchronize & Version Bump:**
    - Synchronize all modified files from root into the `site/` folder.
    - Whenever CSS, JS, HTML, or assets are modified, ALWAYS bump `CACHE_VERSION` in `sw.js` and `site/sw.js`, and increment the cache-buster query on stylesheets (e.g. `css/styles.css?v=XX`) in `index.html` and `site/index.html`.
@@ -190,6 +191,7 @@ After your tests pass:
      curl -s "https://api.github.com/repos/lilaruss-a11y/focusflow/actions/runs?per_page=1" | grep -E '"status"|"conclusion"'
      ```
    - Or simply run `zsh scripts/poll_deploy.sh`, which repeats this check until the deployment succeeds.
+   - Deployments usually take **1–2 minutes**; repeated `in_progress` results during that window are normal, not a failure.
    - Only after the build reports `"status": "completed"` and `"conclusion": "success"` may you conclude your turn and invite the user to refresh their app.
 
 ### Rule 4: Thrash Prevention (Circuit Breaker)
@@ -207,7 +209,7 @@ After your tests pass:
 - NEVER stack speculative edits on top of previously broken code. Every new attempt must start from a clean, working baseline.
 
 ### Rule 7: Mandatory Code Map & Table of Contents Maintenance
-- Whenever you add, rename, delete, or split any files, modals, or architectural subsystems in FocusFlow, you MUST update Section 1 (Code Map & Table of Contents) in both `AGENTS.md` and `GEMINI.md` within the same commit.
+- Whenever you add, rename, delete, or split any files, modals, or architectural subsystems in FocusFlow, you MUST update Section 1 (Code Map & Table of Contents) in `AGENTS.md` within the same commit (`GEMINI.md` is only a pointer and must not be edited).
 - Never leave new files, modules, or major components undocumented. Neglecting to update the Code Map is a strict protocol violation.
 
 ---
@@ -231,8 +233,8 @@ To ensure the project never degenerates into a monolithic mess again, you MUST o
 
 ---
 ### Rule 8 – Token & Step Conservation
-1. **Code‑Map First:** Always consult the Table of Contents in `GEMINI.md` to locate the exact file before any search.
+1. **Code‑Map First:** Always consult the Table of Contents in `AGENTS.md` to locate the exact file before any search.
 2. **Targeted Line Reads:** Use `grep -n` to find line numbers, then read only the 30‑60 lines surrounding the target.
-3. **Batch Execution After Approval:** After you approve, combine file copies, version bump, `python3 verify.py`, and `git commit && git push` into a single command to minimise tool calls.
-4. **Prompt Compaction Before Model Switches:** Run the `/compact` slash command before changing AI models to keep context size minimal.
+3. **Batch Execution After Approval:** Combine file copies, version bump, and `python3 verify.py` into one command. Then run each Git step as its **own separate command** (`git add <files>`, `git commit -m "..."`, `git push origin main`) with no `cd` prefix or `&&` chaining, so the user's "Always allow" approvals apply automatically.
+4. **Prompt Compaction Before Model Switches:** The agent cannot run slash commands itself. When a conversation gets long or a model switch is coming, **remind the user** to run `/compact`.
 ---

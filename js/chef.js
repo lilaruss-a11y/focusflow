@@ -725,7 +725,7 @@
     }
 
     // High-performance Gemini Vision caller with dynamic model discovery and strict 8s timeout
-    async function callGeminiGenerateContent({ prompt, inlineImage = null, inlineImages = null, key = '', expectJson = false, onStatus = null }) {
+    async function callGeminiGenerateContent({ prompt, inlineImage = null, inlineImages = null, key = '', expectJson = false, onStatus = null, statusLabel = 'image' }) {
       const activeKey = (key || getGeminiApiKey() || '').trim();
       if (!activeKey) {
         throw new Error("API_KEY_REQUIRED");
@@ -831,11 +831,11 @@
       // Automatically skips text-only models that return "image input modality not enabled"
       for (const model of targetModels) {
         let elapsed = 0;
-        if (typeof onStatus === 'function') onStatus(`Scanning receipt with ${model}...`);
+        if (typeof onStatus === 'function') onStatus(`Analyzing ${statusLabel} with ${model}...`);
         const statusTicker = setInterval(() => {
           elapsed += 1;
           if (typeof onStatus === 'function') {
-            onStatus(`Scanning receipt with ${model}... (${elapsed}s)`);
+            onStatus(`Analyzing ${statusLabel} with ${model}... (${elapsed}s)`);
           }
         }, 1000);
 

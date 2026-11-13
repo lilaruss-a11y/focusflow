@@ -146,10 +146,11 @@ After the user approves your plan and you make the changes:
    ```
 3. **Mandatory End-to-End Feature & Button Verification:**
    Whenever adding or modifying ANY button, modal, or clickable feature:
-   - **Trace the full click path:** 
+   - **Trace the full click path & visual layering:** 
      1. Element in HTML (`onclick="myFunction()"`) must match a real declared function in JavaScript.
      2. Function must actively perform its intended action (e.g., removing `hidden` from `#my-modal`, switching tabs, or modifying app state).
      3. Target modal/view IDs must exist in `index.html`.
+     4. **Layer Stacking Verification:** If a modal or sub-screen is opened from within another modal (e.g. Receipt Parser -> Nutrition Editor / Barcode Scanner), verify the child modal has an elevated `z-index` (e.g., `z-[125]` vs `z-[100]`) so it is never trapped or occluded underneath.
    - **Dead Button Prevention:** `verify.py` automatically scans all 400+ `onclick` handlers in `index.html` to guarantee 100% of button calls resolve to real functions. Never leave dummy or disconnected handlers.
    - **Verify Desired Effect:** Did the edit specifically produce the user's requested behavior without collateral side-effects?
 4. **Provide a Testing Checklist:**

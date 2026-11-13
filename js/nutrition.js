@@ -3407,6 +3407,18 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       }
     }
 
+    window.preEstimateMicrosSnapshot = null;
+
+    const ALL_MICRONUTRIENT_INPUT_IDS = [
+      'manual-nut-vitA', 'manual-nut-vitC', 'manual-nut-vitD', 'manual-nut-vitE', 'manual-nut-vitK',
+      'manual-nut-vitB1', 'manual-nut-vitB2', 'manual-nut-vitB3', 'manual-nut-vitB5', 'manual-nut-vitB6',
+      'manual-nut-vitB7', 'manual-nut-vitB9', 'manual-nut-vitB12', 'manual-nut-choline',
+      'manual-nut-potassium', 'manual-nut-calcium', 'manual-nut-iron', 'manual-nut-magnesium',
+      'manual-nut-zinc', 'manual-nut-phosphorus', 'manual-nut-chloride', 'manual-nut-sulfur',
+      'manual-nut-copper', 'manual-nut-manganese', 'manual-nut-selenium', 'manual-nut-iodine',
+      'manual-nut-chromium', 'manual-nut-molybdenum'
+    ];
+
     function autoEstimateMissingMicros() {
       const cat = (document.getElementById('manual-nut-cat') || {}).value || 'produce';
       const kcal = parseFloat((document.getElementById('manual-nut-kcal') || {}).value) || 0;
@@ -3414,6 +3426,13 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       const carbs = parseFloat((document.getElementById('manual-nut-carbs') || {}).value) || 0;
       const fat = parseFloat((document.getElementById('manual-nut-fat') || {}).value) || 0;
       const name = (document.getElementById('manual-nut-name') || {}).value || '';
+
+      // Save snapshot of all micronutrient inputs before auto-filling
+      window.preEstimateMicrosSnapshot = {};
+      ALL_MICRONUTRIENT_INPUT_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        window.preEstimateMicrosSnapshot[id] = el ? el.value : '';
+      });
 
       const estimated = estimateMicronutrientsForFood(cat, kcal, protein, carbs, fat, name);
 
@@ -3456,7 +3475,26 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       fillIfEmpty('manual-nut-chromium', estimated.chromium);
       fillIfEmpty('manual-nut-molybdenum', estimated.molybdenum);
 
+      const undoBtn = document.getElementById('btn-undo-auto-estimate-micros');
+      if (undoBtn) undoBtn.classList.remove('hidden');
+
+      if (typeof playChime === 'function') playChime('pop');
       alertBox("Auto-filled missing micronutrients with USDA clinical standards!", "Micros Estimated");
+    }
+
+    function undoAutoEstimateMicros() {
+      if (!window.preEstimateMicrosSnapshot) return;
+      Object.keys(window.preEstimateMicrosSnapshot).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = window.preEstimateMicrosSnapshot[id] || '';
+      });
+
+      window.preEstimateMicrosSnapshot = null;
+      const undoBtn = document.getElementById('btn-undo-auto-estimate-micros');
+      if (undoBtn) undoBtn.classList.add('hidden');
+
+      if (typeof playChime === 'function') playChime('pop');
+      alertBox("Restored original micronutrient amounts.", "Undo Complete");
     }
 
     function saveManualNutritionData() {
@@ -3783,6 +3821,7 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       window.closeManualNutritionModal = closeManualNutritionModal;
       window.switchManualNutMicroTab = switchManualNutMicroTab;
       window.autoEstimateMissingMicros = autoEstimateMissingMicros;
+      window.undoAutoEstimateMicros = undoAutoEstimateMicros;
       window.saveManualNutritionData = saveManualNutritionData;
       window.setLogMealType = setLogMealType;
       window.deleteFoodEntry = deleteFoodEntry;

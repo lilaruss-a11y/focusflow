@@ -716,7 +716,41 @@ function pairReceiptItemWithLabelOrBarcode(idx) {
 }
 
 function editReceiptItemNutrition(idx) {
-  pairReceiptItemWithLabelOrBarcode(idx);
+  const item = (state.incomingGroceriesApprovalList || [])[idx];
+  if (!item) return;
+
+  window.activeReceiptPairingItem = {
+    receiptIndex: idx,
+    receiptRawCode: item.rawName || item.name,
+    name: item.name
+  };
+
+  const nut = item.nutrition || {};
+  if (typeof openManualNutritionModal === 'function') {
+    openManualNutritionModal({
+      barcode: item.barcode || '',
+      name: item.name,
+      brand: item.brand || '',
+      amount: item.amount || 1,
+      unit: item.unit || 'items',
+      category: item.category || 'produce',
+      storage: item.storage || 'fridge',
+      nutrition: nut,
+      kcal: nut.kcal,
+      protein: nut.protein,
+      carbs: nut.carbs,
+      fat: nut.fat,
+      fiber: nut.fiber,
+      sugar: nut.sugar,
+      satFat: nut.satFat,
+      sodium: nut.sodium,
+      isReceiptPairing: true,
+      receiptIndex: idx,
+      receiptRawCode: item.rawName || item.name
+    });
+  } else if (typeof openBarcodeScannerModal === 'function') {
+    openBarcodeScannerModal('receipt_pair');
+  }
 }
 
 function renderIncomingGroceriesApprovalList(items) {
@@ -765,12 +799,12 @@ function renderIncomingGroceriesApprovalList(items) {
         ${!item.isVerified ? `
           <button type="button" onclick="pairReceiptItemWithLabelOrBarcode(${idx})" class="px-2 py-1 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-[10px] font-bold flex items-center gap-1 transition shadow-sm" title="Scan package barcode or label to pair with this store code permanently">
             <i data-lucide="camera" class="w-3 h-3"></i>
-            <span>📷 Pair Label/Barcode</span>
+            <span>Pair Label/Barcode</span>
           </button>
         ` : ''}
         <button type="button" onclick="editReceiptItemNutrition(${idx})" class="px-2 py-1 rounded-xl bg-dark-elevated hover:bg-slate-700 text-slate-300 hover:text-white border border-dark-border text-[10px] flex items-center gap-1 transition" title="View or edit macro and micronutrient facts">
-          <i data-lucide="edit-3" class="w-3 h-3"></i>
-          <span>✏️ Facts</span>
+          <i data-lucide="clipboard-list" class="w-3 h-3 text-pastel-mint"></i>
+          <span>Nutrition Facts</span>
         </button>
 
         <!-- Quantity & Unit -->

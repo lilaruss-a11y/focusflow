@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=56">
+  <link rel="stylesheet" href="css/styles.css?v=57">
   <script>
     function resetViewportZoom() {
       try {
@@ -5411,15 +5411,20 @@
         </div>
       </div>
 
-      <!-- Quick Auto-Estimate Helper -->
-      <div class="flex items-center justify-between p-2.5 rounded-xl bg-pastel-mint/10 border border-pastel-mint/30 text-xs">
+      <!-- Quick Auto-Estimate Helper with Undo Support -->
+      <div class="flex items-center justify-between p-2.5 rounded-xl bg-pastel-mint/10 border border-pastel-mint/30 text-xs flex-wrap gap-2">
         <div class="flex items-center gap-2">
           <i data-lucide="sparkles" class="w-4 h-4 text-pastel-mint shrink-0"></i>
-          <span class="text-[11px] text-slate-300">Auto-fill all missing vitamins &amp; minerals using USDA clinical averages:</span>
+          <span class="text-[11px] text-slate-300">Auto-fill missing vitamins &amp; minerals using USDA averages:</span>
         </div>
-        <button type="button" onclick="autoEstimateMissingMicros()" class="px-3 py-1 rounded-lg bg-pastel-mint text-dark-base font-bold text-[11px] shrink-0 hover:bg-emerald-300 transition">
-          ⚡ Auto-Estimate Micros
-        </button>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button type="button" id="btn-undo-auto-estimate-micros" onclick="undoAutoEstimateMicros()" class="hidden px-2.5 py-1 rounded-lg bg-dark-base border border-dark-border text-slate-300 hover:text-white font-semibold text-[11px] transition" title="Revert to original micronutrient values">
+            ↺ Undo Auto-Fill
+          </button>
+          <button type="button" onclick="autoEstimateMissingMicros()" class="px-3 py-1 rounded-lg bg-pastel-mint text-dark-base font-bold text-[11px] hover:bg-emerald-300 transition">
+            Auto-Estimate Micros
+          </button>
+        </div>
       </div>
 
       <!-- Section: Essential Human Survival Micronutrients -->

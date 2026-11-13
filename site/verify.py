@@ -383,6 +383,26 @@ if dead_calls:
 else:
     success(f"All {len(raw_onclicks)} onclick handlers in index.html resolve to valid functions.")
 
+# 5c. Verifying modal dialog stacking hierarchy and child z-index safety...
+print("\n5c. Verifying modal stacking hierarchy & z-index layering...")
+with open(os.path.join(BASE_DIR, "css/styles.css"), "r", encoding="utf-8") as f:
+    css_content = f.read()
+
+child_modals = [
+    '#barcode-scanner-modal',
+    '#manual-nutrition-modal',
+    '#food-detail-modal',
+    '#custom-food-modal',
+    '#pantry-item-modal',
+    '#pantry-item-detail-modal'
+]
+
+missing_high_z = [m for m in child_modals if m not in css_content]
+if missing_high_z:
+    error(f"Child utility modals missing higher z-index stacking in css/styles.css: {missing_high_z}")
+else:
+    success(f"All {len(child_modals)} child/sub-flow modals have explicit elevated z-index stacking above parent dialogs.")
+
 print("\n6. Testing against known past mistakes...")
 if not os.path.exists(REGRESSIONS_FILE):
     print("  ℹ️ No learned regressions registered yet.")

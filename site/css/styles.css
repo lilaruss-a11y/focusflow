@@ -197,3 +197,13 @@ div[id$="-modal"] > div {
   opacity: 0.15 !important;
   backdrop-filter: none !important;
 }
+
+/* Nested / Child Utility Modals: Must stack cleanly on top of parent dialogs */
+#barcode-scanner-modal,
+#manual-nutrition-modal,
+#food-detail-modal,
+#custom-food-modal,
+#pantry-item-modal,
+#pantry-item-detail-modal {
+  z-index: 125 !important;
+}

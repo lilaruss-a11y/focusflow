@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=53">
+  <link rel="stylesheet" href="css/styles.css?v=56">
   <script>
     function resetViewportZoom() {
       try {
@@ -827,42 +827,42 @@
     <!-- ============================================== -->
     <div id="view-kitchen" class="hidden space-y-6">
       <!-- Main Kitchen Header & Sub-Navigation -->
-      <div class="bg-dark-surface/90 border border-dark-border rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div class="flex items-center gap-2">
-              <h2 class="text-xl font-bold text-slate-100">Smart Kitchen, Meal Planner &amp; Pantry</h2>
-              <span class="text-xs px-2.5 py-0.5 rounded-full bg-pastel-butter/20 text-pastel-butter border border-pastel-butter/30 font-medium">Weekly Prep Suite</span>
+      <div class="bg-dark-surface/90 border border-dark-border rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-lg sm:text-xl font-bold text-slate-100">Smart Kitchen, Meal Planner &amp; Pantry</h2>
+              <span class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-pastel-butter/20 text-pastel-butter border border-pastel-butter/30 font-medium shrink-0">Weekly Prep Suite</span>
             </div>
-            <p class="text-xs text-slate-400 mt-1">Inventory your pantry, plan balanced meals for the week, and auto-generate your grocery shopping list.</p>
+            <p class="text-xs text-slate-400 mt-0.5">Inventory your pantry, plan balanced meals for the week, and auto-generate your grocery shopping list.</p>
           </div>
 
-          <!-- Global Action Buttons (Condense into one line of icon-only buttons) -->
-          <div class="flex items-center gap-1.5 flex-wrap">
-            <button type="button" onclick="openReverseChefFromKitchen()" class="h-10 w-10 sm:h-9 sm:w-9 flex items-center justify-center rounded-xl bg-gradient-to-r from-pastel-coral to-pastel-peach hover:opacity-90 text-dark-base shadow-md shadow-pastel-coral/20 transition active:scale-95 shrink-0" title="Launch Reverse Chef">
+          <!-- Global Action Buttons: Always fit in horizontal space -->
+          <div class="flex items-center gap-1 sm:gap-1.5 w-full md:w-auto justify-between sm:justify-end overflow-x-auto no-scrollbar py-0.5 shrink-0">
+            <button type="button" onclick="openReverseChefFromKitchen()" class="h-9 w-9 sm:h-9 sm:w-9 flex-1 sm:flex-initial flex items-center justify-center rounded-xl bg-gradient-to-r from-pastel-coral to-pastel-peach hover:opacity-90 text-dark-base shadow-md shadow-pastel-coral/20 transition active:scale-95 shrink-0" title="Launch Reverse Chef">
               <i data-lucide="chef-hat" class="w-4 h-4 text-dark-base shrink-0"></i>
             </button>
-            <button type="button" onclick="openWalmartGroceryImportModal()" class="h-10 w-10 sm:h-9 sm:w-9 flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-sky/40 text-pastel-sky transition active:scale-95 shrink-0" title="Import Walmart or grocery receipt items with 1-by-1 approval">
+            <button type="button" onclick="openWalmartGroceryImportModal()" class="h-9 w-9 sm:h-9 sm:w-9 flex-1 sm:flex-initial flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-sky/40 text-pastel-sky transition active:scale-95 shrink-0" title="Import Walmart or grocery receipt items with 1-by-1 approval">
               <i data-lucide="shopping-cart" class="w-4 h-4 shrink-0"></i>
             </button>
-            <button type="button" onclick="openBarcodeScannerModal('pantry')" class="h-10 w-10 sm:h-9 sm:w-9 flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender transition shrink-0" title="Scan Barcode into Pantry">
+            <button type="button" onclick="openBarcodeScannerModal('pantry')" class="h-9 w-9 sm:h-9 sm:w-9 flex-1 sm:flex-initial flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender transition shrink-0" title="Scan Barcode into Pantry">
               <i data-lucide="scan-barcode" class="w-4 h-4 shrink-0"></i>
             </button>
-            <label class="cursor-pointer h-10 w-10 sm:h-9 sm:w-9 flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender transition shrink-0 m-0" title="Scan Fridge Photo with AI Vision">
+            <label class="cursor-pointer h-9 w-9 sm:h-9 sm:w-9 flex-1 sm:flex-initial flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender transition shrink-0 m-0" title="Scan Fridge Photo with AI Vision">
               <i data-lucide="camera" class="w-4 h-4 shrink-0"></i>
               <input type="file" accept="image/*" class="hidden" onchange="handlePantryPhotoUpload(event)">
             </label>
-            <button type="button" onclick="openAddPantryItemModal()" class="h-10 w-10 sm:h-9 sm:w-9 flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-300 hover:text-white transition shrink-0" title="Add Ingredient Manually">
+            <button type="button" onclick="openAddPantryItemModal()" class="h-9 w-9 sm:h-9 sm:w-9 flex-1 sm:flex-initial flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-300 hover:text-white transition shrink-0" title="Add Ingredient Manually">
               <i data-lucide="plus" class="w-4 h-4 shrink-0"></i>
             </button>
-            <button type="button" onclick="clearDemoPantryItems()" class="h-10 w-10 sm:h-9 sm:w-9 flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-dark-border transition shrink-0" title="Clear Demo Items (Start Fresh with Real Pantry)">
+            <button type="button" onclick="clearDemoPantryItems()" class="h-9 w-9 sm:h-9 sm:w-9 flex-1 sm:flex-initial flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-dark-border transition shrink-0" title="Clear Demo Items (Start Fresh with Real Pantry)">
               <i data-lucide="trash" class="w-4 h-4 shrink-0"></i>
             </button>
           </div>
         </div>
 
         <!-- Section View Switcher: Pantry vs Meal Planner vs Shopping List -->
-        <div class="pt-3 border-t border-dark-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="pt-2.5 border-t border-dark-border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div class="w-full sm:w-auto grid grid-cols-3 sm:flex items-center p-1 rounded-2xl bg-dark-base border border-dark-border gap-1 text-xs">
             <button type="button" onclick="switchKitchenSubTab('pantry')" id="kitchen-subtab-btn-pantry" class="flex-1 min-w-0 px-2 sm:px-3.5 py-2 rounded-xl font-bold bg-pastel-butter text-dark-base transition flex items-center justify-center gap-1 shadow-sm">
               <i data-lucide="package" class="w-4 h-4 shrink-0"></i>

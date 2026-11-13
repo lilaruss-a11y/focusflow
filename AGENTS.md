@@ -91,6 +91,10 @@ Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN
   * Exclusively owns: Reverse Chef 3-step wizard, kitchen scale mode, recipe step timers, Walmart & grocery receipt photo scanner & OCR parser (sole owner of receipt scanning).
   * **Forbidden:** ❌ Calendar timeline rendering, daily schedules, macro charts.
 
+* **`js/body-profile.js`** (Body Profile, Health Targets & Weight Timeline):
+  * Exclusively owns: Body profile modal (`openBodyProfileModal`), BMI calculations, TDEE calculator (`recalculateHealthTargets`), macro target distributions and presets, pace slider, and weight goal timeline (`renderWeightGoalTimeline`).
+  * **Forbidden:** ❌ Calendar day grid math, food logging modals, recipe calculations, barcode scanning.
+
 * **`js/nutrition.js`** (Nutrition, Macros & Whole Foods):
   * Exclusively owns: `renderNutrition()`, macro dials, macronutrient calculations & adjustments, centralized food & recipe master reference (`getUnifiedFoodOrMeal`, `buildRecipeUnifiedNutrition`), USDA specific-food matcher & approval workflow (`findClosestUsdaFood`, `requestUsdaFoodSupplementation`), and green shield / yellow tilde verification icons.
   * **Forbidden:** ❌ Barcode camera scanning, calendar drag-and-drop, cooking timers, Firebase cloud sync.
@@ -152,6 +156,7 @@ Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN
 * Google Calendar or iCal sync, category colors → `js/calendar-categories.js`
 * Pantry, meal planner, recipe book → `js/kitchen.js`
 * Shopping list → `js/shopping.js`; receipt photo scanning → `js/chef.js`
+* Body profile, BMI, TDEE & weight goal timeline → `js/body-profile.js`
 * Macros, USDA matching, shields → `js/nutrition.js`
 * Barcode scanner & product packaging lookup → `js/barcode.js`
 * Health charts / Apple Health → `js/health.js`; blood pressure, heart rate, meds → `js/biometrics.js`

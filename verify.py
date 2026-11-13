@@ -291,6 +291,17 @@ MODULE_BOUNDARIES = {
             (r'function\s+.*Medication', 'medication belongs in js/biometrics.js')
         ]
     },
+    'body-profile.js': {
+        'name': 'Body Profile, TDEE, Macro Targets & Weight Timeline',
+        'forbidden': [
+            (r'function\s+.*TimelineView', 'timeline calendar views belong in js/timeline.js'),
+            (r'function\s+.*HourHeight', 'hour height belongs in js/timeline.js'),
+            (r'function\s+.*ReverseChef', 'Reverse Chef belongs in js/chef.js'),
+            (r'function\s+.*Barcode', 'barcode scanner belongs in js/barcode.js'),
+            (r'function\s+renderNutrition', 'nutrition rendering belongs in js/nutrition.js'),
+            (r'function\s+renderTimeline', 'timeline rendering belongs in js/timeline.js')
+        ]
+    },
     'barcode.js': {
         'name': 'Barcode Scanner & Package Lookup',
         'forbidden': [

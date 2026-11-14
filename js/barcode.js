@@ -522,10 +522,10 @@
       return null;
     }
 
-    // Tier 5: Gemini AI Vision Scanner for Nutrition Facts Label & Package (Dual-Photo Front + Nutrition Facts)
+    // Tier 5: Gemini AI Vision Scanner for Nutrition Facts Label & Package (Front + Nutrition Facts Part 1 + Optional Part 2)
     window.stagedPackagePhotos = {
-      barcode: { front: null, nutrition: null },
-      manual: { front: null, nutrition: null }
+      barcode: { front: null, nutrition: null, nutrition2: null },
+      manual: { front: null, nutrition: null, nutrition2: null }
     };
 
     function compressImageForVision(file, maxDimension = 1600, quality = 0.85) {
@@ -593,7 +593,7 @@
       }
 
       if (!window.stagedPackagePhotos[context]) {
-        window.stagedPackagePhotos[context] = { front: null, nutrition: null };
+        window.stagedPackagePhotos[context] = { front: null, nutrition: null, nutrition2: null };
       }
       window.stagedPackagePhotos[context][type] = {
         base64Data: compressed.base64Data,
@@ -602,7 +602,8 @@
       };
 
       if (badgeEl) {
-        badgeEl.textContent = '✓ Ready (' + (type === 'front' ? 'Front' : 'Label') + ')';
+        const labelMap = { front: 'Front', nutrition: 'Label 1', nutrition2: 'Label 2' };
+        badgeEl.textContent = '✓ Ready (' + (labelMap[type] || 'Photo') + ')';
         badgeEl.className = 'text-[9px] text-pastel-mint font-bold';
       }
 
@@ -632,11 +633,41 @@
           mimeType: staged.nutrition.mimeType || 'image/jpeg'
         });
       }
+      if (staged.nutrition2 && staged.nutrition2.base64Data) {
+        inlineImages.push({
+          base64Data: staged.nutrition2.base64Data,
+          mimeType: staged.nutrition2.mimeType || 'image/jpeg'
+        });
+      }
 
       if (inlineImages.length === 0) {
         alertBox("Please snap at least one photo (Front of package or Nutrition Facts label) before scanning.", "Photo Needed");
         return;
       }
+
+      // Update button loading state immediately so the user knows AI is working
+      const scanBtn = document.getElementById(context === 'manual' ? 'manual-ai-scan-btn' : 'barcode-ai-scan-btn');
+      const scanBtnText = document.getElementById(context === 'manual' ? 'manual-ai-scan-btn-text' : 'barcode-ai-scan-btn-text');
+      const originalBtnText = scanBtnText ? scanBtnText.textContent : (scanBtn ? scanBtn.textContent : '');
+
+      if (scanBtn) {
+        scanBtn.disabled = true;
+        scanBtn.classList.add('opacity-75', 'cursor-wait');
+      }
+      if (scanBtnText) {
+        scanBtnText.innerHTML = `<span class="flex items-center gap-1.5"><i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i><span>Analyzing with Gemini AI...</span></span>`;
+        if (window.lucide) lucide.createIcons();
+      }
+
+      const resetBtnState = () => {
+        if (scanBtn) {
+          scanBtn.disabled = false;
+          scanBtn.classList.remove('opacity-75', 'cursor-wait');
+        }
+        if (scanBtnText) {
+          scanBtnText.textContent = originalBtnText || (context === 'manual' ? 'Auto-Fill Form with Gemini AI' : 'Scan Selected Photo(s) with AI');
+        }
+      };
 
       const resBox = document.getElementById('barcode-lookup-result');
       if (resBox && context === 'barcode') {
@@ -776,6 +807,19 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
             micros: mergedMicros
           };
 
+          // Build explicit verification map for all extracted nutrients (including confirmed 0s)
+          const verifiedNutrientsMap = {};
+          ['kcal', 'protein', 'carbs', 'fat', 'fiber', 'sugar', 'addedSugar', 'satFat', 'transFat', 'sodium', 'cholesterol', 'water'].forEach(k => {
+            if (nut[k] !== undefined && nut[k] !== null && nut[k] !== '' && !isNaN(Number(nut[k]))) {
+              verifiedNutrientsMap[k] = true;
+            }
+          });
+          Object.keys(DAILY_NUTRITION_STANDARDS).forEach(k => {
+            if (parsedMicros[k] !== undefined && parsedMicros[k] !== null && parsedMicros[k] !== '' && !isNaN(Number(parsedMicros[k]))) {
+              verifiedNutrientsMap[k] = true;
+            }
+          });
+
           const product = {
             name: parsed.name,
             brand: parsed.brand || 'Verified Food',
@@ -789,11 +833,21 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
             fat: completeNutrition.fat,
             fiber: completeNutrition.fiber,
             sugar: completeNutrition.sugar,
+            addedSugar: completeNutrition.addedSugar,
             satFat: completeNutrition.satFat,
+            transFat: completeNutrition.transFat,
             sodium: completeNutrition.sodium,
+            cholesterol: completeNutrition.cholesterol,
+            water: completeNutrition.water,
             sourceBadge: '✨ AI Nutrition Label Verified',
             barcode: barcode || '',
-            nutrition: completeNutrition
+            isVerified: true,
+            verifiedNutrients: verifiedNutrientsMap,
+            nutrition: {
+              ...completeNutrition,
+              isVerified: true,
+              verifiedNutrients: verifiedNutrientsMap
+            }
           };
 
           // Save to personal database immediately if barcode present
@@ -801,9 +855,13 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
             saveCustomBarcodeItem(barcode, product);
           }
 
+          resetBtnState();
+
           if (context === 'manual') {
             openManualNutritionModal({
               ...product,
+              isVerified: true,
+              verifiedNutrients: verifiedNutrientsMap,
               barcode: barcode || (document.getElementById('manual-nut-barcode') || {}).value || '',
               isReceiptPairing: activeManualNutritionContext ? activeManualNutritionContext.isReceiptPairing : false,
               receiptIndex: activeManualNutritionContext ? activeManualNutritionContext.receiptIndex : null,
@@ -818,6 +876,7 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
           throw new Error("Unable to parse nutrition data from photos");
         }
       } catch (err) {
+        resetBtnState();
         console.warn("AI label vision error:", err);
         if (resBox && context === 'barcode') {
           resBox.innerHTML = `

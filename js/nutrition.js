@@ -1766,16 +1766,20 @@
       const setNutrientVal = (id, key, val) => {
         const el = document.getElementById(id);
         if (!el) return;
-        const isConfirmed = Boolean(window.activeManualVerifiedMap[key]);
         if (val === null || val === undefined || val === '') {
           el.value = '';
           return;
         }
         const num = parseFloat(val);
-        if (!isNaN(num) && num === 0 && !isConfirmed) {
-          el.value = '';
-        } else {
+        // If an explicit value (including 0) was provided, preserve it!
+        if (!isNaN(num)) {
           el.value = val;
+          // If coming from verified source or positive confirmation, mark verified
+          if (params.isVerified || (incomingVerified && incomingVerified[key])) {
+            window.activeManualVerifiedMap[key] = true;
+          }
+        } else {
+          el.value = '';
         }
       };
 

@@ -73,5 +73,13 @@
     "check_type": "forbidden_pattern",
     "pattern": "barcodeStream\\.getTracks\\(\\)\\.forEach\\(track => track\\.stop\\(\\)\\);\\s*}\\s*catch\\s*\\(e\\)\\s*\\{\\}\\s*barcodeStream = null;\\s*const video",
     "is_regex": true
+  },
+  {
+    "id": "preserve_zero_nutrients_in_manual_modal",
+    "description": "Never wipe or clear valid numeric 0 nutrient values when opening openManualNutritionModal",
+    "file": "js/nutrition.js",
+    "check_type": "forbidden_pattern",
+    "pattern": "num === 0 && !isConfirmed",
+    "is_regex": false
   }
 ]

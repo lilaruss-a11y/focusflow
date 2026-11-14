@@ -65,5 +65,13 @@
     "check_type": "forbidden_pattern",
     "pattern": "const micros = nut\\.micros \\|\\| \\(\\(params\\.name \\|\\| params\\.kcal\\) \\? estimateMicronutrientsForFood",
     "is_regex": true
+  },
+  {
+    "id": "leak_camera_tracks_on_scan",
+    "description": "Never leave barcode scanner camera tracks running without calling stopBarcodeCamera",
+    "file": "js/barcode.js",
+    "check_type": "forbidden_pattern",
+    "pattern": "barcodeStream\\.getTracks\\(\\)\\.forEach\\(track => track\\.stop\\(\\)\\);\\s*}\\s*catch\\s*\\(e\\)\\s*\\{\\}\\s*barcodeStream = null;\\s*const video",
+    "is_regex": true
   }
 ]

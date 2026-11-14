@@ -5865,8 +5865,12 @@
         <div id="barcode-lookup-result" class="hidden mt-2 p-3 rounded-xl bg-dark-base border border-pastel-mint/40 space-y-2"></div>
       </div>
 
-      <div class="pt-2 flex justify-end border-t border-dark-border">
-        <button onclick="closeBarcodeScannerModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs">Close</button>
+      <div class="pt-2 flex items-center justify-between border-t border-dark-border">
+        <div class="flex items-center gap-1.5 text-[10px] text-slate-400">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-pastel-mint shrink-0"></i>
+          <span>In Chrome: Tap address bar icon &gt; Permissions &gt; <strong>Allow Camera</strong> to remember.</span>
+        </div>
+        <button onclick="closeBarcodeScannerModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs hover:text-white shrink-0">Close</button>
       </div>
     </div>
   </div>
@@ -6592,7 +6596,7 @@
   <script src="js/chef.js?v=58"></script>
   <script src="js/body-profile.js?v=61"></script>
   <script src="js/nutrition.js?v=61"></script>
-  <script src="js/barcode.js?v=61"></script>
+  <script src="js/barcode.js?v=62"></script>
   <script src="js/health.js?v=48"></script>
   <script src="js/biometrics.js?v=48"></script>
   <script src="js/app.js?v=48"></script>

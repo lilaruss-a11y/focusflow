@@ -264,11 +264,8 @@
       if (isBarcodeScanningLocked) return;
       isBarcodeScanningLocked = true;
 
-      // Stop ZXing scanning loop while processing
-      if (zxingBarcodeReader) {
-        try { zxingBarcodeReader.reset(); } catch (e) {}
-        zxingBarcodeReader = null;
-      }
+      // Stop camera hardware completely once barcode is captured so phone doesn't keep recording
+      stopBarcodeCamera();
 
       if (typeof playChime === 'function') {
         try { playChime('bell'); } catch (e) {}
@@ -1256,6 +1253,17 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
 
 
 if (typeof window !== 'undefined') {
+  // Ensure camera hardware stops immediately if tab or app is minimized / backgrounded
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopBarcodeCamera();
+    }
+  });
+  window.addEventListener('pagehide', () => {
+    stopBarcodeCamera();
+  });
+
+  window.stopBarcodeCamera = stopBarcodeCamera;
   window.initZXingReader = initZXingReader;
   window.openLabelScannerModal = openLabelScannerModal;
   window.openBarcodeScannerModal = openBarcodeScannerModal;

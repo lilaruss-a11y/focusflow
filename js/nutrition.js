@@ -1102,6 +1102,7 @@
             nutrition: built.nutrition,
             ingredients: r.ingredients || [],
             instructions: r.instructions || '',
+            author: r.author || null,
             cookTime: r.cookTime || 25,
             servings: r.servings || '4-6',
             isVerified: Boolean(r.isVerified)

@@ -1461,11 +1461,24 @@
     function inspectLoggedFood(foodId) {
       const food = state.nutritionLog.find(n => n.id === foodId);
       if (!food) return;
+      openFoodNutrientDetailView(food);
+    }
+
+    function openNutrientBreakdownForSearchResult(matchIdx) {
+      const list = state._activeSearchResults || [];
+      const m = list[matchIdx];
+      if (!m) return;
+      openFoodNutrientDetailView(m);
+    }
+
+    function openFoodNutrientDetailView(food) {
+      if (!food) return;
       state.selectedFoodForDetail = food;
 
       // Cross-reference unified food & recipe database if serving or micros are missing
+      const cleanName = (food.name || '').replace(/\s*\(1 serving\)/i, '').trim();
       const unifiedRef = (typeof getUnifiedFoodOrMeal === 'function')
-        ? getUnifiedFoodOrMeal(food.name.replace(/\s*\(1 serving\)/i, '').trim())[0]
+        ? getUnifiedFoodOrMeal(cleanName)[0]
         : null;
 
       const servingDesc = food.serving || food.nutrition?.serving || unifiedRef?.serving || '1 serving';
@@ -1473,8 +1486,8 @@
       const verifiedMap = food.verifiedNutrients || food.nutrition?.verifiedNutrients || (food.isVerified ? { kcal: true, protein: true, carbs: true, fat: true, fiber: true, sodium: true } : {});
       const isOverallVerified = Boolean(food.isVerified || Object.keys(verifiedMap).length > 0);
 
-      document.getElementById('detail-food-name').textContent = food.name;
-      document.getElementById('detail-food-kcal').textContent = `${food.kcal} kcal`;
+      document.getElementById('detail-food-name').textContent = food.name || 'Food Details';
+      document.getElementById('detail-food-kcal').textContent = `${food.kcal || 0} kcal`;
       const srvEl = document.getElementById('detail-food-serving');
       if (srvEl) {
         srvEl.textContent = `1 serving = ${servingDesc} (${servingGrams} g)`;
@@ -1541,34 +1554,37 @@
       ` : '';
 
       const specs = document.getElementById('detail-nutrient-specs');
-      specs.innerHTML = `
-        ${usdaBannerHtml}
-        <div class="bg-dark-base p-3 rounded-xl border border-dark-border space-y-1.5">
-          <div class="flex items-center justify-between">
-            <span class="text-pastel-lavender font-bold text-[11px] uppercase tracking-wider">Macronutrients &amp; Daily Goal Contribution</span>
-            <span class="text-[10px] text-slate-400 font-mono">1 serving = ${servingDesc} (${servingGrams} g)</span>
+      if (specs) {
+        specs.innerHTML = `
+          ${usdaBannerHtml}
+          <div class="bg-dark-base p-3 rounded-xl border border-dark-border space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-pastel-lavender font-bold text-[11px] uppercase tracking-wider">Macronutrients &amp; Daily Goal Contribution</span>
+              <span class="text-[10px] text-slate-400 font-mono">1 serving = ${servingDesc} (${servingGrams} g)</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              ${macroRowsHtml}
+            </div>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-            ${macroRowsHtml}
-          </div>
-        </div>
 
-        <div class="bg-dark-base p-3 rounded-xl border border-dark-border space-y-1.5">
-          <span class="text-pastel-sky font-bold block text-[11px] uppercase tracking-wider">Essential Vitamins (13 + Choline)</span>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1">
-            ${vitRowsHtml}
+          <div class="bg-dark-base p-3 rounded-xl border border-dark-border space-y-1.5">
+            <span class="text-pastel-sky font-bold block text-[11px] uppercase tracking-wider">Essential Vitamins (13 + Choline)</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1">
+              ${vitRowsHtml}
+            </div>
           </div>
-        </div>
 
-        <div class="bg-dark-base p-3 rounded-xl border border-dark-border space-y-1.5">
-          <span class="text-pastel-mint font-bold block text-[11px] uppercase tracking-wider">Essential Minerals (14)</span>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1">
-            ${minRowsHtml}
+          <div class="bg-dark-base p-3 rounded-xl border border-dark-border space-y-1.5">
+            <span class="text-pastel-mint font-bold block text-[11px] uppercase tracking-wider">Essential Minerals (14)</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1">
+              ${minRowsHtml}
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      }
 
-      document.getElementById('food-detail-modal').classList.remove('hidden');
+      const modal = document.getElementById('food-detail-modal');
+      if (modal) modal.classList.remove('hidden');
       if (window.lucide) lucide.createIcons();
       playChime('bell');
     }
@@ -2572,7 +2588,27 @@
       // Check if any single target token matches the single query word
       if (qTokens.length === 1 && q.length >= 4) {
         const maxDist = q.length > 6 ? 2 : 1;
-        return tTokens.some(tt => computeLevenshteinDistance(q, tt) <= maxDist);
+        if (tTokens.some(tt => computeLevenshteinDistance(q, tt) <= maxDist)) return true;
+      }
+
+      // N-gram / fused token squashing for typos like "tikimasala" -> "tikka masala"
+      const qSquashed = q.replace(/[^a-z0-9]/g, '');
+      const tSquashed = t.replace(/[^a-z0-9]/g, '');
+      if (qSquashed.length >= 4) {
+        if (tSquashed.includes(qSquashed) || qSquashed.includes(tSquashed)) return true;
+        const distSquashed = computeLevenshteinDistance(qSquashed, tSquashed);
+        if (distSquashed <= (qSquashed.length > 7 ? 2 : 1)) return true;
+
+        // Check sliding sub-sequence of consecutive words in target
+        for (let span = 1; span <= Math.min(4, tTokens.length); span++) {
+          for (let i = 0; i <= tTokens.length - span; i++) {
+            const sub = tTokens.slice(i, i + span).join('').replace(/[^a-z0-9]/g, '');
+            if (!sub || sub.length < 3) continue;
+            if (sub.includes(qSquashed) || qSquashed.includes(sub)) return true;
+            const subDist = computeLevenshteinDistance(qSquashed, sub);
+            if (subDist <= (qSquashed.length > 7 ? 2 : 1)) return true;
+          }
+        }
       }
 
       return false;
@@ -2636,6 +2672,7 @@
             ? ((typeof renderVerifiedShieldIcon === 'function') ? renderVerifiedShieldIcon() : '✓')
             : ((typeof renderEstimatedTildeIcon === 'function') ? renderEstimatedTildeIcon() : '~');
           const sourceTag = m.source || (m.type === 'recipe' ? 'Recipe' : 'USDA');
+          const authorTag = m.author ? `<span class="text-[9.5px] text-pastel-sky font-normal italic truncate max-w-[120px]">by ${m.author}</span>` : '';
           const row = document.createElement('div');
           row.className = "p-2 rounded-xl bg-dark-base hover:bg-slate-700 flex items-center justify-between text-xs transition gap-2 group";
           
@@ -2644,9 +2681,10 @@
               <div class="flex items-center gap-1.5 flex-wrap">
                 ${badgeIcon}
                 <span class="font-bold text-white group-hover:text-pastel-mint transition truncate">${m.name}</span>
+                ${authorTag}
                 <span class="text-[9px] px-1.5 py-0.2 rounded bg-dark-elevated text-slate-400 font-mono">${sourceTag}</span>
               </div>
-              <span class="text-[10px] text-slate-400 font-mono block mt-0.5">1 serving = ${srv} (${srvG} g) • <span class="text-pastel-lavender font-bold">${m.kcal} kcal</span> • <span class="text-pastel-coral">P:${m.protein}g</span> <span class="text-pastel-mint">C:${m.carbs}g</span> <span class="text-pastel-butter">F:${m.fat}g</span></span>
+              <span onclick="event.stopPropagation(); openNutrientBreakdownForSearchResult(${idx});" class="text-[10px] text-slate-400 hover:text-white font-mono block mt-0.5 hover:underline cursor-pointer" title="Click to view full nutritional & micronutrient breakdown">1 serving = ${srv} (${srvG} g) • <span class="text-pastel-lavender font-bold">${m.kcal} kcal</span> • <span class="text-pastel-coral">P:${m.protein}g</span> <span class="text-pastel-mint">C:${m.carbs}g</span> <span class="text-pastel-butter">F:${m.fat}g</span> <span class="text-[9px] text-pastel-mint ml-1">📊 View facts</span></span>
             </div>
             <button type="button" onclick="event.stopPropagation(); quickAddSearchResultItem(${idx});" class="w-7 h-7 rounded-lg bg-pastel-mint hover:bg-emerald-300 text-dark-base font-extrabold text-sm flex items-center justify-center shrink-0 shadow-sm transition active:scale-95" title="Quick 1-tap add to current section">
               +
@@ -2667,11 +2705,11 @@
       footerActions.innerHTML = `
         <button type="button" onclick="openCreateChoiceModal('${q.replace(/'/g, "\\'")}')" class="flex-1 py-1.5 px-3 rounded-xl bg-pastel-mint/15 hover:bg-pastel-mint/25 border border-pastel-mint/40 text-pastel-mint font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95" title="Create a custom food or a new recipe">
           <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
-          <span>+ Create &amp; Save (Food or Recipe)</span>
+          <span>Create &amp; Save (Food or Recipe)</span>
         </button>
         <button type="button" onclick="openAiDishEstimatorModal('${q.replace(/'/g, "\\'")}')" class="flex-1 py-1.5 px-3 rounded-xl bg-gradient-to-r from-pastel-lavender/20 to-pastel-mint/20 hover:opacity-90 border border-pastel-lavender/40 text-pastel-lavender font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95" title="Estimate a restaurant meal or leftover dish using photo, origin, and ingredients">
           <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-          <span>✨ Estimate Dish with AI</span>
+          <span>Estimate Dish with AI</span>
         </button>
       `;
       box.appendChild(footerActions);
@@ -3063,10 +3101,16 @@
       closeCreateChoiceModal();
       collapseKitchenHeaderSearch();
       const q = state._pendingCreateQuery || '';
-      if (typeof openCustomFoodModal === 'function') {
+      if (typeof openManualNutritionModal === 'function') {
+        openManualNutritionModal({
+          name: q,
+          serving: '1 serving',
+          servingGrams: 100,
+          category: 'produce',
+          storage: 'fridge-main'
+        });
+      } else if (typeof openCustomFoodModal === 'function') {
         openCustomFoodModal(q);
-      } else if (typeof openManualNutritionModal === 'function') {
-        openManualNutritionModal({ name: q, category: 'produce', storage: 'fridge' });
       }
     }
 
@@ -3092,11 +3136,21 @@
       const originInput = document.getElementById('ai-dish-origin-input');
       const ingInput = document.getElementById('ai-dish-ingredients-input');
       const destHint = document.getElementById('ai-dish-dest-hint');
+      const reviewSection = document.getElementById('ai-dish-review-section');
+      const saveBtn = document.getElementById('btn-save-ai-dish-review');
+      const estBtn = document.getElementById('btn-run-ai-dish-estimate');
       const q = dishName || state._currentKitchenSearchQuery || '';
 
       if (nameInput) nameInput.value = q;
       if (originInput) originInput.value = '';
       if (ingInput) ingInput.value = '';
+
+      if (reviewSection) reviewSection.classList.add('hidden');
+      if (saveBtn) saveBtn.classList.add('hidden');
+      if (estBtn) {
+        estBtn.classList.remove('hidden');
+        estBtn.disabled = false;
+      }
 
       clearAiDishPhoto();
 
@@ -3113,7 +3167,18 @@
 
     function closeAiDishEstimatorModal() {
       const modal = document.getElementById('ai-dish-estimator-modal');
+      const reviewSection = document.getElementById('ai-dish-review-section');
+      const saveBtn = document.getElementById('btn-save-ai-dish-review');
+      const estBtn = document.getElementById('btn-run-ai-dish-estimate');
+
       if (modal) modal.classList.add('hidden');
+      if (reviewSection) reviewSection.classList.add('hidden');
+      if (saveBtn) saveBtn.classList.add('hidden');
+      if (estBtn) {
+        estBtn.classList.remove('hidden');
+        estBtn.disabled = false;
+      }
+      window._stagedAiDishEstimate = null;
       clearAiDishPhoto();
     }
 
@@ -3163,14 +3228,21 @@
       }
     }
 
+    // State for staged AI dish estimate awaiting user confirmation
+    window._stagedAiDishEstimate = null;
+
     async function runAiDishEstimation() {
       const nameInput = document.getElementById('ai-dish-name-input');
       const originInput = document.getElementById('ai-dish-origin-input');
       const amountInput = document.getElementById('ai-dish-amount-input');
       const unitInput = document.getElementById('ai-dish-unit-input');
+      const categoryInput = document.getElementById('ai-dish-category-input');
+      const storageInput = document.getElementById('ai-dish-storage-input');
       const ingredientsInput = document.getElementById('ai-dish-ingredients-input');
       const statusBox = document.getElementById('ai-dish-estimating-status');
       const btn = document.getElementById('btn-run-ai-dish-estimate');
+      const reviewSection = document.getElementById('ai-dish-review-section');
+      const saveBtn = document.getElementById('btn-save-ai-dish-review');
 
       const dishName = nameInput ? nameInput.value.trim() : '';
       if (!dishName) {
@@ -3181,6 +3253,8 @@
       const origin = originInput ? originInput.value.trim() : 'Restaurant / Homemade';
       const amount = (amountInput && !isNaN(parseFloat(amountInput.value))) ? parseFloat(amountInput.value) : 1;
       const unit = unitInput ? unitInput.value : 'container';
+      const category = categoryInput ? categoryInput.value : 'leftovers';
+      const storage = storageInput ? storageInput.value : 'fridge-main';
       const ingredients = ingredientsInput ? ingredientsInput.value.trim() : '';
 
       if (statusBox) statusBox.classList.remove('hidden');
@@ -3198,8 +3272,8 @@ Estimate complete nutritional facts for this dish by considering all provided cl
 Respond strictly with valid JSON (no markdown formatting, no code fence) in this schema:
 {
   "name": "${dishName}",
-  "category": "leftovers",
-  "storage": "fridge",
+  "category": "${category}",
+  "storage": "${storage}",
   "serving": "${amount} ${unit}",
   "servingGrams": 400,
   "kcal": 650,
@@ -3262,73 +3336,139 @@ Respond strictly with valid JSON (no markdown formatting, no code fence) in this
         }
       }
 
-      const curSub = state.kitchenSubTab || 'pantry';
       const displayName = origin ? `${dishName} (${origin})` : dishName;
+
+      // Stage estimate into window context so user can review and edit
+      window._stagedAiDishEstimate = {
+        dishName,
+        origin,
+        displayName,
+        amount,
+        unit,
+        category,
+        storage,
+        servingGrams,
+        estKcal,
+        estProt,
+        estCarbs,
+        estFat,
+        estFiber,
+        estSodium
+      };
+
+      // Populate review fields
+      const editKcal = document.getElementById('ai-dish-edit-kcal');
+      const editProt = document.getElementById('ai-dish-edit-protein');
+      const editCarbs = document.getElementById('ai-dish-edit-carbs');
+      const editFat = document.getElementById('ai-dish-edit-fat');
+      const editFiber = document.getElementById('ai-dish-edit-fiber');
+      const editSodium = document.getElementById('ai-dish-edit-sodium');
+
+      if (editKcal) editKcal.value = estKcal;
+      if (editProt) editProt.value = estProt;
+      if (editCarbs) editCarbs.value = estCarbs;
+      if (editFat) editFat.value = estFat;
+      if (editFiber) editFiber.value = estFiber;
+      if (editSodium) editSodium.value = estSodium;
+
+      if (statusBox) statusBox.classList.add('hidden');
+      if (btn) btn.disabled = false;
+
+      // Reveal review section and Save button
+      if (reviewSection) reviewSection.classList.remove('hidden');
+      if (saveBtn) saveBtn.classList.remove('hidden');
+      if (btn) btn.classList.add('hidden');
+      if (window.lucide) lucide.createIcons();
+      playChime('bell');
+    }
+
+    function confirmAndSaveAiDish() {
+      const staged = window._stagedAiDishEstimate;
+      if (!staged) return;
+
+      const editKcal = document.getElementById('ai-dish-edit-kcal');
+      const editProt = document.getElementById('ai-dish-edit-protein');
+      const editCarbs = document.getElementById('ai-dish-edit-carbs');
+      const editFat = document.getElementById('ai-dish-edit-fat');
+      const editFiber = document.getElementById('ai-dish-edit-fiber');
+      const editSodium = document.getElementById('ai-dish-edit-sodium');
+      const catInput = document.getElementById('ai-dish-category-input');
+      const storageInput = document.getElementById('ai-dish-storage-input');
+
+      const kcal = editKcal && !isNaN(parseInt(editKcal.value)) ? parseInt(editKcal.value) : staged.estKcal;
+      const prot = editProt && !isNaN(parseFloat(editProt.value)) ? parseFloat(editProt.value) : staged.estProt;
+      const carbs = editCarbs && !isNaN(parseFloat(editCarbs.value)) ? parseFloat(editCarbs.value) : staged.estCarbs;
+      const fat = editFat && !isNaN(parseFloat(editFat.value)) ? parseFloat(editFat.value) : staged.estFat;
+      const fiber = editFiber && !isNaN(parseFloat(editFiber.value)) ? parseFloat(editFiber.value) : staged.estFiber;
+      const sodium = editSodium && !isNaN(parseInt(editSodium.value)) ? parseInt(editSodium.value) : staged.estSodium;
+      const category = catInput ? catInput.value : staged.category;
+      const storage = storageInput ? storageInput.value : staged.storage;
+
+      const curSub = state.kitchenSubTab || 'pantry';
 
       if (curSub === 'shopping') {
         if (!Array.isArray(state.shoppingList)) state.shoppingList = [];
         state.shoppingList.push({
           id: `shop-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-          name: displayName,
-          quantity: `${amount} ${unit}`,
-          category: 'other',
+          name: staged.displayName,
+          quantity: `${staged.amount} ${staged.unit}`,
+          category: category || 'other',
           checked: false,
-          source: `AI Dish Estimation (${origin})`
+          source: `AI Dish Estimation (${staged.origin})`
         });
         saveAppState();
         if (typeof renderShoppingList === 'function') renderShoppingList();
         updateShoppingBadges();
         playChime('bell');
-        alertBox(`Added "${displayName}" to your Shopping List!`, "Added to Groceries");
+        alertBox(`Added "${staged.displayName}" to your Shopping List!`, "Added to Groceries");
       } else {
         if (!Array.isArray(state.pantry)) state.pantry = [];
         state.pantry.push({
           id: `p-${Date.now()}`,
-          name: displayName,
-          category: 'leftovers',
-          storage: 'fridge',
-          amount: amount,
-          unit: unit,
-          serving: `${amount} ${unit}`,
-          servingGrams: servingGrams,
+          name: staged.displayName,
+          category: category,
+          storage: storage,
+          amount: staged.amount,
+          unit: staged.unit,
+          serving: `${staged.amount} ${staged.unit}`,
+          servingGrams: staged.servingGrams,
           dateAdded: new Date().toISOString().split('T')[0],
-          kcal: estKcal,
-          protein: estProt,
-          carbs: estCarbs,
-          fat: estFat,
-          fiber: estFiber,
-          sugar: Math.round(estCarbs * 0.15),
-          satFat: Math.round(estFat * 0.35),
-          sodium: estSodium,
-          water: Math.round(servingGrams * 0.65),
+          kcal: kcal,
+          protein: prot,
+          carbs: carbs,
+          fat: fat,
+          fiber: fiber,
+          sugar: Math.round(carbs * 0.15),
+          satFat: Math.round(fat * 0.35),
+          sodium: sodium,
+          water: Math.round(staged.servingGrams * 0.65),
           isVerified: false,
-          sourceBadge: `✨ AI Synthesized (${origin})`,
+          sourceBadge: `✨ AI Synthesized (${staged.origin})`,
           nutrition: {
-            kcal: estKcal,
-            protein: estProt,
-            carbs: estCarbs,
-            fat: estFat,
-            fiber: estFiber,
-            sugar: Math.round(estCarbs * 0.15),
-            satFat: Math.round(estFat * 0.35),
-            sodium: estSodium,
-            water: Math.round(servingGrams * 0.65),
-            serving: `${amount} ${unit}`,
-            servingGrams: servingGrams,
+            kcal: kcal,
+            protein: prot,
+            carbs: carbs,
+            fat: fat,
+            fiber: fiber,
+            sugar: Math.round(carbs * 0.15),
+            satFat: Math.round(fat * 0.35),
+            sodium: sodium,
+            water: Math.round(staged.servingGrams * 0.65),
+            serving: `${staged.amount} ${staged.unit}`,
+            servingGrams: staged.servingGrams,
             verifiedNutrients: {},
             micros: (typeof estimateMicronutrientsForFood === 'function')
-              ? estimateMicronutrientsForFood('leftovers', estKcal, estProt, estCarbs, estFat, dishName, servingGrams)
+              ? estimateMicronutrientsForFood(category, kcal, prot, carbs, fat, staged.dishName, staged.servingGrams)
               : {}
           }
         });
         saveAppState();
         renderPantry();
         playChime('bell');
-        alertBox(`Estimated "${displayName}" (${estKcal} kcal, ${estProt}g protein) and stored in Fridge Leftovers!`, "Dish Added to Pantry");
+        alertBox(`Saved "${staged.displayName}" (${kcal} kcal, ${prot}g protein) to your ${storage} zone!`, "Dish Added to Pantry");
       }
 
-      if (statusBox) statusBox.classList.add('hidden');
-      if (btn) btn.disabled = false;
+      window._stagedAiDishEstimate = null;
       closeAiDishEstimatorModal();
       collapseKitchenHeaderSearch();
     }
@@ -3340,4 +3480,6 @@ Respond strictly with valid JSON (no markdown formatting, no code fence) in this
       window.renderMicroBarRow = renderMicroBarRow;
       window.scalePantryDetailPortion = scalePantryDetailPortion;
       window.renderPantryDetailMacroDonut = renderPantryDetailMacroDonut;
+      window.confirmAndSaveAiDish = confirmAndSaveAiDish;
+      window.openNutrientBreakdownForSearchResult = openNutrientBreakdownForSearchResult;
     }

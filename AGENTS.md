@@ -213,7 +213,12 @@ After the user approves your plan and you make the changes:
      1. Element in HTML (`onclick="myFunction()"`) must match a real declared function in JavaScript.
      2. Function must actively perform its intended action (e.g., removing `hidden` from `#my-modal`, switching tabs, or modifying app state).
      3. Target modal/view IDs must exist in `index.html`.
-     4. **Layer Stacking Verification:** If a modal or sub-screen is opened from within another modal (e.g. Receipt Parser -> Nutrition Editor / Barcode Scanner), verify the child modal has an elevated `z-index` (e.g., `z-[125]` vs `z-[100]`) so it is never trapped or occluded underneath.
+     4. **Strict 4-Tier Layer Stacking Verification:**
+        - Tier 1 (`z-10` to `z-40`): Navigation bars, sticky headers, bottom menu.
+        - Tier 2 (`z-100`): Standard main modals (Timeline, Health, Settings, Body Profile).
+        - Tier 3 (`z-150`): Any nested utility modal opened from within another dialog (e.g. Barcode Scanner, Nutrition Editor, Item Details, Cooking Wrapup). Must have `z-150 !important` in `css/styles.css`.
+        - Tier 4 (`z-200`): Confirmation prompts and critical alerts.
+        - `verify.py` check 5c automatically blocks deployment if any child modal lacks Tier 3 stacking.
    - **Dead Button Prevention:** `verify.py` automatically scans all 400+ `onclick` handlers in `index.html` to guarantee 100% of button calls resolve to real functions. Never leave dummy or disconnected handlers.
    - **Verify Desired Effect:** Did the edit specifically produce the user's requested behavior without collateral side-effects?
 4. **Provide a Testing Checklist:**

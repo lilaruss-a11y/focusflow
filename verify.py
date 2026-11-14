@@ -404,20 +404,28 @@ print("\n5c. Verifying modal stacking hierarchy & z-index layering...")
 with open(os.path.join(BASE_DIR, "css/styles.css"), "r", encoding="utf-8") as f:
     css_content = f.read()
 
-child_modals = [
+# All sub-dialogs and utility modals that can be opened from within another modal
+# MUST be registered in css/styles.css with z-index: 150 !important
+tier3_child_modals = [
     '#barcode-scanner-modal',
     '#manual-nutrition-modal',
     '#food-detail-modal',
     '#custom-food-modal',
     '#pantry-item-modal',
-    '#pantry-item-detail-modal'
+    '#pantry-item-detail-modal',
+    '#create-choice-modal',
+    '#ai-dish-estimator-modal',
+    '#cooking-questions-drawer-modal',
+    '#cooking-wrapup-modal'
 ]
 
-missing_high_z = [m for m in child_modals if m not in css_content]
-if missing_high_z:
-    error(f"Child utility modals missing higher z-index stacking in css/styles.css: {missing_high_z}")
+missing_tier3 = [m for m in tier3_child_modals if m not in css_content]
+if missing_tier3:
+    error(f"Child utility modals missing Tier 3 (z-150) stacking in css/styles.css: {missing_tier3}")
+elif "z-index: 150 !important" not in css_content:
+    error("css/styles.css is missing Tier 3 (z-index: 150 !important) definition for nested modals!")
 else:
-    success(f"All {len(child_modals)} child/sub-flow modals have explicit elevated z-index stacking above parent dialogs.")
+    success(f"All {len(tier3_child_modals)} child/sub-flow modals have explicit Tier 3 (z-150) stacking above parent dialogs.")
 
 print("\n6. Testing against known past mistakes...")
 if not os.path.exists(REGRESSIONS_FILE):

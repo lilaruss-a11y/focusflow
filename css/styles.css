@@ -198,12 +198,49 @@ div[id$="-modal"] > div {
   backdrop-filter: none !important;
 }
 
-/* Nested / Child Utility Modals: Must stack cleanly on top of parent dialogs */
+/* ==========================================================================
+   STRICT 4-TIER MODAL & OVERLAY STACKING HIERARCHY
+   Prevents any pop-up or sub-dialog from ever appearing behind other UI elements
+   Tier 1 (z-10 to z-40): Navbars, headers, action bars, bottom navigation
+   Tier 2 (z-100): Standard top-level modals (Schedule, Health, Settings, Chef)
+   Tier 3 (z-150): Sub-dialogs & utility modals opened from within parent modals
+   Tier 4 (z-200): Confirmation prompts, camera/scanner, and critical alerts
+   ========================================================================== */
+
+/* Tier 2: All Standard Modals & Drawers */
+div[id$="-modal"],
+div[id$="-drawer"],
+div[id$="-popup"] {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 100 !important;
+  background-color: rgba(0, 0, 0, 0.85) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  padding: 12px 12px 64px 12px !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Tier 3: Nested Utility & Child Modals (Must ALWAYS stack above Tier 2) */
 #barcode-scanner-modal,
 #manual-nutrition-modal,
 #food-detail-modal,
 #custom-food-modal,
 #pantry-item-modal,
-#pantry-item-detail-modal {
-  z-index: 125 !important;
+#pantry-item-detail-modal,
+#create-choice-modal,
+#ai-dish-estimator-modal,
+#cooking-questions-drawer-modal,
+#cooking-wrapup-modal {
+  z-index: 150 !important;
+}
+
+/* Tier 4: Critical Action Confirmations & Overlays */
+#usda-supplement-confirm-card,
+.critical-confirm-dialog {
+  z-index: 200 !important;
 }

@@ -169,7 +169,18 @@
     function onKitchenSearchKeydown(event) {
       if (event.key === 'Enter') {
         event.preventDefault();
-        addCustomPantryItemFromInput();
+        const activeResults = state._activeSearchResults || [];
+        if (activeResults.length > 0) {
+          // Open verification dialog for the top match so user can review amount, macros & storage
+          openVerifyFoodModalBeforeAdding(0);
+        } else {
+          // No match: open Create Choice popup so user can decide what to create
+          const input = document.getElementById('kitchen-food-search-input');
+          const val = input ? input.value.trim() : '';
+          if (val) {
+            openCreateChoiceModal(val);
+          }
+        }
       } else if (event.key === 'Escape') {
         collapseKitchenHeaderSearch();
       }
@@ -2555,63 +2566,71 @@
       return dp[m][n];
     }
 
-    function isFuzzyFoodMatch(query, targetName) {
-      if (!query || !targetName) return false;
+    function scoreFoodSearchMatch(query, targetName) {
+      if (!query || !targetName) return 0;
       const q = query.trim().toLowerCase();
       const t = targetName.trim().toLowerCase();
-      if (t.includes(q)) return true;
+      if (!q || !t) return 0;
 
-      // Token overlap check (e.g. "chicken tikimasala" vs "chicken tikka masala")
-      const qTokens = q.split(/\s+/);
-      const tTokens = t.split(/\s+/);
+      // 1. Exact or prefix matches get highest priority
+      if (t === q) return 1000;
+      if (t.startsWith(q)) return 800 - (t.length - q.length);
+      if (t.includes(q)) return 600 - (t.length - q.length);
+
+      const qTokens = q.split(/\s+/).filter(tok => tok.length > 0);
+      const tTokens = t.split(/\s+/).filter(tok => tok.length > 0);
+
+      // 2. Multi-token queries: ALL query tokens must match or closely match target tokens
       let matchedTokens = 0;
+      let tokenScore = 0;
       for (const qt of qTokens) {
-        if (qt.length <= 2) continue;
-        const found = tTokens.some(tt => {
-          if (tt.includes(qt) || qt.includes(tt)) return true;
-          const dist = computeLevenshteinDistance(qt, tt);
-          const maxDist = qt.length > 6 ? 2 : 1;
-          return dist <= maxDist;
-        });
-        if (found) matchedTokens++;
-      }
-      if (qTokens.length > 1 && matchedTokens >= Math.ceil(qTokens.length * 0.6)) {
-        return true;
+        let bestTokenScore = 0;
+        for (const tt of tTokens) {
+          if (tt === qt) {
+            bestTokenScore = Math.max(bestTokenScore, 100);
+          } else if (tt.startsWith(qt)) {
+            bestTokenScore = Math.max(bestTokenScore, 80);
+          } else if (tt.includes(qt)) {
+            bestTokenScore = Math.max(bestTokenScore, 60);
+          } else if (qt.length >= 4) {
+            const dist = computeLevenshteinDistance(qt, tt);
+            const maxD = qt.length > 6 ? 2 : 1;
+            if (dist <= maxD) {
+              bestTokenScore = Math.max(bestTokenScore, 50 - dist * 10);
+            }
+          }
+        }
+        if (bestTokenScore > 0) {
+          matchedTokens++;
+          tokenScore += bestTokenScore;
+        }
       }
 
-      // Overall string distance for single words (e.g. "chikcen" -> "chicken", "brocoli" -> "broccoli")
-      if (qTokens.length === 1 && tTokens.length === 1) {
-        const maxDist = q.length > 5 ? 2 : 1;
-        return computeLevenshteinDistance(q, t) <= maxDist;
+      if (matchedTokens === qTokens.length) {
+        return 400 + tokenScore - t.length;
       }
 
-      // Check if any single target token matches the single query word
+      // 3. Fused / typo words (e.g. "tikimasala" -> "chicken tikka masala" or "chikcen" -> "chicken")
       if (qTokens.length === 1 && q.length >= 4) {
-        const maxDist = q.length > 6 ? 2 : 1;
-        if (tTokens.some(tt => computeLevenshteinDistance(q, tt) <= maxDist)) return true;
-      }
-
-      // N-gram / fused token squashing for typos like "tikimasala" -> "tikka masala"
-      const qSquashed = q.replace(/[^a-z0-9]/g, '');
-      const tSquashed = t.replace(/[^a-z0-9]/g, '');
-      if (qSquashed.length >= 4) {
-        if (tSquashed.includes(qSquashed) || qSquashed.includes(tSquashed)) return true;
-        const distSquashed = computeLevenshteinDistance(qSquashed, tSquashed);
-        if (distSquashed <= (qSquashed.length > 7 ? 2 : 1)) return true;
-
-        // Check sliding sub-sequence of consecutive words in target
-        for (let span = 1; span <= Math.min(4, tTokens.length); span++) {
+        const qSquashed = q.replace(/[^a-z0-9]/g, '');
+        for (let span = 1; span <= Math.min(3, tTokens.length); span++) {
           for (let i = 0; i <= tTokens.length - span; i++) {
             const sub = tTokens.slice(i, i + span).join('').replace(/[^a-z0-9]/g, '');
             if (!sub || sub.length < 3) continue;
-            if (sub.includes(qSquashed) || qSquashed.includes(sub)) return true;
-            const subDist = computeLevenshteinDistance(qSquashed, sub);
-            if (subDist <= (qSquashed.length > 7 ? 2 : 1)) return true;
+            if (sub === qSquashed) return 350;
+            if (sub.startsWith(qSquashed)) return 300;
+            const dist = computeLevenshteinDistance(qSquashed, sub);
+            const maxD = qSquashed.length > 6 ? 2 : 1;
+            if (dist <= maxD) return 250 - dist * 20;
           }
         }
       }
 
-      return false;
+      return 0;
+    }
+
+    function isFuzzyFoodMatch(query, targetName) {
+      return scoreFoodSearchMatch(query, targetName) > 0;
     }
 
     function searchWholeFoodsForPantry(query) {
@@ -2638,26 +2657,31 @@
 
       // Pool all candidates: Recipes, USDA foods, branded items, and custom foods
       const allDatabaseCandidates = [
-        ...(typeof familyCookbookDatabase !== 'undefined' ? familyCookbookDatabase.map(r => ({ ...r, type: 'recipe', source: 'Recipe Codex' })) : []),
+        ...unifiedMatches,
+        ...(typeof familyCookbookDatabase !== 'undefined' ? familyCookbookDatabase.map(r => ({ ...r, name: r.title, type: 'recipe', source: r.origin === 'family' ? 'Heirloom Cookbook' : 'Recipe Codex' })) : []),
         ...(typeof commonFoodsDatabase !== 'undefined' ? commonFoodsDatabase.map(u => ({ ...u, type: 'food', source: 'USDA' })) : []),
         ...(typeof brandedGroceriesDatabase !== 'undefined' ? brandedGroceriesDatabase : []),
         ...customFoods
       ];
 
-      // Match using exact, substring, or typo/fuzzy tolerance
-      const extraFuzzyMatches = allDatabaseCandidates.filter(item => {
-        return item.name && isFuzzyFoodMatch(qLower, item.name);
-      });
-
+      // Score and rank all matches
       const seenNames = new Set();
-      const matches = [];
-      unifiedMatches.concat(extraFuzzyMatches).forEach(item => {
-        const key = (item.name || '').toLowerCase();
-        if (key && !seenNames.has(key) && matches.length < 6) {
+      const scoredMatches = [];
+      for (const item of allDatabaseCandidates) {
+        const name = item.name || item.title || '';
+        const key = name.toLowerCase().trim();
+        if (!key || seenNames.has(key)) continue;
+
+        const score = scoreFoodSearchMatch(qLower, name);
+        if (score > 0) {
           seenNames.add(key);
-          matches.push(item);
+          scoredMatches.push({ item, score });
         }
-      });
+      }
+
+      // Sort by score descending (most relevant first) and pick top 6
+      scoredMatches.sort((a, b) => b.score - a.score);
+      const matches = scoredMatches.slice(0, 6).map(s => s.item);
 
       box.innerHTML = '';
       state._activeSearchResults = matches;

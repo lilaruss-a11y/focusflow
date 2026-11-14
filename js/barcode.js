@@ -60,37 +60,54 @@
       startBarcodeCamera();
     }
 
-    function closeBarcodeScannerModal() {
-      isBarcodeScanningLocked = false;
+    function stopBarcodeCamera() {
+      // 1. Reset and nullify ZXing scanning loop
       if (zxingBarcodeReader) {
         try {
           zxingBarcodeReader.reset();
         } catch (e) {}
         zxingBarcodeReader = null;
       }
+
+      // 2. Stop tracks on captured barcodeStream
       if (barcodeStream) {
         try {
-          barcodeStream.getTracks().forEach(track => track.stop());
+          barcodeStream.getTracks().forEach(track => {
+            track.stop();
+          });
         } catch (e) {}
         barcodeStream = null;
       }
-      const video = document.getElementById('barcode-camera-video');
-      const ph = document.getElementById('barcode-camera-placeholder');
-      const reticle = document.getElementById('barcode-scanner-reticle');
-      const liveStatus = document.getElementById('barcode-live-status');
-      const flipBtn = document.getElementById('barcode-flip-cam-btn');
 
+      // 3. Stop tracks on video element's srcObject (ensures hardware camera releases completely)
+      const video = document.getElementById('barcode-camera-video');
       if (video) {
         try {
+          if (video.srcObject && typeof video.srcObject.getTracks === 'function') {
+            video.srcObject.getTracks().forEach(track => {
+              track.stop();
+            });
+          }
           video.pause();
           video.srcObject = null;
         } catch (e) {}
         video.classList.add('hidden');
       }
+
+      const ph = document.getElementById('barcode-camera-placeholder');
+      const reticle = document.getElementById('barcode-scanner-reticle');
+      const liveStatus = document.getElementById('barcode-live-status');
+      const flipBtn = document.getElementById('barcode-flip-cam-btn');
+
       if (ph) ph.classList.remove('hidden');
       if (reticle) reticle.classList.add('hidden');
       if (liveStatus) liveStatus.classList.add('hidden');
       if (flipBtn) flipBtn.classList.add('hidden');
+    }
+
+    function closeBarcodeScannerModal() {
+      isBarcodeScanningLocked = false;
+      stopBarcodeCamera();
 
       const modal = document.getElementById('barcode-scanner-modal');
       if (modal) modal.classList.add('hidden');
@@ -113,14 +130,7 @@
       isBarcodeScanningLocked = false;
 
       // Clean up any existing stream & reader before starting new
-      if (zxingBarcodeReader) {
-        try { zxingBarcodeReader.reset(); } catch (e) {}
-        zxingBarcodeReader = null;
-      }
-      if (barcodeStream) {
-        try { barcodeStream.getTracks().forEach(t => t.stop()); } catch (e) {}
-        barcodeStream = null;
-      }
+      stopBarcodeCamera();
 
       if (phMsg) phMsg.textContent = "Connecting to camera...";
 
@@ -161,6 +171,9 @@
 
         // decodeFromConstraints continuously scans the stream using ZXing multi-pass algorithm
         await zxingBarcodeReader.decodeFromConstraints(constraints, video, (result, err) => {
+          if (video && video.srcObject && !barcodeStream) {
+            barcodeStream = video.srcObject;
+          }
           if (result && !isBarcodeScanningLocked) {
             const foundCode = result.getText();
             if (foundCode) {
@@ -168,6 +181,9 @@
             }
           }
         });
+        if (video && video.srcObject) {
+          barcodeStream = video.srcObject;
+        }
       } catch (err) {
         console.warn("Camera start or decode error:", err);
         if (video) video.classList.add('hidden');

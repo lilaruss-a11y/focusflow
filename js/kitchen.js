@@ -2516,19 +2516,82 @@
     }
 
     // Manual Instant Whole Food & Recipe Search Bar (Unified Reference Continuity)
+
+    // ==============================================
+    // SPELLING ERROR TOLERANCE & FUZZY MATCH ENGINE
+    // ==============================================
+    function computeLevenshteinDistance(a, b) {
+      if (!a || !b) return (a || b || '').length;
+      const m = a.length, n = b.length;
+      const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+      for (let i = 0; i <= m; i++) dp[i][0] = i;
+      for (let j = 0; j <= n; j++) dp[0][j] = j;
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+          dp[i][j] = Math.min(
+            dp[i - 1][j] + 1,      // deletion
+            dp[i][j - 1] + 1,      // insertion
+            dp[i - 1][j - 1] + cost // substitution
+          );
+        }
+      }
+      return dp[m][n];
+    }
+
+    function isFuzzyFoodMatch(query, targetName) {
+      if (!query || !targetName) return false;
+      const q = query.trim().toLowerCase();
+      const t = targetName.trim().toLowerCase();
+      if (t.includes(q)) return true;
+
+      // Token overlap check (e.g. "chicken tikimasala" vs "chicken tikka masala")
+      const qTokens = q.split(/\s+/);
+      const tTokens = t.split(/\s+/);
+      let matchedTokens = 0;
+      for (const qt of qTokens) {
+        if (qt.length <= 2) continue;
+        const found = tTokens.some(tt => {
+          if (tt.includes(qt) || qt.includes(tt)) return true;
+          const dist = computeLevenshteinDistance(qt, tt);
+          const maxDist = qt.length > 6 ? 2 : 1;
+          return dist <= maxDist;
+        });
+        if (found) matchedTokens++;
+      }
+      if (qTokens.length > 1 && matchedTokens >= Math.ceil(qTokens.length * 0.6)) {
+        return true;
+      }
+
+      // Overall string distance for single words (e.g. "chikcen" -> "chicken", "brocoli" -> "broccoli")
+      if (qTokens.length === 1 && tTokens.length === 1) {
+        const maxDist = q.length > 5 ? 2 : 1;
+        return computeLevenshteinDistance(q, t) <= maxDist;
+      }
+
+      // Check if any single target token matches the single query word
+      if (qTokens.length === 1 && q.length >= 4) {
+        const maxDist = q.length > 6 ? 2 : 1;
+        return tTokens.some(tt => computeLevenshteinDistance(q, tt) <= maxDist);
+      }
+
+      return false;
+    }
+
     function searchWholeFoodsForPantry(query) {
       const box = document.getElementById('kitchen-search-suggestions');
       if (!box) return;
-      const q = (query || '').trim().toLowerCase();
-      if (!q) {
+      const q = (query || '').trim();
+      const qLower = q.toLowerCase();
+      if (!qLower) {
         box.classList.add('hidden');
         box.innerHTML = '';
         return;
       }
 
-      // Query centralized food & recipe database first (e.g. "German Pancakes", "Apple", etc.)
+      // Query centralized food & recipe database first
       const unifiedMatches = (typeof getUnifiedFoodOrMeal === 'function')
-        ? getUnifiedFoodOrMeal(q)
+        ? getUnifiedFoodOrMeal(qLower)
         : [];
 
       let customFoods = [];
@@ -2537,74 +2600,86 @@
         if (savedCustom) customFoods = JSON.parse(savedCustom);
       } catch(e) {}
 
-      const extraPool = [
+      // Pool all candidates: Recipes, USDA foods, branded items, and custom foods
+      const allDatabaseCandidates = [
+        ...(typeof familyCookbookDatabase !== 'undefined' ? familyCookbookDatabase.map(r => ({ ...r, type: 'recipe', source: 'Recipe Codex' })) : []),
+        ...(typeof commonFoodsDatabase !== 'undefined' ? commonFoodsDatabase.map(u => ({ ...u, type: 'food', source: 'USDA' })) : []),
         ...(typeof brandedGroceriesDatabase !== 'undefined' ? brandedGroceriesDatabase : []),
         ...customFoods
-      ].filter(cf => cf.name && cf.name.toLowerCase().includes(q));
+      ];
+
+      // Match using exact, substring, or typo/fuzzy tolerance
+      const extraFuzzyMatches = allDatabaseCandidates.filter(item => {
+        return item.name && isFuzzyFoodMatch(qLower, item.name);
+      });
 
       const seenNames = new Set();
       const matches = [];
-      unifiedMatches.concat(extraPool).forEach(item => {
+      unifiedMatches.concat(extraFuzzyMatches).forEach(item => {
         const key = (item.name || '').toLowerCase();
-        if (key && !seenNames.has(key) && matches.length < 7) {
+        if (key && !seenNames.has(key) && matches.length < 6) {
           seenNames.add(key);
           matches.push(item);
         }
       });
 
-      if (matches.length === 0) {
-        box.innerHTML = `
-          <div class="p-3 text-xs text-slate-300 space-y-2">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-slate-300 font-medium">No direct database match for "<strong class="text-white">${query}</strong>".</span>
-              <button type="button" onclick="openCustomFoodModal('${query.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs shrink-0">+ Create &amp; Save</button>
-            </div>
-            <div class="p-2 rounded-xl bg-dark-base border border-dark-border/80 flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2 text-[11px] text-slate-400">
-                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-pastel-lavender shrink-0"></i>
-                <span>Have a package or label? Take a photo to auto-estimate macros with AI</span>
+      box.innerHTML = '';
+      state._activeSearchResults = matches;
+      state._currentKitchenSearchQuery = q;
+
+      // If matches exist, render them
+      if (matches.length > 0) {
+        matches.forEach((m, idx) => {
+          const srv = m.serving || m.nutrition?.serving || '1 serving';
+          const srvG = m.servingGrams || m.nutrition?.servingGrams || 100;
+          const badgeIcon = m.isVerified
+            ? ((typeof renderVerifiedShieldIcon === 'function') ? renderVerifiedShieldIcon() : '✓')
+            : ((typeof renderEstimatedTildeIcon === 'function') ? renderEstimatedTildeIcon() : '~');
+          const sourceTag = m.source || (m.type === 'recipe' ? 'Recipe' : 'USDA');
+          const row = document.createElement('div');
+          row.className = "p-2 rounded-xl bg-dark-base hover:bg-slate-700 flex items-center justify-between text-xs transition gap-2 group";
+          
+          row.innerHTML = `
+            <div class="min-w-0 pr-2 flex-1 cursor-pointer" onclick="openVerifyFoodModalBeforeAdding(${idx})" title="Click to verify item and adjust amount before adding">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                ${badgeIcon}
+                <span class="font-bold text-white group-hover:text-pastel-mint transition truncate">${m.name}</span>
+                <span class="text-[9px] px-1.5 py-0.2 rounded bg-dark-elevated text-slate-400 font-mono">${sourceTag}</span>
               </div>
-              <button type="button" onclick="openBarcodeScannerModal('pantry')" class="px-2 py-1 rounded-lg bg-dark-elevated hover:bg-slate-700 text-pastel-lavender border border-pastel-lavender/30 text-[10px] font-bold shrink-0">📷 Snap Label</button>
+              <span class="text-[10px] text-slate-400 font-mono block mt-0.5">1 serving = ${srv} (${srvG} g) • <span class="text-pastel-lavender font-bold">${m.kcal} kcal</span> • <span class="text-pastel-coral">P:${m.protein}g</span> <span class="text-pastel-mint">C:${m.carbs}g</span> <span class="text-pastel-butter">F:${m.fat}g</span></span>
             </div>
-          </div>
-        `;
-        if (window.lucide) lucide.createIcons();
-        box.classList.remove('hidden');
-        return;
+            <button type="button" onclick="event.stopPropagation(); quickAddSearchResultItem(${idx});" class="w-7 h-7 rounded-lg bg-pastel-mint hover:bg-emerald-300 text-dark-base font-extrabold text-sm flex items-center justify-center shrink-0 shadow-sm transition active:scale-95" title="Quick 1-tap add to current section">
+              +
+            </button>
+          `;
+          box.appendChild(row);
+        });
+      } else {
+        const noMatchNotice = document.createElement('div');
+        noMatchNotice.className = "p-2 text-xs text-slate-400";
+        noMatchNotice.innerHTML = `<span>No exact match found for "<strong class="text-white">${q}</strong>". Choose an option below:</span>`;
+        box.appendChild(noMatchNotice);
       }
 
-      box.innerHTML = '';
-      // Store search results in state for safe modal referencing
-      state._activeSearchResults = matches;
+      // ALWAYS-AVAILABLE CREATION & AI ESTIMATION BAR (ALWAYS VISIBLE AT BOTTOM)
+      const footerActions = document.createElement('div');
+      footerActions.className = "pt-2 mt-1 border-t border-dark-border/80 flex flex-col sm:flex-row gap-1.5";
+      footerActions.innerHTML = `
+        <button type="button" onclick="openCreateChoiceModal('${q.replace(/'/g, "\\'")}')" class="flex-1 py-1.5 px-3 rounded-xl bg-pastel-mint/15 hover:bg-pastel-mint/25 border border-pastel-mint/40 text-pastel-mint font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95" title="Create a custom food or a new recipe">
+          <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+          <span>+ Create &amp; Save (Food or Recipe)</span>
+        </button>
+        <button type="button" onclick="openAiDishEstimatorModal('${q.replace(/'/g, "\\'")}')" class="flex-1 py-1.5 px-3 rounded-xl bg-gradient-to-r from-pastel-lavender/20 to-pastel-mint/20 hover:opacity-90 border border-pastel-lavender/40 text-pastel-lavender font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95" title="Estimate a restaurant meal or leftover dish using photo, origin, and ingredients">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+          <span>✨ Estimate Dish with AI</span>
+        </button>
+      `;
+      box.appendChild(footerActions);
 
-      matches.forEach((m, idx) => {
-        const srv = m.serving || m.nutrition?.serving || '1 serving';
-        const srvG = m.servingGrams || m.nutrition?.servingGrams || 100;
-        const badgeIcon = m.isVerified
-          ? ((typeof renderVerifiedShieldIcon === 'function') ? renderVerifiedShieldIcon() : '✓')
-          : ((typeof renderEstimatedTildeIcon === 'function') ? renderEstimatedTildeIcon() : '~');
-        const sourceTag = m.source || (m.type === 'recipe' ? 'Recipe' : 'USDA');
-        const row = document.createElement('div');
-        row.className = "p-2 rounded-xl bg-dark-base hover:bg-slate-700 flex items-center justify-between text-xs transition gap-2 group";
-        
-        // Clicking the item label opens verification & amount adjustment popup
-        row.innerHTML = `
-          <div class="min-w-0 pr-2 flex-1 cursor-pointer" onclick="openVerifyFoodModalBeforeAdding(${idx})" title="Click to verify item and adjust amount before adding">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              ${badgeIcon}
-              <span class="font-bold text-white group-hover:text-pastel-mint transition truncate">${m.name}</span>
-              <span class="text-[9px] px-1.5 py-0.2 rounded bg-dark-elevated text-slate-400 font-mono">${sourceTag}</span>
-            </div>
-            <span class="text-[10px] text-slate-400 font-mono block mt-0.5">1 serving = ${srv} (${srvG} g) • <span class="text-pastel-lavender font-bold">${m.kcal} kcal</span> • <span class="text-pastel-coral">P:${m.protein}g</span> <span class="text-pastel-mint">C:${m.carbs}g</span> <span class="text-pastel-butter">F:${m.fat}g</span></span>
-          </div>
-          <button type="button" onclick="event.stopPropagation(); quickAddSearchResultItem(${idx});" class="w-7 h-7 rounded-lg bg-pastel-mint hover:bg-emerald-300 text-dark-base font-extrabold text-sm flex items-center justify-center shrink-0 shadow-sm transition active:scale-95" title="Quick 1-tap add to current section">
-            +
-          </button>
-        `;
-        box.appendChild(row);
-      });
+      if (window.lucide) lucide.createIcons();
       box.classList.remove('hidden');
     }
+
 
     function addFoodMatchToPantry(m) {
       const cleanName = m.name.replace(/\s*\([0-9]+[^)]*\)/g, '').trim();
@@ -2846,14 +2921,20 @@
         else unitSelect.value = 'items';
       }
 
-      // Default destination matching current kitchen subtab
+      // Destination is automatically inferred by currently open kitchen subtab
       const curSub = state.kitchenSubTab || 'pantry';
-      const radioPantry = document.getElementById('verify-dest-pantry');
-      const radioShopping = document.getElementById('verify-dest-shopping');
-      if (curSub === 'shopping') {
-        if (radioShopping) radioShopping.checked = true;
-      } else {
-        if (radioPantry) radioPantry.checked = true;
+      const destLabel = document.getElementById('verify-destination-label');
+      const storageRow = document.getElementById('verify-storage-row');
+      if (destLabel) {
+        if (curSub === 'shopping') {
+          destLabel.innerHTML = '<span>🛒 Shopping List (Need to buy)</span>';
+          destLabel.className = 'font-bold text-pastel-sky flex items-center gap-1.5';
+          if (storageRow) storageRow.classList.add('hidden');
+        } else {
+          destLabel.innerHTML = '<span>🥫 Pantry Inventory (On-hand in kitchen)</span>';
+          destLabel.className = 'font-bold text-pastel-mint flex items-center gap-1.5';
+          if (storageRow) storageRow.classList.remove('hidden');
+        }
       }
 
       if (storageSelect) {
@@ -2875,9 +2956,8 @@
       const amtInput = document.getElementById('verify-item-amount-input');
       const unitSelect = document.getElementById('pantry-category-input');
       const storageSelect = document.getElementById('verify-item-storage-select');
-      const radioShopping = document.getElementById('verify-dest-shopping');
-
-      const isShopping = radioShopping && radioShopping.checked;
+      const curSub = state.kitchenSubTab || 'pantry';
+      const isShopping = (curSub === 'shopping');
       const finalName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : (m ? m.name : 'Food Item');
       const finalAmt = (amtInput && !isNaN(parseFloat(amtInput.value))) ? parseFloat(amtInput.value) : 1;
       const finalUnit = (unitSelect && unitSelect.value) ? unitSelect.value : 'items';
@@ -2956,6 +3036,301 @@
       closeAddPantryItemModal();
       collapseKitchenHeaderSearch();
       state._pendingVerifyItem = null;
+    }
+
+    
+    // ==============================================
+    // CREATE CHOICE MODAL: CUSTOM FOOD VS RECIPE
+    // ==============================================
+    function openCreateChoiceModal(query = '') {
+      const modal = document.getElementById('create-choice-modal');
+      const titleEl = document.getElementById('create-choice-query-title');
+      const q = query || state._currentKitchenSearchQuery || 'New Item';
+      state._pendingCreateQuery = q;
+      if (titleEl) titleEl.textContent = q;
+      if (modal) {
+        modal.classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    function closeCreateChoiceModal() {
+      const modal = document.getElementById('create-choice-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function proceedToCreateCustomFood() {
+      closeCreateChoiceModal();
+      collapseKitchenHeaderSearch();
+      const q = state._pendingCreateQuery || '';
+      if (typeof openCustomFoodModal === 'function') {
+        openCustomFoodModal(q);
+      } else if (typeof openManualNutritionModal === 'function') {
+        openManualNutritionModal({ name: q, category: 'produce', storage: 'fridge' });
+      }
+    }
+
+    function proceedToCreateCustomRecipe() {
+      closeCreateChoiceModal();
+      collapseKitchenHeaderSearch();
+      const q = state._pendingCreateQuery || '';
+      if (typeof openAddRecipeModal === 'function') {
+        openAddRecipeModal();
+        const titleInput = document.getElementById('recipe-title-input');
+        if (titleInput && q) titleInput.value = q;
+      }
+    }
+
+    // ==============================================
+    // AI DISH & LEFTOVERS ESTIMATOR ENGINE
+    // ==============================================
+    window._stagedAiDishPhoto = null;
+
+    function openAiDishEstimatorModal(dishName = '') {
+      const modal = document.getElementById('ai-dish-estimator-modal');
+      const nameInput = document.getElementById('ai-dish-name-input');
+      const originInput = document.getElementById('ai-dish-origin-input');
+      const ingInput = document.getElementById('ai-dish-ingredients-input');
+      const destHint = document.getElementById('ai-dish-dest-hint');
+      const q = dishName || state._currentKitchenSearchQuery || '';
+
+      if (nameInput) nameInput.value = q;
+      if (originInput) originInput.value = '';
+      if (ingInput) ingInput.value = '';
+
+      clearAiDishPhoto();
+
+      const curSub = state.kitchenSubTab || 'pantry';
+      if (destHint) {
+        destHint.textContent = (curSub === 'shopping') ? '🛒 Shopping List' : '🥫 Pantry (Leftovers / Fridge)';
+      }
+
+      if (modal) {
+        modal.classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    function closeAiDishEstimatorModal() {
+      const modal = document.getElementById('ai-dish-estimator-modal');
+      if (modal) modal.classList.add('hidden');
+      clearAiDishPhoto();
+    }
+
+    function handleAiDishPhotoSelected(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        const b64 = (dataUrl.indexOf(',') !== -1) ? dataUrl.split(',')[1] : dataUrl;
+        window._stagedAiDishPhoto = {
+          base64Data: b64,
+          mimeType: file.type || 'image/jpeg',
+          previewUrl: dataUrl
+        };
+
+        const previewBox = document.getElementById('ai-dish-preview-box');
+        const previewImg = document.getElementById('ai-dish-preview-img');
+        const uploadLabel = document.getElementById('ai-dish-upload-label');
+        const photoBadge = document.getElementById('ai-dish-photo-badge');
+
+        if (previewImg) previewImg.src = dataUrl;
+        if (previewBox) previewBox.classList.remove('hidden');
+        if (uploadLabel) uploadLabel.classList.add('hidden');
+        if (photoBadge) {
+          photoBadge.textContent = '✓ Dish photo attached';
+          photoBadge.className = 'text-[10px] text-pastel-mint font-bold';
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearAiDishPhoto() {
+      window._stagedAiDishPhoto = null;
+      const fileInput = document.getElementById('ai-dish-file-input');
+      const previewBox = document.getElementById('ai-dish-preview-box');
+      const uploadLabel = document.getElementById('ai-dish-upload-label');
+      const photoBadge = document.getElementById('ai-dish-photo-badge');
+
+      if (fileInput) fileInput.value = '';
+      if (previewBox) previewBox.classList.add('hidden');
+      if (uploadLabel) uploadLabel.classList.remove('hidden');
+      if (photoBadge) {
+        photoBadge.textContent = 'Optional but recommended';
+        photoBadge.className = 'text-[10px] text-slate-400';
+      }
+    }
+
+    async function runAiDishEstimation() {
+      const nameInput = document.getElementById('ai-dish-name-input');
+      const originInput = document.getElementById('ai-dish-origin-input');
+      const amountInput = document.getElementById('ai-dish-amount-input');
+      const unitInput = document.getElementById('ai-dish-unit-input');
+      const ingredientsInput = document.getElementById('ai-dish-ingredients-input');
+      const statusBox = document.getElementById('ai-dish-estimating-status');
+      const btn = document.getElementById('btn-run-ai-dish-estimate');
+
+      const dishName = nameInput ? nameInput.value.trim() : '';
+      if (!dishName) {
+        alertBox("Please enter the name of the meal or dish.", "Name Required");
+        return;
+      }
+
+      const origin = originInput ? originInput.value.trim() : 'Restaurant / Homemade';
+      const amount = (amountInput && !isNaN(parseFloat(amountInput.value))) ? parseFloat(amountInput.value) : 1;
+      const unit = unitInput ? unitInput.value : 'container';
+      const ingredients = ingredientsInput ? ingredientsInput.value.trim() : '';
+
+      if (statusBox) statusBox.classList.remove('hidden');
+      if (btn) btn.disabled = true;
+
+      // Construct Gemini prompt synthesizing all user clues in consort
+      const prompt = `You are an expert clinical dietitian analyzing a prepared meal or leftover dish.
+Estimate complete nutritional facts for this dish by considering all provided clues in consort:
+- Dish Name: "${dishName}"
+- Origin/Establishment: "${origin || 'Unknown origin'}"
+- Portion/Amount: ${amount} ${unit}
+- Known Ingredients: "${ingredients || 'Standard recipe components'}"
+- Food Photo: ${window._stagedAiDishPhoto ? 'Visual appearance, portion mass, sauce density, and ingredients shown in attached photo' : 'No photo provided'}
+
+Respond strictly with valid JSON (no markdown formatting, no code fence) in this schema:
+{
+  "name": "${dishName}",
+  "category": "leftovers",
+  "storage": "fridge",
+  "serving": "${amount} ${unit}",
+  "servingGrams": 400,
+  "kcal": 650,
+  "protein": 34,
+  "carbs": 58,
+  "fat": 28,
+  "fiber": 5,
+  "sugar": 8,
+  "satFat": 9,
+  "sodium": 890,
+  "water": 260,
+  "confidenceNotes": "Estimated for ${amount} ${unit} from ${origin}"
+}`;
+
+      let estKcal = 550, estProt = 28, estCarbs = 45, estFat = 20, estFiber = 4, estSodium = 750, servingGrams = 350;
+      let parsed = null;
+
+      try {
+        const key = (window.state && window.state.geminiApiKey) || localStorage.getItem('focusflow_gemini_api_key') || '';
+        if (key && typeof callGeminiGenerateContent === 'function') {
+          const inlineImages = [];
+          if (window._stagedAiDishPhoto && window._stagedAiDishPhoto.base64Data) {
+            inlineImages.push({
+              base64Data: window._stagedAiDishPhoto.base64Data,
+              mimeType: window._stagedAiDishPhoto.mimeType || 'image/jpeg'
+            });
+          }
+
+          const rawResponse = await callGeminiGenerateContent({
+            prompt: prompt,
+            inlineImages: inlineImages,
+            key: key,
+            expectJson: true
+          });
+
+          const resText = (rawResponse && typeof rawResponse === 'object' && rawResponse.text) ? rawResponse.text : (rawResponse || '');
+          const cleanJson = resText.replace(/```json/gi, '').replace(/```/g, '').trim();
+          parsed = JSON.parse(cleanJson);
+        }
+      } catch (err) {
+        console.warn("Gemini Dish Estimator fallback:", err);
+      }
+
+      if (parsed) {
+        estKcal = Math.round(parsed.kcal || estKcal);
+        estProt = parseFloat(parsed.protein || estProt);
+        estCarbs = parseFloat(parsed.carbs || estCarbs);
+        estFat = parseFloat(parsed.fat || estFat);
+        estFiber = parseFloat(parsed.fiber || estFiber);
+        estSodium = Math.round(parsed.sodium || estSodium);
+        servingGrams = Math.round(parsed.servingGrams || servingGrams);
+      } else {
+        // Clinical intelligent estimation fallback based on ingredients and origin
+        if (/curry|tikka|masala|butter/i.test(dishName + ' ' + ingredients)) {
+          estKcal = 680 * amount; estProt = 35 * amount; estCarbs = 55 * amount; estFat = 30 * amount;
+        } else if (/pasta|noodle|rice|pad thai/i.test(dishName + ' ' + ingredients)) {
+          estKcal = 620 * amount; estProt = 22 * amount; estCarbs = 75 * amount; estFat = 22 * amount;
+        } else if (/salad|bowl/i.test(dishName + ' ' + ingredients)) {
+          estKcal = 420 * amount; estProt = 26 * amount; estCarbs = 28 * amount; estFat = 18 * amount;
+        }
+      }
+
+      const curSub = state.kitchenSubTab || 'pantry';
+      const displayName = origin ? `${dishName} (${origin})` : dishName;
+
+      if (curSub === 'shopping') {
+        if (!Array.isArray(state.shoppingList)) state.shoppingList = [];
+        state.shoppingList.push({
+          id: `shop-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          name: displayName,
+          quantity: `${amount} ${unit}`,
+          category: 'other',
+          checked: false,
+          source: `AI Dish Estimation (${origin})`
+        });
+        saveAppState();
+        if (typeof renderShoppingList === 'function') renderShoppingList();
+        updateShoppingBadges();
+        playChime('bell');
+        alertBox(`Added "${displayName}" to your Shopping List!`, "Added to Groceries");
+      } else {
+        if (!Array.isArray(state.pantry)) state.pantry = [];
+        state.pantry.push({
+          id: `p-${Date.now()}`,
+          name: displayName,
+          category: 'leftovers',
+          storage: 'fridge',
+          amount: amount,
+          unit: unit,
+          serving: `${amount} ${unit}`,
+          servingGrams: servingGrams,
+          dateAdded: new Date().toISOString().split('T')[0],
+          kcal: estKcal,
+          protein: estProt,
+          carbs: estCarbs,
+          fat: estFat,
+          fiber: estFiber,
+          sugar: Math.round(estCarbs * 0.15),
+          satFat: Math.round(estFat * 0.35),
+          sodium: estSodium,
+          water: Math.round(servingGrams * 0.65),
+          isVerified: false,
+          sourceBadge: `✨ AI Synthesized (${origin})`,
+          nutrition: {
+            kcal: estKcal,
+            protein: estProt,
+            carbs: estCarbs,
+            fat: estFat,
+            fiber: estFiber,
+            sugar: Math.round(estCarbs * 0.15),
+            satFat: Math.round(estFat * 0.35),
+            sodium: estSodium,
+            water: Math.round(servingGrams * 0.65),
+            serving: `${amount} ${unit}`,
+            servingGrams: servingGrams,
+            verifiedNutrients: {},
+            micros: (typeof estimateMicronutrientsForFood === 'function')
+              ? estimateMicronutrientsForFood('leftovers', estKcal, estProt, estCarbs, estFat, dishName, servingGrams)
+              : {}
+          }
+        });
+        saveAppState();
+        renderPantry();
+        playChime('bell');
+        alertBox(`Estimated "${displayName}" (${estKcal} kcal, ${estProt}g protein) and stored in Fridge Leftovers!`, "Dish Added to Pantry");
+      }
+
+      if (statusBox) statusBox.classList.add('hidden');
+      if (btn) btn.disabled = false;
+      closeAiDishEstimatorModal();
+      collapseKitchenHeaderSearch();
     }
 
     if (typeof window !== 'undefined') {

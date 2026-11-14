@@ -177,7 +177,161 @@
   <!-- Main View Container: Zero outer scrollbar on Timeline -->
   <main id="main-content-scroll" class="flex-1 overflow-hidden w-full relative flex flex-col min-h-0">
 
-    <!-- ============================================== -->
+    <!-- MODAL: CHOOSE WHAT TO CREATE (CUSTOM FOOD VS CUSTOM RECIPE) -->
+  <div id="create-choice-modal" class="hidden fixed inset-0 z-[125] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-20 pb-16 overflow-y-auto">
+    <div class="bg-dark-elevated border border-pastel-mint/50 rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-pastel-mint/20 border border-pastel-mint/40 flex items-center justify-center text-pastel-mint">
+            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Create &amp; Save</h3>
+            <p class="text-[11px] text-slate-400">Choose item format</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeCreateChoiceModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-300">What would you like to build for "<strong class="text-white" id="create-choice-query-title">Item</strong>"?</p>
+
+      <div class="space-y-2.5">
+        <button type="button" onclick="proceedToCreateCustomFood()" class="w-full p-3.5 rounded-2xl bg-dark-base hover:bg-dark-surface border border-pastel-mint/40 hover:border-pastel-mint text-left transition flex items-start gap-3 active:scale-[0.98]">
+          <div class="w-9 h-9 rounded-xl bg-pastel-mint/20 text-pastel-mint flex items-center justify-center text-lg shrink-0">
+            🥗
+          </div>
+          <div>
+            <span class="font-bold text-white text-xs block">Single Food / Grocery Ingredient</span>
+            <span class="text-[10px] text-slate-400 block mt-0.5 leading-snug">Enter calorie and nutrition facts, serving size, and storage zone.</span>
+          </div>
+        </button>
+
+        <button type="button" onclick="proceedToCreateCustomRecipe()" class="w-full p-3.5 rounded-2xl bg-dark-base hover:bg-dark-surface border border-pastel-coral/40 hover:border-pastel-coral text-left transition flex items-start gap-3 active:scale-[0.98]">
+          <div class="w-9 h-9 rounded-xl bg-pastel-coral/20 text-pastel-coral flex items-center justify-center text-lg shrink-0">
+            📖
+          </div>
+          <div>
+            <span class="font-bold text-white text-xs block">Multi-Ingredient Recipe</span>
+            <span class="text-[10px] text-slate-400 block mt-0.5 leading-snug">Combine ingredients, set prep instructions, servings, and occasion in Codex.</span>
+          </div>
+        </button>
+      </div>
+
+      <div class="pt-2 flex justify-end border-t border-dark-border">
+        <button type="button" onclick="closeCreateChoiceModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DEDICATED AI DISH & LEFTOVERS ESTIMATOR (PHOTO + ORIGIN + INGREDIENTS + PORTION) -->
+  <div id="ai-dish-estimator-modal" class="hidden fixed inset-0 z-[125] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
+    <div class="bg-dark-elevated border border-pastel-lavender/50 rounded-3xl w-full max-w-lg p-5 sm:p-6 space-y-4 shadow-2xl my-2">
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pastel-lavender/30 to-pastel-mint/30 border border-pastel-lavender/40 flex items-center justify-center text-pastel-lavender shrink-0 text-xl">
+            ✨
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">AI Dish &amp; Leftovers Estimator</h3>
+            <p class="text-xs text-slate-400">Estimate complex meals by combining photo + source + ingredients</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeAiDishEstimatorModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3.5 text-xs">
+        <!-- 1. Dish Name & Where It Came From -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-slate-300 mb-1 font-semibold">Dish Name <span class="text-rose-400">*</span></label>
+            <input type="text" id="ai-dish-name-input" placeholder="e.g. Chicken Tikka Masala, Pad Thai" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white focus:border-pastel-lavender text-xs">
+          </div>
+          <div>
+            <label class="block text-slate-300 mb-1 font-semibold">Where is it from? (Origin)</label>
+            <input type="text" id="ai-dish-origin-input" placeholder="e.g. Tandoor, Homemade, Chipotle, McDonald's" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white focus:border-pastel-lavender text-xs">
+          </div>
+        </div>
+
+        <!-- 2. Portion & Amount -->
+        <div class="p-3 rounded-2xl bg-dark-base border border-dark-border space-y-2">
+          <span class="font-bold text-white block text-[11px]">Portion &amp; Quantity:</span>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10.5px] text-slate-400 block mb-0.5">Estimated Amount / Portion</label>
+              <input type="number" id="ai-dish-amount-input" step="any" min="0.1" value="1" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-mint">
+            </div>
+            <div>
+              <label class="text-[10.5px] text-slate-400 block mb-0.5">Unit</label>
+              <select id="ai-dish-unit-input" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs focus:border-pastel-mint">
+                <option value="container" selected>Takeout Container</option>
+                <option value="plate">Plate / Serving</option>
+                <option value="bowl">Bowl</option>
+                <option value="cups">Cup(s)</option>
+                <option value="grams">Grams (g)</option>
+                <option value="oz">Ounces (oz)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Known Ingredients -->
+        <div>
+          <label class="block text-slate-300 mb-1 font-semibold">What ingredients do you know are in it?</label>
+          <input type="text" id="ai-dish-ingredients-input" placeholder="e.g. Chicken breast, creamy tomato curry, butter, basmati white rice" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white focus:border-pastel-lavender text-xs">
+          <span class="text-[10px] text-slate-400 block mt-1">Listing main components lets Gemini calculate protein and carbs accurately.</span>
+        </div>
+
+        <!-- 4. Photo of the Food -->
+        <div class="p-3.5 rounded-2xl bg-dark-base border border-dashed border-pastel-lavender/60 text-center space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white text-[11px] flex items-center gap-1.5">
+              <i data-lucide="camera" class="w-4 h-4 text-pastel-lavender"></i>
+              Photo of the Prepared Dish
+            </span>
+            <span id="ai-dish-photo-badge" class="text-[10px] text-slate-400">Optional but recommended</span>
+          </div>
+          <div id="ai-dish-preview-box" class="hidden relative rounded-xl overflow-hidden max-h-40 border border-dark-border">
+            <img id="ai-dish-preview-img" src="" alt="Dish preview" class="w-full h-36 object-cover">
+            <button type="button" onclick="clearAiDishPhoto()" class="absolute top-2 right-2 p-1 rounded-lg bg-black/80 text-white hover:text-rose-400">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <label id="ai-dish-upload-label" class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-pastel-lavender font-bold text-xs transition">
+            <i data-lucide="upload" class="w-4 h-4"></i>
+            <span>Take Photo or Upload Image</span>
+            <input type="file" id="ai-dish-file-input" accept="image/*" capture="environment" class="hidden" onchange="handleAiDishPhotoSelected(event)">
+          </label>
+        </div>
+
+        <!-- Destination & Storage Preview -->
+        <div class="flex items-center justify-between p-2.5 rounded-xl bg-dark-base border border-dark-border text-[11px]">
+          <span class="text-slate-400">Auto-assigned to:</span>
+          <span class="text-pastel-mint font-bold" id="ai-dish-dest-hint">🥫 Pantry (Leftovers / Fridge)</span>
+        </div>
+
+        <!-- Live Estimator Progress State -->
+        <div id="ai-dish-estimating-status" class="hidden p-3 rounded-xl bg-dark-base border border-pastel-mint/50 flex items-center gap-2.5 text-xs animate-pulse">
+          <div class="w-5 h-5 rounded-full border-2 border-pastel-mint border-t-transparent animate-spin shrink-0"></div>
+          <span class="text-pastel-mint font-semibold">Gemini is synthesizing ingredients, origin, and photo...</span>
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-between items-center border-t border-dark-border">
+        <button type="button" onclick="closeAiDishEstimatorModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs font-semibold">Cancel</button>
+        <button type="button" id="btn-run-ai-dish-estimate" onclick="runAiDishEstimation()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-pastel-lavender to-pastel-mint text-dark-base font-extrabold text-xs shadow-md flex items-center gap-1.5 hover:opacity-95 transition">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          <span>Estimate &amp; Add to Kitchen</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
     <!-- TAB 1: GOOGLE CALENDAR TIMELINE (THE ONLY SCROLLBAR IS INSIDE) -->
     <!-- ============================================== -->
     <div id="view-timeline" class="flex-1 min-h-0 flex flex-col h-full w-full max-w-6xl mx-auto px-2 sm:px-4 pt-1.5 pb-1 gap-1.5 overflow-hidden">
@@ -3287,25 +3441,12 @@
           </div>
         </div>
 
-        <!-- Kitchen Destination Selector (Pantry vs Shopping List) -->
-        <div>
-          <label class="block text-slate-300 mb-1 font-semibold">Add to Kitchen Destination</label>
-          <div class="grid grid-cols-2 gap-2">
-            <label class="flex items-center gap-2 p-2.5 rounded-xl bg-dark-base border border-pastel-mint/40 cursor-pointer">
-              <input type="radio" name="verify-dest-radio" id="verify-dest-pantry" value="pantry" checked class="text-pastel-mint focus:ring-0">
-              <div>
-                <span class="font-bold text-white block text-xs">🥫 Pantry Inventory</span>
-                <span class="text-[10px] text-slate-400">On-hand in kitchen</span>
-              </div>
-            </label>
-            <label class="flex items-center gap-2 p-2.5 rounded-xl bg-dark-base border border-dark-border cursor-pointer hover:border-pastel-sky/50">
-              <input type="radio" name="verify-dest-radio" id="verify-dest-shopping" value="shopping" class="text-pastel-sky focus:ring-0">
-              <div>
-                <span class="font-bold text-white block text-xs">🛒 Shopping List</span>
-                <span class="text-[10px] text-slate-400">Need to buy</span>
-              </div>
-            </label>
-          </div>
+        <!-- Inferred Destination Banner -->
+        <div id="verify-destination-banner" class="p-2.5 rounded-xl bg-dark-base border border-dark-border flex items-center justify-between text-xs">
+          <span class="text-slate-400">Destination:</span>
+          <span id="verify-destination-label" class="font-bold text-pastel-mint flex items-center gap-1.5">
+            <span>🥫 Pantry Inventory</span>
+          </span>
         </div>
 
         <!-- Storage Location (for Pantry) -->
@@ -6348,7 +6489,7 @@
   <script src="js/sync.js?v=48"></script>
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
-  <script src="js/kitchen.js?v=64"></script>
+  <script src="js/kitchen.js?v=65"></script>
   <script src="js/recipes.js?v=62"></script>
   <script src="js/shopping.js?v=58"></script>
   <script src="js/chef.js?v=58"></script>

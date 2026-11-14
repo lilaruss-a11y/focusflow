@@ -211,37 +211,15 @@ else:
     else:
         success("css/styles.css clean with zero stray tags.")
 
-# --- 4. Verify site/ Deployment Mirror ---
-print("\n4. Checking site/ deployment sync...")
+# --- 4. Verify Project Hygiene & Clean Workspace ---
+print("\n4. Checking project hygiene & workspace cleanliness...")
+downloads_index = os.path.expanduser("~/Downloads/index.html")
+if os.path.exists(downloads_index):
+    error("Accidental index.html found in ~/Downloads! All project files belong in ~/Documents/FocusFlow.")
 site_dir = os.path.join(BASE_DIR, "site")
-if not os.path.exists(site_dir):
-    error("site/ deployment directory is missing!")
-else:
-    synced_items = ["index.html", "sw.js", "css/styles.css"]
-    for d in ["js", "data"]:
-        d_full = os.path.join(BASE_DIR, d)
-        if os.path.exists(d_full):
-            for fname in sorted(os.listdir(d_full)):
-                if fname.endswith(".js"):
-                    synced_items.append(os.path.join(d, fname))
-    out_of_sync = []
-    for item in synced_items:
-        root_file = os.path.join(BASE_DIR, item)
-        site_file = os.path.join(site_dir, item)
-        if not os.path.exists(site_file):
-            out_of_sync.append(f"{item} (missing in site/)")
-        elif os.path.getsize(root_file) != os.path.getsize(site_file):
-            out_of_sync.append(f"{item} (size mismatch: root {os.path.getsize(root_file)}B vs site {os.path.getsize(site_file)}B)")
-    if out_of_sync:
-        error(f"site/ deployment is out of sync with root! Unsynced: {', '.join(out_of_sync)}")
-    else:
-        success("site/ deployment files are 100% in sync with root.")
-
-    if os.path.exists(os.path.join(site_dir, "verify.py")):
-        error("Stray verify.py found inside site/ folder! Remove site/verify.py.")
-    downloads_index = os.path.expanduser("~/Downloads/index.html")
-    if os.path.exists(downloads_index):
-        error("Accidental index.html found in ~/Downloads! All project files belong in ~/Documents/FocusFlow.")
+if os.path.exists(site_dir):
+    error("Obsolete site/ folder found! GitHub Pages serves directly from root, so site/ should not exist.")
+success("Project workspace is clean (no accidental downloads or obsolete site/ folder).")
 
 # --- 5. Strict Universal Architectural Module Boundaries Enforcement ---
 print("\n5. Enforcing Strict Architectural Module Boundaries...")

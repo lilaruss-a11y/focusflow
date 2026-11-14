@@ -138,15 +138,12 @@ Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN
 
 ### Testing & Verification (`tests/` & `verify.py`)
 * **`verify.py`** (Universal Boundary Enforcer & Test Suite):
-  * Automated testing script that verifies HTML tags, local asset links, compiles all JS with macOS WebKit JavaScriptCore, validates `site/` deployment sync, and **strictly enforces module domain boundaries** in under 1 second.
+  * Automated testing script that verifies HTML tags, local asset links, compiles all JS with macOS WebKit JavaScriptCore, and **strictly enforces module domain boundaries** in under 1 second.
 
 * **`tests/regressions.json`** (Known Mistakes Database):
   * Automatically loaded and tested by `verify.py` on every run. Stores all past bugs and mistakes to prevent them from ever recurring.
 
-### Deployment & Safety
-* **`site/`** (Live GitHub Pages Mirror):
-  * **Rule:** Whenever making edits to `index.html`, `css/`, `js/`, `data/`, or `sw.js`, **ALWAYS copy the modified files into the `site/` folder** so that the user's phone (homescreen PWA) gets the updates!
-
+### Safety & Backups
 * **`backups/`** (Historical Backups & Archives):
   * All safety backups, archive copies, or temporary exported files MUST live here. Never leave backups in the root folder.
 
@@ -210,12 +207,11 @@ After the user approves your plan and you make the changes:
 4. **Provide a Testing Checklist:**
    Give the user a simple, 1-2-3 checklist of what to tap in Google Chrome on their computer or phone to verify the change.
 
-### Rule 3: Auto-Sync, Version Bump & GitHub Pages Deployment Verification
+### Rule 3: Version Bump & GitHub Pages Deployment Verification
 After your tests pass:
-0. **Docs-Only Exception:** If the change touches ONLY `AGENTS.md`, `GEMINI.md`, `README.md`, `scripts/`, or `tests/`, skip the `site/` sync and version bump — just run `python3 verify.py`, commit, and push.
-1. **Synchronize & Version Bump:**
-   - Synchronize all modified files from root into the `site/` folder.
-   - Whenever CSS, JS, HTML, or assets are modified, ALWAYS bump `CACHE_VERSION` in `sw.js` and `site/sw.js`, and increment the cache-buster query on stylesheets (e.g. `css/styles.css?v=XX`) in `index.html` and `site/index.html`.
+0. **Docs-Only Exception:** If the change touches ONLY `AGENTS.md`, `GEMINI.md`, `README.md`, `scripts/`, or `tests/`, skip the version bump — just run `python3 verify.py`, commit, and push.
+1. **Version Bump:**
+   - Whenever CSS, JS, HTML, or assets are modified, ALWAYS bump `CACHE_VERSION` in `sw.js`, and increment the cache-buster query on stylesheets (e.g. `css/styles.css?v=XX`) in `index.html`.
 2. **Commit & Push:**
    - Commit the changes to Git with a concise, descriptive message.
    - Push to `origin main`.

@@ -43,13 +43,6 @@
     ]
   },
   {
-    "id": "site_deployment_sync",
-    "description": "Always keep the site/ folder byte-for-byte identical to root index.html so mobile PWA stays updated",
-    "file": "site/index.html",
-    "check_type": "file_match",
-    "match_file": "index.html"
-  },
-  {
     "id": "shadowing_common_foods_database",
     "description": "Never declare var/let/const commonFoodsDatabase in js/nutrition.js (declared as const in data/usda-foods.js)",
     "file": "js/nutrition.js",

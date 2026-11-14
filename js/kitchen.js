@@ -3309,10 +3309,41 @@ Respond strictly with valid JSON (no markdown formatting, no code fence) in this
   "satFat": 9,
   "sodium": 890,
   "water": 260,
+  "micros": {
+    "vitA": 150,
+    "vitC": 12,
+    "vitD": 1.5,
+    "vitE": 2.0,
+    "vitK": 25,
+    "vitB1": 0.3,
+    "vitB2": 0.4,
+    "vitB3": 5.5,
+    "vitB5": 1.2,
+    "vitB6": 0.6,
+    "vitB7": 6.0,
+    "vitB9": 65,
+    "vitB12": 1.2,
+    "choline": 95,
+    "potassium": 650,
+    "calcium": 120,
+    "iron": 3.2,
+    "magnesium": 55,
+    "zinc": 2.8,
+    "phosphorus": 260,
+    "chloride": 450,
+    "sulfur": 180,
+    "copper": 0.3,
+    "manganese": 0.6,
+    "selenium": 22,
+    "iodine": 35,
+    "chromium": 8,
+    "molybdenum": 12
+  },
   "confidenceNotes": "Estimated for ${amount} ${unit} from ${origin}"
 }`;
 
       let estKcal = 550, estProt = 28, estCarbs = 45, estFat = 20, estFiber = 4, estSodium = 750, servingGrams = 350;
+      let estSugar = 6, estSatFat = 5, estWater = 240;
       let parsed = null;
 
       try {
@@ -3347,7 +3378,10 @@ Respond strictly with valid JSON (no markdown formatting, no code fence) in this
         estCarbs = parseFloat(parsed.carbs || estCarbs);
         estFat = parseFloat(parsed.fat || estFat);
         estFiber = parseFloat(parsed.fiber || estFiber);
+        estSugar = parseFloat(parsed.sugar || estSugar);
+        estSatFat = parseFloat(parsed.satFat || estSatFat);
         estSodium = Math.round(parsed.sodium || estSodium);
+        estWater = Math.round(parsed.water || estWater);
         servingGrams = Math.round(parsed.servingGrams || servingGrams);
       } else {
         // Clinical intelligent estimation fallback based on ingredients and origin
@@ -3358,7 +3392,32 @@ Respond strictly with valid JSON (no markdown formatting, no code fence) in this
         } else if (/salad|bowl/i.test(dishName + ' ' + ingredients)) {
           estKcal = 420 * amount; estProt = 26 * amount; estCarbs = 28 * amount; estFat = 18 * amount;
         }
+        estSugar = Math.round(estCarbs * 0.15);
+        estSatFat = Math.round(estFat * 0.35);
+        estWater = Math.round(servingGrams * 0.65);
       }
+
+      // Synthesize complete micronutrients (all 13 vitamins + 14 minerals)
+      const baseMicros = (parsed && parsed.micros && typeof parsed.micros === 'object') ? parsed.micros : {};
+      const fallbackMicros = (typeof estimateMicronutrientsForFood === 'function')
+        ? estimateMicronutrientsForFood(category, estKcal, estProt, estCarbs, estFat, dishName, servingGrams)
+        : {};
+
+      const microKeys = [
+        'vitA', 'vitC', 'vitD', 'vitE', 'vitK', 'vitB1', 'vitB2', 'vitB3', 'vitB5', 'vitB6', 'vitB7', 'vitB9', 'vitB12', 'choline',
+        'potassium', 'calcium', 'iron', 'magnesium', 'zinc', 'phosphorus', 'chloride', 'sulfur', 'copper', 'manganese', 'selenium', 'iodine', 'chromium', 'molybdenum'
+      ];
+
+      const resolvedMicros = {};
+      microKeys.forEach(mk => {
+        if (baseMicros[mk] !== undefined && baseMicros[mk] !== null && !isNaN(parseFloat(baseMicros[mk]))) {
+          resolvedMicros[mk] = parseFloat(baseMicros[mk]);
+        } else if (fallbackMicros[mk] !== undefined && fallbackMicros[mk] !== null) {
+          resolvedMicros[mk] = parseFloat(fallbackMicros[mk]);
+        } else {
+          resolvedMicros[mk] = 0;
+        }
+      });
 
       const displayName = origin ? `${dishName} (${origin})` : dishName;
 
@@ -3377,23 +3436,30 @@ Respond strictly with valid JSON (no markdown formatting, no code fence) in this
         estCarbs,
         estFat,
         estFiber,
-        estSodium
+        estSugar,
+        estSatFat,
+        estSodium,
+        estWater,
+        micros: resolvedMicros
       };
 
-      // Populate review fields
-      const editKcal = document.getElementById('ai-dish-edit-kcal');
-      const editProt = document.getElementById('ai-dish-edit-protein');
-      const editCarbs = document.getElementById('ai-dish-edit-carbs');
-      const editFat = document.getElementById('ai-dish-edit-fat');
-      const editFiber = document.getElementById('ai-dish-edit-fiber');
-      const editSodium = document.getElementById('ai-dish-edit-sodium');
+      // Populate core and extended macro review fields
+      const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+      setVal('ai-dish-edit-kcal', estKcal);
+      setVal('ai-dish-edit-protein', estProt);
+      setVal('ai-dish-edit-carbs', estCarbs);
+      setVal('ai-dish-edit-fat', estFat);
+      setVal('ai-dish-edit-fiber', estFiber);
+      setVal('ai-dish-edit-sugar', estSugar);
+      setVal('ai-dish-edit-satFat', estSatFat);
+      setVal('ai-dish-edit-sodium', estSodium);
+      setVal('ai-dish-edit-water', estWater);
+      setVal('ai-dish-edit-servingGrams', servingGrams);
 
-      if (editKcal) editKcal.value = estKcal;
-      if (editProt) editProt.value = estProt;
-      if (editCarbs) editCarbs.value = estCarbs;
-      if (editFat) editFat.value = estFat;
-      if (editFiber) editFiber.value = estFiber;
-      if (editSodium) editSodium.value = estSodium;
+      // Populate all 28 micronutrients
+      microKeys.forEach(mk => {
+        setVal(`ai-dish-edit-${mk}`, resolvedMicros[mk] ?? 0);
+      });
 
       if (statusBox) statusBox.classList.add('hidden');
       if (btn) btn.disabled = false;
@@ -3410,23 +3476,37 @@ Respond strictly with valid JSON (no markdown formatting, no code fence) in this
       const staged = window._stagedAiDishEstimate;
       if (!staged) return;
 
-      const editKcal = document.getElementById('ai-dish-edit-kcal');
-      const editProt = document.getElementById('ai-dish-edit-protein');
-      const editCarbs = document.getElementById('ai-dish-edit-carbs');
-      const editFat = document.getElementById('ai-dish-edit-fat');
-      const editFiber = document.getElementById('ai-dish-edit-fiber');
-      const editSodium = document.getElementById('ai-dish-edit-sodium');
+      const getNum = (id, fallback) => {
+        const el = document.getElementById(id);
+        if (!el || isNaN(parseFloat(el.value))) return fallback;
+        return parseFloat(el.value);
+      };
+
+      const kcal = Math.round(getNum('ai-dish-edit-kcal', staged.estKcal));
+      const prot = getNum('ai-dish-edit-protein', staged.estProt);
+      const carbs = getNum('ai-dish-edit-carbs', staged.estCarbs);
+      const fat = getNum('ai-dish-edit-fat', staged.estFat);
+      const fiber = getNum('ai-dish-edit-fiber', staged.estFiber);
+      const sugar = getNum('ai-dish-edit-sugar', staged.estSugar);
+      const satFat = getNum('ai-dish-edit-satFat', staged.estSatFat);
+      const sodium = Math.round(getNum('ai-dish-edit-sodium', staged.estSodium));
+      const water = Math.round(getNum('ai-dish-edit-water', staged.estWater));
+      const servingGrams = Math.round(getNum('ai-dish-edit-servingGrams', staged.servingGrams));
+
       const catInput = document.getElementById('ai-dish-category-input');
       const storageInput = document.getElementById('ai-dish-storage-input');
-
-      const kcal = editKcal && !isNaN(parseInt(editKcal.value)) ? parseInt(editKcal.value) : staged.estKcal;
-      const prot = editProt && !isNaN(parseFloat(editProt.value)) ? parseFloat(editProt.value) : staged.estProt;
-      const carbs = editCarbs && !isNaN(parseFloat(editCarbs.value)) ? parseFloat(editCarbs.value) : staged.estCarbs;
-      const fat = editFat && !isNaN(parseFloat(editFat.value)) ? parseFloat(editFat.value) : staged.estFat;
-      const fiber = editFiber && !isNaN(parseFloat(editFiber.value)) ? parseFloat(editFiber.value) : staged.estFiber;
-      const sodium = editSodium && !isNaN(parseInt(editSodium.value)) ? parseInt(editSodium.value) : staged.estSodium;
       const category = catInput ? catInput.value : staged.category;
       const storage = storageInput ? storageInput.value : staged.storage;
+
+      // Read edited micronutrients
+      const microKeys = [
+        'vitA', 'vitC', 'vitD', 'vitE', 'vitK', 'vitB1', 'vitB2', 'vitB3', 'vitB5', 'vitB6', 'vitB7', 'vitB9', 'vitB12', 'choline',
+        'potassium', 'calcium', 'iron', 'magnesium', 'zinc', 'phosphorus', 'chloride', 'sulfur', 'copper', 'manganese', 'selenium', 'iodine', 'chromium', 'molybdenum'
+      ];
+      const editedMicros = {};
+      microKeys.forEach(mk => {
+        editedMicros[mk] = getNum(`ai-dish-edit-${mk}`, staged.micros[mk] || 0);
+      });
 
       const curSub = state.kitchenSubTab || 'pantry';
 
@@ -3455,17 +3535,17 @@ Respond strictly with valid JSON (no markdown formatting, no code fence) in this
           amount: staged.amount,
           unit: staged.unit,
           serving: `${staged.amount} ${staged.unit}`,
-          servingGrams: staged.servingGrams,
+          servingGrams: servingGrams,
           dateAdded: new Date().toISOString().split('T')[0],
           kcal: kcal,
           protein: prot,
           carbs: carbs,
           fat: fat,
           fiber: fiber,
-          sugar: Math.round(carbs * 0.15),
-          satFat: Math.round(fat * 0.35),
+          sugar: sugar,
+          satFat: satFat,
           sodium: sodium,
-          water: Math.round(staged.servingGrams * 0.65),
+          water: water,
           isVerified: false,
           sourceBadge: `✨ AI Synthesized (${staged.origin})`,
           nutrition: {
@@ -3474,22 +3554,20 @@ Respond strictly with valid JSON (no markdown formatting, no code fence) in this
             carbs: carbs,
             fat: fat,
             fiber: fiber,
-            sugar: Math.round(carbs * 0.15),
-            satFat: Math.round(fat * 0.35),
+            sugar: sugar,
+            satFat: satFat,
             sodium: sodium,
-            water: Math.round(staged.servingGrams * 0.65),
+            water: water,
             serving: `${staged.amount} ${staged.unit}`,
-            servingGrams: staged.servingGrams,
+            servingGrams: servingGrams,
             verifiedNutrients: {},
-            micros: (typeof estimateMicronutrientsForFood === 'function')
-              ? estimateMicronutrientsForFood(category, kcal, prot, carbs, fat, staged.dishName, staged.servingGrams)
-              : {}
+            micros: editedMicros
           }
         });
         saveAppState();
         renderPantry();
         playChime('bell');
-        alertBox(`Saved "${staged.displayName}" (${kcal} kcal, ${prot}g protein) to your ${storage} zone!`, "Dish Added to Pantry");
+        alertBox(`Saved "${staged.displayName}" (${kcal} kcal, ${prot}g protein) with complete macro & micro nutrients to your ${storage} zone!`, "Dish Added to Pantry");
       }
 
       window._stagedAiDishEstimate = null;

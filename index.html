@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=68">
+  <link rel="stylesheet" href="css/styles.css?v=69">
   <script>
     function resetViewportZoom() {
       try {
@@ -6527,6 +6527,8 @@
             <span class="text-[10px] text-pastel-lavender font-mono">Tap values to adjust</span>
           </div>
 
+          <!-- Section 1: Core Macros -->
+          <span class="text-[11px] font-bold text-pastel-lavender uppercase tracking-wider block">1. Energy &amp; Core Macronutrients</span>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
             <div class="p-2 rounded-xl bg-dark-elevated border border-dark-border">
               <span class="text-[10px] text-slate-400 block mb-0.5">Calories</span>
@@ -6547,7 +6549,7 @@
               </div>
             </div>
             <div class="p-2 rounded-xl bg-dark-elevated border border-dark-border">
-              <span class="text-[10px] text-slate-400 block mb-0.5">Fat</span>
+              <span class="text-[10px] text-slate-400 block mb-0.5">Total Fat</span>
               <div class="flex items-center justify-center gap-0.5">
                 <input type="number" step="0.1" id="ai-dish-edit-fat" class="w-full bg-dark-base text-pastel-butter font-mono font-bold text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-butter">
                 <span class="text-[10px] text-slate-400">g</span>
@@ -6555,11 +6557,26 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-2 text-center">
+          <!-- Section 2: Extended Macros & Moisture -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
             <div class="p-2 rounded-xl bg-dark-elevated border border-dark-border">
               <span class="text-[10px] text-slate-400 block mb-0.5">Fiber</span>
               <div class="flex items-center justify-center gap-0.5">
                 <input type="number" step="0.1" id="ai-dish-edit-fiber" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border">
+                <span class="text-[10px] text-slate-400">g</span>
+              </div>
+            </div>
+            <div class="p-2 rounded-xl bg-dark-elevated border border-dark-border">
+              <span class="text-[10px] text-slate-400 block mb-0.5">Sugars</span>
+              <div class="flex items-center justify-center gap-0.5">
+                <input type="number" step="0.1" id="ai-dish-edit-sugar" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border">
+                <span class="text-[10px] text-slate-400">g</span>
+              </div>
+            </div>
+            <div class="p-2 rounded-xl bg-dark-elevated border border-dark-border">
+              <span class="text-[10px] text-slate-400 block mb-0.5">Sat. Fat</span>
+              <div class="flex items-center justify-center gap-0.5">
+                <input type="number" step="0.1" id="ai-dish-edit-satFat" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border">
                 <span class="text-[10px] text-slate-400">g</span>
               </div>
             </div>
@@ -6571,6 +6588,243 @@
               </div>
             </div>
           </div>
+
+          <div class="grid grid-cols-2 gap-2 text-center">
+            <div class="p-2 rounded-xl bg-dark-elevated border border-dark-border">
+              <span class="text-[10px] text-slate-400 block mb-0.5">Water / Moisture</span>
+              <div class="flex items-center justify-center gap-0.5">
+                <input type="number" id="ai-dish-edit-water" class="w-full bg-dark-base text-pastel-sky font-mono text-center text-xs rounded-lg py-1 border border-dark-border">
+                <span class="text-[10px] text-slate-400">ml</span>
+              </div>
+            </div>
+            <div class="p-2 rounded-xl bg-dark-elevated border border-dark-border">
+              <span class="text-[10px] text-slate-400 block mb-0.5">Serving Weight</span>
+              <div class="flex items-center justify-center gap-0.5">
+                <input type="number" id="ai-dish-edit-servingGrams" class="w-full bg-dark-base text-pastel-mint font-mono text-center text-xs rounded-lg py-1 border border-dark-border">
+                <span class="text-[10px] text-slate-400">g</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: 13 Essential Vitamins + Choline -->
+          <details class="bg-dark-elevated p-2.5 rounded-2xl border border-dark-border space-y-2">
+            <summary class="cursor-pointer text-[11px] font-bold text-pastel-sky flex items-center justify-between select-none">
+              <span>💊 13 Essential Vitamins &amp; Choline (Tap to expand)</span>
+              <span class="text-[10px] text-slate-400 font-normal">14 nutrients</span>
+            </summary>
+            <div class="pt-2">
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-center">
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Vitamin A">Vitamin A</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-vitA" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mcg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Vitamin C">Vitamin C</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-vitC" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Vitamin D">Vitamin D</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-vitD" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mcg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Vitamin E">Vitamin E</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-vitE" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Vitamin K">Vitamin K</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-vitK" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mcg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Thiamin (B1)">Thiamin (B1)</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-vitB1" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Riboflavin (B2)">Riboflavin (B2)</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-vitB2" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Niacin (B3)">Niacin (B3)</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-vitB3" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Pantothenic (B5)">Pantothenic (B5)</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-vitB5" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Vitamin B6">Vitamin B6</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-vitB6" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Biotin (B7)">Biotin (B7)</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-vitB7" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mcg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Folate (B9)">Folate (B9)</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-vitB9" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mcg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Vitamin B12">Vitamin B12</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-vitB12" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mcg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Choline">Choline</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-choline" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mg</span>
+                </div>
+              </div>
+            </div>
+            </div>
+          </details>
+
+          <!-- Section 4: 14 Essential Minerals -->
+          <details class="bg-dark-elevated p-2.5 rounded-2xl border border-dark-border space-y-2">
+            <summary class="cursor-pointer text-[11px] font-bold text-pastel-mint flex items-center justify-between select-none">
+              <span>🧂 14 Essential Minerals &amp; Electrolytes (Tap to expand)</span>
+              <span class="text-[10px] text-slate-400 font-normal">14 nutrients</span>
+            </summary>
+            <div class="pt-2">
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-center">
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Potassium">Potassium</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-potassium" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Calcium">Calcium</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-calcium" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Iron">Iron</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-iron" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Magnesium">Magnesium</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-magnesium" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Zinc">Zinc</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-zinc" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Phosphorus">Phosphorus</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-phosphorus" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Chloride">Chloride</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-chloride" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Sulfur">Sulfur</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-sulfur" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Copper">Copper</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-copper" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Manganese">Manganese</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-manganese" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Selenium">Selenium</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-selenium" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mcg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Iodine">Iodine</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-iodine" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mcg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Chromium">Chromium</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-chromium" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mcg</span>
+                </div>
+              </div>
+              <div class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border">
+                <span class="text-[10px] text-slate-400 block mb-0.5 truncate" title="Molybdenum">Molybdenum</span>
+                <div class="flex items-center justify-center gap-0.5">
+                  <input type="number" step="any" id="ai-dish-edit-molybdenum" class="w-full bg-dark-base text-white font-mono text-center text-xs rounded-lg py-1 border border-dark-border focus:border-pastel-lavender">
+                  <span class="text-[9px] text-slate-400 shrink-0 pr-1">mcg</span>
+                </div>
+              </div>
+            </div>
+            </div>
+          </details>
         </div>
       </div>
 

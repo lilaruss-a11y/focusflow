@@ -849,7 +849,7 @@ function renderIncomingGroceriesApprovalList(items) {
         <!-- Storage Location Selector (7 Physical Kitchen Storage Zones) -->
         <select onchange="updateGroceryStorage(${idx}, this.value)" class="bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1 text-slate-200 text-[11px] font-bold focus:border-pastel-sky focus:outline-none" title="Kitchen Storage Zone">
           <option value="fridge-crisper" ${item.storage === 'fridge-crisper' ? 'selected' : ''}>🥬 Crisper</option>
-          <option value="fridge-main" ${(!item.storage || item.storage === 'fridge-main' || item.storage === 'fridge') ? 'selected' : ''}>🥶 Fridge</option>
+          <option value="fridge-main" ${(!item.storage || item.storage === 'fridge-main' || item.storage === 'fridge') ? 'selected' : ''}>❄️ Fridge</option>
           <option value="freezer" ${(item.storage === 'freezer' || item.storage === 'frozen') ? 'selected' : ''}>🧊 Freezer</option>
           <option value="counter" ${item.storage === 'counter' ? 'selected' : ''}>🧺 Counter</option>
           <option value="cupboard" ${item.storage === 'cupboard' ? 'selected' : ''}>🚪 Cupboard</option>

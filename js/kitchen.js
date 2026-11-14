@@ -137,10 +137,41 @@
       playChime('bell');
     }
 
+        // ==============================================
+    // EXPANDABLE KITCHEN HEADER SEARCH BAR
+    // ==============================================
+    function expandKitchenHeaderSearch() {
+      const container = document.getElementById('kitchen-expanded-search-container');
+      const input = document.getElementById('kitchen-food-search-input');
+      if (container) {
+        container.classList.remove('hidden');
+        if (input) {
+          input.focus();
+          if (input.value.trim()) {
+            searchWholeFoodsForPantry(input.value);
+          }
+        }
+      }
+    }
+
+    function collapseKitchenHeaderSearch() {
+      const container = document.getElementById('kitchen-expanded-search-container');
+      const box = document.getElementById('kitchen-search-suggestions');
+      const input = document.getElementById('kitchen-food-search-input');
+      if (container) container.classList.add('hidden');
+      if (box) {
+        box.classList.add('hidden');
+        box.innerHTML = '';
+      }
+      if (input) input.value = '';
+    }
+
     function onKitchenSearchKeydown(event) {
       if (event.key === 'Enter') {
         event.preventDefault();
         addCustomPantryItemFromInput();
+      } else if (event.key === 'Escape') {
+        collapseKitchenHeaderSearch();
       }
     }
 
@@ -2543,7 +2574,10 @@
       }
 
       box.innerHTML = '';
-      matches.forEach(m => {
+      // Store search results in state for safe modal referencing
+      state._activeSearchResults = matches;
+
+      matches.forEach((m, idx) => {
         const srv = m.serving || m.nutrition?.serving || '1 serving';
         const srvG = m.servingGrams || m.nutrition?.servingGrams || 100;
         const badgeIcon = m.isVerified
@@ -2551,18 +2585,21 @@
           : ((typeof renderEstimatedTildeIcon === 'function') ? renderEstimatedTildeIcon() : '~');
         const sourceTag = m.source || (m.type === 'recipe' ? 'Recipe' : 'USDA');
         const row = document.createElement('div');
-        row.className = "p-2 rounded-xl bg-dark-base hover:bg-slate-700 cursor-pointer flex items-center justify-between text-xs transition";
-        row.onclick = () => addFoodMatchToPantry(m);
+        row.className = "p-2 rounded-xl bg-dark-base hover:bg-slate-700 flex items-center justify-between text-xs transition gap-2 group";
+        
+        // Clicking the item label opens verification & amount adjustment popup
         row.innerHTML = `
-          <div class="min-w-0 pr-2">
-            <div class="flex items-center gap-1 flex-wrap">
+          <div class="min-w-0 pr-2 flex-1 cursor-pointer" onclick="openVerifyFoodModalBeforeAdding(${idx})" title="Click to verify item and adjust amount before adding">
+            <div class="flex items-center gap-1.5 flex-wrap">
               ${badgeIcon}
-              <span class="font-bold text-white truncate">${m.name}</span>
+              <span class="font-bold text-white group-hover:text-pastel-mint transition truncate">${m.name}</span>
               <span class="text-[9px] px-1.5 py-0.2 rounded bg-dark-elevated text-slate-400 font-mono">${sourceTag}</span>
             </div>
             <span class="text-[10px] text-slate-400 font-mono block mt-0.5">1 serving = ${srv} (${srvG} g) • <span class="text-pastel-lavender font-bold">${m.kcal} kcal</span> • <span class="text-pastel-coral">P:${m.protein}g</span> <span class="text-pastel-mint">C:${m.carbs}g</span> <span class="text-pastel-butter">F:${m.fat}g</span></span>
           </div>
-          <button type="button" class="px-2.5 py-1 rounded-lg bg-pastel-mint text-dark-base font-bold text-[10px] shrink-0">+ Add</button>
+          <button type="button" onclick="event.stopPropagation(); quickAddSearchResultItem(${idx});" class="w-7 h-7 rounded-lg bg-pastel-mint hover:bg-emerald-300 text-dark-base font-extrabold text-sm flex items-center justify-center shrink-0 shadow-sm transition active:scale-95" title="Quick 1-tap add to current section">
+            +
+          </button>
         `;
         box.appendChild(row);
       });
@@ -2721,6 +2758,205 @@
 
 
 
+
+    
+    // ==============================================
+    // SEARCH DUAL-ACTION: QUICK ADD & VERIFICATION MODAL
+    // ==============================================
+    function quickAddSearchResultItem(matchIdx) {
+      const list = state._activeSearchResults || [];
+      const m = list[matchIdx];
+      if (!m) return;
+
+      const curSub = state.kitchenSubTab || 'pantry';
+      if (curSub === 'shopping') {
+        if (!Array.isArray(state.shoppingList)) state.shoppingList = [];
+        state.shoppingList.push({
+          id: `shop-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          name: m.name,
+          quantity: '1',
+          category: m.category || 'produce',
+          checked: false,
+          source: 'Kitchen Search'
+        });
+        saveAppState();
+        if (typeof renderShoppingList === 'function') renderShoppingList();
+        updateShoppingBadges();
+        playChime('bell');
+        alertBox(`Added "${m.name}" to your Shopping List!`, "Added to Groceries");
+      } else {
+        addFoodMatchToPantry(m);
+      }
+      collapseKitchenHeaderSearch();
+    }
+
+    function openVerifyFoodModalBeforeAdding(matchIdx) {
+      const list = state._activeSearchResults || [];
+      const m = list[matchIdx];
+      if (!m) return;
+
+      state._pendingVerifyItem = JSON.parse(JSON.stringify(m));
+
+      const modal = document.getElementById('pantry-item-modal');
+      const titleEl = document.getElementById('verify-item-title');
+      const nameInput = document.getElementById('pantry-name-input');
+      const badgeEl = document.getElementById('verify-item-badge');
+      const sourceEl = document.getElementById('verify-item-source-tag');
+      const srvEl = document.getElementById('verify-item-serving-info');
+      const kcalEl = document.getElementById('verify-item-kcal');
+      const protEl = document.getElementById('verify-item-protein');
+      const carbsEl = document.getElementById('verify-item-carbs');
+      const fatEl = document.getElementById('verify-item-fat');
+      const amtInput = document.getElementById('verify-item-amount-input');
+      const unitSelect = document.getElementById('pantry-category-input');
+      const storageSelect = document.getElementById('verify-item-storage-select');
+      const iconEl = document.getElementById('verify-item-icon');
+
+      const srv = m.serving || m.nutrition?.serving || '1 serving';
+      const srvG = m.servingGrams || m.nutrition?.servingGrams || 100;
+
+      if (titleEl) titleEl.textContent = m.name;
+      if (nameInput) nameInput.value = m.name;
+      if (badgeEl) {
+        badgeEl.textContent = m.isVerified ? "✓ Verified Reference" : "~ Clinical / Recipe Estimate";
+        badgeEl.className = m.isVerified
+          ? "px-2 py-0.5 rounded-full text-[10px] font-bold bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30"
+          : "px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/40 text-amber-300 border border-amber-400/30";
+      }
+      if (sourceEl) sourceEl.textContent = m.source || (m.type === 'recipe' ? 'Recipe Codex' : 'USDA FoodData');
+      if (srvEl) srvEl.textContent = `1 serving = ${srv} (${srvG}g)`;
+      if (kcalEl) kcalEl.textContent = m.kcal || 0;
+      if (protEl) protEl.textContent = `${m.protein || 0}g`;
+      if (carbsEl) carbsEl.textContent = `${m.carbs || 0}g`;
+      if (fatEl) fatEl.textContent = `${m.fat || 0}g`;
+      if (amtInput) amtInput.value = '1';
+
+      if (iconEl) {
+        let cat = m.category || 'produce';
+        if (cat === 'protein') iconEl.textContent = '🥩';
+        else if (cat === 'dairy') iconEl.textContent = '🥛';
+        else if (cat === 'grains') iconEl.textContent = '🌾';
+        else if (cat === 'fruits') iconEl.textContent = '🍎';
+        else if (cat === 'canned') iconEl.textContent = '🥫';
+        else iconEl.textContent = '🥗';
+      }
+
+      if (unitSelect) {
+        if (m.type === 'recipe') unitSelect.value = 'servings';
+        else unitSelect.value = 'items';
+      }
+
+      // Default destination matching current kitchen subtab
+      const curSub = state.kitchenSubTab || 'pantry';
+      const radioPantry = document.getElementById('verify-dest-pantry');
+      const radioShopping = document.getElementById('verify-dest-shopping');
+      if (curSub === 'shopping') {
+        if (radioShopping) radioShopping.checked = true;
+      } else {
+        if (radioPantry) radioPantry.checked = true;
+      }
+
+      if (storageSelect) {
+        let cat = m.category || 'produce';
+        if (m.storage) storageSelect.value = m.storage;
+        else if (cat === 'protein' || cat === 'produce' || cat === 'dairy') storageSelect.value = 'fridge';
+        else storageSelect.value = 'shelf';
+      }
+
+      if (modal) {
+        modal.classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    function commitVerifiedItemToKitchen() {
+      const m = state._pendingVerifyItem;
+      const nameInput = document.getElementById('pantry-name-input');
+      const amtInput = document.getElementById('verify-item-amount-input');
+      const unitSelect = document.getElementById('pantry-category-input');
+      const storageSelect = document.getElementById('verify-item-storage-select');
+      const radioShopping = document.getElementById('verify-dest-shopping');
+
+      const isShopping = radioShopping && radioShopping.checked;
+      const finalName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : (m ? m.name : 'Food Item');
+      const finalAmt = (amtInput && !isNaN(parseFloat(amtInput.value))) ? parseFloat(amtInput.value) : 1;
+      const finalUnit = (unitSelect && unitSelect.value) ? unitSelect.value : 'items';
+      const finalStorage = (storageSelect && storageSelect.value) ? storageSelect.value : 'fridge';
+
+      if (isShopping) {
+        if (!Array.isArray(state.shoppingList)) state.shoppingList = [];
+        state.shoppingList.push({
+          id: `shop-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          name: finalName,
+          quantity: `${finalAmt} ${finalUnit}`,
+          category: (m && m.category) ? m.category : 'produce',
+          checked: false,
+          source: 'Kitchen Verified Search'
+        });
+        saveAppState();
+        if (typeof renderShoppingList === 'function') renderShoppingList();
+        updateShoppingBadges();
+        playChime('bell');
+        alertBox(`Added ${finalAmt} ${finalUnit} of "${finalName}" to your Shopping List!`, "Added to Groceries");
+      } else {
+        if (!Array.isArray(state.pantry)) state.pantry = [];
+        const baseKcal = (m && m.kcal != null) ? m.kcal : 100;
+        const baseProt = (m && m.protein != null) ? m.protein : 2;
+        const baseCarbs = (m && m.carbs != null) ? m.carbs : 15;
+        const baseFat = (m && m.fat != null) ? m.fat : 1;
+        const srv = (m && (m.serving || m.nutrition?.serving)) ? (m.serving || m.nutrition?.serving) : '1 serving';
+        const srvG = (m && (m.servingGrams || m.nutrition?.servingGrams)) ? (m.servingGrams || m.nutrition?.servingGrams) : 100;
+
+        state.pantry.push({
+          id: `p-${Date.now()}`,
+          name: finalName,
+          recipeId: (m && m.recipeId) || null,
+          category: (m && m.category) || 'produce',
+          storage: finalStorage,
+          amount: finalAmt,
+          unit: finalUnit,
+          serving: srv,
+          servingGrams: srvG,
+          dateAdded: new Date().toISOString().split('T')[0],
+          kcal: baseKcal,
+          protein: baseProt,
+          carbs: baseCarbs,
+          fat: baseFat,
+          fiber: (m && m.fiber) || 0,
+          sugar: (m && m.sugar) || 0,
+          satFat: (m && m.satFat) || 0,
+          sodium: (m && m.sodium) || 0,
+          water: (m && m.water) || 0,
+          verifiedNutrients: (m && (m.verifiedNutrients || m.nutrition?.verifiedNutrients)) || {},
+          isVerified: Boolean(m && m.isVerified),
+          sourceBadge: (m && m.isVerified) ? '✓ Verified Reference' : '~ Recipe / USDA Estimate',
+          nutrition: (m && m.nutrition) ? m.nutrition : {
+            kcal: baseKcal,
+            protein: baseProt,
+            carbs: baseCarbs,
+            fat: baseFat,
+            fiber: (m && m.fiber) || 0,
+            sugar: (m && m.sugar) || 0,
+            satFat: (m && m.satFat) || 0,
+            sodium: (m && m.sodium) || 0,
+            water: (m && m.water) || 0,
+            serving: srv,
+            servingGrams: srvG,
+            verifiedNutrients: (m && (m.verifiedNutrients || m.nutrition?.verifiedNutrients)) || {},
+            micros: (m && m.micros) || {}
+          }
+        });
+
+        saveAppState();
+        renderPantry();
+        playChime('bell');
+        alertBox(`Added ${finalAmt} ${finalUnit} of "${finalName}" to ${finalStorage}!`, "Pantry Updated");
+      }
+
+      closeAddPantryItemModal();
+      collapseKitchenHeaderSearch();
+      state._pendingVerifyItem = null;
+    }
 
     if (typeof window !== 'undefined') {
       window.openManualNutritionForLoggedFood = openManualNutritionForLoggedFood;

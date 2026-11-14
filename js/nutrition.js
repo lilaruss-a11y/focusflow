@@ -1783,13 +1783,46 @@
         }
       };
 
+      const normalizeStorage = (stor) => {
+        if (!stor) return 'fridge-main';
+        const s = String(stor).toLowerCase().trim();
+        if (s.includes('crisp')) return 'fridge-crisper';
+        if (s.includes('fridge') || s === 'refrigerator') return 'fridge-main';
+        if (s.includes('freez') || s.includes('frozen')) return 'freezer';
+        if (s.includes('count')) return 'counter';
+        if (s.includes('cupb')) return 'cupboard';
+        if (s.includes('spice') || s.includes('season')) return 'spices';
+        return 'pantry';
+      };
+
+      const normalizeUnit = (u) => {
+        if (!u) return 'items';
+        const s = String(u).toLowerCase().trim().replace(/\s+/g, ' ');
+        if (s.includes('fl oz') || s.includes('fluid')) return 'fl oz';
+        if (s === 'oz' || s.includes('ounce')) return 'oz';
+        if (s === 'g' || s.includes('gram')) return 'g';
+        if (s === 'ml' || s.includes('milli')) return 'ml';
+        if (s.includes('cup')) return 'cup';
+        if (s.includes('serv')) return 'servings';
+        if (s.includes('bottle')) return 'bottle';
+        if (s.includes('can')) return 'can';
+        return 'items';
+      };
+
       setVal('manual-nut-barcode', params.barcode || '');
       setVal('manual-nut-name', params.name || '');
       setVal('manual-nut-brand', params.brand || '');
       setVal('manual-nut-amount', params.amount != null ? params.amount : 1);
-      setVal('manual-nut-unit', params.unit || 'items');
-      setVal('manual-nut-cat', params.category || 'produce');
-      setVal('manual-nut-storage', params.storage || 'fridge');
+      
+      const amtRemainingEl = document.getElementById('manual-nut-amount-remaining');
+      if (amtRemainingEl) {
+        amtRemainingEl.value = params.amountRemaining != null ? params.amountRemaining : (params.amount != null ? params.amount : 1);
+        amtRemainingEl.dataset.linked = params.amountRemaining != null ? '0' : '1';
+      }
+
+      setVal('manual-nut-unit', normalizeUnit(params.unit));
+      setVal('manual-nut-cat', params.category || 'pantry_staples');
+      setVal('manual-nut-storage', normalizeStorage(params.storage));
 
       const servingDesc = params.serving || nut.serving || matchedUsda?.serving || '1 serving';
       const servingGrams = params.servingGrams || nut.servingGrams || matchedUsda?.servingGrams || 100;
@@ -2074,7 +2107,7 @@
       alertBox("Restored original nutrient amounts.", "Undo Complete");
     }
 
-    function saveManualNutritionData() {
+    function saveManualNutritionData(returnToScanner = false) {
       const name = (document.getElementById('manual-nut-name') || {}).value?.trim();
       if (!name) {
         alertBox("Please enter an item or ingredient name.", "Name Required");
@@ -2097,9 +2130,10 @@
       const barcode = (document.getElementById('manual-nut-barcode') || {}).value?.trim() || '';
       const brand = (document.getElementById('manual-nut-brand') || {}).value?.trim() || '';
       const amount = getNum('manual-nut-amount', 1);
+      const amountRemaining = getNum('manual-nut-amount-remaining', amount);
       const unit = (document.getElementById('manual-nut-unit') || {}).value || 'items';
-      const category = (document.getElementById('manual-nut-cat') || {}).value || 'produce';
-      const storage = (document.getElementById('manual-nut-storage') || {}).value || 'fridge';
+      const category = (document.getElementById('manual-nut-cat') || {}).value || 'pantry_staples';
+      const storage = (document.getElementById('manual-nut-storage') || {}).value || 'fridge-main';
 
       const serving = (document.getElementById('manual-nut-serving-desc') || {}).value?.trim() || '1 serving';
       const servingGrams = getNum('manual-nut-serving-grams', 100);
@@ -2173,6 +2207,7 @@
         name,
         brand,
         amount,
+        amountRemaining,
         unit,
         serving,
         servingGrams,
@@ -2258,6 +2293,7 @@
           pItem.name = name;
           pItem.brand = brand;
           pItem.amount = amount;
+          pItem.amountRemaining = amountRemaining;
           pItem.unit = unit;
           pItem.serving = serving;
           pItem.servingGrams = servingGrams;
@@ -2323,6 +2359,14 @@
 
       closeManualNutritionModal();
       applyScannedBarcodeFood(product);
+
+      if (returnToScanner) {
+        setTimeout(() => {
+          if (typeof openBarcodeScannerModal === 'function') {
+            openBarcodeScannerModal('pantry');
+          }
+        }, 300);
+      }
     }
 
     if (typeof window !== 'undefined') {

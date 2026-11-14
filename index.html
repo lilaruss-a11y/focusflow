@@ -5455,12 +5455,16 @@
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <div>
             <label class="font-semibold text-slate-300 block mb-1">Total Package Size</label>
-            <input type="number" id="manual-nut-amount" step="any" min="0" value="1" class="w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-mint">
+            <input type="number" id="manual-nut-amount" oninput="const rem = document.getElementById('manual-nut-amount-remaining'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0" value="1" class="w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-mint">
+          </div>
+          <div>
+            <label class="font-semibold text-slate-300 block mb-1">Amount Remaining</label>
+            <input type="number" id="manual-nut-amount-remaining" oninput="this.dataset.linked = '0';" step="any" min="0" placeholder="e.g. 1" class="w-full bg-dark-base border border-pastel-sky/50 rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-sky" title="How much of the item is currently left in your kitchen">
           </div>
           <div>
             <label class="font-semibold text-slate-300 block mb-1">Package Unit</label>
             <select id="manual-nut-unit" class="w-full bg-dark-base border border-dark-border rounded-xl px-2 py-1.5 text-white text-xs">
-              <option value="items">items</option>
+              <option value="items" selected>items</option>
               <option value="fl oz">fl oz</option>
               <option value="oz">oz</option>
               <option value="g">g</option>
@@ -5482,12 +5486,12 @@
               <option value="frozen">🧊 Frozen</option>
               <option value="condiments">🥫 Condiments</option>
               <option value="snacks">🍿 Snacks</option>
-              <option value="pantry_staples">🥫 Pantry</option>
+              <option value="pantry_staples" selected>🥫 Pantry</option>
             </select>
           </div>
-          <div>
-            <label class="font-semibold text-slate-300 block mb-1">Storage</label>
-            <select id="manual-nut-storage" class="w-full bg-dark-base border border-dark-border rounded-xl px-2 py-1.5 text-white text-xs">
+          <div class="col-span-2 sm:col-span-4">
+            <label class="font-semibold text-slate-300 block mb-1">Storage Location in Kitchen</label>
+            <select id="manual-nut-storage" class="w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs">
               <option value="fridge-main" selected>❄️ Fridge - Main</option>
               <option value="fridge-crisper">🥬 Fridge - Crisper</option>
               <option value="freezer">🧊 Freezer</option>
@@ -5757,12 +5761,18 @@
         </div>
       </div>
 
-      <div class="pt-2 flex justify-between items-center border-t border-dark-border">
-        <button type="button" onclick="closeManualNutritionModal()" class="px-4 py-2 rounded-xl bg-dark-base hover:bg-slate-700 text-slate-300 text-xs font-semibold">Cancel</button>
-        <button type="button" onclick="saveManualNutritionData()" class="px-5 py-2 rounded-xl bg-pastel-mint hover:bg-emerald-300 text-dark-base font-extrabold text-xs shadow-md shadow-pastel-mint/20 flex items-center gap-1.5 transition">
-          <i data-lucide="check" class="w-4 h-4"></i>
-          <span>Save Verified Nutrition</span>
-        </button>
+      <div class="pt-2 flex flex-col sm:flex-row justify-between items-center gap-2 border-t border-dark-border">
+        <button type="button" onclick="closeManualNutritionModal()" class="w-full sm:w-auto px-4 py-2 rounded-xl bg-dark-base hover:bg-slate-700 text-slate-300 text-xs font-semibold">Cancel</button>
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <button type="button" onclick="saveManualNutritionData(true)" class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-dark-base border border-pastel-lavender/50 hover:bg-slate-700 text-pastel-lavender font-bold text-xs flex items-center justify-center gap-1.5 transition" title="Save this item and return directly to scanner to scan the next one">
+            <i data-lucide="scan-barcode" class="w-4 h-4"></i>
+            <span>Add &amp; Scan Next</span>
+          </button>
+          <button type="button" onclick="saveManualNutritionData(false)" class="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-pastel-mint hover:bg-emerald-300 text-dark-base font-extrabold text-xs shadow-md shadow-pastel-mint/20 flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>Add to Pantry</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -6861,8 +6871,8 @@
   <script src="js/shopping.js?v=58"></script>
   <script src="js/chef.js?v=58"></script>
   <script src="js/body-profile.js?v=61"></script>
-  <script src="js/nutrition.js?v=62"></script>
-  <script src="js/barcode.js?v=65"></script>
+  <script src="js/nutrition.js?v=63"></script>
+  <script src="js/barcode.js?v=66"></script>
   <script src="js/health.js?v=48"></script>
   <script src="js/biometrics.js?v=48"></script>
   <script src="js/app.js?v=48"></script>

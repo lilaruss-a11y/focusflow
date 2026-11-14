@@ -133,6 +133,10 @@
       stopBarcodeCamera();
 
       if (phMsg) phMsg.textContent = "Connecting to camera...";
+      const startCamBtn = document.querySelector('#barcode-camera-placeholder button');
+      if (startCamBtn) {
+        startCamBtn.textContent = "Start Camera";
+      }
 
       // Wait briefly if ZXing script is still initializing
       if (!window.ZXing) {
@@ -266,6 +270,17 @@
 
       // Stop camera hardware completely once barcode is captured so phone doesn't keep recording
       stopBarcodeCamera();
+
+      // Show intuitive captured screen in camera viewport instead of black placeholder
+      const phMsg = document.getElementById('barcode-camera-placeholder-msg');
+      if (phMsg) {
+        phMsg.innerHTML = `<span class="text-pastel-mint font-bold flex items-center justify-center gap-1"><i data-lucide="check-circle" class="w-4 h-4"></i><span>Barcode Scanned: ${code}</span></span><span class="text-[11px] text-slate-400 block mt-1">Review details below or tap to scan next</span>`;
+      }
+      const startCamBtn = document.querySelector('#barcode-camera-placeholder button');
+      if (startCamBtn) {
+        startCamBtn.innerHTML = `<span class="flex items-center gap-1.5"><i data-lucide="scan-barcode" class="w-3.5 h-3.5"></i><span>Scan Next Barcode</span></span>`;
+      }
+      if (window.lucide) lucide.createIcons();
 
       if (typeof playChime === 'function') {
         try { playChime('bell'); } catch (e) {}

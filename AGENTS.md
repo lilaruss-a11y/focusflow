@@ -53,7 +53,13 @@ Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN
     * Screen 3: Nutrition & Macro Goals (`#view-nutrition`)
     * Screen 4: Wellbeing & Apple Health (`#view-health`)
     * Screen 5: Biometrics & Medication (`#view-biometrics`)
-    * Modals: Event creation, recipe inspector, pantry manager, USDA food search, barcode scanner, and calibration modal.
+    * **Modal Dialog Map by Category:**
+      * **1. Schedule & Timeline:** `#new-event-modal`, `#standalone-focus-modal`, `#event-tools-modal`, `#matrix-add-modal`, `#time-calibration-modal`, `#insights-hub-modal`
+      * **2. Kitchen & Shopping:** `#pantry-item-modal`, `#pantry-item-detail-modal`, `#walmart-import-modal`
+      * **3. Recipes & Cooking:** `#recipe-modal`, `#recipe-inspect-modal`, `#share-recipe-modal`, `#incoming-recipe-modal`, `#reverse-chef-modal`, `#cooking-questions-drawer-modal`, `#cooking-wrapup-modal`
+      * **4. Nutrition & Body:** `#body-profile-modal`, `#food-log-modal`, `#custom-food-modal`, `#food-detail-modal`, `#manual-nutrition-modal`, `#nutrient-breakdown-modal`, `#barcode-scanner-modal`
+      * **5. Health & Biometrics:** `#apple-health-modal`, `#log-medication-modal`, `#log-heart-rate-modal`, `#log-symptom-modal`, `#ocd-support-modal`
+      * **6. Settings & Sync:** `#apikey-modal`, `#ff-sync-modal`, `#gcal-sync-modal`, `#install-app-modal`, `#phone-demo-modal`, `#scaffold-hub-modal`
 
 * **`css/styles.css`** (Design & Layout):
   * Exclusively for CSS color schemes, container constraints, animations, safe-area headers.

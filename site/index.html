@@ -837,26 +837,19 @@
             <p class="text-xs text-slate-400 mt-0.5">Inventory your pantry, plan balanced meals for the week, and auto-generate your grocery shopping list.</p>
           </div>
 
-          <!-- Global Action Buttons: Always fit in horizontal space -->
-          <div class="flex items-center gap-1 sm:gap-1.5 w-full md:w-auto justify-between sm:justify-end overflow-x-auto no-scrollbar py-0.5 shrink-0">
-            <button type="button" onclick="openReverseChefFromKitchen()" class="h-9 w-9 sm:h-9 sm:w-9 flex-1 sm:flex-initial flex items-center justify-center rounded-xl bg-gradient-to-r from-pastel-coral to-pastel-peach hover:opacity-90 text-dark-base shadow-md shadow-pastel-coral/20 transition active:scale-95 shrink-0" title="Launch Reverse Chef">
+          <!-- Global Action Buttons: Exactly 3 primary actions (Reverse Chef, Grocery Receipts, Barcode Scanner) -->
+          <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <button type="button" onclick="openReverseChefFromKitchen()" class="h-9 px-3 rounded-xl bg-gradient-to-r from-pastel-coral to-pastel-peach hover:opacity-90 text-dark-base font-bold text-xs shadow-md shadow-pastel-coral/20 transition active:scale-95 flex items-center gap-1.5" title="Launch Reverse Chef">
               <i data-lucide="chef-hat" class="w-4 h-4 text-dark-base shrink-0"></i>
+              <span class="hidden sm:inline">Reverse Chef</span>
             </button>
-            <button type="button" onclick="openWalmartGroceryImportModal()" class="h-9 w-9 sm:h-9 sm:w-9 flex-1 sm:flex-initial flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-sky/40 text-pastel-sky transition active:scale-95 shrink-0" title="Import Walmart or grocery receipt items with 1-by-1 approval">
+            <button type="button" onclick="openWalmartGroceryImportModal()" class="h-9 px-3 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-sky/40 text-pastel-sky font-bold text-xs transition active:scale-95 flex items-center gap-1.5" title="Import groceries or store receipt photo with 1-by-1 approval">
               <i data-lucide="shopping-cart" class="w-4 h-4 shrink-0"></i>
+              <span class="hidden sm:inline">Grocery Import</span>
             </button>
-            <button type="button" onclick="openBarcodeScannerModal('pantry')" class="h-9 w-9 sm:h-9 sm:w-9 flex-1 sm:flex-initial flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender transition shrink-0" title="Scan Barcode into Pantry">
+            <button type="button" onclick="openBarcodeScannerModal('pantry')" class="h-9 px-3 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender font-bold text-xs transition active:scale-95 flex items-center gap-1.5" title="Scan Barcode or package photos into Pantry">
               <i data-lucide="scan-barcode" class="w-4 h-4 shrink-0"></i>
-            </button>
-            <label class="cursor-pointer h-9 w-9 sm:h-9 sm:w-9 flex-1 sm:flex-initial flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender transition shrink-0 m-0" title="Scan Fridge Photo with AI Vision">
-              <i data-lucide="camera" class="w-4 h-4 shrink-0"></i>
-              <input type="file" accept="image/*" class="hidden" onchange="handlePantryPhotoUpload(event)">
-            </label>
-            <button type="button" onclick="openAddPantryItemModal()" class="h-9 w-9 sm:h-9 sm:w-9 flex-1 sm:flex-initial flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-300 hover:text-white transition shrink-0" title="Add Ingredient Manually">
-              <i data-lucide="plus" class="w-4 h-4 shrink-0"></i>
-            </button>
-            <button type="button" onclick="clearDemoPantryItems()" class="h-9 w-9 sm:h-9 sm:w-9 flex-1 sm:flex-initial flex items-center justify-center rounded-xl bg-dark-elevated hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-dark-border transition shrink-0" title="Clear Demo Items (Start Fresh with Real Pantry)">
-              <i data-lucide="trash" class="w-4 h-4 shrink-0"></i>
+              <span class="hidden sm:inline">Scan Barcode</span>
             </button>
           </div>
         </div>
@@ -896,17 +889,11 @@
         <!-- Search Bar & Storage Filters -->
         <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3">
           <div class="relative">
-            <div class="relative flex items-center gap-2">
-              <div class="relative flex-1 min-w-0">
-                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none"></i>
-                <input type="text" id="kitchen-food-search-input" onkeydown="onKitchenSearchKeydown(event)" oninput="searchWholeFoodsForPantry(this.value)" placeholder="Type ingredient name (e.g. Sliced Almonds, Tofu, Honey) and press Enter to add..." class="w-full bg-dark-base border border-dark-border rounded-xl pl-10 pr-20 py-2.5 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-pastel-mint">
-                <button type="button" onclick="addCustomPantryItemFromInput()" class="absolute right-2 top-2 px-3 py-1 rounded-lg bg-pastel-mint text-dark-base font-bold text-xs hover:bg-emerald-300 transition active:scale-95">
-                  + Add
-                </button>
-              </div>
-              <button type="button" onclick="openBarcodeScannerModal()" class="px-3 py-2.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender font-bold text-xs flex items-center gap-1.5 shrink-0 transition" title="Scan package barcode into pantry">
-                <i data-lucide="scan-barcode" class="w-4 h-4"></i>
-                <span class="hidden sm:inline">Scan Barcode</span>
+            <div class="relative flex items-center">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none"></i>
+              <input type="text" id="kitchen-food-search-input" onkeydown="onKitchenSearchKeydown(event)" oninput="searchWholeFoodsForPantry(this.value)" placeholder="Type food or recipe (e.g. Sliced Almonds, Tofu, German Pancakes) and press Enter to add..." class="w-full bg-dark-base border border-dark-border rounded-xl pl-10 pr-20 py-2.5 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-pastel-mint">
+              <button type="button" onclick="addCustomPantryItemFromInput()" class="absolute right-2 top-2 px-3 py-1 rounded-lg bg-pastel-mint text-dark-base font-bold text-xs hover:bg-emerald-300 transition active:scale-95">
+                + Add
               </button>
             </div>
             <div id="kitchen-search-suggestions" class="hidden absolute left-0 right-0 top-full mt-1.5 z-30 bg-dark-elevated border border-dark-border rounded-2xl p-2 shadow-2xl space-y-1"></div>
@@ -5746,19 +5733,29 @@
         </div>
       </div>
 
-      <!-- Manual Barcode Input with instant test buttons -->
-      <div class="space-y-2 text-xs">
-        <label class="block text-slate-300 font-semibold">Or Enter Barcode / UPC Number:</label>
-        <div class="flex gap-2">
-          <input type="text" id="barcode-manual-input" placeholder="e.g. 011110038332 or 052159701026" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-lavender">
-          <button type="button" onclick="lookupBarcode()" class="px-4 py-2 rounded-xl bg-pastel-lavender text-dark-base font-bold text-xs shrink-0">Lookup</button>
-        </div>
-        <div class="flex flex-wrap items-center gap-1.5 pt-1">
-          <span class="text-[10px] text-slate-400">Quick Test Barcodes:</span>
-          <button type="button" onclick="setAndLookupBarcode('011110038332')" class="px-2 py-0.5 rounded bg-dark-base border border-dark-border text-slate-300 text-[10px] hover:text-white">Rolled Oats</button>
-          <button type="button" onclick="setAndLookupBarcode('052159701026')" class="px-2 py-0.5 rounded bg-dark-base border border-dark-border text-slate-300 text-[10px] hover:text-white">Greek Yogurt</button>
-        </div>
-        <div id="barcode-lookup-result" class="hidden p-3 rounded-xl bg-dark-base border border-pastel-mint/40 space-y-2"></div>
+      <!-- Manual Barcode Fallback (Collapsed by default for broken/unreadable barcodes) -->
+      <div class="pt-1 text-xs">
+        <details class="group">
+          <summary class="flex items-center justify-between text-slate-400 hover:text-white cursor-pointer select-none text-[10.5px] py-1 font-semibold">
+            <span class="flex items-center gap-1 text-slate-400 group-hover:text-pastel-lavender">
+              <i data-lucide="help-circle" class="w-3 h-3 text-slate-400"></i>
+              <span>Unreadable barcode? Enter UPC number manually</span>
+            </span>
+            <span class="text-[9px] text-slate-400 font-mono group-open:rotate-180 transition">▼</span>
+          </summary>
+          <div class="pt-2 space-y-2">
+            <div class="flex gap-2">
+              <input type="text" id="barcode-manual-input" placeholder="e.g. 011110038332 or 052159701026" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-1.5 text-white font-mono text-xs focus:border-pastel-lavender">
+              <button type="button" onclick="lookupBarcode()" class="px-3 py-1.5 rounded-xl bg-pastel-lavender text-dark-base font-bold text-xs shrink-0">Lookup</button>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
+              <span class="text-[9.5px] text-slate-400">Quick Test:</span>
+              <button type="button" onclick="setAndLookupBarcode('011110038332')" class="px-2 py-0.5 rounded bg-dark-base border border-dark-border text-slate-300 text-[9.5px] hover:text-white">Rolled Oats</button>
+              <button type="button" onclick="setAndLookupBarcode('052159701026')" class="px-2 py-0.5 rounded bg-dark-base border border-dark-border text-slate-300 text-[9.5px] hover:text-white">Greek Yogurt</button>
+            </div>
+          </div>
+        </details>
+        <div id="barcode-lookup-result" class="hidden mt-2 p-3 rounded-xl bg-dark-base border border-pastel-mint/40 space-y-2"></div>
       </div>
 
       <div class="pt-2 flex justify-end border-t border-dark-border">
@@ -5956,7 +5953,7 @@
           </div>
           <div>
             <h3 class="text-base font-bold text-white">Import Groceries &amp; Store Receipts</h3>
-            <p class="text-xs text-slate-400">Walmart, Target, Kroger, or any receipt • 1-by-1 Approval</p>
+            <p class="text-xs text-slate-400">Scan or upload receipt photo • 1-by-1 Approval</p>
           </div>
         </div>
         <button onclick="closeWalmartGroceryImportModal()" class="text-slate-400 hover:text-white p-1">
@@ -5964,59 +5961,8 @@
         </button>
       </div>
 
-      <!-- Import Mode Switcher -->
-      <div class="grid grid-cols-2 gap-2 text-xs">
-        <button type="button" onclick="switchWalmartImportTab('paste')" id="btn-tab-walmart-paste" class="py-2 px-3 rounded-xl font-bold bg-pastel-sky text-dark-base text-center transition">
-          📋 Paste Receipt / Grocery Text
-        </button>
-        <button type="button" onclick="switchWalmartImportTab('photo')" id="btn-tab-walmart-photo" class="py-2 px-3 rounded-xl font-bold bg-dark-base border border-dark-border text-slate-400 hover:text-white text-center transition">
-          📷 Scan / Upload Receipt Photo
-        </button>
-      </div>
-
-      <!-- Paste Tab Body -->
-      <div id="walmart-tab-paste" class="space-y-3 text-xs">
-        <div>
-          <div class="flex items-center justify-between mb-1.5 flex-wrap gap-1">
-            <label class="text-slate-300 font-semibold text-xs">Paste Order Email, Store Receipt, or Grocery List:</label>
-            <div class="flex items-center gap-2">
-              <button type="button" onclick="importFromFocusFlowShoppingList()" class="text-[11px] text-pastel-mint hover:underline font-semibold flex items-center gap-1">
-                <i data-lucide="list-checks" class="w-3.5 h-3.5"></i>
-                <span>From Shopping List</span>
-              </button>
-              <button type="button" onclick="clearReceiptPasteText()" class="text-[11px] text-slate-400 hover:text-white">Clear</button>
-            </div>
-          </div>
-          <textarea id="walmart-paste-textarea" rows="5" placeholder="Paste order confirmation text, receipt lines, or list here:&#10;Great Value Boneless Skinless Chicken Breasts 3 lb $9.84&#10;Marketside Organic Baby Spinach 10 oz $2.98&#10;Great Value Jasmine Rice 5 lb $4.12&#10;Organic Whole Milk 1 gal $3.68&#10;Great Value Frozen Broccoli Florets 16 oz $1.48&#10;Bounty Paper Towels 6 rolls $12.50" class="w-full bg-dark-base border border-dark-border rounded-xl p-3 text-white font-mono text-xs focus:border-pastel-sky focus:outline-none"></textarea>
-        </div>
-
-        <!-- Quick Sample Store Presets -->
-        <div class="flex items-center justify-between flex-wrap gap-1.5 pt-0.5">
-          <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Try sample receipt:</span>
-          <div class="flex items-center gap-1.5 flex-wrap">
-            <button type="button" onclick="loadSampleWalmartReceipt('walmart')" class="px-2 py-1 rounded-lg bg-dark-base hover:bg-dark-border border border-pastel-sky/30 text-pastel-sky text-[11px] font-semibold transition">
-              🔵 Walmart
-            </button>
-            <button type="button" onclick="loadSampleWalmartReceipt('target')" class="px-2 py-1 rounded-lg bg-dark-base hover:bg-dark-border border border-rose-400/30 text-rose-300 text-[11px] font-semibold transition">
-              🔴 Target
-            </button>
-            <button type="button" onclick="loadSampleWalmartReceipt('kroger')" class="px-2 py-1 rounded-lg bg-dark-base hover:bg-dark-border border border-emerald-400/30 text-emerald-300 text-[11px] font-semibold transition">
-              🟢 Kroger / Grocery
-            </button>
-            <button type="button" onclick="loadSampleWalmartReceipt('generic')" class="px-2 py-1 rounded-lg bg-dark-base hover:bg-dark-border border border-pastel-lavender/30 text-pastel-lavender text-[11px] font-semibold transition">
-              📝 Simple List
-            </button>
-          </div>
-        </div>
-
-        <button type="button" onclick="parseIncomingGroceriesFromText()" class="w-full py-2.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs flex items-center justify-center gap-1.5 shadow-md hover:bg-sky-300 transition active:scale-[0.99]">
-          <i data-lucide="search" class="w-4 h-4"></i>
-          <span>Parse &amp; Review Incoming Groceries</span>
-        </button>
-      </div>
-
-      <!-- Photo Tab Body -->
-      <div id="walmart-tab-photo" class="hidden space-y-3 text-xs">
+      <!-- Photo Receipt Upload Body (Primary Streamlined Mode) -->
+      <div id="walmart-tab-photo" class="space-y-3 text-xs">
         <!-- Live Scanning Progress State -->
         <div id="walmart-receipt-scanning-loading" class="hidden p-4 rounded-2xl bg-dark-base border border-pastel-sky/50 flex items-center gap-3 animate-pulse">
           <div class="w-8 h-8 rounded-full border-2 border-pastel-sky border-t-transparent animate-spin shrink-0"></div>
@@ -6045,16 +5991,13 @@
         <div class="p-6 rounded-2xl bg-dark-base border-2 border-dashed border-dark-border text-center space-y-2.5">
           <i data-lucide="camera" class="w-8 h-8 text-pastel-sky mx-auto"></i>
           <p class="text-slate-300 font-semibold">Take a photo or upload receipt screenshot</p>
-          <p class="text-[11px] text-slate-400">Gemini 3.8 Flash Lite reads items, units, and storage in under 5 seconds</p>
-          <div class="flex items-center justify-center gap-2 pt-1 flex-wrap">
-            <label class="cursor-pointer px-4 py-2.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs hover:bg-sky-300 transition shadow-md shadow-pastel-sky/15 flex items-center gap-1.5">
+          <p class="text-[11px] text-slate-400">Gemini reads items, units, and storage in seconds with 1-by-1 approval</p>
+          <div class="flex items-center justify-center gap-2 pt-1">
+            <label class="cursor-pointer px-5 py-2.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs hover:bg-sky-300 transition shadow-md shadow-pastel-sky/15 flex items-center gap-2">
               <i data-lucide="upload" class="w-4 h-4"></i>
-              <span>Choose Photo / Camera</span>
+              <span>Choose Receipt Photo / Camera</span>
               <input type="file" accept="image/*" class="hidden" onchange="handleWalmartReceiptPhoto(event)">
             </label>
-            <button type="button" onclick="testSampleWalmartReceiptPhoto()" class="px-3 py-2.5 rounded-xl bg-dark-elevated border border-dark-border hover:border-pastel-sky text-slate-300 hover:text-white text-xs font-semibold transition">
-              🧪 Try Sample Receipt
-            </button>
           </div>
         </div>
       </div>
@@ -6106,13 +6049,7 @@
       </div>
 
       <div class="pt-2 flex justify-end border-t border-dark-border">
-        <div class="flex items-center justify-between w-full">
-          <button type="button" onclick="forceReloadLatestApp()" class="text-[11px] text-pastel-sky hover:underline flex items-center gap-1 font-semibold">
-            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
-            <span>Force Update App (Clear Cache)</span>
-          </button>
-          <button type="button" onclick="closeWalmartGroceryImportModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-300 text-xs font-semibold">Cancel</button>
-        </div>
+        <button type="button" onclick="closeWalmartGroceryImportModal()" class="px-5 py-2 rounded-xl bg-dark-base border border-dark-border hover:border-slate-500 text-slate-300 text-xs font-semibold transition">Cancel</button>
       </div>
     </div>
   </div>
@@ -6297,7 +6234,7 @@
   <script src="js/sync.js?v=48"></script>
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
-  <script src="js/kitchen.js?v=62"></script>
+  <script src="js/kitchen.js?v=63"></script>
   <script src="js/recipes.js?v=62"></script>
   <script src="js/shopping.js?v=58"></script>
   <script src="js/chef.js?v=58"></script>

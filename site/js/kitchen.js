@@ -2523,11 +2523,21 @@
 
       if (matches.length === 0) {
         box.innerHTML = `
-          <div class="p-2.5 text-xs text-slate-300 flex items-center justify-between gap-2">
-            <span>No match found for "${query}".</span>
-            <button type="button" onclick="openCustomFoodModal('${query.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs shrink-0">+ Create &amp; Save Food</button>
+          <div class="p-3 text-xs text-slate-300 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-slate-300 font-medium">No direct database match for "<strong class="text-white">${query}</strong>".</span>
+              <button type="button" onclick="openCustomFoodModal('${query.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs shrink-0">+ Create &amp; Save</button>
+            </div>
+            <div class="p-2 rounded-xl bg-dark-base border border-dark-border/80 flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 text-[11px] text-slate-400">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-pastel-lavender shrink-0"></i>
+                <span>Have a package or label? Take a photo to auto-estimate macros with AI</span>
+              </div>
+              <button type="button" onclick="openBarcodeScannerModal('pantry')" class="px-2 py-1 rounded-lg bg-dark-elevated hover:bg-slate-700 text-pastel-lavender border border-pastel-lavender/30 text-[10px] font-bold shrink-0">📷 Snap Label</button>
+            </div>
           </div>
         `;
+        if (window.lucide) lucide.createIcons();
         box.classList.remove('hidden');
         return;
       }

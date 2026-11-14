@@ -692,49 +692,51 @@
       }
 
       try {
-        const prompt = `You are an expert clinical dietitian and OCR engine for food packages, containers, and product labels.
+        const prompt = `You are an expert clinical dietitian and high-precision OCR engine for food packages, containers, and product nutrition labels.
 Analyze the provided photo(s). These photos may include:
 1. FRONT OF PACKAGE: Look closely for the exact product name, brand name, variety, and the net weight or volume printed on the front (e.g. "16 fl oz", "1 lb", "500 g", "12 oz", "1 gal", "32 fl oz", "6 count").
-2. NUTRITION FACTS PANEL / BACK OF PACKAGE: Look for calories, serving size, macronutrients, and vitamins/minerals.
+2. NUTRITION FACTS PANEL / BACK OF PACKAGE: Look for the exact "Serving size" (e.g. "2/3 cup (55g)", "1 pouch (150g)", "2 tbsp (30g)"), "Servings per container", calories, macronutrients, and vitamins/minerals.
 3. CURVED BOTTLES, JARS, TUBS & CANS: Text may wrap around curved surfaces or have glare. Account for perspective distortion and specular reflections.
 
-CRITICAL EXTRACTION GOALS:
-- Extract the exact product name and brand from the package front.
-- Extract the exact total package size/weight (e.g. 16, 32, 500, 1) and unit (e.g. "fl oz", "oz", "g", "lb", "ml", "items").
-- Extract the serving size description (e.g. "1 cup (240ml)", "2 tbsp (30g)", "1 pouch").
-- Extract COMPLETE nutritional values:
-  - Calories (kcal)
-  - Macronutrients: protein (g), carbs (g), fat (g), fiber (g), sugar (g), addedSugar (g), satFat (g), transFat (g), sodium (mg), cholesterol (mg), water (ml)
-  - All 13 Essential Vitamins: vitA (mcg RAE), vitC (mg), vitD (mcg), vitE (mg), vitK (mcg), vitB1 (thiamin mg), vitB2 (riboflavin mg), vitB3 (niacin mg), vitB5 (pantothenic acid mg), vitB6 (mg), vitB7 (biotin mcg), vitB9 (folate mcg DFE), vitB12 (mcg), choline (mg).
-  - All 14 Essential Minerals: potassium (mg), calcium (mg), iron (mg), magnesium (mg), zinc (mg), phosphorus (mg), chloride (mg), sulfur (mg), copper (mg), manganese (mg), selenium (mcg), iodine (mcg), chromium (mcg), molybdenum (mcg).
-- If any micronutrient is not explicitly printed on the label, estimate it clinically based on the food type and ingredients.
+CRITICAL RULES FOR NUTRITION EXTRACTION:
+- Serving Size: Extract the exact household serving portion text as "serving" (e.g. "2/3 cup", "2 tbsp", "1 pouch", "1 bar").
+- Serving Mass in Grams: Extract the exact metric weight in grams as "servingGrams" (e.g. if the label says "2/3 cup (55g)", servingGrams is 55. If "1 cup (240ml)", servingGrams is 240).
+- Servings per container: Extract the exact number of servings as "servingsPerContainer" (e.g. 8, 4, 2.5, 1).
+- Total package net weight/size from the front as "amount" (e.g. 16) and "unit" (e.g. "oz", "fl oz", "g", "lb", "items").
+- Storage: Intelligently infer optimal storage zone ("fridge", "frozen", "counter", or "shelf") based on whether this food item typically requires refrigeration, freezing, or pantry storage.
+- STRICT RULE ON NUTRIENTS & MICRONUTRIENTS (ZERO vs UNMENTIONED):
+  * If a nutrient is explicitly printed on the label with 0, 0g, 0mg, or 0% Daily Value (e.g. "Total Fat 0g", "Iron 0mg", "Trans Fat 0g", "Added Sugars 0g"): Return exactly 0.
+  * If a nutrient or vitamin/mineral is NOT mentioned on the label at all: Return null. DO NOT guess, fabricate, or estimate nutrients that are not printed on the label.
 
 Return ONLY a valid JSON object (no markdown, no backticks, no markdown code block fences):
 {
   "name": "Product Name and Variety",
   "brand": "Brand Name",
   "amount": 16,
-  "unit": "fl oz",
-  "serving_size": "8 fl oz (240ml)",
+  "unit": "oz",
+  "serving": "2/3 cup",
+  "servingGrams": 55,
+  "servingsPerContainer": 8,
   "category": "produce|protein|dairy|grains|frozen|condiments|snacks|beverages|pantry_staples",
   "storage": "fridge|frozen|counter|shelf",
   "nutrition": {
-    "kcal": 120,
-    "protein": 1,
-    "carbs": 28,
-    "fat": 0.2,
-    "fiber": 2,
-    "sugar": 24,
+    "kcal": 150,
+    "protein": 5,
+    "carbs": 27,
+    "fat": 2.5,
+    "fiber": 4,
+    "sugar": 12,
     "addedSugar": 0,
-    "satFat": 0,
+    "satFat": 0.5,
     "transFat": 0,
-    "sodium": 35,
+    "sodium": 140,
     "cholesterol": 0,
-    "water": 220,
+    "water": null,
     "micros": {
-      "vitA": 10, "vitC": 45, "vitD": 0, "vitE": 1.2, "vitK": 2.5,
-      "vitB1": 0.05, "vitB2": 0.04, "vitB3": 0.5, "vitB5": 0.3, "vitB6": 0.1, "vitB7": 1.0, "vitB9": 20, "vitB12": 0, "choline": 15,
-      "potassium": 450, "calcium": 25, "iron": 0.6, "magnesium": 20, "zinc": 0.3, "phosphorus": 30, "chloride": 40, "sulfur": 15, "copper": 0.1, "manganese": 0.2, "selenium": 1.0, "iodine": 5, "chromium": 2, "molybdenum": 3
+      "vitD": 2, "calcium": 260, "iron": 8, "potassium": 250,
+      "vitA": null, "vitC": null, "vitE": null, "vitK": null,
+      "vitB1": null, "vitB2": null, "vitB3": null, "vitB5": null, "vitB6": null, "vitB7": null, "vitB9": null, "vitB12": null, "choline": null,
+      "magnesium": null, "zinc": null, "phosphorus": null, "chloride": null, "sulfur": null, "copper": null, "manganese": null, "selenium": null, "iodine": null, "chromium": null, "molybdenum": null
     }
   }
 }`;
@@ -773,78 +775,95 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
         if (parsed && parsed.name) {
           const nut = parsed.nutrition || {};
           const parsedMicros = nut.micros || {};
-          const defaultMicros = estimateMicronutrientsForFood(
-            parsed.category || inferFoodCategory(parsed.name, ''),
-            nut.kcal || 0,
-            nut.protein || 0,
-            nut.carbs || 0,
-            nut.fat || 0,
-            parsed.name
-          );
 
-          const mergedMicros = {};
+          // DO NOT auto-estimate unmentioned micronutrients when scanning real packages!
+          // Only populate nutrients explicitly returned by OCR. Everything else remains null (empty).
+          const extractedMicros = {};
+          const verifiedNutrientsMap = {};
+
           Object.keys(DAILY_NUTRITION_STANDARDS).forEach(k => {
-            if (parsedMicros[k] != null && !isNaN(parseFloat(parsedMicros[k]))) {
-              mergedMicros[k] = parseFloat(parsedMicros[k]);
+            if (parsedMicros[k] !== undefined && parsedMicros[k] !== null && parsedMicros[k] !== '' && !isNaN(parseFloat(parsedMicros[k]))) {
+              extractedMicros[k] = parseFloat(parsedMicros[k]);
+              verifiedNutrientsMap[k] = true;
             } else {
-              mergedMicros[k] = defaultMicros[k] || 0;
+              extractedMicros[k] = null;
             }
           });
 
-          const completeNutrition = {
-            kcal: Math.round(nut.kcal || 0),
-            protein: parseFloat(nut.protein || 0),
-            carbs: parseFloat(nut.carbs || 0),
-            fat: parseFloat(nut.fat || 0),
-            fiber: parseFloat(nut.fiber || 0),
-            sugar: parseFloat(nut.sugar || 0),
-            addedSugar: parseFloat(nut.addedSugar || 0),
-            satFat: parseFloat(nut.satFat || 0),
-            transFat: parseFloat(nut.transFat || 0),
-            sodium: Math.round(nut.sodium || 0),
-            cholesterol: Math.round(nut.cholesterol || 0),
-            water: Math.round(nut.water || 0),
-            micros: mergedMicros
+          // Macronutrients & core values: explicitly check if present on label (including 0)
+          const parseNutrientVal = (val, key, isInt = false) => {
+            if (val !== undefined && val !== null && val !== '' && !isNaN(Number(val))) {
+              verifiedNutrientsMap[key] = true;
+              return isInt ? Math.round(Number(val)) : parseFloat(Number(val).toFixed(2));
+            }
+            return null;
           };
 
-          // Build explicit verification map for all extracted nutrients (including confirmed 0s)
-          const verifiedNutrientsMap = {};
-          ['kcal', 'protein', 'carbs', 'fat', 'fiber', 'sugar', 'addedSugar', 'satFat', 'transFat', 'sodium', 'cholesterol', 'water'].forEach(k => {
-            if (nut[k] !== undefined && nut[k] !== null && nut[k] !== '' && !isNaN(Number(nut[k]))) {
-              verifiedNutrientsMap[k] = true;
-            }
-          });
-          Object.keys(DAILY_NUTRITION_STANDARDS).forEach(k => {
-            if (parsedMicros[k] !== undefined && parsedMicros[k] !== null && parsedMicros[k] !== '' && !isNaN(Number(parsedMicros[k]))) {
-              verifiedNutrientsMap[k] = true;
-            }
-          });
+          const completeNutrition = {
+            kcal: parseNutrientVal(nut.kcal, 'kcal', true),
+            protein: parseNutrientVal(nut.protein, 'protein'),
+            carbs: parseNutrientVal(nut.carbs, 'carbs'),
+            fat: parseNutrientVal(nut.fat, 'fat'),
+            fiber: parseNutrientVal(nut.fiber, 'fiber'),
+            sugar: parseNutrientVal(nut.sugar, 'sugar'),
+            addedSugar: parseNutrientVal(nut.addedSugar, 'addedSugar'),
+            satFat: parseNutrientVal(nut.satFat, 'satFat'),
+            transFat: parseNutrientVal(nut.transFat, 'transFat'),
+            sodium: parseNutrientVal(nut.sodium, 'sodium', true),
+            cholesterol: parseNutrientVal(nut.cholesterol, 'cholesterol', true),
+            water: parseNutrientVal(nut.water, 'water', true),
+            micros: extractedMicros
+          };
+
+          const inferredCategory = parsed.category || inferFoodCategory(parsed.name, '');
+          const inferredStorage = inferStorageZone(inferredCategory, parsed.name);
+
+          // Extract exact serving portion and metric mass in grams directly from label
+          const servingPortion = parsed.serving || parsed.serving_size || '1 serving';
+          let servingMassGrams = null;
+          if (parsed.servingGrams != null && !isNaN(parseFloat(parsed.servingGrams))) {
+            servingMassGrams = parseFloat(parsed.servingGrams);
+          } else {
+            const gramsMatch = (servingPortion || '').match(/\(?\s*(\d+(?:\.\d+)?)\s*(?:g|grams?|ml)\b/i);
+            if (gramsMatch) servingMassGrams = parseFloat(gramsMatch[1]);
+          }
+
+          let servingsContainer = 1;
+          if (parsed.servingsPerContainer != null && !isNaN(parseFloat(parsed.servingsPerContainer))) {
+            servingsContainer = parseFloat(parsed.servingsPerContainer);
+          }
 
           const product = {
             name: parsed.name,
             brand: parsed.brand || 'Verified Food',
             amount: parseFloat(parsed.amount) || 1,
             unit: parsed.unit || 'items',
-            category: parsed.category || inferFoodCategory(parsed.name, ''),
-            storage: parsed.storage || inferStorageZone(parsed.category, parsed.name),
-            kcal: completeNutrition.kcal,
-            protein: completeNutrition.protein,
-            carbs: completeNutrition.carbs,
-            fat: completeNutrition.fat,
-            fiber: completeNutrition.fiber,
-            sugar: completeNutrition.sugar,
-            addedSugar: completeNutrition.addedSugar,
-            satFat: completeNutrition.satFat,
-            transFat: completeNutrition.transFat,
-            sodium: completeNutrition.sodium,
-            cholesterol: completeNutrition.cholesterol,
-            water: completeNutrition.water,
+            serving: servingPortion,
+            servingGrams: servingMassGrams || 100,
+            servingsPerContainer: servingsContainer,
+            category: inferredCategory,
+            storage: parsed.storage || inferredStorage,
+            kcal: completeNutrition.kcal != null ? completeNutrition.kcal : 0,
+            protein: completeNutrition.protein != null ? completeNutrition.protein : 0,
+            carbs: completeNutrition.carbs != null ? completeNutrition.carbs : 0,
+            fat: completeNutrition.fat != null ? completeNutrition.fat : 0,
+            fiber: completeNutrition.fiber != null ? completeNutrition.fiber : 0,
+            sugar: completeNutrition.sugar != null ? completeNutrition.sugar : 0,
+            addedSugar: completeNutrition.addedSugar != null ? completeNutrition.addedSugar : 0,
+            satFat: completeNutrition.satFat != null ? completeNutrition.satFat : 0,
+            transFat: completeNutrition.transFat != null ? completeNutrition.transFat : 0,
+            sodium: completeNutrition.sodium != null ? completeNutrition.sodium : 0,
+            cholesterol: completeNutrition.cholesterol != null ? completeNutrition.cholesterol : 0,
+            water: completeNutrition.water != null ? completeNutrition.water : 0,
             sourceBadge: '✨ AI Nutrition Label Verified',
             barcode: barcode || '',
             isVerified: true,
             verifiedNutrients: verifiedNutrientsMap,
             nutrition: {
               ...completeNutrition,
+              serving: servingPortion,
+              servingGrams: servingMassGrams || 100,
+              servingsPerContainer: servingsContainer,
               isVerified: true,
               verifiedNutrients: verifiedNutrientsMap
             }
@@ -860,6 +879,9 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
           if (context === 'manual') {
             openManualNutritionModal({
               ...product,
+              serving: servingPortion,
+              servingGrams: servingMassGrams || 100,
+              servingsPerContainer: servingsContainer,
               isVerified: true,
               verifiedNutrients: verifiedNutrientsMap,
               barcode: barcode || (document.getElementById('manual-nut-barcode') || {}).value || '',

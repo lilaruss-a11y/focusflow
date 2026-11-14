@@ -1312,10 +1312,20 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
 
 
 if (typeof window !== 'undefined') {
-  // Ensure camera hardware stops immediately if tab or app is minimized / backgrounded
+  // Ensure camera hardware stops when page is fully hidden or closed
+  // On iOS, system permission prompts temporarily trigger document.visibilitychange,
+  // so we use a small debounce to avoid killing the camera while the user is granting permission!
+  let cameraVisibilityTimer = null;
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      stopBarcodeCamera();
+      cameraVisibilityTimer = setTimeout(() => {
+        stopBarcodeCamera();
+      }, 2500);
+    } else {
+      if (cameraVisibilityTimer) {
+        clearTimeout(cameraVisibilityTimer);
+        cameraVisibilityTimer = null;
+      }
     }
   });
   window.addEventListener('pagehide', () => {

@@ -3153,22 +3153,40 @@
     // AI DISH & LEFTOVERS ESTIMATOR ENGINE
     // ==============================================
     window._stagedAiDishPhoto = null;
+    window._stagedAiDishClarifications = null;
+
+    function setAiDishPortionQuickPill(text) {
+      const input = document.getElementById('ai-dish-portion-input');
+      if (input) {
+        input.value = text;
+        input.focus();
+      }
+    }
 
     function openAiDishEstimatorModal(dishName = '') {
       const modal = document.getElementById('ai-dish-estimator-modal');
       const nameInput = document.getElementById('ai-dish-name-input');
       const originInput = document.getElementById('ai-dish-origin-input');
+      const portionInput = document.getElementById('ai-dish-portion-input');
       const ingInput = document.getElementById('ai-dish-ingredients-input');
       const destHint = document.getElementById('ai-dish-dest-hint');
       const reviewSection = document.getElementById('ai-dish-review-section');
+      const clarifyingCard = document.getElementById('ai-dish-clarifying-card');
       const saveBtn = document.getElementById('btn-save-ai-dish-review');
       const estBtn = document.getElementById('btn-run-ai-dish-estimate');
       const q = dishName || state._currentKitchenSearchQuery || '';
 
       if (nameInput) nameInput.value = q;
       if (originInput) originInput.value = '';
+      if (portionInput) portionInput.value = '';
       if (ingInput) ingInput.value = '';
 
+      // Reset richness to standard
+      const standardRadio = document.querySelector('input[name="ai-dish-richness"][value="standard"]');
+      if (standardRadio) standardRadio.checked = true;
+
+      window._stagedAiDishClarifications = null;
+      if (clarifyingCard) clarifyingCard.classList.add('hidden');
       if (reviewSection) reviewSection.classList.add('hidden');
       if (saveBtn) saveBtn.classList.add('hidden');
       if (estBtn) {
@@ -3192,10 +3210,13 @@
     function closeAiDishEstimatorModal() {
       const modal = document.getElementById('ai-dish-estimator-modal');
       const reviewSection = document.getElementById('ai-dish-review-section');
+      const clarifyingCard = document.getElementById('ai-dish-clarifying-card');
       const saveBtn = document.getElementById('btn-save-ai-dish-review');
       const estBtn = document.getElementById('btn-run-ai-dish-estimate');
 
+      window._stagedAiDishClarifications = null;
       if (modal) modal.classList.add('hidden');
+      if (clarifyingCard) clarifyingCard.classList.add('hidden');
       if (reviewSection) reviewSection.classList.add('hidden');
       if (saveBtn) saveBtn.classList.add('hidden');
       if (estBtn) {
@@ -3255,17 +3276,81 @@
     // State for staged AI dish estimate awaiting user confirmation
     window._stagedAiDishEstimate = null;
 
-    async function runAiDishEstimation() {
+    function renderAiDishClarifyingQuestions(questions) {
+      const card = document.getElementById('ai-dish-clarifying-card');
+      const list = document.getElementById('ai-dish-clarifying-list');
+      if (!card || !list) return;
+
+      list.innerHTML = '';
+      window._stagedAiDishClarifications = { questions, answers: {} };
+
+      questions.forEach((q, idx) => {
+        const qDiv = document.createElement('div');
+        qDiv.className = 'p-2.5 rounded-xl bg-dark-elevated border border-dark-border space-y-1.5';
+
+        const label = document.createElement('div');
+        label.className = 'text-[11px] font-bold text-white flex items-center justify-between';
+        label.innerHTML = `<span>${q.label || q.question}</span><span id="clarify-choice-badge-${idx}" class="text-[10px] text-pastel-sky font-normal">Select an option</span>`;
+        qDiv.appendChild(label);
+
+        const optsDiv = document.createElement('div');
+        optsDiv.className = 'flex flex-wrap gap-1.5';
+
+        (q.options || []).forEach(opt => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'px-2.5 py-1 rounded-lg bg-dark-base border border-dark-border hover:border-pastel-sky text-slate-200 text-[10.5px] transition clarify-opt-btn';
+          btn.textContent = opt;
+          btn.onclick = () => {
+            // Set choice
+            window._stagedAiDishClarifications.answers[q.id || `q_${idx}`] = opt;
+            // Highlight selected button
+            optsDiv.querySelectorAll('.clarify-opt-btn').forEach(b => {
+              b.classList.remove('bg-pastel-sky/20', 'border-pastel-sky', 'text-pastel-sky', 'font-bold');
+              b.classList.add('bg-dark-base', 'border-dark-border', 'text-slate-200');
+            });
+            btn.classList.add('bg-pastel-sky/20', 'border-pastel-sky', 'text-pastel-sky', 'font-bold');
+            btn.classList.remove('bg-dark-base', 'border-dark-border', 'text-slate-200');
+            const badge = document.getElementById(`clarify-choice-badge-${idx}`);
+            if (badge) badge.textContent = `✓ ${opt}`;
+          };
+          optsDiv.appendChild(btn);
+        });
+
+        qDiv.appendChild(optsDiv);
+        list.appendChild(qDiv);
+      });
+
+      card.classList.remove('hidden');
+    }
+
+    async function submitAiDishClarifications(skip = false) {
+      const card = document.getElementById('ai-dish-clarifying-card');
+      if (card) card.classList.add('hidden');
+
+      let clarificationSummary = '';
+      if (!skip && window._stagedAiDishClarifications && window._stagedAiDishClarifications.answers) {
+        const answers = window._stagedAiDishClarifications.answers;
+        const parts = Object.entries(answers).map(([k, v]) => `${k}: ${v}`);
+        if (parts.length > 0) {
+          clarificationSummary = parts.join(', ');
+        }
+      }
+
+      await runAiDishEstimation(clarificationSummary);
+    }
+
+    async function runAiDishEstimation(clarificationDetails = '') {
       const nameInput = document.getElementById('ai-dish-name-input');
       const originInput = document.getElementById('ai-dish-origin-input');
-      const amountInput = document.getElementById('ai-dish-amount-input');
-      const unitInput = document.getElementById('ai-dish-unit-input');
+      const portionInput = document.getElementById('ai-dish-portion-input');
       const categoryInput = document.getElementById('ai-dish-category-input');
       const storageInput = document.getElementById('ai-dish-storage-input');
       const ingredientsInput = document.getElementById('ai-dish-ingredients-input');
       const statusBox = document.getElementById('ai-dish-estimating-status');
       const btn = document.getElementById('btn-run-ai-dish-estimate');
       const reviewSection = document.getElementById('ai-dish-review-section');
+      const clarifyingCard = document.getElementById('ai-dish-clarifying-card');
       const saveBtn = document.getElementById('btn-save-ai-dish-review');
 
       const dishName = nameInput ? nameInput.value.trim() : '';
@@ -3275,75 +3360,94 @@
       }
 
       const origin = originInput ? originInput.value.trim() : 'Restaurant / Homemade';
-      const amount = (amountInput && !isNaN(parseFloat(amountInput.value))) ? parseFloat(amountInput.value) : 1;
-      const unit = unitInput ? unitInput.value : 'container';
+      const portion = (portionInput && portionInput.value.trim()) ? portionInput.value.trim() : '1 serving';
       const category = categoryInput ? categoryInput.value : 'leftovers';
       const storage = storageInput ? storageInput.value : 'fridge-main';
       const ingredients = ingredientsInput ? ingredientsInput.value.trim() : '';
+
+      const richnessRadio = document.querySelector('input[name="ai-dish-richness"]:checked');
+      const richness = richnessRadio ? richnessRadio.value : 'standard';
 
       if (statusBox) statusBox.classList.remove('hidden');
       if (btn) btn.disabled = true;
 
       // Construct Gemini prompt synthesizing all user clues in consort
-      const prompt = `You are an expert clinical dietitian analyzing a prepared meal or leftover dish.
+      const prompt = `You are an expert clinical dietitian and food scientist analyzing a prepared meal or leftover dish.
 Estimate complete nutritional facts for this dish by considering all provided clues in consort:
 - Dish Name: "${dishName}"
 - Origin/Establishment: "${origin || 'Unknown origin'}"
-- Portion/Amount: ${amount} ${unit}
+- Portion/Amount: "${portion}"
+- Preparation/Richness: "${richness}" (light = minimal oils/steamed; standard = regular restaurant/home prep; rich = fried, butter-basted, heavy cream or extra cheese)
 - Known Ingredients: "${ingredients || 'Standard recipe components'}"
+${clarificationDetails ? `- User Clarifications: "${clarificationDetails}"` : ''}
 - Food Photo: ${window._stagedAiDishPhoto ? 'Visual appearance, portion mass, sauce density, and ingredients shown in attached photo' : 'No photo provided'}
 
-Respond strictly with valid JSON (no markdown formatting, no code fence) in this schema:
+RULES:
+1. RESTAURANT CHAINS & BRANDS: If the origin or dish name mentions a specific restaurant chain (e.g. "Little Caesars", "Domino's", "Chipotle", "Panda Express", "McDonald's", etc.):
+   - Reference published chain nutrition facts (e.g. for Little Caesars, calculate strictly per specified slice or piece, DO NOT calculate an entire 8-slice large pizza unless explicitly requested).
+2. PORTION ACCURACY: Calculate strictly for the exact stated portion ("${portion}"). Never assume an entire restaurant party tray or multi-serving order if the user specified slices, bowls, or plates.
+3. CLARIFYING QUESTIONS:
+   - If NO photo is attached, NO previous user clarifications were provided (user clarifications are currently: "${clarificationDetails}"), AND key ambiguities make a calorie estimate vary wildly (e.g., user just says "Little Caesars Pizza" without specifying crust or slice count, or "Chicken Curry" without knowing if rice or naan is included):
+   - You may ask 1 to 3 quick clarifying multiple-choice questions to resolve ambiguity.
+   - If asking questions, respond strictly with JSON:
+     {
+       "needsClarification": true,
+       "questions": [
+         { "id": "crust", "label": "Crust Style", "options": ["Classic Round", "Thin Crust", "Deep Dish / Stuffed"] },
+         { "id": "slices", "label": "Number of Slices", "options": ["1 slice", "2 slices", "3 slices", "Half pizza (4 slices)"] }
+       ]
+     }
+4. When sufficient details exist (or if clarifications are provided), return full nutrition strictly in this JSON schema (no markdown, no code fence):
 {
   "name": "${dishName}",
   "category": "${category}",
   "storage": "${storage}",
-  "serving": "${amount} ${unit}",
-  "servingGrams": 400,
-  "kcal": 650,
-  "protein": 34,
-  "carbs": 58,
-  "fat": 28,
-  "fiber": 5,
-  "sugar": 8,
-  "satFat": 9,
-  "sodium": 890,
-  "water": 260,
+  "serving": "${portion}",
+  "servingGrams": 280,
+  "kcal": 550,
+  "protein": 24,
+  "carbs": 55,
+  "fat": 22,
+  "fiber": 4,
+  "sugar": 6,
+  "satFat": 7,
+  "sodium": 820,
+  "water": 180,
   "micros": {
-    "vitA": 150,
-    "vitC": 12,
-    "vitD": 1.5,
-    "vitE": 2.0,
-    "vitK": 25,
-    "vitB1": 0.3,
-    "vitB2": 0.4,
-    "vitB3": 5.5,
-    "vitB5": 1.2,
-    "vitB6": 0.6,
-    "vitB7": 6.0,
-    "vitB9": 65,
-    "vitB12": 1.2,
-    "choline": 95,
-    "potassium": 650,
-    "calcium": 120,
-    "iron": 3.2,
-    "magnesium": 55,
-    "zinc": 2.8,
-    "phosphorus": 260,
-    "chloride": 450,
-    "sulfur": 180,
-    "copper": 0.3,
-    "manganese": 0.6,
-    "selenium": 22,
-    "iodine": 35,
-    "chromium": 8,
-    "molybdenum": 12
+    "vitA": 120,
+    "vitC": 8,
+    "vitD": 1.0,
+    "vitE": 1.5,
+    "vitK": 20,
+    "vitB1": 0.25,
+    "vitB2": 0.35,
+    "vitB3": 4.5,
+    "vitB5": 1.0,
+    "vitB6": 0.5,
+    "vitB7": 5.0,
+    "vitB9": 55,
+    "vitB12": 1.0,
+    "choline": 80,
+    "potassium": 550,
+    "calcium": 180,
+    "iron": 2.8,
+    "magnesium": 45,
+    "zinc": 2.4,
+    "phosphorus": 220,
+    "chloride": 400,
+    "sulfur": 150,
+    "copper": 0.25,
+    "manganese": 0.5,
+    "selenium": 20,
+    "iodine": 30,
+    "chromium": 6,
+    "molybdenum": 10
   },
-  "confidenceNotes": "Estimated for ${amount} ${unit} from ${origin}"
+  "confidenceNotes": "Estimated for ${portion} from ${origin}"
 }`;
 
-      let estKcal = 550, estProt = 28, estCarbs = 45, estFat = 20, estFiber = 4, estSodium = 750, servingGrams = 350;
-      let estSugar = 6, estSatFat = 5, estWater = 240;
+      let estKcal = 550, estProt = 28, estCarbs = 45, estFat = 20, estFiber = 4, estSodium = 750, servingGrams = 280;
+      let estSugar = 6, estSatFat = 5, estWater = 180;
       let parsed = null;
 
       try {
@@ -3372,6 +3476,14 @@ Respond strictly with valid JSON (no markdown formatting, no code fence) in this
         console.warn("Gemini Dish Estimator fallback:", err);
       }
 
+      // Check if Gemini requested clarifying questions
+      if (parsed && parsed.needsClarification && Array.isArray(parsed.questions) && parsed.questions.length > 0) {
+        if (statusBox) statusBox.classList.add('hidden');
+        if (btn) btn.disabled = false;
+        renderAiDishClarifyingQuestions(parsed.questions);
+        return;
+      }
+
       if (parsed) {
         estKcal = Math.round(parsed.kcal || estKcal);
         estProt = parseFloat(parsed.protein || estProt);
@@ -3384,13 +3496,45 @@ Respond strictly with valid JSON (no markdown formatting, no code fence) in this
         estWater = Math.round(parsed.water || estWater);
         servingGrams = Math.round(parsed.servingGrams || servingGrams);
       } else {
-        // Clinical intelligent estimation fallback based on ingredients and origin
+        // Clinical intelligent estimation fallback based on ingredients, origin, richness, and portion
+        let multiplier = 1.0;
+        const portionLower = portion.toLowerCase();
+        const numMatch = portionLower.match(/(\d+(\.\d+)?)/);
+        if (numMatch) {
+          const n = parseFloat(numMatch[1]);
+          if (/slice/i.test(portionLower)) multiplier = n * 0.45;
+          else if (/bowl/i.test(portionLower)) multiplier = n * 1.0;
+          else if (/cup/i.test(portionLower)) multiplier = n * 0.5;
+          else if (/plate/i.test(portionLower)) multiplier = n * 1.1;
+          else if (/half/i.test(portionLower)) multiplier = 0.5;
+          else multiplier = Math.max(0.3, Math.min(n, 3.0));
+        }
+
+        const richnessMult = (richness === 'rich') ? 1.25 : (richness === 'light' ? 0.8 : 1.0);
+
         if (/curry|tikka|masala|butter/i.test(dishName + ' ' + ingredients)) {
-          estKcal = 680 * amount; estProt = 35 * amount; estCarbs = 55 * amount; estFat = 30 * amount;
+          estKcal = Math.round(580 * multiplier * richnessMult);
+          estProt = Math.round(32 * multiplier);
+          estCarbs = Math.round(48 * multiplier);
+          estFat = Math.round(26 * multiplier * richnessMult);
+        } else if (/pizza/i.test(dishName + ' ' + origin)) {
+          // Per slice baseline ~270 kcal
+          const slices = (/slice/i.test(portionLower) && numMatch) ? parseFloat(numMatch[1]) : 2;
+          estKcal = Math.round(270 * slices);
+          estProt = Math.round(12 * slices);
+          estCarbs = Math.round(31 * slices);
+          estFat = Math.round(11 * slices * richnessMult);
+          servingGrams = Math.round(105 * slices);
         } else if (/pasta|noodle|rice|pad thai/i.test(dishName + ' ' + ingredients)) {
-          estKcal = 620 * amount; estProt = 22 * amount; estCarbs = 75 * amount; estFat = 22 * amount;
+          estKcal = Math.round(520 * multiplier * richnessMult);
+          estProt = Math.round(20 * multiplier);
+          estCarbs = Math.round(65 * multiplier);
+          estFat = Math.round(18 * multiplier * richnessMult);
         } else if (/salad|bowl/i.test(dishName + ' ' + ingredients)) {
-          estKcal = 420 * amount; estProt = 26 * amount; estCarbs = 28 * amount; estFat = 18 * amount;
+          estKcal = Math.round(380 * multiplier * richnessMult);
+          estProt = Math.round(24 * multiplier);
+          estCarbs = Math.round(24 * multiplier);
+          estFat = Math.round(16 * multiplier * richnessMult);
         }
         estSugar = Math.round(estCarbs * 0.15);
         estSatFat = Math.round(estFat * 0.35);
@@ -3426,8 +3570,7 @@ Respond strictly with valid JSON (no markdown formatting, no code fence) in this
         dishName,
         origin,
         displayName,
-        amount,
-        unit,
+        portion,
         category,
         storage,
         servingGrams,
@@ -3465,6 +3608,7 @@ Respond strictly with valid JSON (no markdown formatting, no code fence) in this
       if (btn) btn.disabled = false;
 
       // Reveal review section and Save button
+      if (clarifyingCard) clarifyingCard.classList.add('hidden');
       if (reviewSection) reviewSection.classList.remove('hidden');
       if (saveBtn) saveBtn.classList.remove('hidden');
       if (btn) btn.classList.add('hidden');
@@ -3515,7 +3659,7 @@ Respond strictly with valid JSON (no markdown formatting, no code fence) in this
         state.shoppingList.push({
           id: `shop-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
           name: staged.displayName,
-          quantity: `${staged.amount} ${staged.unit}`,
+          quantity: staged.portion || '1 serving',
           category: category || 'other',
           checked: false,
           source: `AI Dish Estimation (${staged.origin})`
@@ -3532,9 +3676,9 @@ Respond strictly with valid JSON (no markdown formatting, no code fence) in this
           name: staged.displayName,
           category: category,
           storage: storage,
-          amount: staged.amount,
-          unit: staged.unit,
-          serving: `${staged.amount} ${staged.unit}`,
+          amount: 1,
+          unit: staged.portion || 'serving',
+          serving: staged.portion || '1 serving',
           servingGrams: servingGrams,
           dateAdded: new Date().toISOString().split('T')[0],
           kcal: kcal,
@@ -3558,7 +3702,7 @@ Respond strictly with valid JSON (no markdown formatting, no code fence) in this
             satFat: satFat,
             sodium: sodium,
             water: water,
-            serving: `${staged.amount} ${staged.unit}`,
+            serving: staged.portion || '1 serving',
             servingGrams: servingGrams,
             verifiedNutrients: {},
             micros: editedMicros
@@ -3584,4 +3728,7 @@ Respond strictly with valid JSON (no markdown formatting, no code fence) in this
       window.renderPantryDetailMacroDonut = renderPantryDetailMacroDonut;
       window.confirmAndSaveAiDish = confirmAndSaveAiDish;
       window.openNutrientBreakdownForSearchResult = openNutrientBreakdownForSearchResult;
+      window.setAiDishPortionQuickPill = setAiDishPortionQuickPill;
+      window.submitAiDishClarifications = submitAiDishClarifications;
+      window.renderAiDishClarifyingQuestions = renderAiDishClarifyingQuestions;
     }

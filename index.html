@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=69">
+  <link rel="stylesheet" href="css/styles.css?v=75">
   <script>
     function resetViewportZoom() {
       try {
@@ -6437,25 +6437,46 @@
           </div>
         </div>
 
-        <!-- 2. Portion & Amount -->
+        <!-- 2. Portion & Amount (Natural Free-Form Description + Quick Pills) -->
         <div class="p-3 rounded-2xl bg-dark-base border border-dark-border space-y-2">
-          <span class="font-bold text-white block text-[11px]">Portion &amp; Quantity:</span>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="text-[10.5px] text-slate-400 block mb-0.5">Estimated Amount / Portion</label>
-              <input type="number" id="ai-dish-amount-input" step="any" min="0.1" value="1" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-mint">
-            </div>
-            <div>
-              <label class="text-[10.5px] text-slate-400 block mb-0.5">Unit</label>
-              <select id="ai-dish-unit-input" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs focus:border-pastel-mint">
-                <option value="container" selected>Takeout Container</option>
-                <option value="plate">Plate / Serving</option>
-                <option value="bowl">Bowl</option>
-                <option value="cups">Cup(s)</option>
-                <option value="grams">Grams (g)</option>
-                <option value="oz">Ounces (oz)</option>
-              </select>
-            </div>
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white block text-[11px]">Portion &amp; Quantity:</span>
+            <span class="text-[10px] text-pastel-lavender">Describe naturally</span>
+          </div>
+          <input type="text" id="ai-dish-portion-input" placeholder="e.g. 2 slices, 1 medium bowl, 3 tacos, 1 chicken breast" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-mint">
+          <!-- Quick pill suggestions -->
+          <div class="flex items-center flex-wrap gap-1.5 pt-1">
+            <span class="text-[10px] text-slate-400">Suggestions:</span>
+            <button type="button" onclick="setAiDishPortionQuickPill('2 slices')" class="px-2 py-0.5 rounded-lg bg-dark-base hover:bg-slate-700 border border-dark-border text-slate-300 text-[10px] transition">2 slices</button>
+            <button type="button" onclick="setAiDishPortionQuickPill('1 medium bowl')" class="px-2 py-0.5 rounded-lg bg-dark-base hover:bg-slate-700 border border-dark-border text-slate-300 text-[10px] transition">1 bowl</button>
+            <button type="button" onclick="setAiDishPortionQuickPill('1 plate / dinner portion')" class="px-2 py-0.5 rounded-lg bg-dark-base hover:bg-slate-700 border border-dark-border text-slate-300 text-[10px] transition">1 plate</button>
+            <button type="button" onclick="setAiDishPortionQuickPill('1 cup')" class="px-2 py-0.5 rounded-lg bg-dark-base hover:bg-slate-700 border border-dark-border text-slate-300 text-[10px] transition">1 cup</button>
+            <button type="button" onclick="setAiDishPortionQuickPill('half container')" class="px-2 py-0.5 rounded-lg bg-dark-base hover:bg-slate-700 border border-dark-border text-slate-300 text-[10px] transition">half container</button>
+          </div>
+        </div>
+
+        <!-- 2b. Cooking Richness & Oil Level -->
+        <div class="p-3 rounded-2xl bg-dark-base border border-dark-border space-y-1.5">
+          <label class="block text-slate-300 font-semibold text-[11px]">Preparation / Oil Richness</label>
+          <div class="grid grid-cols-3 gap-1.5 text-center">
+            <label class="cursor-pointer p-2 rounded-xl bg-dark-elevated border border-dark-border hover:border-pastel-mint flex flex-col items-center gap-1 text-[10px] text-slate-300 has-[:checked]:border-pastel-mint has-[:checked]:bg-pastel-mint/15 has-[:checked]:text-pastel-mint transition">
+              <input type="radio" name="ai-dish-richness" value="light" class="hidden">
+              <span class="text-sm">🥗</span>
+              <span class="font-bold leading-tight">Light</span>
+              <span class="text-[9px] text-slate-400">Steamed / low oil</span>
+            </label>
+            <label class="cursor-pointer p-2 rounded-xl bg-dark-elevated border border-dark-border hover:border-pastel-lavender flex flex-col items-center gap-1 text-[10px] text-slate-300 has-[:checked]:border-pastel-lavender has-[:checked]:bg-pastel-lavender/15 has-[:checked]:text-pastel-lavender transition">
+              <input type="radio" name="ai-dish-richness" value="standard" checked class="hidden">
+              <span class="text-sm">🍲</span>
+              <span class="font-bold leading-tight">Standard</span>
+              <span class="text-[9px] text-slate-400">Normal cooking</span>
+            </label>
+            <label class="cursor-pointer p-2 rounded-xl bg-dark-elevated border border-dark-border hover:border-pastel-coral flex flex-col items-center gap-1 text-[10px] text-slate-300 has-[:checked]:border-pastel-coral has-[:checked]:bg-pastel-coral/15 has-[:checked]:text-pastel-coral transition">
+              <input type="radio" name="ai-dish-richness" value="rich" class="hidden">
+              <span class="text-sm">🧈</span>
+              <span class="font-bold leading-tight">Rich</span>
+              <span class="text-[9px] text-slate-400">Fried / creamy / buttery</span>
+            </label>
           </div>
         </div>
 
@@ -6519,6 +6540,24 @@
         <div class="flex items-center justify-between p-2.5 rounded-xl bg-dark-base border border-dark-border text-[11px]">
           <span class="text-slate-400">Destination:</span>
           <span class="text-pastel-mint font-bold" id="ai-dish-dest-hint">🥫 Pantry (Leftovers / Fridge)</span>
+        </div>
+
+        <!-- Clarifying Questions Drawer/Card (Shown when AI detects ambiguities) -->
+        <div id="ai-dish-clarifying-card" class="hidden p-3.5 rounded-2xl bg-dark-base border border-pastel-sky/50 space-y-3">
+          <div class="flex items-center justify-between border-b border-dark-border pb-2">
+            <div class="flex items-center gap-1.5 text-pastel-sky">
+              <span class="text-base">🤔</span>
+              <span class="font-bold text-xs text-white">Helpful Quick Clarifications</span>
+            </div>
+            <span class="text-[10px] text-slate-400">Tap answers for high accuracy</span>
+          </div>
+          <div id="ai-dish-clarifying-list" class="space-y-2.5">
+            <!-- Dynamic question items rendered here -->
+          </div>
+          <div class="pt-1 flex items-center justify-end gap-2">
+            <button type="button" onclick="submitAiDishClarifications(true)" class="px-3 py-1.5 rounded-xl bg-dark-elevated text-slate-400 text-[10.5px] hover:text-white transition">Skip Questions</button>
+            <button type="button" onclick="submitAiDishClarifications(false)" class="px-4 py-1.5 rounded-xl bg-pastel-sky text-dark-base font-extrabold text-[11px] shadow hover:bg-sky-300 transition">Continue with Answers</button>
+          </div>
         </div>
 
         <!-- Live Estimator Progress State -->

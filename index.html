@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=75">
+  <link rel="stylesheet" href="css/styles.css?v=76">
   <script>
     function resetViewportZoom() {
       try {
@@ -692,39 +692,38 @@
     <!-- ============================================== -->
     <!-- TAB 4: RECIPE BOOK & KITCHEN CODEX             -->
     <!-- ============================================== -->
-    <div id="view-recipes" class="hidden space-y-6">
-      <div class="bg-dark-surface/90 border border-dark-border rounded-2xl p-6 shadow-xl">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-dark-border pb-5">
-          <div>
-            <div class="flex items-center gap-2">
-              <h2 class="text-xl font-bold text-slate-100">Recipe Codex &amp; Cookbooks</h2>
-              <span class="text-xs px-2.5 py-0.5 rounded-full bg-pastel-coral/20 text-pastel-coral border border-pastel-coral/30 font-medium">Personal &amp; Shared Lore</span>
-            </div>
-            <p class="text-xs text-slate-400 mt-1">Organize your favorite culinary staples into thematic cookbooks, browse formats with one tap, or use multi-filter search.</p>
-          </div>
+    <div id="view-recipes" class="hidden space-y-4">
+      <div class="bg-dark-surface/90 border border-dark-border rounded-2xl p-4 sm:p-5 shadow-xl">
+        <!-- Compact Header & View Controls -->
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-dark-border/60 pb-3">
           <div class="flex items-center gap-2">
-            <button type="button" onclick="openAddRecipeModal()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-pastel-coral hover:bg-rose-300 text-dark-base font-bold text-xs shadow-lg shadow-pastel-coral/20 transition">
-              <i data-lucide="plus" class="w-4 h-4"></i>
-              <span>Add New Recipe</span>
-            </button>
+            <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+              <i data-lucide="book-open" class="w-5 h-5 text-pastel-coral"></i>
+              <span>Recipe Books</span>
+            </h2>
           </div>
-        </div>
 
-        <!-- Recipe Section View Toggle: Cookbooks vs Multi-Filter Codex -->
-        <div class="pt-4 flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center p-1 rounded-xl bg-dark-base border border-dark-border gap-1 text-xs">
-            <button type="button" onclick="switchRecipeSectionView('cookbooks')" id="tab-recipe-cookbooks" class="px-3.5 py-1.5 rounded-lg font-bold bg-pastel-coral text-dark-base transition flex items-center gap-1.5 shadow-sm">
-              <i data-lucide="book" class="w-3.5 h-3.5"></i>
-              <span>My Cookbooks</span>
-            </button>
-            <button type="button" onclick="switchRecipeSectionView('codex')" id="tab-recipe-codex" class="px-3.5 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white transition flex items-center gap-1.5">
-              <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
-              <span>Multi-Filter Codex</span>
+          <!-- View Toggle + Add Recipe Button in Single Slim Row -->
+          <div class="flex items-center gap-2 ml-auto">
+            <div class="flex items-center p-1 rounded-xl bg-dark-base border border-dark-border gap-1 text-xs">
+              <button type="button" onclick="switchRecipeSectionView('cookbooks')" id="tab-recipe-cookbooks" class="px-3 py-1 rounded-lg font-bold bg-pastel-coral text-dark-base transition flex items-center gap-1.5 shadow-sm">
+                <i data-lucide="book" class="w-3.5 h-3.5"></i>
+                <span>Cookbooks</span>
+              </button>
+              <button type="button" onclick="switchRecipeSectionView('codex')" id="tab-recipe-codex" class="px-3 py-1 rounded-lg font-medium text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
+                <span>Codex</span>
+              </button>
+            </div>
+
+            <button type="button" onclick="openAddRecipeModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pastel-coral hover:bg-rose-300 text-dark-base font-bold text-xs shadow-md shadow-pastel-coral/20 transition">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span class="hidden sm:inline">Add Recipe</span>
             </button>
           </div>
 
           <!-- Active Filter Pill Summary -->
-          <div id="recipe-active-filters-summary" class="hidden flex items-center gap-1.5 text-[11px] text-slate-400">
+          <div id="recipe-active-filters-summary" class="hidden w-full flex items-center gap-1.5 text-[11px] text-slate-400 pt-1">
             <span>Filters:</span>
             <div id="recipe-active-chips" class="flex flex-wrap gap-1"></div>
             <button type="button" onclick="clearAllRecipeFilters()" class="text-pastel-coral underline ml-1 hover:text-white">Clear All</button>
@@ -732,9 +731,9 @@
         </div>
 
         <!-- VIEW A: THEMATIC COOKBOOKS SHELF -->
-        <div id="recipe-view-cookbooks" class="pt-5 space-y-4">
+        <div id="recipe-view-cookbooks" class="pt-3 space-y-3">
           <!-- Breadcrumb inside Cookbooks -->
-          <div id="cookbook-breadcrumb" class="hidden flex items-center gap-2 text-xs">
+          <div id="cookbook-breadcrumb" class="hidden flex items-center gap-2 text-xs pb-1">
             <button type="button" onclick="backToAllCookbooks()" class="text-pastel-coral hover:underline font-semibold flex items-center gap-1">
               <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
               <span>All Cookbooks</span>
@@ -747,8 +746,8 @@
             </span>
           </div>
 
-          <!-- Cookbooks Grid -->
-          <div id="cookbooks-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          <!-- Cookbooks Grid: 2 columns everywhere -->
+          <div id="cookbooks-grid" class="grid grid-cols-2 md:grid-cols-4 gap-3">
             <!-- Populated dynamically: ADHD Staples, Friends & Family, Campus Meals, Low Energy -->
           </div>
 

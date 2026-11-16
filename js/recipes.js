@@ -90,20 +90,22 @@
         state.cookbooks.forEach(cb => {
           const count = state.recipes.filter(r => cb.origin === 'all' || r.origin === cb.origin).length;
           const card = document.createElement('div');
-          card.className = "p-4 rounded-2xl bg-dark-base border border-dark-border hover:border-pastel-coral/60 cursor-pointer transition transform hover:-translate-y-0.5 space-y-2 group shadow-md";
+          card.className = "p-3 sm:p-4 rounded-2xl bg-dark-base border border-dark-border hover:border-pastel-coral/60 cursor-pointer transition transform hover:-translate-y-0.5 flex flex-col justify-between group shadow-md text-left";
           card.onclick = () => openCookbook(cb.id);
           card.innerHTML = `
-            <div class="flex items-center justify-between">
-              <span class="text-2xl">${cb.icon}</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-dark-elevated text-slate-300 font-bold group-hover:text-pastel-coral">${count} recipes</span>
-            </div>
             <div>
-              <h3 class="font-bold text-white text-sm group-hover:text-pastel-coral transition">${cb.title}</h3>
-              <p class="text-[11px] text-slate-400 mt-1 line-clamp-2">${cb.desc}</p>
+              <div class="flex items-start justify-between gap-1.5 mb-2.5">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-dark-elevated border border-dark-border/80 flex items-center justify-center text-lg sm:text-xl shadow-inner group-hover:border-pastel-coral/40 group-hover:bg-pastel-coral/10 transition">
+                  ${cb.icon}
+                </div>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-dark-elevated text-slate-300 font-bold group-hover:text-pastel-coral whitespace-nowrap">${count}</span>
+              </div>
+              <h3 class="font-bold text-white text-xs sm:text-sm group-hover:text-pastel-coral transition line-clamp-1 leading-snug">${cb.title}</h3>
+              <p class="text-[10px] sm:text-[11px] text-slate-400 mt-1 line-clamp-2 leading-tight">${cb.desc}</p>
             </div>
-            <div class="pt-1 flex items-center gap-1 text-[11px] text-pastel-coral font-semibold">
-              <span>Open Cookbook</span>
-              <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            <div class="pt-2.5 mt-2 border-t border-dark-border/40 flex items-center justify-between text-[10px] sm:text-[11px] text-pastel-coral font-semibold">
+              <span>Open</span>
+              <i data-lucide="chevron-right" class="w-3 h-3"></i>
             </div>
           `;
           grid.appendChild(card);

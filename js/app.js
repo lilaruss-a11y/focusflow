@@ -403,6 +403,9 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         localStorage.setItem('focusflow_events', JSON.stringify(state.events));
         localStorage.setItem('focusflow_water_logged_ml', JSON.stringify(state.waterLoggedMl || 0));
         localStorage.setItem('focusflow_water_unit', (state.userProfile && state.userProfile.waterUnit) || 'fl_oz');
+        if (state.cookbooks) {
+          localStorage.setItem('focusflow_cookbooks', JSON.stringify(state.cookbooks));
+        }
         if (typeof ffOnLocalChange === 'function') {
           try { ffOnLocalChange(); } catch(e) {}
         }
@@ -756,6 +759,17 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         if (savedWater !== null) {
           const num = Number(savedWater);
           if (!isNaN(num)) state.waterLoggedMl = num;
+        }
+      } catch (e) {}
+
+      // 13. Custom Cookbooks
+      try {
+        const savedCookbooks = localStorage.getItem('focusflow_cookbooks');
+        if (savedCookbooks) {
+          const parsed = JSON.parse(savedCookbooks);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            state.cookbooks = parsed;
+          }
         }
       } catch (e) {}
     }

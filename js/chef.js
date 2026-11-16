@@ -8,27 +8,47 @@
     state.reverseChefActiveStepIndex = 0;
     state.currentMealOptions = [];
 
+    state.reverseChefChatHistory = [];
+
+    function toggleReverseChefPantryList() {
+      const container = document.getElementById('reverse-chef-pantry-container');
+      const chevron = document.getElementById('chef-pantry-chevron');
+      if (!container) return;
+      const isHidden = container.classList.contains('hidden');
+      if (isHidden) {
+        container.classList.remove('hidden');
+        if (chevron) chevron.style.transform = 'rotate(0deg)';
+      } else {
+        container.classList.add('hidden');
+        if (chevron) chevron.style.transform = 'rotate(-90deg)';
+      }
+    }
+
+    function selectAllReverseChefPantry(checked) {
+      const cbs = document.querySelectorAll('#reverse-chef-pantry-chips input[type="checkbox"]');
+      cbs.forEach(cb => { cb.checked = !!checked; });
+      updateReverseChefSelectedCount();
+      checkFrozenSelectionAlert();
+    }
+
+    function updateReverseChefSelectedCount() {
+      const checked = document.querySelectorAll('#reverse-chef-pantry-chips input[type="checkbox"]:checked');
+      const total = document.querySelectorAll('#reverse-chef-pantry-chips input[type="checkbox"]');
+      const countEl = document.getElementById('reverse-chef-selected-count');
+      if (countEl) {
+        countEl.textContent = `${checked.length} of ${total.length} selected`;
+      }
+    }
+
     function openReverseChefFromKitchen() {
       const modal = document.getElementById('reverse-chef-modal');
       const chips = document.getElementById('reverse-chef-pantry-chips');
+      const alertEl = document.getElementById('chef-expiring-alert');
+      const alertText = document.getElementById('chef-expiring-alert-text');
+      const cravingInput = document.getElementById('reverse-chef-craving-input');
+      if (cravingInput) cravingInput.value = '';
 
-      if (chips) {
-        chips.innerHTML = '';
-        state.pantry.forEach(item => {
-          const isFrozen = item.storage === 'frozen';
-          const chip = document.createElement('label');
-          chip.className = `flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-elevated border text-slate-200 text-xs cursor-pointer hover:border-pastel-coral/50 transition ${isFrozen ? 'border-sky-400/40 text-sky-200' : 'border-dark-border'}`;
-          chip.innerHTML = `
-            <input type="checkbox" checked value="${item.name}" data-storage="${item.storage || 'fridge'}" onchange="checkFrozenSelectionAlert()" class="w-4 h-4 rounded text-pastel-coral focus:ring-0">
-            <span>${isFrozen ? '🧊 ' : (item.storage === 'shelf' ? '🥫 ' : '❄️ ')}${item.name}</span>
-          `;
-          chips.appendChild(chip);
-        });
-      }
-
-      checkFrozenSelectionAlert();
-
-      // Check for ingredients expiring in the next 7 days and prompt user
+      // Check for ingredients expiring in the next 7 days
       const now = new Date();
       const expiringSoon = (state.pantry || []).filter(item => {
         if (!item.expirationDate) return false;
@@ -36,13 +56,30 @@
         return diffDays >= 0 && diffDays <= 7;
       });
 
+      if (chips) {
+        chips.innerHTML = '';
+        state.pantry.forEach(item => {
+          const isFrozen = item.storage === 'frozen';
+          const isExpiring = expiringSoon.some(e => e.id === item.id || e.name.toLowerCase() === item.name.toLowerCase());
+          const chip = document.createElement('label');
+          chip.className = `flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-elevated border text-slate-200 text-xs cursor-pointer hover:border-pastel-coral/50 transition ${isExpiring ? 'border-amber-400/60 bg-amber-950/20 text-amber-200' : (isFrozen ? 'border-sky-400/40 text-sky-200' : 'border-dark-border')}`;
+          chip.innerHTML = `
+            <input type="checkbox" checked value="${item.name}" data-storage="${item.storage || 'fridge'}" onchange="checkFrozenSelectionAlert(); updateReverseChefSelectedCount();" class="w-4 h-4 rounded text-pastel-coral focus:ring-0">
+            <span>${isExpiring ? '⚠️ ' : (isFrozen ? '🧊 ' : (item.storage === 'shelf' ? '🥫 ' : '❄️ '))}${item.name}${isExpiring ? ' <em class="text-[10px] text-amber-300 not-italic">(exp. soon)</em>' : ''}</span>
+          `;
+          chips.appendChild(chip);
+        });
+      }
+
+      updateReverseChefSelectedCount();
+      checkFrozenSelectionAlert();
+
       if (expiringSoon.length > 0) {
-        setTimeout(() => {
-          const names = expiringSoon.map(i => i.name).join(', ');
-          if (confirm(`⚠️ You have ingredients expiring in the next week (${names})! Would you like Reverse Chef to prioritize a recipe using these ingredients?`)) {
-            prioritizeExpiringIngredients();
-          }
-        }, 350);
+        const names = expiringSoon.map(i => i.name).join(', ');
+        if (alertEl) alertEl.classList.remove('hidden');
+        if (alertText) alertText.textContent = `Expiring soon: ${names}. Reverse Chef can prioritize them!`;
+      } else {
+        if (alertEl) alertEl.classList.add('hidden');
       }
 
       goToReverseChefStep(1);
@@ -180,65 +217,281 @@
     }
 
     async function generateChefMealSuggestions(userQuery) {
+      const cravingInput = document.getElementById('reverse-chef-craving-input');
+      const cravingVal = (cravingInput && cravingInput.value) ? cravingInput.value.trim() : '';
+
       const checkedBoxes = document.querySelectorAll('#reverse-chef-pantry-chips input[type="checkbox"]:checked');
       const selectedIngredients = Array.from(checkedBoxes).map(cb => cb.value);
-      const ingredientsListStr = selectedIngredients.length > 0 ? selectedIngredients.join(', ') : 'chicken breast, broccoli, rice, olive oil';
+
+      // Determine expiring ingredients (within 7 days)
+      const now = new Date();
+      const expiringItems = (state.pantry || []).filter(item => {
+        if (!item.expirationDate) return false;
+        const diffDays = Math.ceil((new Date(item.expirationDate) - now) / (1000 * 60 * 60 * 24));
+        return diffDays >= 0 && diffDays <= 7;
+      }).map(i => i.name);
+
+      const allPantryNames = (state.pantry || []).map(i => i.name);
+      const ingredientsListStr = selectedIngredients.length > 0 
+        ? selectedIngredients.join(', ') 
+        : (allPantryNames.length > 0 ? allPantryNames.join(', ') : 'chicken breast, broccoli, rice, olive oil, eggs');
+
       const key = getGeminiApiKey();
 
-      // 3 Rich Built-in Recipe Options (Enhanced with Gemini when key is present)
-      state.currentMealOptions = [
-        {
-          id: 'opt-1',
-          title: 'Crispy Garlic-Herb Protein & Steamed Broccoli Florets',
-          cookTime: 18,
-          kcal: 480,
-          description: 'Pan-seared protein with tender broccoli florets steamed directly in the pan. Maximum flavor, 0 wasted pans.',
-          ingredients: ['200g Chicken Breast (or preferred protein)', '150g Fresh Broccoli Florets', '1 tbsp Olive Oil', 'Salt, pepper & garlic powder'],
-          steps: [
-            { text: 'Dice 200g chicken into bite-sized pieces and cut 150g broccoli florets', minutes: 4, isDish: false },
-            { text: 'Heat skillet over medium-high heat with 1 tbsp olive oil; add chicken to sear', minutes: 3, isDish: false },
-            { text: '🧽 [WASH WINDOW 1] Wash cutting board and prep knife while chicken sears', minutes: 3, isDish: true },
-            { text: 'Add broccoli florets to skillet with 2 tbsp water; cover with lid to steam', minutes: 5, isDish: false },
-            { text: '🧽 [WASH WINDOW 2] Wipe prep counters and put seasoning away', minutes: 3, isDish: true }
-          ]
-        },
-        {
-          id: 'opt-2',
-          title: '15-Minute Sweet & Savory Teriyaki Stir-Fry Bowl',
-          cookTime: 15,
-          kcal: 440,
-          description: 'High-energy stir fry using your available produce and staples with a quick glaze. Fast dopamine boost.',
-          ingredients: ['180g Sliced Protein or Tofu', '100g Sliced Veggies (Spinach/Broccoli)', '1 cup Jasmine Rice (cooked)', '2 tbsp Soy Sauce or Tamari with honey'],
-          steps: [
-            { text: 'Slice vegetables and protein into thin strips on prep board', minutes: 3, isDish: false },
-            { text: 'Sauté protein in skillet with olive oil for 4 minutes until golden', minutes: 4, isDish: false },
-            { text: '🧽 [WASH WINDOW 1] Rinse prep bowls and cutting knife under warm tap', minutes: 3, isDish: true },
-            { text: 'Toss vegetables and sauce into pan, heat through for 3 minutes', minutes: 3, isDish: false },
-            { text: 'Serve warm over rice; rinse skillet immediately so nothing sticks', minutes: 2, isDish: true }
-          ]
-        },
-        {
-          id: 'opt-3',
-          title: 'Comforting 12-Minute Mediterranean Skillet Scramble',
-          cookTime: 12,
-          kcal: 360,
-          description: 'Creamy, herb-infused scramble with warm toast. Effortless execution with zero sink clutter.',
-          ingredients: ['3 Large Eggs (or Egg Whites)', '50g Baby Spinach', '1 tbsp Butter or Olive Oil', '1 slice Whole Grain Toast'],
-          steps: [
-            { text: 'Whisk eggs with splash of milk, pinch of salt and pepper in small bowl', minutes: 2, isDish: false },
-            { text: 'Melt butter in skillet, add spinach to wilt for 1 minute', minutes: 2, isDish: false },
-            { text: 'Pour whisked eggs; gently fold over medium-low heat', minutes: 3, isDish: false },
-            { text: '🧽 [WASH WINDOW] Wash whisk and prep bowl while eggs finish gently', minutes: 3, isDish: true },
-            { text: 'Plate onto warm toast and wipe skillet with clean paper towel', minutes: 2, isDish: true }
-          ]
-        }
-      ];
+      // Show temporary typing indicator
+      const stream = document.getElementById('sous-chef-chat-messages');
+      let typingId = `typing-${Date.now()}`;
+      if (stream) {
+        const typingEl = document.createElement('div');
+        typingEl.id = typingId;
+        typingEl.className = "flex items-start gap-2.5 max-w-[92%]";
+        typingEl.innerHTML = `
+          <div class="w-7 h-7 rounded-full bg-pastel-coral/20 text-pastel-coral flex items-center justify-center text-xs shrink-0 font-bold">🧑‍🍳</div>
+          <div class="p-3 rounded-2xl rounded-tl-none bg-dark-elevated text-slate-300 border border-dark-border leading-relaxed text-xs flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-pastel-coral animate-ping"></span>
+            <span>Chef is crafting meal ideas from your pantry...</span>
+          </div>
+        `;
+        stream.appendChild(typingEl);
+        stream.scrollTop = stream.scrollHeight;
+      }
 
-      // Format response with 3 clickable options
-      let chefHtml = `
-        <p class="font-semibold text-white">Here are 3 customized meal options based on your prompt and pantry ingredients (<strong>${ingredientsListStr}</strong>):</p>
-        <div class="space-y-2.5 pt-1">
-      `;
+      // If Gemini Key is present, call Gemini for rich dynamic ideas
+      let generatedOptions = null;
+      let conversationalReply = '';
+
+      if (key && typeof callGeminiGenerateContent === 'function') {
+        try {
+          const systemContext = `You are Sous Chef, an expert friendly culinary companion in FocusFlow.
+The user is looking for meal ideas based on their pantry.
+PANTRY INGREDIENTS ON HAND: ${ingredientsListStr}
+INGREDIENTS EXPIRING SOON: ${expiringItems.length > 0 ? expiringItems.join(', ') : 'None'}
+OPTIONAL USER CRAVING / PREFERENCE: ${cravingVal ? cravingVal : 'None specified'}
+USER INSTRUCTION / QUESTION: "${userQuery}"
+
+Provide 3 distinct, creative, and realistic meal options tailored to what they have on hand.
+CRITICAL ADHD / TIME-SAVING REQUIREMENTS:
+Each meal must include:
+1. Title
+2. Cook time (minutes, total)
+3. Estimated kcal per serving
+4. Brief warm 1-2 sentence description
+5. Ingredients array with metric weights (e.g. "200g Chicken breast", "100g Rice")
+6. Step-by-step reverse choreography steps array: each step has "text", "minutes" (number), and "isDish" (boolean - true if it is a cleanup/wash-as-you-go window while cooking).
+
+Return ONLY valid JSON matching this schema:
+{
+  "message": "A warm, helpful 1-2 sentence response greeting them and explaining how these options fit their request.",
+  "options": [
+    {
+      "id": "opt-1",
+      "title": "Recipe Title",
+      "cookTime": 15,
+      "kcal": 450,
+      "description": "Short appetizing description.",
+      "ingredients": ["200g Chicken Breast", "150g Broccoli florets", "1 tbsp Olive Oil"],
+      "steps": [
+        { "text": "Dice chicken and chop vegetables", "minutes": 3, "isDish": false },
+        { "text": "Sear chicken in hot skillet with olive oil", "minutes": 4, "isDish": false },
+        { "text": "🧽 [WASH WINDOW] Wash cutting board and knife while chicken sears", "minutes": 3, "isDish": true },
+        { "text": "Steam broccoli florets in pan with splash of water", "minutes": 4, "isDish": false },
+        { "text": "Plate and enjoy warm", "minutes": 1, "isDish": false }
+      ]
+    }
+  ]
+}`;
+
+          const result = await callGeminiGenerateContent({
+            prompt: systemContext,
+            key,
+            expectJson: true
+          });
+
+          if (result && result.text) {
+            let parsed = null;
+            try {
+              parsed = JSON.parse(result.text);
+            } catch (je) {
+              const cleaned = result.text.replace(/```json/gi, '').replace(/```/g, '').trim();
+              parsed = JSON.parse(cleaned);
+            }
+
+            if (parsed && Array.isArray(parsed.options) && parsed.options.length > 0) {
+              generatedOptions = parsed.options;
+              conversationalReply = parsed.message || '';
+            }
+          }
+        } catch (apiErr) {
+          console.warn("Sous Chef Gemini API call failed or timed out, falling back to smart defaults:", apiErr);
+        }
+      }
+
+      // Remove typing indicator
+      const activeTyping = document.getElementById(typingId);
+      if (activeTyping) activeTyping.remove();
+
+      // If Gemini returned options, use them! Otherwise fall back to smart built-ins
+      if (generatedOptions && generatedOptions.length > 0) {
+        state.currentMealOptions = generatedOptions;
+      } else {
+        // Fallback built-in options tailored to expiring or query
+        const isExpiring = userQuery.toLowerCase().includes('expir');
+        const isComfort = userQuery.toLowerCase().includes('comfort') || userQuery.toLowerCase().includes('cozy');
+        const isHighProtein = userQuery.toLowerCase().includes('protein');
+
+        if (isComfort) {
+          state.currentMealOptions = [
+            {
+              id: 'opt-1',
+              title: 'Cozy Garlic Herb Skillet Melts & Warm Broth',
+              cookTime: 14,
+              kcal: 420,
+              description: 'Golden toasted bread with warm melted cheese, alongside a quick savory herb pan broth.',
+              ingredients: ['2 Slices Whole Grain Bread', '40g Cheddar or Swiss Cheese', '1 cup Vegetable or Chicken Broth', '1 tbsp Butter or Olive Oil'],
+              steps: [
+                { text: 'Melt 1 tbsp butter in skillet and toast bread slices with cheese until melted', minutes: 5, isDish: false },
+                { text: '🧽 [WASH WINDOW 1] Wipe cutting board and butter knife', minutes: 2, isDish: true },
+                { text: 'Warm 1 cup broth with pinch of garlic powder and black pepper', minutes: 4, isDish: false },
+                { text: 'Serve warm melts with steaming broth for dipping', minutes: 3, isDish: false }
+              ]
+            },
+            {
+              id: 'opt-2',
+              title: 'Creamy 15-Minute Savory Risotto-Style Rice Bowl',
+              cookTime: 15,
+              kcal: 460,
+              description: 'Comforting, rich stovetop rice bowl with melted butter, spinach, and a soft-poached egg on top.',
+              ingredients: ['1.5 cups Jasmine or White Rice (cooked)', '2 Large Eggs', '50g Fresh Baby Spinach', '1 tbsp Butter & Parmesan'],
+              steps: [
+                { text: 'Warm cooked rice in skillet with 1 tbsp butter and splash of water until creamy', minutes: 4, isDish: false },
+                { text: 'Stir in spinach until wilted into rice', minutes: 2, isDish: false },
+                { text: 'Crack eggs directly into rice, cover skillet with lid on low heat', minutes: 5, isDish: false },
+                { text: '🧽 [WASH WINDOW] Rinse prep dish and wipe counter while eggs gently set', minutes: 3, isDish: true },
+                { text: 'Garnish with black pepper and enjoy warm directly from bowl', minutes: 1, isDish: false }
+              ]
+            },
+            {
+              id: 'opt-3',
+              title: 'Warm Rustic Skillet Scramble with Potatoes',
+              cookTime: 12,
+              kcal: 380,
+              description: 'Golden skillet-crisped potatoes folded with fluffy eggs and fresh herbs.',
+              ingredients: ['3 Large Eggs', '150g Diced Pre-Cooked Potatoes or Toast', '1 tbsp Olive Oil', 'Salt, pepper & paprika'],
+              steps: [
+                { text: 'Crisp diced potatoes in olive oil over medium-high heat for 5 minutes', minutes: 5, isDish: false },
+                { text: 'Whisk eggs with pinch of salt in small bowl', minutes: 2, isDish: false },
+                { text: '🧽 [WASH WINDOW] Rinse whisk under warm tap', minutes: 2, isDish: true },
+                { text: 'Pour eggs into skillet, gently fold with potatoes until just set', minutes: 3, isDish: false }
+              ]
+            }
+          ];
+        } else if (isExpiring && expiringItems.length > 0) {
+          state.currentMealOptions = [
+            {
+              id: 'opt-1',
+              title: `Expiring Priority: Sautéed ${expiringItems[0]} & Protein Skillet`,
+              cookTime: 15,
+              kcal: 440,
+              description: `Zero-waste skillet featuring your ${expiringItems.join(' and ')} seared with fresh seasonings.`,
+              ingredients: [`150g ${expiringItems[0]}`, '180g Protein or Eggs', '1 tbsp Olive Oil', 'Garlic & soy sauce or lemon'],
+              steps: [
+                { text: `Rinse and chop ${expiringItems[0]} into bite-sized pieces`, minutes: 3, isDish: false },
+                { text: 'Sear protein and produce in hot skillet with olive oil', minutes: 6, isDish: false },
+                { text: '🧽 [WASH WINDOW] Wash cutting board and knife while skillet sizzles', minutes: 3, isDish: true },
+                { text: 'Toss with seasoning and serve hot', minutes: 3, isDish: false }
+              ]
+            },
+            {
+              id: 'opt-2',
+              title: `Expiring Produce & Rice Stir-Fry`,
+              cookTime: 16,
+              kcal: 460,
+              description: `High-flavor stir-fry using up ${expiringItems.slice(0, 2).join(' and ')} before they spoil.`,
+              ingredients: [`100g ${expiringItems[0]}`, '1.5 cups Cooked Rice', '2 Eggs or Tofu', '1 tbsp Cooking oil & soy sauce'],
+              steps: [
+                { text: 'Chop expiring produce and crack eggs into bowl', minutes: 3, isDish: false },
+                { text: 'Scramble eggs quickly and set aside', minutes: 2, isDish: false },
+                { text: 'Stir fry produce and rice with sauce in skillet for 6 minutes', minutes: 6, isDish: false },
+                { text: '🧽 [WASH WINDOW] Wash egg bowl while rice toasts', minutes: 3, isDish: true },
+                { text: 'Fold eggs back into rice and plate immediately', minutes: 2, isDish: false }
+              ]
+            },
+            {
+              id: 'opt-3',
+              title: `10-Minute Savory Egg & Vegetable Scramble`,
+              cookTime: 10,
+              kcal: 350,
+              description: `Fastest way to use up ${expiringItems[0]} without leftover pans.`,
+              ingredients: ['3 Eggs', `80g ${expiringItems[0]}`, '1 tbsp Butter', 'Salt & pepper'],
+              steps: [
+                { text: `Dice ${expiringItems[0]} finely`, minutes: 2, isDish: false },
+                { text: 'Sauté in butter for 3 minutes until tender', minutes: 3, isDish: false },
+                { text: 'Add eggs and soft scramble on low heat for 3 minutes', minutes: 3, isDish: false },
+                { text: '🧽 [WASH WINDOW] Wipe prep counter and enjoy', minutes: 2, isDish: true }
+              ]
+            }
+          ];
+        } else {
+          // Standard smart options
+          state.currentMealOptions = [
+            {
+              id: 'opt-1',
+              title: 'Crispy Garlic-Herb Protein & Steamed Broccoli Florets',
+              cookTime: 18,
+              kcal: 480,
+              description: 'Pan-seared protein with tender broccoli florets steamed directly in the pan. Maximum flavor, 0 wasted pans.',
+              ingredients: ['200g Chicken Breast (or preferred protein)', '150g Fresh Broccoli Florets', '1 tbsp Olive Oil', 'Salt, pepper & garlic powder'],
+              steps: [
+                { text: 'Dice 200g chicken into bite-sized pieces and cut 150g broccoli florets', minutes: 4, isDish: false },
+                { text: 'Heat skillet over medium-high heat with 1 tbsp olive oil; add chicken to sear', minutes: 3, isDish: false },
+                { text: '🧽 [WASH WINDOW 1] Wash cutting board and prep knife while chicken sears', minutes: 3, isDish: true },
+                { text: 'Add broccoli florets to skillet with 2 tbsp water; cover with lid to steam', minutes: 5, isDish: false },
+                { text: '🧽 [WASH WINDOW 2] Wipe prep counters and put seasoning away', minutes: 3, isDish: true }
+              ]
+            },
+            {
+              id: 'opt-2',
+              title: '15-Minute Sweet & Savory Teriyaki Stir-Fry Bowl',
+              cookTime: 15,
+              kcal: 440,
+              description: 'High-energy stir fry using your available produce and staples with a quick glaze. Fast dopamine boost.',
+              ingredients: ['180g Sliced Protein or Tofu', '100g Sliced Veggies (Spinach/Broccoli)', '1 cup Jasmine Rice (cooked)', '2 tbsp Soy Sauce or Tamari with honey'],
+              steps: [
+                { text: 'Slice vegetables and protein into thin strips on prep board', minutes: 3, isDish: false },
+                { text: 'Sauté protein in skillet with olive oil for 4 minutes until golden', minutes: 4, isDish: false },
+                { text: '🧽 [WASH WINDOW 1] Rinse prep bowls and cutting knife under warm tap', minutes: 3, isDish: true },
+                { text: 'Toss vegetables and sauce into pan, heat through for 3 minutes', minutes: 3, isDish: false },
+                { text: 'Serve warm over rice; rinse skillet immediately so nothing sticks', minutes: 2, isDish: true }
+              ]
+            },
+            {
+              id: 'opt-3',
+              title: 'Comforting 12-Minute Mediterranean Skillet Scramble',
+              cookTime: 12,
+              kcal: 360,
+              description: 'Creamy, herb-infused scramble with warm toast. Effortless execution with zero sink clutter.',
+              ingredients: ['3 Large Eggs (or Egg Whites)', '50g Baby Spinach', '1 tbsp Butter or Olive Oil', '1 slice Whole Grain Toast'],
+              steps: [
+                { text: 'Whisk eggs with splash of milk, pinch of salt and pepper in small bowl', minutes: 2, isDish: false },
+                { text: 'Melt butter in skillet, add spinach to wilt for 1 minute', minutes: 2, isDish: false },
+                { text: 'Pour whisked eggs; gently fold over medium-low heat', minutes: 3, isDish: false },
+                { text: '🧽 [WASH WINDOW] Wash whisk and prep bowl while eggs finish gently', minutes: 3, isDish: true },
+                { text: 'Plate onto warm toast and wipe skillet with clean paper towel', minutes: 2, isDish: true }
+              ]
+            }
+          ];
+        }
+      }
+
+      // Format response with clickable options
+      let chefHtml = ``;
+      if (conversationalReply) {
+        chefHtml += `<p class="font-medium text-slate-200 text-xs mb-2">${conversationalReply}</p>`;
+      } else {
+        chefHtml += `<p class="font-semibold text-white">Here are 3 tailored meal options using your pantry:</p>`;
+      }
+
+      chefHtml += `<div class="space-y-2.5 pt-1">`;
 
       state.currentMealOptions.forEach((opt, idx) => {
         chefHtml += `
@@ -251,7 +504,7 @@
               <span class="px-2 py-0.5 rounded-full bg-pastel-coral/20 text-pastel-coral font-bold text-[10px] shrink-0 font-mono">${opt.cookTime}m • ${opt.kcal} kcal</span>
             </div>
             <div class="flex items-center justify-between pt-1 border-t border-dark-border/40">
-              <span class="text-[10px] text-slate-400 truncate max-w-xs">${opt.ingredients.slice(0, 3).join(', ')}</span>
+              <span class="text-[10px] text-slate-400 truncate max-w-xs">${(opt.ingredients || []).slice(0, 3).join(', ')}</span>
               <div class="flex items-center gap-2">
                 <button type="button" onclick="inspectRecipeDetails(${idx})" class="px-2.5 py-1.5 rounded-xl bg-dark-elevated border border-dark-border text-slate-200 hover:text-white font-bold text-xs flex items-center gap-1 transition">
                   <span>🔍 Details</span>
@@ -265,12 +518,10 @@
         `;
       });
 
-      chefHtml += `</div><p class="text-[11px] text-slate-400">Tap <strong>"Cook This Recipe"</strong> on any option to generate its reverse choreography with timer!</p>`;
+      chefHtml += `</div><p class="text-[11px] text-slate-400 mt-2">Tap <strong>"🚀 Cook"</strong> to load the step-by-step timer and wash-as-you-go choreography!</p>`;
 
-      setTimeout(() => {
-        appendSousChefChatMessage('chef', chefHtml);
-        playChime('bell');
-      }, 500);
+      appendSousChefChatMessage('chef', chefHtml);
+      playChime('bell');
     }
 
     function launchRecipeOption(idx) {

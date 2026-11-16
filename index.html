@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=76">
+  <link rel="stylesheet" href="css/styles.css?v=78">
   <script>
     function resetViewportZoom() {
       try {
@@ -693,40 +693,39 @@
     <!-- TAB 4: RECIPE BOOK & KITCHEN CODEX             -->
     <!-- ============================================== -->
     <div id="view-recipes" class="hidden space-y-4">
-      <div class="bg-dark-surface/90 border border-dark-border rounded-2xl p-4 sm:p-5 shadow-xl">
-        <!-- Compact Header & View Controls -->
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-dark-border/60 pb-3">
-          <div class="flex items-center gap-2">
-            <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
-              <i data-lucide="book-open" class="w-5 h-5 text-pastel-coral"></i>
-              <span>Recipe Books</span>
-            </h2>
+      <div class="bg-dark-surface/90 border border-dark-border rounded-2xl p-3 sm:p-4 shadow-xl">
+        <!-- Compact Full-Width Action Header: Title + Cookbooks / Codex Tabs + Add Buttons -->
+        <div class="flex items-center justify-between gap-2 border-b border-dark-border/60 pb-2.5">
+          <div class="flex items-center gap-1.5 shrink-0">
+            <i data-lucide="book-open" class="w-5 h-5 text-pastel-coral"></i>
+            <h2 class="text-base sm:text-lg font-bold text-slate-100 hidden sm:inline">Recipes</h2>
           </div>
 
-          <!-- View Toggle + Add Recipe Button in Single Slim Row -->
-          <div class="flex items-center gap-2 ml-auto">
-            <div class="flex items-center p-1 rounded-xl bg-dark-base border border-dark-border gap-1 text-xs">
-              <button type="button" onclick="switchRecipeSectionView('cookbooks')" id="tab-recipe-cookbooks" class="px-3 py-1 rounded-lg font-bold bg-pastel-coral text-dark-base transition flex items-center gap-1.5 shadow-sm">
+          <!-- Buttons expand across horizontal space -->
+          <div class="flex items-center gap-2 flex-1 justify-end">
+            <!-- View Mode Switch: Cookbooks vs Codex -->
+            <div class="flex items-center p-1 rounded-xl bg-dark-base border border-dark-border gap-1 text-xs flex-1 max-w-xs">
+              <button type="button" onclick="switchRecipeSectionView('cookbooks')" id="tab-recipe-cookbooks" class="flex-1 py-1.5 rounded-lg font-bold bg-pastel-coral text-dark-base transition flex items-center justify-center gap-1 shadow-sm">
                 <i data-lucide="book" class="w-3.5 h-3.5"></i>
                 <span>Cookbooks</span>
               </button>
-              <button type="button" onclick="switchRecipeSectionView('codex')" id="tab-recipe-codex" class="px-3 py-1 rounded-lg font-medium text-slate-400 hover:text-white transition flex items-center gap-1.5">
+              <button type="button" onclick="switchRecipeSectionView('codex')" id="tab-recipe-codex" class="flex-1 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white transition flex items-center justify-center gap-1">
                 <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
                 <span>Codex</span>
               </button>
             </div>
 
-            <button type="button" onclick="openAddRecipeModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pastel-coral hover:bg-rose-300 text-dark-base font-bold text-xs shadow-md shadow-pastel-coral/20 transition">
+            <!-- New Cookbook Button -->
+            <button type="button" onclick="openCookbookModal()" class="flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-coral/40 text-pastel-coral font-bold text-xs transition active:scale-95 shadow-sm shrink-0" title="Create New Cookbook">
+              <i data-lucide="folder-plus" class="w-4 h-4"></i>
+              <span class="hidden md:inline">New Book</span>
+            </button>
+
+            <!-- Add Recipe Button -->
+            <button type="button" onclick="openAddRecipeModal()" class="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-pastel-coral hover:bg-rose-300 text-dark-base font-bold text-xs shadow-md shadow-pastel-coral/20 transition active:scale-95 shrink-0" title="Add New Recipe">
               <i data-lucide="plus" class="w-4 h-4"></i>
               <span class="hidden sm:inline">Add Recipe</span>
             </button>
-          </div>
-
-          <!-- Active Filter Pill Summary -->
-          <div id="recipe-active-filters-summary" class="hidden w-full flex items-center gap-1.5 text-[11px] text-slate-400 pt-1">
-            <span>Filters:</span>
-            <div id="recipe-active-chips" class="flex flex-wrap gap-1"></div>
-            <button type="button" onclick="clearAllRecipeFilters()" class="text-pastel-coral underline ml-1 hover:text-white">Clear All</button>
           </div>
         </div>
 
@@ -2602,6 +2601,72 @@
           <i data-lucide="check" class="w-4 h-4 stroke-[2.5]"></i>
           <span>Save to My Cookbook</span>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT COOKBOOK -->
+  <div id="cookbook-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
+    <div class="bg-dark-elevated border border-pastel-coral/40 rounded-3xl w-full max-w-md p-5 sm:p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-pastel-coral/20 border border-pastel-coral/40 flex items-center justify-center text-pastel-coral">
+            <i data-lucide="book" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 id="cookbook-modal-title" class="text-base font-bold text-white">New Cookbook</h3>
+            <p class="text-xs text-slate-400">Organize your dishes into a custom recipe book</p>
+          </div>
+        </div>
+        <button onclick="closeCookbookModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <input type="hidden" id="cookbook-edit-id" value="">
+
+      <div class="space-y-3.5 text-xs">
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Book Title</label>
+          <input type="text" id="cookbook-title-input" placeholder="e.g. Quick Lunches, Grandmas Baking" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-pastel-coral">
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Description</label>
+          <input type="text" id="cookbook-desc-input" placeholder="Brief note about what goes here" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-pastel-coral">
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1.5">Icon / Emoji</label>
+          <div class="flex items-center gap-2 mb-2">
+            <input type="text" id="cookbook-icon-input" value="📖" maxlength="4" class="w-14 text-center text-xl bg-dark-base border border-dark-border rounded-xl py-1.5 text-white focus:outline-none focus:border-pastel-coral">
+            <span class="text-slate-400 text-[11px]">Pick an icon or tap a preset below:</span>
+          </div>
+          <div class="flex flex-wrap gap-2 text-lg">
+            <button type="button" onclick="setCookbookModalIcon('📖')" class="w-9 h-9 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-coral flex items-center justify-center">📖</button>
+            <button type="button" onclick="setCookbookModalIcon('👨‍👩‍👧‍👦')" class="w-9 h-9 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-coral flex items-center justify-center">👨‍👩‍👧‍👦</button>
+            <button type="button" onclick="setCookbookModalIcon('⚡')" class="w-9 h-9 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-coral flex items-center justify-center">⚡</button>
+            <button type="button" onclick="setCookbookModalIcon('🍳')" class="w-9 h-9 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-coral flex items-center justify-center">🍳</button>
+            <button type="button" onclick="setCookbookModalIcon('🥗')" class="w-9 h-9 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-coral flex items-center justify-center">🥗</button>
+            <button type="button" onclick="setCookbookModalIcon('🧁')" class="w-9 h-9 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-coral flex items-center justify-center">🧁</button>
+            <button type="button" onclick="setCookbookModalIcon('🍲')" class="w-9 h-9 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-coral flex items-center justify-center">🍲</button>
+            <button type="button" onclick="setCookbookModalIcon('☕')" class="w-9 h-9 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-coral flex items-center justify-center">☕</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-dark-border flex items-center justify-between">
+        <button type="button" id="cookbook-delete-btn" onclick="deleteCurrentCookbook()" class="hidden px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold flex items-center gap-1.5 transition">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span>Delete</span>
+        </button>
+        <div class="flex items-center gap-2 ml-auto">
+          <button type="button" onclick="closeCookbookModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-400 text-xs font-semibold hover:text-white">Cancel</button>
+          <button type="button" onclick="saveCookbookModal()" class="px-5 py-2 rounded-xl bg-pastel-coral hover:bg-rose-300 text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-md shadow-pastel-coral/20 transition">
+            <i data-lucide="check" class="w-4 h-4 stroke-[2.5]"></i>
+            <span id="cookbook-save-btn-text">Save Book</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -4890,24 +4955,53 @@
       <!-- STEP 1: INGREDIENTS & SCAFFOLDING STAGE -->
       <div id="chef-wizard-step-1" class="space-y-4 text-xs">
         <!-- Expiring Soon Banner (if any item expiring within 7 days) -->
-        <div id="chef-expiring-alert" class="hidden p-3 rounded-2xl bg-amber-950/30 border border-amber-400/40 text-amber-200 flex items-center justify-between gap-2">
+        <div id="chef-expiring-alert" class="hidden p-3.5 rounded-2xl bg-amber-950/30 border border-amber-400/40 text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div class="flex items-center gap-2">
-            <span class="text-lg">⚠️</span>
-            <span id="chef-expiring-alert-text">Ingredients expiring soon: Broccoli, Spinach. Use them up first!</span>
+            <span class="text-xl shrink-0">⚠️</span>
+            <div>
+              <span class="font-bold text-amber-300 block">Expiring Soon in Pantry:</span>
+              <span id="chef-expiring-alert-text" class="text-[11px] text-amber-200/90 leading-snug">Ingredients expiring soon: Broccoli, Spinach. Use them up first!</span>
+            </div>
           </div>
-          <button type="button" onclick="prioritizeExpiringIngredients()" class="px-3 py-1.5 rounded-xl bg-amber-400 text-dark-base font-bold text-xs shrink-0 hover:bg-amber-300 transition">Prioritize in Recipe</button>
+          <button type="button" onclick="prioritizeExpiringIngredients()" class="px-3.5 py-2 rounded-xl bg-amber-400 text-dark-base font-bold text-xs shrink-0 hover:bg-amber-300 transition flex items-center gap-1.5 shadow-sm">
+            <span>⚡ Use Expiring Items</span>
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+          </button>
         </div>
 
-        <!-- Available Pantry Ingredients Picker -->
-        <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="text-slate-300 font-semibold">Select Ingredients on Hand in Pantry:</label>
-            <span class="text-[10px] text-pastel-mint">Tap to toggle • Storage respected</span>
+        <!-- Optional: Feature an ingredient or search -->
+        <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="text-slate-200 font-bold flex items-center gap-1.5">
+              <span>🎯 Craving or Want to Feature Anything?</span>
+              <span class="text-[10px] text-slate-400 font-normal">(Optional)</span>
+            </label>
+            <span class="text-[10px] text-pastel-mint font-semibold">Chef picks the rest</span>
           </div>
-          <div id="reverse-chef-pantry-chips" class="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto p-2 rounded-xl bg-dark-base border border-dark-border">
-            <!-- Populated dynamically with storage badges (frozen/fridge/shelf) -->
+          <input type="text" id="reverse-chef-craving-input" placeholder="e.g. chicken, eggs, rice, warm soup, pasta (or leave empty)..." class="w-full bg-dark-elevated border border-dark-border rounded-xl px-3 py-2 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-pastel-coral transition">
+          <p class="text-[11px] text-slate-400">You don't need to know the whole recipe — type a favorite ingredient or idea and Gemini will craft complete meals using your pantry!</p>
+        </div>
+
+        <!-- Available Pantry Ingredients Picker (Collapsible / Filterable) -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <button type="button" onclick="toggleReverseChefPantryList()" class="flex items-center gap-1.5 text-slate-300 hover:text-white font-semibold transition text-left">
+              <i data-lucide="chevron-down" id="chef-pantry-chevron" class="w-4 h-4 text-pastel-coral transition-transform"></i>
+              <span>Browse / Toggle Available Pantry Items</span>
+              <span id="reverse-chef-selected-count" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-dark-elevated text-slate-300 border border-dark-border">0 selected</span>
+            </button>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="selectAllReverseChefPantry(true)" class="text-[10px] text-pastel-coral hover:underline font-medium">Select All</button>
+              <span class="text-slate-600">•</span>
+              <button type="button" onclick="selectAllReverseChefPantry(false)" class="text-[10px] text-slate-400 hover:underline font-medium">Clear All</button>
+            </div>
           </div>
-          <div id="chef-frozen-alert" class="hidden mt-1.5 text-[11px] text-sky-300 flex items-center gap-1.5 bg-sky-950/30 p-2 rounded-xl border border-sky-400/30">
+          <div id="reverse-chef-pantry-container" class="space-y-1.5">
+            <div id="reverse-chef-pantry-chips" class="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto p-2 rounded-xl bg-dark-base border border-dark-border">
+              <!-- Populated dynamically with storage badges (frozen/fridge/shelf) -->
+            </div>
+          </div>
+          <div id="chef-frozen-alert" class="hidden mt-1 text-[11px] text-sky-300 flex items-center gap-1.5 bg-sky-950/30 p-2 rounded-xl border border-sky-400/30">
             <i data-lucide="snowflake" class="w-3.5 h-3.5 shrink-0 text-sky-400"></i>
             <span>🧊 Frozen ingredients selected: Reverse Chef will insert automatic thawing/defrost steps into the choreography!</span>
           </div>
@@ -4982,10 +5076,25 @@
           </div>
 
           <!-- Quick Suggestion Prompts -->
-          <div class="px-3 py-2 bg-dark-elevated/60 border-t border-dark-border flex items-center gap-2 overflow-x-auto text-[11px]">
-            <button type="button" onclick="sendSousChefQuickPrompt('What can I make with my ingredients on hand? Give me 3 meal ideas.')" class="px-3 py-1.5 rounded-xl bg-dark-base text-slate-200 hover:text-white border border-dark-border whitespace-nowrap font-medium">💡 Give Me 3 Meal Ideas</button>
-            <button type="button" onclick="sendSousChefQuickPrompt('I want something high-protein and under 20 mins. Give me 3 fast options.')" class="px-3 py-1.5 rounded-xl bg-dark-base text-slate-200 hover:text-white border border-dark-border whitespace-nowrap font-medium">⚡ Under 20m High-Protein</button>
-            <button type="button" onclick="sendSousChefQuickPrompt('How should I thaw and prep the frozen ingredients?')" class="px-3 py-1.5 rounded-xl bg-dark-base text-slate-200 hover:text-white border border-dark-border whitespace-nowrap font-medium">🧊 Prep Frozen</button>
+          <div class="px-3 py-2 bg-dark-elevated/60 border-t border-dark-border flex items-center gap-2 overflow-x-auto text-[11px] scrollbar-thin">
+            <button type="button" onclick="sendSousChefQuickPrompt('Create recipes that use my ingredients that are expiring soonest so they don\'t go to waste!')" class="px-3 py-1.5 rounded-xl bg-amber-950/40 text-amber-200 hover:text-white border border-amber-400/50 whitespace-nowrap font-bold flex items-center gap-1.5 transition">
+              <span>⚠️ Use Expiring Food</span>
+            </button>
+            <button type="button" onclick="sendSousChefQuickPrompt('Give me quick, effortless meal options ready in under 15-20 minutes with minimal steps.')" class="px-3 py-1.5 rounded-xl bg-dark-base text-slate-200 hover:text-white border border-dark-border whitespace-nowrap font-medium flex items-center gap-1.5 transition">
+              <span>⚡ Under 20m Fast</span>
+            </button>
+            <button type="button" onclick="sendSousChefQuickPrompt('Give me cozy, warm comfort food ideas using what I have in my pantry (like a skillet bowl, simple soup, or savory melt).')" class="px-3 py-1.5 rounded-xl bg-dark-base text-slate-200 hover:text-white border border-dark-border whitespace-nowrap font-medium flex items-center gap-1.5 transition">
+              <span>🍲 Cozy Comfort Food</span>
+            </button>
+            <button type="button" onclick="sendSousChefQuickPrompt('I want high-protein meal options to hit my fitness goals using my ingredients.')" class="px-3 py-1.5 rounded-xl bg-dark-base text-slate-200 hover:text-white border border-dark-border whitespace-nowrap font-medium flex items-center gap-1.5 transition">
+              <span>💪 High Protein</span>
+            </button>
+            <button type="button" onclick="sendSousChefQuickPrompt('Give me a simple one-pot or one-pan meal with minimal dishes and cleanup.')" class="px-3 py-1.5 rounded-xl bg-dark-base text-slate-200 hover:text-white border border-dark-border whitespace-nowrap font-medium flex items-center gap-1.5 transition">
+              <span>🧼 One-Pot / Easy Cleanup</span>
+            </button>
+            <button type="button" onclick="sendSousChefQuickPrompt('How should I thaw and prep any frozen ingredients I have?')" class="px-3 py-1.5 rounded-xl bg-dark-base text-slate-200 hover:text-white border border-dark-border whitespace-nowrap font-medium flex items-center gap-1.5 transition">
+              <span>🧊 Prep Frozen</span>
+            </button>
           </div>
 
           <!-- Chat Input -->

@@ -20,13 +20,24 @@
     }
 
     // Cookbooks & Multi-Filter Engine
-    state.cookbooks = [
+    const defaultCookbooks = [
       { id: 'cb-family', title: 'Family Recipes', icon: '👨‍👩‍👧‍👦', theme: 'pastel-coral', origin: 'family', desc: '216 heirloom family recipes, holiday traditions, and generational favorites from the family recipe book.' },
       { id: 'cb-staples', title: 'ADHD Daily Staples', icon: '📖', theme: 'pastel-mint', origin: 'mine', desc: 'Everyday go-tos calibrated for low initiation inertia and clean sink windows.' },
       { id: 'cb-shared', title: 'Family & Friends Lore', icon: '👨‍👩‍👧', theme: 'pastel-coral', origin: 'shared', desc: 'Gifted recipes from loved ones, roommates, and family traditions.' },
       { id: 'cb-campus', title: 'Campus & Rush Meals', icon: '🎓', theme: 'pastel-sky', origin: 'school', desc: 'Speedy under-15-minute study fuel and dorm-friendly quick bites.' },
       { id: 'cb-lowenergy', title: 'Low Executive Energy', icon: '⚡', theme: 'pastel-butter', origin: 'oneoff', desc: 'One-pot and 3-step zero-cleanup lifesavers for exhausted evenings.' }
     ];
+
+    if (!state.cookbooks || !Array.isArray(state.cookbooks) || state.cookbooks.length === 0) {
+      state.cookbooks = defaultCookbooks;
+    } else {
+      // Ensure default books exist if not present
+      defaultCookbooks.forEach(d => {
+        if (!state.cookbooks.some(c => c.id === d.id)) {
+          state.cookbooks.push(d);
+        }
+      });
+    }
 
     // Ensure family recipes are populated into state.recipes
     if (typeof FAMILY_RECIPES !== 'undefined' && Array.isArray(FAMILY_RECIPES)) {
@@ -90,18 +101,26 @@
         state.cookbooks.forEach(cb => {
           const count = state.recipes.filter(r => cb.origin === 'all' || r.origin === cb.origin).length;
           const card = document.createElement('div');
-          card.className = "p-3 sm:p-4 rounded-2xl bg-dark-base border border-dark-border hover:border-pastel-coral/60 cursor-pointer transition transform hover:-translate-y-0.5 flex flex-col justify-between group shadow-md text-left";
-          card.onclick = () => openCookbook(cb.id);
+          card.className = "relative p-3 sm:p-4 rounded-2xl bg-dark-base border border-dark-border hover:border-pastel-coral/60 cursor-pointer transition transform hover:-translate-y-0.5 flex flex-col justify-between group shadow-md text-left";
+          card.onclick = (e) => {
+            if (e.target.closest('.cookbook-edit-btn')) return;
+            openCookbook(cb.id);
+          };
           card.innerHTML = `
             <div>
               <div class="flex items-start justify-between gap-1.5 mb-2.5">
                 <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-dark-elevated border border-dark-border/80 flex items-center justify-center text-lg sm:text-xl shadow-inner group-hover:border-pastel-coral/40 group-hover:bg-pastel-coral/10 transition">
-                  ${cb.icon}
+                  ${cb.icon || '📖'}
                 </div>
-                <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-dark-elevated text-slate-300 font-bold group-hover:text-pastel-coral whitespace-nowrap">${count}</span>
+                <div class="flex items-center gap-1.5">
+                  <button type="button" onclick="event.stopPropagation(); openCookbookModal('${cb.id}')" class="cookbook-edit-btn p-1 rounded-lg hover:bg-dark-elevated text-slate-500 hover:text-white transition" title="Edit Cookbook">
+                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-dark-elevated text-slate-300 font-bold group-hover:text-pastel-coral whitespace-nowrap">${count}</span>
+                </div>
               </div>
               <h3 class="font-bold text-white text-xs sm:text-sm group-hover:text-pastel-coral transition line-clamp-1 leading-snug">${cb.title}</h3>
-              <p class="text-[10px] sm:text-[11px] text-slate-400 mt-1 line-clamp-2 leading-tight">${cb.desc}</p>
+              <p class="text-[10px] sm:text-[11px] text-slate-400 mt-1 line-clamp-2 leading-tight">${cb.desc || ''}</p>
             </div>
             <div class="pt-2.5 mt-2 border-t border-dark-border/40 flex items-center justify-between text-[10px] sm:text-[11px] text-pastel-coral font-semibold">
               <span>Open</span>
@@ -110,6 +129,21 @@
           `;
           grid.appendChild(card);
         });
+
+        // Add New Cookbook Card at the end of the shelf
+        const addCard = document.createElement('div');
+        addCard.className = "p-3 sm:p-4 rounded-2xl bg-dark-base/60 border border-dashed border-dark-border hover:border-pastel-coral/60 cursor-pointer transition flex flex-col items-center justify-center text-center group min-h-[130px] space-y-2";
+        addCard.onclick = () => openCookbookModal();
+        addCard.innerHTML = `
+          <div class="w-9 h-9 rounded-xl bg-dark-elevated border border-dark-border flex items-center justify-center text-pastel-coral group-hover:scale-110 transition shadow-inner">
+            <i data-lucide="plus" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <span class="text-xs font-bold text-white group-hover:text-pastel-coral transition block">Add Cookbook</span>
+            <span class="text-[10px] text-slate-500 block">Create new theme</span>
+          </div>
+        `;
+        grid.appendChild(addCard);
       } else {
         // A specific cookbook is opened: Show formats
         grid.classList.add('hidden');
@@ -342,6 +376,13 @@
 
       const isCookbookView = state.recipeSectionView === 'cookbooks';
 
+      // When in Cookbooks view and no cookbook has been opened yet, keep the recipe cards shelf clean
+      if (isCookbookView && !state.activeCookbook) {
+        grid.classList.add('hidden');
+        return;
+      }
+      grid.classList.remove('hidden');
+
       const filtered = state.recipes.filter(r => {
         if (isCookbookView && state.activeCookbook) {
           const cb = state.cookbooks.find(c => c.id === state.activeCookbook);
@@ -510,7 +551,134 @@
       alertBox(`Logged 1 serving = ${built.serving} (${built.servingGrams} g) of "${recipe.title}" (${nut.kcal} kcal) to today's diary!`, "Nutrition Diary");
     }
 
+    // ==============================================
+    // COOKBOOK CREATION & EDITING ENGINE
+    // ==============================================
+    function openCookbookModal(cookbookId) {
+      const modal = document.getElementById('cookbook-modal');
+      if (!modal) return;
+
+      const titleEl = document.getElementById('cookbook-modal-title');
+      const saveText = document.getElementById('cookbook-save-btn-text');
+      const idInput = document.getElementById('cookbook-edit-id');
+      const titleInput = document.getElementById('cookbook-title-input');
+      const descInput = document.getElementById('cookbook-desc-input');
+      const iconInput = document.getElementById('cookbook-icon-input');
+      const deleteBtn = document.getElementById('cookbook-delete-btn');
+
+      if (cookbookId) {
+        const cb = (state.cookbooks || []).find(c => c.id === cookbookId);
+        if (!cb) return;
+        if (titleEl) titleEl.textContent = 'Edit Cookbook';
+        if (saveText) saveText.textContent = 'Save Changes';
+        if (idInput) idInput.value = cb.id;
+        if (titleInput) titleInput.value = cb.title || '';
+        if (descInput) descInput.value = cb.desc || '';
+        if (iconInput) iconInput.value = cb.icon || '📖';
+
+        // Cannot delete default family heirloom book
+        if (deleteBtn) {
+          if (cb.id === 'cb-family') {
+            deleteBtn.classList.add('hidden');
+          } else {
+            deleteBtn.classList.remove('hidden');
+          }
+        }
+      } else {
+        if (titleEl) titleEl.textContent = 'New Cookbook';
+        if (saveText) saveText.textContent = 'Create Book';
+        if (idInput) idInput.value = '';
+        if (titleInput) titleInput.value = '';
+        if (descInput) descInput.value = '';
+        if (iconInput) iconInput.value = '📖';
+        if (deleteBtn) deleteBtn.classList.add('hidden');
+      }
+
+      modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeCookbookModal() {
+      const modal = document.getElementById('cookbook-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function setCookbookModalIcon(iconEmoji) {
+      const iconInput = document.getElementById('cookbook-icon-input');
+      if (iconInput) iconInput.value = iconEmoji;
+    }
+
+    function saveCookbookModal() {
+      const idInput = document.getElementById('cookbook-edit-id');
+      const titleInput = document.getElementById('cookbook-title-input');
+      const descInput = document.getElementById('cookbook-desc-input');
+      const iconInput = document.getElementById('cookbook-icon-input');
+
+      const title = (titleInput?.value || '').trim();
+      if (!title) {
+        alertBox('Please enter a cookbook title.', 'Title Required');
+        return;
+      }
+      const desc = (descInput?.value || '').trim();
+      const icon = (iconInput?.value || '📖').trim();
+      const editId = idInput?.value;
+
+      state.cookbooks = state.cookbooks || [];
+
+      if (editId) {
+        const cb = state.cookbooks.find(c => c.id === editId);
+        if (cb) {
+          cb.title = title;
+          cb.desc = desc;
+          cb.icon = icon;
+        }
+      } else {
+        const newId = `cb-custom-${Date.now()}`;
+        state.cookbooks.push({
+          id: newId,
+          title,
+          icon,
+          theme: 'pastel-coral',
+          origin: newId,
+          desc
+        });
+      }
+
+      if (typeof saveAppState === 'function') saveAppState();
+      closeCookbookModal();
+      renderCookbooks();
+      playChime('bell');
+      alertBox(`Cookbook "${title}" saved successfully!`, 'Cookbook Updated');
+    }
+
+    function deleteCurrentCookbook() {
+      const idInput = document.getElementById('cookbook-edit-id');
+      const editId = idInput?.value;
+      if (!editId || editId === 'cb-family') return;
+
+      const idx = (state.cookbooks || []).findIndex(c => c.id === editId);
+      if (idx !== -1) {
+        const removed = state.cookbooks.splice(idx, 1)[0];
+        if (state.activeCookbook === editId) {
+          state.activeCookbook = null;
+        }
+        if (typeof saveAppState === 'function') saveAppState();
+        closeCookbookModal();
+        renderCookbooks();
+        renderRecipes();
+        alertBox(`Removed cookbook "${removed.title}".`, 'Cookbook Deleted');
+      }
+    }
+
     function openAddRecipeModal() {
+      // Auto-populate origin dropdown with all current cookbooks
+      const originSelect = document.getElementById('recipe-origin-input');
+      if (originSelect && state.cookbooks) {
+        const currentVal = state.activeCookbook ? ((state.cookbooks.find(c => c.id === state.activeCookbook)?.origin) || 'mine') : originSelect.value;
+        originSelect.innerHTML = state.cookbooks.map(cb => {
+          return `<option value="${cb.origin}" ${cb.origin === currentVal ? 'selected' : ''}>${cb.icon || '📖'} ${cb.title}</option>`;
+        }).join('');
+      }
       document.getElementById('recipe-modal').classList.remove('hidden');
     }
     function closeAddRecipeModal() {
@@ -1000,4 +1168,9 @@ if (typeof window !== 'undefined') {
   window.inspectRecipeDetails = inspectRecipeDetails;
   window.closeRecipeInspectModal = closeRecipeInspectModal;
   window.viewRecipeDetails = viewRecipeDetails;
+  window.openCookbookModal = openCookbookModal;
+  window.closeCookbookModal = closeCookbookModal;
+  window.setCookbookModalIcon = setCookbookModalIcon;
+  window.saveCookbookModal = saveCookbookModal;
+  window.deleteCurrentCookbook = deleteCurrentCookbook;
 }

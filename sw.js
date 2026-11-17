@@ -2,11 +2,11 @@
 // - The app page (index.html): network-first, falls back to the cached copy when offline.
 // - Libraries from CDNs (Tailwind, Lucide, Firebase SDK, fonts): cache-first.
 // - Google sign-in, Firestore and other API traffic is never touched (always goes to the network).
-const CACHE_VERSION = 'focusflow-v88-codex-format-preparation-and-unit-conversion';
+const CACHE_VERSION = 'focusflow-v89-force-cache-refresh-all-modules';
 const APP_SHELL = [
   './',
   './index.html',
-  './css/styles.css?v=59',
+  './css/styles.css?v=89',
   './data/family-cookbook.js?v=48',
   './data/usda-foods.js?v=59',
   './js/audio.js?v=48',
@@ -14,15 +14,16 @@ const APP_SHELL = [
   './js/sync.js?v=48',
   './js/timeline.js?v=48',
   './js/calendar-categories.js?v=48',
-  './js/kitchen.js?v=65',
-  './js/shopping.js?v=58',
-  './js/chef.js?v=58',
-  './js/body-profile.js?v=61',
-  './js/nutrition.js?v=61',
-  './js/barcode.js?v=61',
-  './js/health.js?v=48',
-  './js/biometrics.js?v=48',
-  './js/app.js?v=48',
+  './js/kitchen.js?v=89',
+  './js/recipes.js?v=89',
+  './js/shopping.js?v=89',
+  './js/chef.js?v=89',
+  './js/body-profile.js?v=89',
+  './js/nutrition.js?v=89',
+  './js/barcode.js?v=89',
+  './js/health.js?v=89',
+  './js/biometrics.js?v=89',
+  './js/app.js?v=89',
   './assets/icons/favicon.ico',
   './assets/icons/apple-touch-icon.png',
   './assets/icons/icon-192.png',

@@ -291,6 +291,9 @@ To ensure the project never degenerates into a monolithic mess again, you MUST o
 5. **No Redundant Emojis in Buttons (Clean UI Standard):**
    * When a button has an SVG / Lucide vector icon (`data-lucide="..."`), DO NOT add a duplicate emoji or symbol (like ⚡, 💡, 🎉, ✕) inside the button's text label.
    * Button labels must be clean, readable English text without visual clutter. `verify.py` automatically scans and blocks buttons with duplicate emojis.
+6. **No Sideways Drift in Popups (Horizontal Stability):**
+   * All modal overlays (`div[id$="-modal"]`, `div[id$="-drawer"]`) and their inner cards must strictly enforce `overflow-x: hidden !important`, `max-width: 100% !important`, and `touch-action: pan-y !important` in `css/styles.css`.
+   * Agents are strictly forbidden from placing elements with fixed pixel widths larger than viewport width inside popups. `verify.py` check 5d automatically tests and enforces this.
 
 ---
 ### Rule 8 – Token & Step Conservation

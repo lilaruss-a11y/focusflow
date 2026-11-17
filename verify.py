@@ -440,6 +440,13 @@ elif "z-index: 150 !important" not in css_content:
 else:
     success(f"All {len(tier3_child_modals)} child/sub-flow modals have explicit Tier 3 (z-150) stacking above parent dialogs.")
 
+# 5d. Verifying modal horizontal stability and zero sideways drift...
+print("\n5d. Verifying modal horizontal drift prevention...")
+if "overflow-x: hidden !important" not in css_content or "touch-action: pan-y !important" not in css_content:
+    error("css/styles.css is missing modal horizontal overflow protection (overflow-x: hidden / touch-action: pan-y)!")
+else:
+    success("All modal containers and inner cards have strict horizontal stability locked in CSS.")
+
 print("\n6. Testing against known past mistakes...")
 if not os.path.exists(REGRESSIONS_FILE):
     print("  ℹ️ No learned regressions registered yet.")

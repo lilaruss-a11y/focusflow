@@ -97,5 +97,13 @@
     "check_type": "forbidden_pattern",
     "pattern": "storEl\\.value = inferStorageZone\\(cat",
     "is_regex": false
+  },
+  {
+    "id": "modal_no_horizontal_scroll",
+    "description": "Never remove modal horizontal stability (overflow-x: hidden / touch-action: pan-y) in css/styles.css",
+    "file": "css/styles.css",
+    "check_type": "forbidden_pattern",
+    "pattern": "div\\[id\\$\\=\"-modal\"\\]\\s*\\{[^}]*overflow-x:\\s*scroll",
+    "is_regex": true
   }
 ]

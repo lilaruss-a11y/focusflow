@@ -281,6 +281,9 @@ To ensure the project never degenerates into a monolithic mess again, you MUST o
    * Cross-domain function declarations will cause `verify.py` to fail and block your commit.
 4. **Keep `verify.py` Green:**
    * Any change you make must keep `python3 verify.py` passing with 0 errors.
+5. **No Redundant Emojis in Buttons (Clean UI Standard):**
+   * When a button has an SVG / Lucide vector icon (`data-lucide="..."`), DO NOT add a duplicate emoji or symbol (like ⚡, 💡, 🎉, ✕) inside the button's text label.
+   * Button labels must be clean, readable English text without visual clutter. `verify.py` automatically scans and blocks buttons with duplicate emojis.
 
 ---
 ### Rule 8 – Token & Step Conservation

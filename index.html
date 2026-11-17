@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=96">
+  <link rel="stylesheet" href="css/styles.css?v=97">
   <script>
     function resetViewportZoom() {
       try {
@@ -5630,13 +5630,22 @@
         <input type="hidden" id="manual-nut-barcode" value="">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
-            <label class="font-semibold text-slate-300 block mb-1">Item / Ingredient Name <span class="text-rose-400">*</span></label>
-            <input type="text" id="manual-nut-name" placeholder="e.g. Cold-Pressed Pomegranate Juice" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-mint">
+            <label class="font-semibold text-slate-300 block mb-1">Full Product Name <span class="text-rose-400">*</span></label>
+            <input type="text" id="manual-nut-name" oninput="autoSuggestGenericName(this.value)" placeholder="e.g. Nature Valley Protein Granola" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-mint">
           </div>
           <div>
             <label class="font-semibold text-slate-300 block mb-1">Brand Name / Manufacturer</label>
-            <input type="text" id="manual-nut-brand" placeholder="e.g. POM Wonderful" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-mint">
+            <input type="text" id="manual-nut-brand" oninput="autoSuggestGenericName(document.getElementById('manual-nut-name')?.value)" placeholder="e.g. Nature Valley" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-mint">
           </div>
+        </div>
+
+        <!-- Smart Generic / Pantry Display Name -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-semibold text-slate-300 block">Pantry Display Name (Short Generic Name)</label>
+            <span class="text-[10px] text-pastel-lavender">Auto-generated for clean pantry pills</span>
+          </div>
+          <input type="text" id="manual-nut-generic-name" placeholder="e.g. Protein Granola, Greek Yogurt, Strawberries" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-lavender" title="How this item appears on pantry pills">
         </div>
 
         <!-- Package Dimensions & Serving Size Definition -->
@@ -5671,10 +5680,10 @@
             <!-- Total Package Size -->
             <div>
               <label class="font-semibold text-slate-300 block mb-1">Total Package Size</label>
-              <div class="flex items-center bg-dark-base border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm h-10 w-full">
-                <input type="number" id="manual-nut-amount" oninput="const rem = document.getElementById('manual-nut-amount-remaining'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0" value="1" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-xs focus:outline-none min-w-0">
-                <div class="shrink-0 border-l border-dark-border bg-dark-elevated/70 h-full px-2.5 flex items-center justify-center min-w-[76px] select-none">
-                  <select id="manual-nut-unit" onchange="onManualNutritionUnitChange(this.value)" class="w-full bg-transparent text-pastel-sky font-bold text-xs py-1 text-center cursor-pointer focus:outline-none" title="Tap to change unit">
+              <div class="flex items-center bg-dark-base border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm h-11 w-full">
+                <input type="number" id="manual-nut-amount" oninput="const rem = document.getElementById('manual-nut-amount-remaining'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0" value="1" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-sm font-semibold focus:outline-none min-w-0">
+                <div class="shrink-0 border-l border-dark-border bg-dark-elevated/80 h-full px-2.5 flex items-center justify-center min-w-[80px] select-none">
+                  <select id="manual-nut-unit" onchange="onManualNutritionUnitChange(this.value)" class="w-full bg-transparent text-pastel-sky font-bold font-mono text-sm py-1 text-center cursor-pointer focus:outline-none" title="Tap to change unit">
                     <option value="items" selected>items</option>
                     <option value="fl oz">fl oz</option>
                     <option value="oz">oz</option>
@@ -5692,10 +5701,10 @@
             <!-- Amount Remaining -->
             <div>
               <label class="font-semibold text-slate-300 block mb-1">Amount Remaining</label>
-              <div class="flex items-center bg-dark-base border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm h-10 w-full" title="How much of the item is currently left in your kitchen">
-                <input type="number" id="manual-nut-amount-remaining" oninput="this.dataset.linked = '0';" step="any" min="0" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-xs focus:outline-none min-w-0">
-                <div class="shrink-0 border-l border-dark-border bg-dark-elevated/70 h-full px-2.5 flex items-center justify-center min-w-[76px] select-none cursor-pointer" onclick="document.getElementById('manual-nut-unit').focus(); document.getElementById('manual-nut-unit').showPicker?.();" title="Tap unit to change">
-                  <span id="manual-nut-unit-display" class="text-pastel-sky font-bold text-xs py-1 text-center block">items</span>
+              <div class="flex items-center bg-dark-base border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm h-11 w-full" title="How much of the item is currently left in your kitchen">
+                <input type="number" id="manual-nut-amount-remaining" oninput="this.dataset.linked = '0';" step="any" min="0" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-sm font-semibold focus:outline-none min-w-0">
+                <div class="shrink-0 border-l border-dark-border bg-dark-elevated/80 h-full px-2.5 flex items-center justify-center min-w-[80px] select-none cursor-pointer" onclick="document.getElementById('manual-nut-unit').focus(); document.getElementById('manual-nut-unit').showPicker?.();" title="Tap unit to change">
+                  <span id="manual-nut-unit-display" class="text-pastel-sky font-bold font-mono text-sm py-1 text-center block">items</span>
                 </div>
               </div>
             </div>

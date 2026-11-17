@@ -1904,23 +1904,23 @@
 
       // Clean generic display name for list (strip brand, marketing, sizes, packaging terms)
       const rawName = item.name || '';
-      let displayName = rawName;
+      let displayName = item.genericName || '';
 
-      // 1. Strip explicit brand if present in name
-      if (item.brand && displayName.toLowerCase().includes(item.brand.toLowerCase())) {
-        displayName = displayName.replace(new RegExp(`\\b${item.brand}\\b`, 'gi'), '').trim();
+      if (!displayName) {
+        if (typeof extractGenericFoodName === 'function') {
+          displayName = extractGenericFoodName(rawName, item.brand);
+        } else {
+          displayName = rawName;
+          if (item.brand && displayName.toLowerCase().includes(item.brand.toLowerCase())) {
+            displayName = displayName.replace(new RegExp(`\\b${item.brand}\\b`, 'gi'), '').trim();
+          }
+          const commonBrandsRegex = /\b(nature valley|chobani|kirkland signature|kirkland|great value|trader joe'?s|simple truth organic|simple truth|kraft|kellogg'?s|general mills|quaker|dannon|fage|stonyfield|silk|oatly|tyson|perdue|hormel|oscar mayer|barilla|de cecco|prego|ragu|campbell'?s|progresso|heinz|hunt'?s|del monte|green giant|birds eye|dole|ocean spray|smucker'?s|jif|skippy|peter pan|mccormick|badia|morton|domino|king arthur|pillsbury|nestle|hershey'?s|ghirardelli|borden|land o'?lakes|tillamook|cabot|kerrygold|lucerne|horizon organic|horizon|fairlife|organic valley|siggi'?s|two good|liberte|yoplait|claritin|advil|tylenol)\b/gi;
+          displayName = displayName.replace(commonBrandsRegex, '').trim();
+          const marketingFluffRegex = /\b(organic|100%|all natural|natural|non-gmo|original|traditional|classic|premium|grade a|crunchy|delicious|style|creamy|extra firm|firm|whole grain|fat free|low fat|non-fat|gluten free|reduced sodium|low sodium|unsalted|salted|sweetened|unsweetened|family size|party size|value pack|bulk size|club pack|resealable|convenience pack|net wt|fl oz|oz|lb|g|ml)\b/gi;
+          displayName = displayName.replace(marketingFluffRegex, '').trim();
+          displayName = displayName.replace(/^[-–:,./\s]+/, '').replace(/[-–:,./\s]+$/, '').replace(/\s{2,}/g, ' ').trim();
+        }
       }
-
-      // 2. Common major brands dictionary to strip automatically even if brand field was empty
-      const commonBrandsRegex = /\b(nature valley|chobani|kirkland signature|kirkland|great value|trader joe'?s|simple truth organic|simple truth|kraft|kellogg'?s|general mills|quaker|dannon|fage|stonyfield|silk|oatly|tyson|perdue|hormel|oscar mayer|barilla|de cecco|prego|ragu|campbell'?s|progresso|heinz|hunt'?s|del monte|green giant|birds eye|dole|ocean spray|smucker'?s|jif|skippy|peter pan|mccormick|badia|morton|domino|king arthur|pillsbury|nestle|hershey'?s|ghirardelli|borden|land o'?lakes|tillamook|cabot|kerrygold|lucerne|horizon organic|horizon|fairlife|organic valley|siggi'?s|two good|liberte|yoplait|claritin|advil|tylenol)\b/gi;
-      displayName = displayName.replace(commonBrandsRegex, '').trim();
-
-      // 3. Marketing fluff, sizes, and packaging terms
-      const marketingFluffRegex = /\b(organic|100%|all natural|natural|non-gmo|original|traditional|classic|premium|grade a|crunchy|delicious|style|creamy|extra firm|firm|whole grain|fat free|low fat|non-fat|gluten free|reduced sodium|low sodium|unsalted|salted|sweetened|unsweetened|family size|party size|value pack|bulk size|club pack|resealable|convenience pack|net wt|fl oz|oz|lb|g|ml)\b/gi;
-      displayName = displayName.replace(marketingFluffRegex, '').trim();
-
-      // 4. Clean leading/trailing punctuation and double spaces
-      displayName = displayName.replace(/^[-–:,./\s]+/, '').replace(/[-–:,./\s]+$/, '').replace(/\s{2,}/g, ' ').trim();
 
       // Fallback: If stripping left nothing or only 1 character, restore rawName
       if (!displayName || displayName.length < 2) displayName = rawName;

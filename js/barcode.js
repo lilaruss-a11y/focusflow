@@ -1053,22 +1053,23 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
             </button>
           </div>
 
-          <!-- Action buttons based on context (Condensed into a clean single line) -->
-          <div class="pt-1 flex flex-row items-center justify-between gap-1.5 sm:gap-2 w-full">
-            <button type="button" onclick="cancelScannedBarcodeResult()" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border text-rose-400 hover:text-rose-300 text-xs flex items-center justify-center gap-1 transition shrink-0" title="Discard this scan and restart camera">
-              <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
-              <span class="hidden sm:inline">Cancel</span>
+          <!-- Action buttons based on context (Clean 3-column equal grid, identical formatting, zero overlap) -->
+          <div class="pt-2 grid grid-cols-3 gap-2 w-full">
+            <!-- Cancel Button -->
+            <button type="button" onclick="cancelScannedBarcodeResult()" class="h-10 px-2 rounded-xl bg-dark-base border border-rose-500/40 hover:bg-rose-500/10 text-rose-300 font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm" title="Discard this scan and restart camera">
+              <i data-lucide="x-circle" class="w-4 h-4 shrink-0 text-rose-400"></i>
+              <span class="truncate">Cancel</span>
             </button>
-            <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 justify-end">
-              <button type="button" onclick="startBarcodeCamera()" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs flex items-center justify-center gap-1.5 shrink-0" title="Scan Next Barcode">
-                <i data-lucide="scan-line" class="w-3.5 h-3.5 text-pastel-lavender"></i>
-                <span class="text-[11px] sm:text-xs">Scan Next</span>
-              </button>
-              <button type="button" onclick="applyScannedBarcodeFood(window.lastScannedBarcodeProduct)" class="px-3 sm:px-4 py-1.5 rounded-xl bg-gradient-to-r from-pastel-mint to-emerald-400 text-dark-base font-extrabold text-xs shadow-md shadow-pastel-mint/20 flex items-center justify-center gap-1.5 hover:opacity-95 transition truncate shrink-0">
-                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
-                <span class="truncate">${barcodeScannerContext === 'receipt_pair' ? 'Pair Item' : (barcodeScannerContext === 'pantry' ? 'Add to Pantry' : (barcodeScannerContext === 'recipe' ? 'Add' : 'Log Food'))}</span>
-              </button>
-            </div>
+            <!-- Scan Next Button with [III] scan-barcode icon -->
+            <button type="button" onclick="startBarcodeCamera()" class="h-10 px-2 rounded-xl bg-dark-base border border-pastel-lavender/50 hover:bg-pastel-lavender/10 text-pastel-lavender font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm" title="Save / discard and scan the next barcode">
+              <i data-lucide="scan-barcode" class="w-4 h-4 shrink-0 text-pastel-lavender"></i>
+              <span class="truncate">Scan Next</span>
+            </button>
+            <!-- Add / Log Button -->
+            <button type="button" onclick="applyScannedBarcodeFood(window.lastScannedBarcodeProduct)" class="h-10 px-2 rounded-xl bg-dark-base border border-pastel-mint/60 hover:bg-pastel-mint/15 text-pastel-mint font-extrabold text-xs flex items-center justify-center gap-1.5 transition shadow-sm" title="Confirm item">
+              <i data-lucide="plus-circle" class="w-4 h-4 shrink-0 text-pastel-mint"></i>
+              <span class="truncate">${barcodeScannerContext === 'receipt_pair' ? 'Pair Item' : (barcodeScannerContext === 'pantry' ? 'Add Item' : (barcodeScannerContext === 'recipe' ? 'Add Item' : 'Log Food'))}</span>
+            </button>
           </div>
         </div>
       `;
@@ -1329,10 +1330,12 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
       } else if (barcodeScannerContext === 'pantry') {
         const remAmt = (typeof product.amountRemaining === 'number' && product.amountRemaining >= 0) ? product.amountRemaining : amount;
         const formatState = product.format || inferFoodFormat(product.name, stor, cat);
+        const genericName = product.genericName || (typeof extractGenericFoodName === 'function' ? extractGenericFoodName(product.name, product.brand) : product.name);
         state.pantry.push({
           id: `p-${Date.now()}`,
           name: product.name,
           brand: product.brand || '',
+          genericName: genericName,
           category: cat,
           storage: stor,
           format: formatState,

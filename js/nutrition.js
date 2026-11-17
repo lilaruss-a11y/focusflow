@@ -1829,6 +1829,13 @@
       setVal('manual-nut-barcode', params.barcode || '');
       setVal('manual-nut-name', params.name || '');
       setVal('manual-nut-brand', params.brand || '');
+      
+      const genEl = document.getElementById('manual-nut-generic-name');
+      if (genEl) {
+        genEl.value = params.genericName || extractGenericFoodName(params.name || '', params.brand || '');
+        genEl.dataset.userEdited = params.genericName ? '1' : '0';
+      }
+      
       setVal('manual-nut-amount', params.amount != null ? params.amount : 1);
       
       const amtRemainingEl = document.getElementById('manual-nut-amount-remaining');
@@ -2340,10 +2347,12 @@
       const hasAnyVerified = Object.keys(verifiedNutrients).length > 0;
 
       const format = (document.getElementById('manual-nut-format') || {}).value || 'fresh';
+      const genericName = (document.getElementById('manual-nut-generic-name') || {}).value?.trim() || extractGenericFoodName(name, brand);
 
       const product = {
         name,
         brand,
+        genericName,
         amount,
         amountRemaining,
         unit,
@@ -2431,6 +2440,7 @@
         if (pItem) {
           pItem.name = name;
           pItem.brand = brand;
+          pItem.genericName = genericName;
           pItem.amount = amount;
           pItem.amountRemaining = amountRemaining;
           pItem.unit = unit;
@@ -2541,5 +2551,44 @@
       window.deleteFoodEntry = deleteFoodEntry;
       window.renderRemainingCaloriesDonut = renderRemainingCaloriesDonut;
       window.triggerBarcodeScannerFromManualModal = triggerBarcodeScannerFromManualModal;
+      window.autoSuggestGenericName = autoSuggestGenericName;
+      window.extractGenericFoodName = extractGenericFoodName;
+    }
+
+    function autoSuggestGenericName(rawVal) {
+      const genericInput = document.getElementById('manual-nut-generic-name');
+      if (!genericInput) return;
+      if (genericInput.dataset.userEdited === '1') return; // Don't overwrite if user manually typed in it
+      const brandVal = (document.getElementById('manual-nut-brand') || {}).value || '';
+      genericInput.value = extractGenericFoodName(rawVal, brandVal);
+    }
+
+    // Universal helper to derive a clean generic name for display
+    function extractGenericFoodName(rawName, brand = '') {
+      if (!rawName) return '';
+      let s = String(rawName).trim();
+
+      // 1. Strip explicit brand if present in name
+      if (brand && s.toLowerCase().includes(brand.toLowerCase())) {
+        s = s.replace(new RegExp(`\\b${brand}\\b`, 'gi'), '').trim();
+      }
+
+      // 2. Comprehensive national & store brand prefixes
+      const brands = /\b(nature valley|chobani|kirkland signature|kirkland|great value|trader joe'?s|simple truth organic|simple truth|kraft heinz|kraft|kellogg'?s|general mills|quaker|dannon|fage|stonyfield|silk|oatly|tyson|perdue|hormel|oscar mayer|barilla|de cecco|prego|ragu|campbell'?s|progresso|heinz|hunt'?s|del monte|green giant|birds eye|dole|ocean spray|smucker'?s|jif|skippy|peter pan|mccormick|badia|morton|domino|king arthur|pillsbury|nestle|hershey'?s|ghirardelli|borden|land o'?lakes|tillamook|cabot|kerrygold|lucerne|horizon organic|horizon|fairlife|organic valley|siggi'?s|two good|liberte|yoplait|claritin|advil|tylenol)\b/gi;
+      s = s.replace(brands, '').trim();
+
+      // 3. Marketing fluff, grade, cert, and size specs
+      const fluff = /\b(organic|100%|all natural|natural|non-gmo|original|traditional|classic|premium|grade a|crunchy|delicious|style|creamy|extra firm|firm|whole grain|fat free|low fat|non-fat|gluten free|reduced sodium|low sodium|unsalted|salted|sweetened|unsweetened|family size|party size|value pack|bulk size|club pack|resealable|convenience pack|net wt|fl oz|oz|lb|g|ml)\b/gi;
+      s = s.replace(fluff, '').trim();
+
+      // 4. Clean leading/trailing punctuation and double spaces
+      s = s.replace(/^[-–:,./\s]+/, '').replace(/[-–:,./\s]+$/, '').replace(/\s{2,}/g, ' ').trim();
+
+      // 5. Capitalize first letter cleanly
+      if (s.length >= 2) {
+        s = s.charAt(0).toUpperCase() + s.slice(1);
+      }
+
+      return (s && s.length >= 2) ? s : rawName;
     }
 

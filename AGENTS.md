@@ -1,16 +1,18 @@
 # ⚠️ STOP: MANDATORY PRE-FLIGHT CHECK (READ BEFORE DOING ANYTHING) ⚠️
 
 **DO NOT EDIT, CREATE, OR DELETE ANY FILES UPON RECEIVING A PROMPT.**
-Any edit made without presenting a step-by-step plan and receiving explicit user approval first is a **CRITICAL PROTOCOL VIOLATION**.
+Any edit made without presenting a diagnosis & proposed solution and receiving explicit user approval first is a **CRITICAL PROTOCOL VIOLATION**.
 
 Before touching any code:
 1. **Inspect & Diagnose:** Read relevant code.
-2. **Explain in Plain English:** Tell the user what is wrong or what feature will do. Avoid confusing technical jargon.
+2. **Diagnosis & Proposed Solution (No Redundant Step-by-Step Plans):** 
+   - State what is wrong (or what the feature will do) and clearly describe your proposed solution in everyday English.
+   - **STRICTLY FORBIDDEN:** Do NOT add a redundant second "step-by-step plan" or duplicate your explanation. Keep it to a single, concise section.
 3. **Plain English Permission & Action Explanations:**
    - Any pop-up approval prompt must have a simple, everyday title (e.g. *"Upload updates to GitHub"*, *"Save changes to computer"*, *"Check if website update finished"*).
    - Technical terms (like *staging*, *commit*, *push*, *poll deploy*, *sandbox bypass*, or script names) are **STRICTLY FORBIDDEN** in the prompt title. The user should be able to look only at the title and instantly know what they are approving without looking at the code.
    - Restrict all file inspections strictly inside the `FocusFlow/` directory so security alerts for external reads never trigger.
-4. **Ask for Approval:** End with: *"Would you like me to proceed with this plan?"*
+4. **Ask for Approval:** End with: *"Would you like me to proceed with this solution?"*
 5. **WAIT:** Do not touch any code until the user explicitly says YES or approves.
 
 ---
@@ -180,18 +182,19 @@ Every file in this project has an exclusive domain. You are **STRICTLY FORBIDDEN
 
 ## 2. Mandatory Rules for the Agent
 
-### Rule 1: MANDATORY Plan & Approval Gate (Look Before You Leap)
+### Rule 1: MANDATORY Diagnosis, Proposed Solution & Approval Gate (Look Before You Leap)
 **You are STRICTLY FORBIDDEN from editing or creating files upon receiving a user prompt without prior approval.**
 Before changing ANY code:
 1. **Inspect & Diagnose:** Read the relevant file(s) and locate the exact functions/lines involved. *Read-only actions (reading files, `grep`, `git status`/`git log`, running `python3 verify.py`) NEVER require approval — only edits, file creation/deletion, commits, and pushes do.*
-2. **Formulate a Plan:** Determine the root cause and the exact step-by-step changes needed.
-3. **Explain to the User in Plain English:** Explain what is causing the issue or how the feature will work without technical jargon.
-4. **Plain English Permission Titles & Action Descriptions:** 
+2. **Diagnosis & Proposed Solution (No Redundant Plan Section):** 
+   - State what is causing the issue (or what the new feature will do) and clearly explain your proposed solution in plain English.
+   - **STRICTLY FORBIDDEN:** Do NOT write a redundant second "step-by-step plan" that re-explains the same ideas. Deliver a single, clear diagnosis and solution.
+3. **Plain English Permission Titles & Action Descriptions:** 
    - Every system approval prompt must have its title written in **100% everyday English** (e.g. *"Upload app changes to GitHub"*, *"Save edits to your project"*, *"Check if live website is updated"*). 
    - Never use technical jargon, terminal command names, or script flags in prompt titles so the user can comfortably approve without reading code.
    - All diagnostic reads must stay strictly inside `FocusFlow/` so security alerts never pop up for reading files.
-5. **ASK FOR APPROVAL:** End your response by asking the user:
-   > *"Would you like me to proceed with this plan?"*
+4. **ASK FOR APPROVAL:** End your response by asking the user:
+   > *"Would you like me to proceed with this solution?"*
    **WAIT** for the user's explicit approval before touching any files.
 
 ### Rule 2: Run Tests After Making Changes & Register Fixed Bugs

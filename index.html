@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=79">
+  <link rel="stylesheet" href="css/styles.css?v=80">
   <script>
     function resetViewportZoom() {
       try {
@@ -4929,7 +4929,6 @@
           <div>
             <h3 class="text-base font-bold text-white flex items-center gap-2">
               <span>Reverse Chef Co-Pilot</span>
-              <span id="reverse-chef-stage-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pastel-coral/20 text-pastel-coral border border-pastel-coral/30">Stage 1: Co-Pilot</span>
             </h3>
             <p class="text-xs text-slate-400">Zero-dish reverse choreography with conversational brainstorming &amp; live timer</p>
           </div>
@@ -4942,13 +4941,13 @@
       <!-- Multi-Step Progress Tracker Bar -->
       <div class="grid grid-cols-3 gap-1.5 p-1 bg-dark-base rounded-2xl border border-dark-border text-center text-xs">
         <button type="button" onclick="goToReverseChefStep(1)" id="btn-wizard-step-1" class="py-2 rounded-xl font-bold bg-pastel-coral text-dark-base shadow-sm transition">
-          1. Ingredients &amp; Stage
+          1. Ingredients
         </button>
         <button type="button" onclick="goToReverseChefStep(2)" id="btn-wizard-step-2" class="py-2 rounded-xl font-semibold text-slate-400 hover:text-white transition">
           2. Chef Chat &amp; Ideas
         </button>
         <button type="button" onclick="goToReverseChefStep(3)" id="btn-wizard-step-3" class="py-2 rounded-xl font-semibold text-slate-400 hover:text-white transition">
-          3. Full Recipe &amp; Choreo
+          3. Full Recipe &amp; Cooking
         </button>
       </div>
 
@@ -4982,12 +4981,12 @@
           <p class="text-[11px] text-slate-400">You don't need to know the whole recipe — type a favorite ingredient or idea and Gemini will craft complete meals using your pantry!</p>
         </div>
 
-        <!-- Available Pantry Ingredients Picker (Collapsible / Filterable) -->
-        <div class="space-y-1.5">
+        <!-- Available Pantry Ingredients Picker (Categorized & Instant Search) -->
+        <div class="space-y-2">
           <div class="flex items-center justify-between">
             <button type="button" onclick="toggleReverseChefPantryList()" class="flex items-center gap-1.5 text-slate-300 hover:text-white font-semibold transition text-left">
               <i data-lucide="chevron-down" id="chef-pantry-chevron" class="w-4 h-4 text-pastel-coral transition-transform"></i>
-              <span>Browse / Toggle Available Pantry Items</span>
+              <span>Browse / Filter Pantry Items</span>
               <span id="reverse-chef-selected-count" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-dark-elevated text-slate-300 border border-dark-border">0 selected</span>
             </button>
             <div class="flex items-center gap-2">
@@ -4996,33 +4995,36 @@
               <button type="button" onclick="selectAllReverseChefPantry(false)" class="text-[10px] text-slate-400 hover:underline font-medium">Clear All</button>
             </div>
           </div>
-          <div id="reverse-chef-pantry-container" class="space-y-1.5">
-            <div id="reverse-chef-pantry-chips" class="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto p-2 rounded-xl bg-dark-base border border-dark-border">
-              <!-- Populated dynamically with storage badges (frozen/fridge/shelf) -->
+
+          <div id="reverse-chef-pantry-container" class="space-y-2">
+            <!-- Search & Filter Bar -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div class="relative flex-1">
+                <input type="text" id="reverse-chef-pantry-search" oninput="filterReverseChefPantryChips()" placeholder="Filter ingredients (e.g. spinach, eggs)..." class="w-full bg-dark-base border border-dark-border rounded-xl pl-8 pr-3 py-1.5 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-pastel-coral">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
+              </div>
+            </div>
+
+            <!-- Category Filter Pills -->
+            <div class="flex items-center gap-1.5 overflow-x-auto text-[11px] pb-1 scrollbar-thin">
+              <button type="button" onclick="setReverseChefCategoryFilter('all')" id="chef-cat-btn-all" class="px-2.5 py-1 rounded-xl bg-pastel-coral text-dark-base font-bold whitespace-nowrap transition">All</button>
+              <button type="button" onclick="setReverseChefCategoryFilter('produce')" id="chef-cat-btn-produce" class="px-2.5 py-1 rounded-xl bg-dark-base text-slate-300 hover:text-white border border-dark-border whitespace-nowrap transition">🥦 Veggies &amp; Fruit</button>
+              <button type="button" onclick="setReverseChefCategoryFilter('protein')" id="chef-cat-btn-protein" class="px-2.5 py-1 rounded-xl bg-dark-base text-slate-300 hover:text-white border border-dark-border whitespace-nowrap transition">🥩 Protein</button>
+              <button type="button" onclick="setReverseChefCategoryFilter('dairy')" id="chef-cat-btn-dairy" class="px-2.5 py-1 rounded-xl bg-dark-base text-slate-300 hover:text-white border border-dark-border whitespace-nowrap transition">🧀 Dairy</button>
+              <button type="button" onclick="setReverseChefCategoryFilter('grains')" id="chef-cat-btn-grains" class="px-2.5 py-1 rounded-xl bg-dark-base text-slate-300 hover:text-white border border-dark-border whitespace-nowrap transition">🍚 Grains &amp; Pasta</button>
+              <button type="button" onclick="setReverseChefCategoryFilter('pantry')" id="chef-cat-btn-pantry" class="px-2.5 py-1 rounded-xl bg-dark-base text-slate-300 hover:text-white border border-dark-border whitespace-nowrap transition">🥫 Canned &amp; Dry</button>
+              <button type="button" onclick="setReverseChefCategoryFilter('frozen')" id="chef-cat-btn-frozen" class="px-2.5 py-1 rounded-xl bg-dark-base text-slate-300 hover:text-white border border-dark-border whitespace-nowrap transition">🧊 Frozen</button>
+            </div>
+
+            <!-- Chips Container -->
+            <div id="reverse-chef-pantry-chips" class="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto p-2 rounded-xl bg-dark-base border border-dark-border">
+              <!-- Populated dynamically with category attributes -->
             </div>
           </div>
+
           <div id="chef-frozen-alert" class="hidden mt-1 text-[11px] text-sky-300 flex items-center gap-1.5 bg-sky-950/30 p-2 rounded-xl border border-sky-400/30">
             <i data-lucide="snowflake" class="w-3.5 h-3.5 shrink-0 text-sky-400"></i>
-            <span>🧊 Frozen ingredients selected: Reverse Chef will insert automatic thawing/defrost steps into the choreography!</span>
-          </div>
-        </div>
-
-        <!-- Scaffolding Stage Selector (3 Stages) -->
-        <div>
-          <label class="text-slate-300 font-semibold block mb-1.5">Choose Scaffolding Level:</label>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <button type="button" onclick="setReverseChefStage(1)" id="btn-chef-stage-1" class="p-3 rounded-2xl border-2 border-pastel-coral bg-pastel-coral/15 text-left transition">
-              <span class="block font-bold text-pastel-coral">Stage 1: Co-Pilot</span>
-              <span class="text-[10px] text-slate-300">Full recipe visible, guided timer, no forced 1-pot limits</span>
-            </button>
-            <button type="button" onclick="setReverseChefStage(2)" id="btn-chef-stage-2" class="p-3 rounded-2xl border border-dark-border text-left transition text-slate-400 hover:text-white">
-              <span class="block font-bold">Stage 2: Self-Choreographer</span>
-              <span class="text-[10px] text-slate-400">Practice reverse sequencing with "Check Order" hints</span>
-            </button>
-            <button type="button" onclick="setReverseChefStage(3)" id="btn-chef-stage-3" class="p-3 rounded-2xl border border-dark-border text-left transition text-slate-400 hover:text-white">
-              <span class="block font-bold">Stage 3: Executive Mastery</span>
-              <span class="text-[10px] text-slate-400">Kitchen scale weights, multi-dish timing, full independence</span>
-            </button>
+            <span>🧊 Frozen ingredients selected: Reverse Chef will insert automatic thawing/defrost steps into the cooking timeline!</span>
           </div>
         </div>
 
@@ -5048,7 +5050,7 @@
             <i data-lucide="arrow-right" class="w-4 h-4"></i>
           </button>
           <button type="button" onclick="generateDefaultAndGoToRecipe()" class="px-4 py-3 rounded-2xl bg-dark-base border border-dark-border hover:border-slate-500 text-slate-300 text-xs font-semibold">
-            Skip to Recipe &amp; Choreo ➔
+            Skip to Step-by-Step Cooking ➔
           </button>
         </div>
       </div>
@@ -5106,7 +5108,7 @@
       </div>
 
       <!-- STEP 3: FULL RECIPE & LIVE REVERSE TIMELINE -->
-      <div id="chef-wizard-step-3" class="hidden space-y-4 text-xs">
+      <div id="chef-wizard-step-3" class="hidden space-y-4 text-xs overflow-x-hidden w-full">
         <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
           <div>
             <span class="text-[10px] text-pastel-coral font-bold uppercase tracking-wider block">Full Recipe &amp; Reverse Timeline</span>

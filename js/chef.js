@@ -10,6 +10,58 @@
 
     state.reverseChefChatHistory = [];
 
+    state.reverseChefCategoryFilter = 'all';
+
+    function setReverseChefCategoryFilter(cat) {
+      state.reverseChefCategoryFilter = cat;
+      const cats = ['all', 'produce', 'protein', 'dairy', 'grains', 'pantry', 'frozen'];
+      cats.forEach(c => {
+        const btn = document.getElementById(`chef-cat-btn-${c}`);
+        if (!btn) return;
+        if (c === cat) {
+          btn.className = "px-2.5 py-1 rounded-xl bg-pastel-coral text-dark-base font-bold whitespace-nowrap transition shadow-sm";
+        } else {
+          btn.className = "px-2.5 py-1 rounded-xl bg-dark-base text-slate-300 hover:text-white border border-dark-border whitespace-nowrap transition";
+        }
+      });
+      filterReverseChefPantryChips();
+    }
+
+    function filterReverseChefPantryChips() {
+      const searchInput = document.getElementById('reverse-chef-pantry-search');
+      const q = searchInput ? searchInput.value.toLowerCase().trim() : '';
+      const cat = state.reverseChefCategoryFilter || 'all';
+
+      const labels = document.querySelectorAll('#reverse-chef-pantry-chips label');
+      labels.forEach(lbl => {
+        const itemCat = lbl.getAttribute('data-item-category') || 'pantry';
+        const isFrozen = lbl.getAttribute('data-is-frozen') === 'true';
+        const text = lbl.textContent.toLowerCase();
+
+        const matchesQuery = !q || text.includes(q);
+        let matchesCat = (cat === 'all');
+        if (cat === 'frozen') {
+          matchesCat = isFrozen;
+        } else if (cat === 'produce') {
+          matchesCat = itemCat === 'produce' || itemCat === 'vegetables' || itemCat === 'fruits';
+        } else if (cat === 'protein') {
+          matchesCat = itemCat === 'protein';
+        } else if (cat === 'dairy') {
+          matchesCat = itemCat === 'dairy';
+        } else if (cat === 'grains') {
+          matchesCat = itemCat === 'grains' || itemCat === 'bakery';
+        } else if (cat === 'pantry') {
+          matchesCat = itemCat === 'pantry' || itemCat === 'canned' || itemCat === 'baking' || itemCat === 'condiments' || itemCat === 'spices' || itemCat === 'snacks';
+        }
+
+        if (matchesQuery && matchesCat) {
+          lbl.classList.remove('hidden');
+        } else {
+          lbl.classList.add('hidden');
+        }
+      });
+    }
+
     function toggleReverseChefPantryList() {
       const container = document.getElementById('reverse-chef-pantry-container');
       const chevron = document.getElementById('chef-pantry-chevron');
@@ -25,8 +77,10 @@
     }
 
     function selectAllReverseChefPantry(checked) {
-      const cbs = document.querySelectorAll('#reverse-chef-pantry-chips input[type="checkbox"]');
-      cbs.forEach(cb => { cb.checked = !!checked; });
+      // If a category filter or search is active, toggle only currently visible items!
+      const visibleCheckboxes = document.querySelectorAll('#reverse-chef-pantry-chips label:not(.hidden) input[type="checkbox"]');
+      const targetCheckboxes = visibleCheckboxes.length > 0 ? visibleCheckboxes : document.querySelectorAll('#reverse-chef-pantry-chips input[type="checkbox"]');
+      targetCheckboxes.forEach(cb => { cb.checked = !!checked; });
       updateReverseChefSelectedCount();
       checkFrozenSelectionAlert();
     }
@@ -46,7 +100,10 @@
       const alertEl = document.getElementById('chef-expiring-alert');
       const alertText = document.getElementById('chef-expiring-alert-text');
       const cravingInput = document.getElementById('reverse-chef-craving-input');
+      const searchInput = document.getElementById('reverse-chef-pantry-search');
       if (cravingInput) cravingInput.value = '';
+      if (searchInput) searchInput.value = '';
+      state.reverseChefCategoryFilter = 'all';
 
       // Check for ingredients expiring in the next 7 days
       const now = new Date();
@@ -59,18 +116,36 @@
       if (chips) {
         chips.innerHTML = '';
         state.pantry.forEach(item => {
-          const isFrozen = item.storage === 'frozen';
+          const isFrozen = item.storage === 'frozen' || (item.name || '').toLowerCase().includes('frozen');
           const isExpiring = expiringSoon.some(e => e.id === item.id || e.name.toLowerCase() === item.name.toLowerCase());
+          
+          // Categorize item cleanly
+          const nameLower = (item.name || '').toLowerCase();
+          const rawCat = (item.category || '').toLowerCase();
+          let cleanCat = 'pantry';
+          if (/broccoli|spinach|kale|carrot|onion|garlic|tomato|cucumber|lettuce|zucchini|pepper|mushroom|apple|banana|berry|lemon|lime|fruit|salad|produce/i.test(nameLower) || rawCat === 'produce') {
+            cleanCat = 'produce';
+          } else if (/chicken|beef|turkey|steak|pork|sausage|bacon|egg|salmon|tuna|shrimp|fish|tofu|protein/i.test(nameLower) || rawCat === 'protein') {
+            cleanCat = 'protein';
+          } else if (/milk|cheese|yogurt|butter|cream|cheddar|parmesan|sour cream/i.test(nameLower) || rawCat === 'dairy') {
+            cleanCat = 'dairy';
+          } else if (/rice|pasta|noodle|spaghetti|bread|tortilla|bagel|oat|quinoa|grain/i.test(nameLower) || rawCat === 'grains' || rawCat === 'bakery') {
+            cleanCat = 'grains';
+          }
+
           const chip = document.createElement('label');
+          chip.setAttribute('data-item-category', cleanCat);
+          chip.setAttribute('data-is-frozen', isFrozen ? 'true' : 'false');
           chip.className = `flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-elevated border text-slate-200 text-xs cursor-pointer hover:border-pastel-coral/50 transition ${isExpiring ? 'border-amber-400/60 bg-amber-950/20 text-amber-200' : (isFrozen ? 'border-sky-400/40 text-sky-200' : 'border-dark-border')}`;
           chip.innerHTML = `
             <input type="checkbox" checked value="${item.name}" data-storage="${item.storage || 'fridge'}" onchange="checkFrozenSelectionAlert(); updateReverseChefSelectedCount();" class="w-4 h-4 rounded text-pastel-coral focus:ring-0">
-            <span>${isExpiring ? '⚠️ ' : (isFrozen ? '🧊 ' : (item.storage === 'shelf' ? '🥫 ' : '❄️ '))}${item.name}${isExpiring ? ' <em class="text-[10px] text-amber-300 not-italic">(exp. soon)</em>' : ''}</span>
+            <span>${isExpiring ? '⚠️ ' : (isFrozen ? '🧊 ' : (item.storage === 'shelf' ? '🥫 ' : '❄️ '))}${item.name}${isExpiring ? ' <em class="text-[10px] text-amber-300 not-italic font-bold">(exp. soon)</em>' : ''}</span>
           `;
           chips.appendChild(chip);
         });
       }
 
+      setReverseChefCategoryFilter('all');
       updateReverseChefSelectedCount();
       checkFrozenSelectionAlert();
 
@@ -263,39 +338,31 @@
       if (key && typeof callGeminiGenerateContent === 'function') {
         try {
           const systemContext = `You are Sous Chef, an expert friendly culinary companion in FocusFlow.
-The user is looking for meal ideas based on their pantry.
+The user is looking for fast, delicious meal ideas based on their pantry.
 PANTRY INGREDIENTS ON HAND: ${ingredientsListStr}
 INGREDIENTS EXPIRING SOON: ${expiringItems.length > 0 ? expiringItems.join(', ') : 'None'}
 OPTIONAL USER CRAVING / PREFERENCE: ${cravingVal ? cravingVal : 'None specified'}
 USER INSTRUCTION / QUESTION: "${userQuery}"
 
 Provide 3 distinct, creative, and realistic meal options tailored to what they have on hand.
-CRITICAL ADHD / TIME-SAVING REQUIREMENTS:
-Each meal must include:
-1. Title
-2. Cook time (minutes, total)
-3. Estimated kcal per serving
-4. Brief warm 1-2 sentence description
-5. Ingredients array with metric weights (e.g. "200g Chicken breast", "100g Rice")
-6. Step-by-step reverse choreography steps array: each step has "text", "minutes" (number), and "isDish" (boolean - true if it is a cleanup/wash-as-you-go window while cooking).
+Keep instructions fast, practical, and dopamine-boosting.
 
 Return ONLY valid JSON matching this schema:
 {
-  "message": "A warm, helpful 1-2 sentence response greeting them and explaining how these options fit their request.",
+  "message": "A warm, helpful 1-2 sentence response explaining how these options fit their request.",
   "options": [
     {
       "id": "opt-1",
       "title": "Recipe Title",
       "cookTime": 15,
       "kcal": 450,
-      "description": "Short appetizing description.",
+      "description": "Short appetizing 1-2 sentence description.",
       "ingredients": ["200g Chicken Breast", "150g Broccoli florets", "1 tbsp Olive Oil"],
       "steps": [
-        { "text": "Dice chicken and chop vegetables", "minutes": 3, "isDish": false },
-        { "text": "Sear chicken in hot skillet with olive oil", "minutes": 4, "isDish": false },
-        { "text": "🧽 [WASH WINDOW] Wash cutting board and knife while chicken sears", "minutes": 3, "isDish": true },
-        { "text": "Steam broccoli florets in pan with splash of water", "minutes": 4, "isDish": false },
-        { "text": "Plate and enjoy warm", "minutes": 1, "isDish": false }
+        { "text": "Dice ingredients on cutting board", "minutes": 3, "isDish": false },
+        { "text": "Sauté in skillet over medium-high heat with oil", "minutes": 4, "isDish": false },
+        { "text": "🧽 [WASH WINDOW] Wash cutting board while food sizzles", "minutes": 3, "isDish": true },
+        { "text": "Plate and serve warm", "minutes": 2, "isDish": false }
       ]
     }
   ]
@@ -628,9 +695,9 @@ Return ONLY valid JSON matching this schema:
           const isActive = idx === curIdx;
           const isDone = idx < curIdx;
           const card = document.createElement('div');
-          card.className = `p-3 rounded-2xl border transition-all cursor-pointer ${
+          card.className = `p-3 rounded-2xl border transition-all cursor-pointer w-full overflow-hidden ${
             isActive 
-              ? 'bg-pastel-coral/20 border-pastel-coral shadow-lg shadow-pastel-coral/20 font-black text-white text-xs sm:text-sm scale-[1.01]' 
+              ? 'bg-pastel-coral/20 border-pastel-coral shadow-md shadow-pastel-coral/20 font-black text-white text-xs sm:text-sm' 
               : (isDone 
                   ? 'bg-dark-base border-dark-border/40 opacity-60 text-slate-400 text-xs line-through' 
                   : (st.isDish ? 'bg-pastel-sky/10 border-pastel-sky/30 text-pastel-sky text-xs' : 'bg-dark-base border-dark-border text-slate-300 text-xs'))
@@ -1012,68 +1079,66 @@ Return ONLY valid JSON matching this schema:
         generationConfig.responseMimeType = "application/json";
       }
 
-      // Permanently remembered vision model from previous successful scans
-      const savedVisionModel = localStorage.getItem('focusflow_active_vision_model') || (window.state && window.state.activeWorkingVisionModel);
+      // Permanently remembered model from previous successful calls
+      const savedModel = localStorage.getItem('focusflow_active_ai_model') || localStorage.getItem('focusflow_active_vision_model') || (window.state && window.state.activeWorkingVisionModel);
 
-      // Default priority list of models (prioritizing 3.8 Flash Lite)
+      // Fast-first model list (prioritizing ultra-responsive Flash tiers)
       let targetModels = [
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-1.5-flash',
         'gemini-3.8-flash-lite',
         'gemini-3.8-lite',
         'gemini-3.8-flash',
         'gemini-4-argon',
-        'gemini-3.8-flash-latest',
-        'gemini-2.0-flash',
-        'gemini-1.5-flash',
-        'gemini-2.5-flash',
         'gemini-1.5-pro'
       ];
 
-      // If a working vision model was previously confirmed, put it FIRST!
-      if (inlineImage && savedVisionModel) {
+      // If a working model was previously confirmed, put it FIRST to skip discovery entirely!
+      if (savedModel) {
         targetModels = [
-          savedVisionModel,
-          ...targetModels.filter(m => m !== savedVisionModel)
+          savedModel,
+          ...targetModels.filter(m => m !== savedModel)
         ];
       }
 
-      // Fast dynamic model discovery from the user's active key
-      if (typeof onStatus === 'function') onStatus("Connecting to Google AI Studio...");
-      try {
-        const discController = new AbortController();
-        const discTimer = setTimeout(() => discController.abort(), 2500);
-        const modelsListResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${activeKey}`, {
-          signal: discController.signal
-        });
-        clearTimeout(discTimer);
+      // Fast dynamic model discovery only when no saved model exists
+      if (!savedModel && typeof onStatus === 'function') onStatus("Connecting to Google AI Studio...");
+      if (!savedModel) {
+        try {
+          const discController = new AbortController();
+          const discTimer = setTimeout(() => discController.abort(), 1800);
+          const modelsListResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${activeKey}`, {
+            signal: discController.signal
+          });
+          clearTimeout(discTimer);
 
-        if (modelsListResp.ok) {
-          const listJson = await modelsListResp.json();
-          const available = (listJson.models || [])
-            .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.indexOf('generateContent') !== -1)
-            .map(m => (m.name || '').replace(/^models\//, ''))
-            .filter(name => !/1\.0|embedding|aqa|imagen/i.test(name));
+          if (modelsListResp.ok) {
+            const listJson = await modelsListResp.json();
+            const available = (listJson.models || [])
+              .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.indexOf('generateContent') !== -1)
+              .map(m => (m.name || '').replace(/^models\//, ''))
+              .filter(name => !/1\.0|embedding|aqa|imagen/i.test(name));
 
-          if (available.length > 0) {
-            // Keep priority order: saved model first, then 3.8 lite, 3.8, argon, etc.
-            available.sort((a, b) => {
-              const score = (str) => {
-                if (savedVisionModel && savedVisionModel === str) return 300;
-                if (/3\.8.*lite/i.test(str)) return 150;
-                if (/3\.8/i.test(str)) return 100;
-                if (/argon|4/i.test(str)) return 90;
-                if (/2\.0.*flash/i.test(str)) return 80;
-                if (/1\.5.*flash/i.test(str)) return 70;
-                if (/2\.5.*flash/i.test(str)) return 65;
-                if (/pro/i.test(str)) return 50;
-                return 10;
-              };
-              return score(b) - score(a);
-            });
-            targetModels = available;
+            if (available.length > 0) {
+              available.sort((a, b) => {
+                const score = (str) => {
+                  if (/2\.5.*flash/i.test(str)) return 200;
+                  if (/2\.0.*flash/i.test(str)) return 180;
+                  if (/3\.8.*lite/i.test(str)) return 150;
+                  if (/1\.5.*flash/i.test(str)) return 120;
+                  if (/3\.8/i.test(str)) return 100;
+                  if (/argon|4/i.test(str)) return 90;
+                  return 10;
+                };
+                return score(b) - score(a);
+              });
+              targetModels = available;
+            }
           }
+        } catch (e) {
+          console.warn("Fast model discovery skipped:", e.message);
         }
-      } catch (e) {
-        console.warn("Fast model discovery skipped:", e.message);
       }
 
       let lastError = null;

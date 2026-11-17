@@ -1053,20 +1053,20 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
             </button>
           </div>
 
-          <!-- Action buttons based on context -->
-          <div class="pt-1 flex flex-col sm:flex-row gap-2 justify-between items-center">
-            <button type="button" onclick="cancelScannedBarcodeResult()" class="px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border text-rose-400 hover:text-rose-300 text-xs flex items-center justify-center gap-1.5 transition" title="Discard this scan and restart camera">
+          <!-- Action buttons based on context (Condensed into a clean single line) -->
+          <div class="pt-1 flex flex-row items-center justify-between gap-1.5 sm:gap-2 w-full">
+            <button type="button" onclick="cancelScannedBarcodeResult()" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border text-rose-400 hover:text-rose-300 text-xs flex items-center justify-center gap-1 transition shrink-0" title="Discard this scan and restart camera">
               <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
-              <span>Cancel Scan</span>
+              <span class="hidden sm:inline">Cancel</span>
             </button>
-            <div class="flex gap-2 w-full sm:w-auto justify-end">
-              <button type="button" onclick="startBarcodeCamera()" class="px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs flex items-center justify-center gap-1.5">
-                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-                <span>Scan Next Barcode</span>
+            <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 justify-end">
+              <button type="button" onclick="startBarcodeCamera()" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs flex items-center justify-center gap-1.5 shrink-0" title="Scan Next Barcode">
+                <i data-lucide="scan-line" class="w-3.5 h-3.5 text-pastel-lavender"></i>
+                <span class="text-[11px] sm:text-xs">Scan Next</span>
               </button>
-              <button type="button" onclick="applyScannedBarcodeFood(window.lastScannedBarcodeProduct)" class="px-4 py-2 rounded-xl bg-gradient-to-r from-pastel-mint to-emerald-400 text-dark-base font-extrabold text-xs shadow-md shadow-pastel-mint/20 flex items-center justify-center gap-1.5 hover:opacity-95 transition">
-                <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                <span>${barcodeScannerContext === 'receipt_pair' ? 'Pair to Receipt Item' : (barcodeScannerContext === 'pantry' ? 'Add Item to Pantry' : (barcodeScannerContext === 'recipe' ? 'Add to Recipe' : 'Log Food'))}</span>
+              <button type="button" onclick="applyScannedBarcodeFood(window.lastScannedBarcodeProduct)" class="px-3 sm:px-4 py-1.5 rounded-xl bg-gradient-to-r from-pastel-mint to-emerald-400 text-dark-base font-extrabold text-xs shadow-md shadow-pastel-mint/20 flex items-center justify-center gap-1.5 hover:opacity-95 transition truncate shrink-0">
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                <span class="truncate">${barcodeScannerContext === 'receipt_pair' ? 'Pair Item' : (barcodeScannerContext === 'pantry' ? 'Add to Pantry' : (barcodeScannerContext === 'recipe' ? 'Add' : 'Log Food'))}</span>
               </button>
             </div>
           </div>

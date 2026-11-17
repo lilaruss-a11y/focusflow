@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=94">
+  <link rel="stylesheet" href="css/styles.css?v=95">
   <script>
     function resetViewportZoom() {
       try {
@@ -5671,10 +5671,10 @@
             <!-- Total Package Size -->
             <div>
               <label class="font-semibold text-slate-300 block mb-1">Total Package Size</label>
-              <div class="flex items-center bg-dark-base border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm h-10">
+              <div class="flex items-center bg-dark-base border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm h-10 w-full">
                 <input type="number" id="manual-nut-amount" oninput="const rem = document.getElementById('manual-nut-amount-remaining'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0" value="1" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-xs focus:outline-none min-w-0">
-                <div class="shrink-0 border-l border-dark-border bg-dark-elevated/70 px-3 py-2 flex items-center justify-center min-w-[70px]">
-                  <select id="manual-nut-unit" onchange="onManualNutritionUnitChange(this.value)" class="bg-transparent text-pastel-sky font-bold text-xs py-0 cursor-pointer focus:outline-none" title="Tap to change unit">
+                <div class="shrink-0 border-l border-dark-border bg-dark-elevated/70 h-full px-2.5 flex items-center justify-center min-w-[76px] select-none">
+                  <select id="manual-nut-unit" onchange="onManualNutritionUnitChange(this.value)" class="w-full bg-transparent text-pastel-sky font-bold text-xs py-1 text-center cursor-pointer focus:outline-none" title="Tap to change unit">
                     <option value="items" selected>items</option>
                     <option value="fl oz">fl oz</option>
                     <option value="oz">oz</option>
@@ -5692,10 +5692,10 @@
             <!-- Amount Remaining -->
             <div>
               <label class="font-semibold text-slate-300 block mb-1">Amount Remaining</label>
-              <div class="flex items-center bg-dark-base border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm h-10" title="How much of the item is currently left in your kitchen">
+              <div class="flex items-center bg-dark-base border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm h-10 w-full" title="How much of the item is currently left in your kitchen">
                 <input type="number" id="manual-nut-amount-remaining" oninput="this.dataset.linked = '0';" step="any" min="0" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-xs focus:outline-none min-w-0">
-                <div class="shrink-0 border-l border-dark-border bg-dark-elevated/70 px-3 py-2 text-pastel-sky font-bold text-xs cursor-pointer select-none flex items-center justify-center min-w-[70px]" onclick="document.getElementById('manual-nut-unit').focus(); document.getElementById('manual-nut-unit').showPicker?.();" title="Tap unit to change">
-                  <span id="manual-nut-unit-display">items</span>
+                <div class="shrink-0 border-l border-dark-border bg-dark-elevated/70 h-full px-2.5 flex items-center justify-center min-w-[76px] select-none cursor-pointer" onclick="document.getElementById('manual-nut-unit').focus(); document.getElementById('manual-nut-unit').showPicker?.();" title="Tap unit to change">
+                  <span id="manual-nut-unit-display" class="text-pastel-sky font-bold text-xs py-1 text-center block">items</span>
                 </div>
               </div>
             </div>

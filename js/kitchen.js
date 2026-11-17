@@ -1887,33 +1887,48 @@
       `;
 
       // Format state badge (e.g. 🥫 Canned, 🧊 Frozen, 🌾 Dried, 🌿 Fresh, 🍳 Cooked)
+      // On mobile screens, collapse to icon-only to conserve horizontal space
       const fmt = (item.format || (typeof inferFoodFormat === 'function' ? inferFoodFormat(item.name, item.storage, item.category) : 'fresh')).toLowerCase();
       let formatBadge = '';
       if (fmt === 'canned') {
-        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[9.5px] font-bold shrink-0">🥫 Canned</span>`;
+        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[9.5px] font-bold shrink-0 flex items-center" title="Format: Canned"><span>🥫</span><span class="hidden sm:inline ml-1">Canned</span></span>`;
       } else if (fmt === 'frozen') {
-        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-sky-500/15 border border-sky-500/30 text-sky-300 text-[9.5px] font-bold shrink-0">🧊 Frozen</span>`;
+        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-sky-500/15 border border-sky-500/30 text-sky-300 text-[9.5px] font-bold shrink-0 flex items-center" title="Format: Frozen"><span>🧊</span><span class="hidden sm:inline ml-1">Frozen</span></span>`;
       } else if (fmt === 'dried') {
-        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 text-[9.5px] font-bold shrink-0">🌾 Dried</span>`;
+        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 text-[9.5px] font-bold shrink-0 flex items-center" title="Format: Dried"><span>🌾</span><span class="hidden sm:inline ml-1">Dried</span></span>`;
       } else if (fmt === 'cooked') {
-        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-orange-500/15 border border-orange-500/30 text-orange-300 text-[9.5px] font-bold shrink-0">🍳 Cooked</span>`;
+        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-orange-500/15 border border-orange-500/30 text-orange-300 text-[9.5px] font-bold shrink-0 flex items-center" title="Format: Cooked"><span>🍳</span><span class="hidden sm:inline ml-1">Cooked</span></span>`;
       } else if (fmt === 'fresh') {
-        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[9.5px] font-bold shrink-0">🌿 Fresh</span>`;
+        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[9.5px] font-bold shrink-0 flex items-center" title="Format: Fresh"><span>🌿</span><span class="hidden sm:inline ml-1">Fresh</span></span>`;
       }
 
-      // Clean generic display name for list (strip brand, marketing, sizes)
+      // Clean generic display name for list (strip brand, marketing, sizes, packaging terms)
       const rawName = item.name || '';
       let displayName = rawName;
+
+      // 1. Strip explicit brand if present in name
       if (item.brand && displayName.toLowerCase().includes(item.brand.toLowerCase())) {
         displayName = displayName.replace(new RegExp(`\\b${item.brand}\\b`, 'gi'), '').trim();
       }
-      displayName = displayName.replace(/\b(organic|100%|all natural|non-gmo|original|traditional|classic|premium|grade a|crunchy|delicious|style|creamy|extra firm|whole grain|fat free|low fat|non-fat|gluten free)\b/gi, '').trim().replace(/^[-:,]\s*/, '').replace(/\s{2,}/g, ' ');
+
+      // 2. Common major brands dictionary to strip automatically even if brand field was empty
+      const commonBrandsRegex = /\b(nature valley|chobani|kirkland signature|kirkland|great value|trader joe'?s|simple truth organic|simple truth|kraft|kellogg'?s|general mills|quaker|dannon|fage|stonyfield|silk|oatly|tyson|perdue|hormel|oscar mayer|barilla|de cecco|prego|ragu|campbell'?s|progresso|heinz|hunt'?s|del monte|green giant|birds eye|dole|ocean spray|smucker'?s|jif|skippy|peter pan|mccormick|badia|morton|domino|king arthur|pillsbury|nestle|hershey'?s|ghirardelli|borden|land o'?lakes|tillamook|cabot|kerrygold|lucerne|horizon organic|horizon|fairlife|organic valley|siggi'?s|two good|liberte|yoplait|claritin|advil|tylenol)\b/gi;
+      displayName = displayName.replace(commonBrandsRegex, '').trim();
+
+      // 3. Marketing fluff, sizes, and packaging terms
+      const marketingFluffRegex = /\b(organic|100%|all natural|natural|non-gmo|original|traditional|classic|premium|grade a|crunchy|delicious|style|creamy|extra firm|firm|whole grain|fat free|low fat|non-fat|gluten free|reduced sodium|low sodium|unsalted|salted|sweetened|unsweetened|family size|party size|value pack|bulk size|club pack|resealable|convenience pack|net wt|fl oz|oz|lb|g|ml)\b/gi;
+      displayName = displayName.replace(marketingFluffRegex, '').trim();
+
+      // 4. Clean leading/trailing punctuation and double spaces
+      displayName = displayName.replace(/^[-–:,./\s]+/, '').replace(/[-–:,./\s]+$/, '').replace(/\s{2,}/g, ' ').trim();
+
+      // Fallback: If stripping left nothing or only 1 character, restore rawName
       if (!displayName || displayName.length < 2) displayName = rawName;
 
       return `
         <div class="flex items-center gap-1.5 min-w-0 flex-1">
-          <span class="text-slate-200 font-semibold truncate group-hover:text-pastel-mint transition ${isOutOfStock ? 'line-through text-slate-400' : ''}" title="${rawName}${item.brand ? ' (' + item.brand + ')' : ''}">${displayName}</span>
           ${formatBadge}
+          <span class="text-slate-200 font-semibold truncate group-hover:text-pastel-mint transition ${isOutOfStock ? 'line-through text-slate-400' : ''}" title="${rawName}${item.brand ? ' (' + item.brand + ')' : ''}">${displayName}</span>
           ${expiryBadge}
         </div>
         <div class="flex items-center gap-1.5 shrink-0" onclick="event.stopPropagation()">

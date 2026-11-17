@@ -1843,16 +1843,12 @@
           <span class="text-slate-200 font-semibold truncate group-hover:text-pastel-mint transition ${isOutOfStock ? 'line-through text-slate-400' : ''}">${item.name}</span>
           ${expiryBadge}
         </div>
-        <div class="flex items-center gap-1 shrink-0" onclick="event.stopPropagation()">
+        <div class="flex items-center gap-1.5 shrink-0" onclick="event.stopPropagation()">
           ${outOfStockAction}
-          <!-- Amount Stepper with 1-Tap Unit Cycling -->
-          <div class="flex items-center bg-dark-elevated border border-dark-border rounded-lg px-1 py-0.5 gap-1 font-mono text-[10px]">
-            <button type="button" onclick="event.stopPropagation(); changePantryItemAmount('${item.id}', -1)" class="w-3.5 h-3.5 rounded hover:bg-slate-700 text-slate-300 hover:text-white font-bold flex items-center justify-center">-</button>
-            <button type="button" onclick="event.stopPropagation(); cyclePantryItemUnit('${item.id}')" class="text-pastel-mint hover:text-pastel-sky font-bold px-1 hover:underline cursor-pointer transition flex items-center" title="Amount: ${item.amount != null ? item.amount : 1} • Unit: ${item.unit || 'items'} (Tap to cycle: items ➔ oz ➔ g ➔ servings)">
-              ${formatPantryAmountAndUnit(item.amount, item.unit)}
-            </button>
-            <button type="button" onclick="event.stopPropagation(); changePantryItemAmount('${item.id}', 1)" class="w-3.5 h-3.5 rounded hover:bg-slate-700 text-slate-300 hover:text-white font-bold flex items-center justify-center">+</button>
-          </div>
+          <!-- Amount Display (Tapping the item opens details to edit) -->
+          <span class="text-pastel-mint font-bold px-2 py-0.5 rounded-lg bg-dark-elevated border border-dark-border font-mono text-[10.5px]" title="Amount remaining: ${formatPantryAmountAndUnit(item.amountRemaining != null ? item.amountRemaining : item.amount, item.unit)}">
+            ${formatPantryAmountAndUnit(item.amountRemaining != null ? item.amountRemaining : item.amount, item.unit)}
+          </span>
           <!-- Delete -->
           <button type="button" onclick="event.stopPropagation(); deletePantryItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-0.5" title="Remove ingredient">
             <i data-lucide="x" class="w-3.5 h-3.5"></i>

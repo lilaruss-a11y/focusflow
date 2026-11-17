@@ -5562,29 +5562,50 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <div>
-            <label class="font-semibold text-slate-300 block mb-1">Total Package Size</label>
-            <input type="number" id="manual-nut-amount" oninput="const rem = document.getElementById('manual-nut-amount-remaining'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0" value="1" class="w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-mint">
+        <div class="space-y-2">
+          <!-- Total Package Size & Unit in One Continuous Line -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="font-semibold text-slate-300 block mb-1">Total Package Size</label>
+              <input type="number" id="manual-nut-amount" oninput="const rem = document.getElementById('manual-nut-amount-remaining'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0" value="1" class="w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-mint">
+            </div>
+            <div>
+              <label class="font-semibold text-slate-300 block mb-1">Package Unit</label>
+              <select id="manual-nut-unit" class="w-full bg-dark-base border border-dark-border rounded-xl px-2 py-1.5 text-white text-xs">
+                <option value="items" selected>items</option>
+                <option value="fl oz">fl oz</option>
+                <option value="oz">oz</option>
+                <option value="g">g</option>
+                <option value="ml">ml</option>
+                <option value="cup">cup</option>
+                <option value="servings">servings</option>
+                <option value="bottle">bottle</option>
+                <option value="can">can</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <label class="font-semibold text-slate-300 block mb-1">Amount Remaining</label>
-            <input type="number" id="manual-nut-amount-remaining" oninput="this.dataset.linked = '0';" step="any" min="0" placeholder="e.g. 1" class="w-full bg-dark-base border border-pastel-sky/50 rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-sky" title="How much of the item is currently left in your kitchen">
+
+          <!-- Amount Remaining & Storage Location in One Continuous Line -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="font-semibold text-slate-300 block mb-1">Amount Remaining</label>
+              <input type="number" id="manual-nut-amount-remaining" oninput="this.dataset.linked = '0';" step="any" min="0" placeholder="e.g. 1" class="w-full bg-dark-base border border-pastel-sky/50 rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-sky" title="How much of the item is currently left in your kitchen">
+            </div>
+            <div>
+              <label class="font-semibold text-slate-300 block mb-1">Storage Location in Kitchen</label>
+              <select id="manual-nut-storage" class="w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs">
+                <option value="fridge-main" selected>❄️ Fridge - Main</option>
+                <option value="fridge-crisper">🥬 Fridge - Crisper</option>
+                <option value="freezer">🧊 Freezer</option>
+                <option value="counter">🧺 Counter</option>
+                <option value="cupboard">🚪 Cupboard</option>
+                <option value="pantry">🥫 Pantry</option>
+                <option value="spices">🧂 Spices / Seasonings</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <label class="font-semibold text-slate-300 block mb-1">Package Unit</label>
-            <select id="manual-nut-unit" class="w-full bg-dark-base border border-dark-border rounded-xl px-2 py-1.5 text-white text-xs">
-              <option value="items" selected>items</option>
-              <option value="fl oz">fl oz</option>
-              <option value="oz">oz</option>
-              <option value="g">g</option>
-              <option value="ml">ml</option>
-              <option value="cup">cup</option>
-              <option value="servings">servings</option>
-              <option value="bottle">bottle</option>
-              <option value="can">can</option>
-            </select>
-          </div>
+
+          <!-- Category -->
           <div>
             <label class="font-semibold text-slate-300 block mb-1">Category</label>
             <select id="manual-nut-cat" onchange="onManualNutritionCategoryChange(this.value)" class="w-full bg-dark-base border border-dark-border rounded-xl px-2 py-1.5 text-white text-xs">
@@ -5597,18 +5618,6 @@
               <option value="condiments">🥫 Condiments</option>
               <option value="snacks">🍿 Snacks</option>
               <option value="pantry_staples" selected>🥫 Pantry</option>
-            </select>
-          </div>
-          <div class="col-span-2 sm:col-span-4">
-            <label class="font-semibold text-slate-300 block mb-1">Storage Location in Kitchen</label>
-            <select id="manual-nut-storage" class="w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs">
-              <option value="fridge-main" selected>❄️ Fridge - Main</option>
-              <option value="fridge-crisper">🥬 Fridge - Crisper</option>
-              <option value="freezer">🧊 Freezer</option>
-              <option value="counter">🧺 Counter</option>
-              <option value="cupboard">🚪 Cupboard</option>
-              <option value="pantry">🥫 Pantry</option>
-              <option value="spices">🧂 Spices / Seasonings</option>
             </select>
           </div>
         </div>
@@ -5682,31 +5691,29 @@
         </div>
       </div>
 
-      <!-- USDA Specific-Food Confirmation Prompt (Clean, No Explanation) -->
-      <div id="usda-supplement-confirm-card" class="hidden p-3 rounded-2xl bg-amber-950/40 border border-amber-400/50 space-y-2 text-xs shadow-lg">
-        <div class="flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2 min-w-0">
-            <i data-lucide="help-circle" class="w-4 h-4 text-amber-300 shrink-0"></i>
-            <span class="font-bold text-white text-xs truncate" id="usda-supplement-prompt-title">Supplement nutrients with info from USDA?</span>
-          </div>
-          <div class="flex items-center gap-1.5 shrink-0">
-            <button type="button" onclick="cancelUsdaSupplementation()" class="px-2.5 py-1 rounded-lg bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs font-semibold">
-              Cancel
-            </button>
-            <button type="button" id="btn-confirm-usda-supplement" onclick="confirmUsdaSupplementation()" class="px-3 py-1 rounded-lg bg-pastel-mint text-dark-base font-bold text-xs hover:bg-emerald-300 shadow-sm transition">
-              ✓ Supplement Nutrients
-            </button>
-          </div>
+      <!-- USDA Specific-Food Confirmation Prompt (Clean, Spacious Mobile Layout) -->
+      <div id="usda-supplement-confirm-card" class="hidden p-3.5 rounded-2xl bg-amber-950/40 border border-amber-400/50 space-y-2.5 text-xs shadow-lg">
+        <div class="flex items-start gap-2">
+          <i data-lucide="help-circle" class="w-4 h-4 text-amber-300 shrink-0 mt-0.5"></i>
+          <span class="font-bold text-white text-xs leading-snug" id="usda-supplement-prompt-title">Supplement nutrients with info from USDA?</span>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-1">
+          <button type="button" onclick="cancelUsdaSupplementation()" class="px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs font-semibold transition">
+            Cancel
+          </button>
+          <button type="button" id="btn-confirm-usda-supplement" onclick="confirmUsdaSupplementation()" class="px-3.5 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs hover:bg-emerald-300 shadow-sm transition">
+            ✓ Supplement Nutrients
+          </button>
         </div>
       </div>
 
       <!-- Sourced Info Attribution Badge -->
-      <div id="usda-source-attribution-pill" class="hidden p-2 rounded-xl bg-pastel-sky/10 border border-pastel-sky/30 text-xs flex items-center justify-between gap-2">
-        <div class="flex items-center gap-1.5 text-pastel-sky text-[11px]">
+      <div id="usda-source-attribution-pill" class="hidden p-2.5 rounded-xl bg-pastel-sky/10 border border-pastel-sky/30 text-xs flex items-center justify-between gap-2">
+        <div class="flex items-center gap-1.5 text-pastel-sky text-[11px] min-w-0">
           <i data-lucide="info" class="w-3.5 h-3.5 shrink-0"></i>
-          <span id="usda-source-attribution-text">Nutrient information supplemented by USDA</span>
+          <span id="usda-source-attribution-text" class="truncate font-medium">Nutrient information supplemented by USDA</span>
         </div>
-        <button type="button" onclick="undoAutoEstimateMicros()" class="text-[10px] font-semibold text-slate-400 hover:text-rose-300 transition">
+        <button type="button" onclick="undoAutoEstimateMicros()" class="text-[10.5px] font-semibold text-slate-300 hover:text-rose-300 transition shrink-0 underline">
           Revert to original
         </button>
       </div>
@@ -5727,7 +5734,7 @@
           <button type="button" id="btn-undo-auto-estimate-micros" onclick="undoAutoEstimateMicros()" class="hidden px-2.5 py-1 rounded-lg bg-dark-base border border-dark-border text-slate-300 hover:text-white font-semibold text-[11px] transition" title="Revert to original micronutrient values">
             ↺ Undo Auto-Fill
           </button>
-          <button type="button" onclick="requestUsdaFoodSupplementation()" class="px-3 py-1 rounded-lg bg-pastel-mint text-dark-base font-bold text-[11px] hover:bg-emerald-300 transition">
+          <button type="button" id="btn-request-usda-supplement" onclick="requestUsdaFoodSupplementation()" class="px-3 py-1 rounded-lg bg-pastel-mint text-dark-base font-bold text-[11px] hover:bg-emerald-300 transition">
             Auto-Estimate with USDA
           </button>
         </div>
@@ -7015,13 +7022,13 @@
   <script src="js/sync.js?v=48"></script>
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
-  <script src="js/kitchen.js?v=65"></script>
+  <script src="js/kitchen.js?v=66"></script>
   <script src="js/recipes.js?v=62"></script>
   <script src="js/shopping.js?v=58"></script>
   <script src="js/chef.js?v=58"></script>
   <script src="js/body-profile.js?v=61"></script>
-  <script src="js/nutrition.js?v=63"></script>
-  <script src="js/barcode.js?v=66"></script>
+  <script src="js/nutrition.js?v=64"></script>
+  <script src="js/barcode.js?v=67"></script>
   <script src="js/health.js?v=48"></script>
   <script src="js/biometrics.js?v=48"></script>
   <script src="js/app.js?v=48"></script>

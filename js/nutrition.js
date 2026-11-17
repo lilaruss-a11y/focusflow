@@ -1732,6 +1732,15 @@
       if (confirmCard) confirmCard.classList.add('hidden');
       const undoBtn = document.getElementById('btn-undo-auto-estimate-micros');
       if (undoBtn) undoBtn.classList.add('hidden');
+      const requestEstimateBtn = document.getElementById('btn-request-usda-supplement');
+      if (requestEstimateBtn) {
+        // If already supplemented with USDA data, hide the button; otherwise show it
+        if (params.usdaSupplementSource || (params.nutrition && params.nutrition.usdaSupplementSource)) {
+          requestEstimateBtn.classList.add('hidden');
+        } else {
+          requestEstimateBtn.classList.remove('hidden');
+        }
+      }
 
       const nut = params.nutrition || {};
       const matchedUsda = findClosestUsdaFood(params.name || '', params.category || '');
@@ -1762,6 +1771,17 @@
         if (el) el.value = (val != null && val !== '') ? val : '';
       };
 
+      // Macronutrients & core values: explicitly check if present on label (including 0)
+      const isConfirmedZeroOrVal = (key, val) => {
+        if (incomingVerified && incomingVerified[key]) return true;
+        if (params.isVerified && val !== undefined && val !== null && val !== '') {
+          // If water, do NOT blindly mark verified unless explicitly specified in verifiedNutrients
+          if (key === 'water' && (!incomingVerified || !incomingVerified.water)) return false;
+          return true;
+        }
+        return false;
+      };
+
       // Differentiate confirmed 0 vs unentered empty nutrient values
       const setNutrientVal = (id, key, val) => {
         const el = document.getElementById(id);
@@ -1775,7 +1795,7 @@
         if (!isNaN(num)) {
           el.value = val;
           // If coming from verified source or positive confirmation, mark verified
-          if (params.isVerified || (incomingVerified && incomingVerified[key])) {
+          if (isConfirmedZeroOrVal(key, val)) {
             window.activeManualVerifiedMap[key] = true;
           }
         } else {
@@ -2065,6 +2085,10 @@
       const undoBtn = document.getElementById('btn-undo-auto-estimate-micros');
       if (undoBtn) undoBtn.classList.remove('hidden');
 
+      // Hide the "Auto-Estimate with USDA" button now that nutrients have been supplemented
+      const requestEstimateBtn = document.getElementById('btn-request-usda-supplement');
+      if (requestEstimateBtn) requestEstimateBtn.classList.add('hidden');
+
       const sourceName = matchedFood ? matchedFood.name : (name || 'USDA Reference');
       if (activeManualNutritionContext) {
         activeManualNutritionContext.usdaSupplementSource = sourceName;
@@ -2097,6 +2121,11 @@
       window.preEstimateMicrosSnapshot = null;
       const undoBtn = document.getElementById('btn-undo-auto-estimate-micros');
       if (undoBtn) undoBtn.classList.add('hidden');
+
+      // Unhide the "Auto-Estimate with USDA" button when reverted
+      const requestEstimateBtn = document.getElementById('btn-request-usda-supplement');
+      if (requestEstimateBtn) requestEstimateBtn.classList.remove('hidden');
+
       const sourcePill = document.getElementById('usda-source-attribution-pill');
       if (sourcePill && !(activeManualNutritionContext && activeManualNutritionContext.usdaSupplementSource)) {
         sourcePill.classList.add('hidden');

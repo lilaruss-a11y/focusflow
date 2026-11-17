@@ -81,5 +81,13 @@
     "check_type": "forbidden_pattern",
     "pattern": "num === 0 && !isConfirmed",
     "is_regex": false
+  },
+  {
+    "id": "water_not_verified_by_default",
+    "description": "Never mark water or moisture as verified by default unless explicitly listed on packaging",
+    "file": "js/nutrition.js",
+    "check_type": "forbidden_pattern",
+    "pattern": "window\\.activeManualVerifiedMap\\['water'\\]\\s*=\\s*true;",
+    "is_regex": true
   }
 ]

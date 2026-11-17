@@ -721,7 +721,8 @@ CRITICAL RULES FOR NUTRITION EXTRACTION:
 - Storage: Intelligently infer optimal storage zone ("fridge", "frozen", "counter", or "shelf") based on whether this food item typically requires refrigeration, freezing, or pantry storage.
 - STRICT RULE ON NUTRIENTS & MICRONUTRIENTS (ZERO vs UNMENTIONED):
   * If a nutrient is explicitly printed on the label with 0, 0g, 0mg, or 0% Daily Value (e.g. "Total Fat 0g", "Iron 0mg", "Trans Fat 0g", "Added Sugars 0g"): Return exactly 0.
-  * If a nutrient or vitamin/mineral is NOT mentioned on the label at all: Return null. DO NOT guess, fabricate, or estimate nutrients that are not printed on the label.
+  * WATER / MOISTURE: Product labels almost never list moisture or water. Leave "water": null unless the label explicitly has a line for water or moisture. NEVER set water to 0 unless printed on the packaging.
+  * If any nutrient or vitamin/mineral is NOT mentioned on the label at all: Return null. DO NOT guess, fabricate, or estimate nutrients that are not printed on the label.
 
 Return ONLY a valid JSON object (no markdown, no backticks, no markdown code block fences):
 {

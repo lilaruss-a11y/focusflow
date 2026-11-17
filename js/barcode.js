@@ -337,10 +337,21 @@
 
     function inferStorageZone(category, name) {
       const n = (name || '').toLowerCase();
-      if (category === 'frozen' || /frozen|ice cream/i.test(n)) return 'frozen';
-      if (category === 'dairy' || category === 'protein' || /milk|cheese|yogurt|meat|chicken|fish|egg/i.test(n)) return 'fridge';
+      if (category === 'frozen' || /frozen|ice cream/i.test(n)) return 'freezer';
+      if (category === 'dairy' || category === 'protein' || /milk|cheese|yogurt|meat|chicken|fish|egg/i.test(n)) return 'fridge-main';
       if (/banana|avocado|tomato|onion|potato|bread/i.test(n)) return 'counter';
-      return 'shelf';
+      if (/spice|seasoning|salt|pepper|oil|vinegar/i.test(n)) return 'spices';
+      return 'pantry';
+    }
+
+    function inferFoodFormat(name, storage, category) {
+      const n = (name || '').toLowerCase();
+      const s = (storage || '').toLowerCase();
+      if (s.includes('freez') || /frozen|ice cream|popsicle/i.test(n)) return 'frozen';
+      if (/canned|can\b|jar\b|marinara|tomato paste|canned black beans|canned corn|tuna/i.test(n)) return 'canned';
+      if (/dry|dried|oats|rice|flour|quinoa|pasta|lentil|bean|noodle|powder/i.test(n)) return 'dried';
+      if (/cooked|leftover|baked|roasted|boiled|stew|soup|curry/i.test(n)) return 'cooked';
+      return 'fresh';
     }
 
     // ==============================================
@@ -1044,20 +1055,38 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
           </div>
 
           <!-- Action buttons based on context -->
-          <div class="pt-1 flex flex-col sm:flex-row gap-2 justify-end">
-            <button type="button" onclick="startBarcodeCamera()" class="px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs flex items-center justify-center gap-1.5">
-              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-              <span>Scan Next Barcode</span>
+          <div class="pt-1 flex flex-col sm:flex-row gap-2 justify-between items-center">
+            <button type="button" onclick="cancelScannedBarcodeResult()" class="px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border text-rose-400 hover:text-rose-300 text-xs flex items-center justify-center gap-1.5 transition" title="Discard this scan and restart camera">
+              <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
+              <span>✕ Cancel Scan</span>
             </button>
-            <button type="button" onclick="applyScannedBarcodeFood(window.lastScannedBarcodeProduct)" class="px-4 py-2 rounded-xl bg-gradient-to-r from-pastel-mint to-emerald-400 text-dark-base font-extrabold text-xs shadow-md shadow-pastel-mint/20 flex items-center justify-center gap-1.5 hover:opacity-95 transition">
-              <i data-lucide="plus-circle" class="w-4 h-4"></i>
-              <span>${barcodeScannerContext === 'receipt_pair' ? 'Pair to Receipt Item' : (barcodeScannerContext === 'pantry' ? 'Add Item to Pantry' : (barcodeScannerContext === 'recipe' ? 'Add to Recipe' : 'Log Food'))}</span>
-            </button>
+            <div class="flex gap-2 w-full sm:w-auto justify-end">
+              <button type="button" onclick="startBarcodeCamera()" class="px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs flex items-center justify-center gap-1.5">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                <span>Scan Next Barcode</span>
+              </button>
+              <button type="button" onclick="applyScannedBarcodeFood(window.lastScannedBarcodeProduct)" class="px-4 py-2 rounded-xl bg-gradient-to-r from-pastel-mint to-emerald-400 text-dark-base font-extrabold text-xs shadow-md shadow-pastel-mint/20 flex items-center justify-center gap-1.5 hover:opacity-95 transition">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                <span>${barcodeScannerContext === 'receipt_pair' ? 'Pair to Receipt Item' : (barcodeScannerContext === 'pantry' ? 'Add Item to Pantry' : (barcodeScannerContext === 'recipe' ? 'Add to Recipe' : 'Log Food'))}</span>
+              </button>
+            </div>
           </div>
         </div>
       `;
       resBox.classList.remove('hidden');
       if (window.lucide) lucide.createIcons();
+    }
+
+    function cancelScannedBarcodeResult() {
+      window.lastScannedBarcodeProduct = null;
+      const resBox = document.getElementById('barcode-lookup-result');
+      if (resBox) {
+        resBox.innerHTML = '';
+        resBox.classList.add('hidden');
+      }
+      const codeInput = document.getElementById('barcode-manual-input');
+      if (codeInput) codeInput.value = '';
+      startBarcodeCamera();
     }
 
     function renderBarcodeMissingWithAiPrompt(code) {
@@ -1299,13 +1328,17 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
         }
         alertBox(`Added "${product.name}" to recipe ingredients.`, "Barcode Added");
       } else if (barcodeScannerContext === 'pantry') {
+        const remAmt = (typeof product.amountRemaining === 'number' && product.amountRemaining >= 0) ? product.amountRemaining : amount;
+        const formatState = product.format || inferFoodFormat(product.name, stor, cat);
         state.pantry.push({
           id: `p-${Date.now()}`,
           name: product.name,
           brand: product.brand || '',
           category: cat,
           storage: stor,
+          format: formatState,
           amount: amount,
+          amountRemaining: remAmt,
           unit: unit,
           kcal: kcal,
           protein: protein,
@@ -1382,6 +1415,7 @@ if (typeof window !== 'undefined') {
   window.setAndLookupBarcode = setAndLookupBarcode;
   window.parsePackageQuantity = parsePackageQuantity;
   window.inferFoodCategory = inferFoodCategory;
+  window.inferFoodFormat = inferFoodFormat;
   window.inferStorageZone = inferStorageZone;
   window.getCustomBarcodeDb = getCustomBarcodeDb;
   window.saveCustomBarcodeItem = saveCustomBarcodeItem;
@@ -1395,6 +1429,7 @@ if (typeof window !== 'undefined') {
   window.openManualNutritionFromScanner = openManualNutritionFromScanner;
   window.inspectScannedProductFullDetails = inspectScannedProductFullDetails;
   window.renderBarcodeProductResult = renderBarcodeProductResult;
+  window.cancelScannedBarcodeResult = cancelScannedBarcodeResult;
   window.renderBarcodeMissingWithAiPrompt = renderBarcodeMissingWithAiPrompt;
   window.lookupBarcode = lookupBarcode;
   window.saveUnknownBarcodeItem = saveUnknownBarcodeItem;

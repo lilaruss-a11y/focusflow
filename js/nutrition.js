@@ -1269,14 +1269,8 @@
         return bestMatch;
       }
 
-      // Secondary fallback by category so user always sees which USDA food reference is proposed
-      const catLower = (category || '').toLowerCase();
-      if (catLower.includes('fruit')) return commonFoodsDatabase.find(f => f.id === 'cf-apple') || commonFoodsDatabase[0];
-      if (catLower.includes('produce') || catLower.includes('veg')) return commonFoodsDatabase.find(f => f.id === 'cf-broccoli') || commonFoodsDatabase[0];
-      if (catLower.includes('dairy')) return commonFoodsDatabase.find(f => f.id === 'cf-milk-whole') || commonFoodsDatabase[0];
-      if (catLower.includes('protein') || catLower.includes('meat')) return commonFoodsDatabase.find(f => f.id === 'cf-chicken-breast') || commonFoodsDatabase[0];
-      if (catLower.includes('grain')) return commonFoodsDatabase.find(f => f.id === 'cf-oats') || commonFoodsDatabase[0];
-      return commonFoodsDatabase[0];
+      // No confident match — do NOT guess randomly (e.g. no tofu for balsamic vinegar!)
+      return null;
     }
 
     function estimateMicronutrientsForFood(category, kcal, protein, carbs, fat, name, servingGramsOverride = null) {
@@ -1437,6 +1431,9 @@
     }
 
     if (typeof window !== 'undefined') {
+      window.onManualNutritionCategoryChange = onManualNutritionCategoryChange;
+      window.onManualNutritionFormatChange = onManualNutritionFormatChange;
+      window.onManualNutritionUnitChange = onManualNutritionUnitChange;
       window.DAILY_NUTRITION_STANDARDS = DAILY_NUTRITION_STANDARDS;
       window.getUnifiedFoodOrMeal = getUnifiedFoodOrMeal;
       window.estimateMicronutrientsForFood = estimateMicronutrientsForFood;
@@ -1844,7 +1841,8 @@
       setVal('manual-nut-unit', unitVal);
       const unitDisp = document.getElementById('manual-nut-unit-display');
       if (unitDisp) unitDisp.textContent = unitVal;
-      setVal('manual-nut-cat', params.category || 'pantry_staples');
+      setVal('manual-nut-cat', params.category || 'vegetables');
+      setVal('manual-nut-format', params.format || 'fresh');
       setVal('manual-nut-storage', normalizeStorage(params.storage));
 
       const servingDesc = params.serving || nut.serving || matchedUsda?.serving || '1 serving';
@@ -1918,15 +1916,76 @@
       const storEl = document.getElementById('manual-nut-storage');
       if (storEl) {
         let mapped = 'pantry';
-        if (cat === 'frozen') mapped = 'freezer';
-        else if (cat === 'dairy' || cat === 'protein') mapped = 'fridge-main';
-        else if (cat === 'produce') mapped = 'fridge-crisper';
-        else if (cat === 'beverages') mapped = 'fridge-main';
-        else if (cat === 'condiments') mapped = 'fridge-main';
-        else if (cat === 'snacks') mapped = 'pantry';
+        if (cat === 'dairy' || cat === 'protein' || cat === 'beverages' || cat === 'leftovers') mapped = 'fridge-main';
+        else if (cat === 'vegetables' || cat === 'fruits') mapped = 'fridge-crisper';
+        else if (cat === 'baking') mapped = 'spices';
         else mapped = 'pantry';
         storEl.value = mapped;
       }
+    }
+
+    function onManualNutritionFormatChange(fmt) {
+      const storEl = document.getElementById('manual-nut-storage');
+      if (!storEl) return;
+      if (fmt === 'frozen') {
+        storEl.value = 'freezer';
+      } else if (fmt === 'canned' || fmt === 'dried') {
+        if (storEl.value === 'freezer' || storEl.value === 'fridge-crisper') {
+          storEl.value = 'pantry';
+        }
+      } else if (fmt === 'fresh') {
+        const cat = (document.getElementById('manual-nut-cat') || {}).value || '';
+        if (cat === 'vegetables' || cat === 'fruits') storEl.value = 'fridge-crisper';
+        else if (cat === 'protein' || cat === 'dairy') storEl.value = 'fridge-main';
+      }
+    }
+
+    // Proportional Unit Conversion
+    window._lastManualNutUnit = 'items';
+    function onManualNutritionUnitChange(newUnit) {
+      const uDisp = document.getElementById('manual-nut-unit-display');
+      if (uDisp) uDisp.textContent = newUnit;
+
+      const oldUnit = window._lastManualNutUnit || 'items';
+      window._lastManualNutUnit = newUnit;
+      if (!oldUnit || oldUnit === newUnit) return;
+
+      const amtEl = document.getElementById('manual-nut-amount');
+      const remEl = document.getElementById('manual-nut-amount-remaining');
+
+      // Conversion rates to grams/ml
+      const toStandard = (val, u) => {
+        if (u === 'oz') return val * 28.3495;
+        if (u === 'g') return val;
+        if (u === 'fl oz') return val * 29.5735;
+        if (u === 'ml') return val;
+        if (u === 'cup') return val * 240;
+        return null;
+      };
+      const fromStandard = (stdVal, targetU, isLiquid = false) => {
+        if (targetU === 'oz') return stdVal / 28.3495;
+        if (targetU === 'g') return stdVal;
+        if (targetU === 'fl oz') return stdVal / 29.5735;
+        if (targetU === 'ml') return stdVal;
+        if (targetU === 'cup') return stdVal / 240;
+        return null;
+      };
+
+      const convertVal = (el) => {
+        if (!el || !el.value) return;
+        const num = parseFloat(el.value);
+        if (isNaN(num) || num <= 0) return;
+        const std = toStandard(num, oldUnit);
+        if (std != null) {
+          const converted = fromStandard(std, newUnit);
+          if (converted != null) {
+            el.value = converted >= 10 ? Math.round(converted * 10) / 10 : Math.round(converted * 100) / 100;
+          }
+        }
+      };
+
+      convertVal(amtEl);
+      convertVal(remEl);
     }
 
     function switchManualNutMicroTab(tab) {
@@ -1965,7 +2024,7 @@
       const name = (document.getElementById('manual-nut-name') || {}).value || '';
       const matched = findClosestUsdaFood(name, cat);
       if (!matched) {
-        alertBox("Could not locate a matching USDA reference food.", "USDA Match");
+        alertBox(`No direct clinical USDA whole food match found for "${name || 'this item'}". You can enter verified values directly from the product label!`, "No Direct Match");
         return;
       }
       window.pendingUsdaSupplementFood = matched;
@@ -2243,6 +2302,8 @@
       const usdaSupplementSource = (activeManualNutritionContext && activeManualNutritionContext.usdaSupplementSource) || '';
       const hasAnyVerified = Object.keys(verifiedNutrients).length > 0;
 
+      const format = (document.getElementById('manual-nut-format') || {}).value || 'fresh';
+
       const product = {
         name,
         brand,
@@ -2253,6 +2314,7 @@
         servingGrams,
         servingsPerContainer,
         category,
+        format,
         storage,
         barcode,
         kcal,
@@ -2339,6 +2401,7 @@
           pItem.servingGrams = servingGrams;
           pItem.servingsPerContainer = servingsPerContainer;
           pItem.category = category;
+          pItem.format = format;
           pItem.storage = storage;
           pItem.kcal = kcal;
           pItem.protein = protein;
@@ -2410,6 +2473,9 @@
     }
 
     if (typeof window !== 'undefined') {
+      window.onManualNutritionCategoryChange = onManualNutritionCategoryChange;
+      window.onManualNutritionFormatChange = onManualNutritionFormatChange;
+      window.onManualNutritionUnitChange = onManualNutritionUnitChange;
       window.DAILY_NUTRITION_STANDARDS = DAILY_NUTRITION_STANDARDS;
       window.getUnifiedFoodOrMeal = getUnifiedFoodOrMeal;
       window.buildRecipeUnifiedNutrition = buildRecipeUnifiedNutrition;

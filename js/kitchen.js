@@ -94,7 +94,7 @@
 
     function setPantryTypeFilter(type) {
       state.pantryTypeFilter = type;
-      const types = ['all', 'protein', 'dairy', 'vegetables', 'fruits', 'grains', 'canned', 'baking', 'snacks', 'leftovers', 'expiring'];
+      const types = ['all', 'protein', 'dairy', 'vegetables', 'fruits', 'grains', 'baking', 'snacks', 'beverages', 'leftovers', 'expiring'];
       types.forEach(t => {
         const btn = document.getElementById(`btn-ptype-${t}`);
         if (!btn) return;
@@ -103,6 +103,21 @@
         } else {
           const borderCls = t === 'expiring' ? 'border-rose-500/40 text-rose-300' : 'border-dark-border text-slate-300';
           btn.className = `px-2.5 py-1 rounded-xl bg-dark-base border ${borderCls} hover:text-white transition text-[11px]`;
+        }
+      });
+      renderPantry();
+    }
+
+    function setPantryFormatFilter(fmt) {
+      state.pantryFormatFilter = fmt;
+      const formats = ['all', 'fresh', 'canned', 'frozen', 'dried', 'cooked'];
+      formats.forEach(f => {
+        const btn = document.getElementById(`btn-pformat-${f}`);
+        if (!btn) return;
+        if (f === fmt) {
+          btn.className = "px-2.5 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition text-[11px] shadow-sm";
+        } else {
+          btn.className = "px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]";
         }
       });
       renderPantry();
@@ -1871,9 +1886,34 @@
         </div>
       `;
 
+      // Format state badge (e.g. 🥫 Canned, 🧊 Frozen, 🌾 Dried)
+      const fmt = (item.format || '').toLowerCase();
+      let formatBadge = '';
+      if (fmt === 'canned') {
+        formatBadge = `<span class="px-1.5 py-0.2 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[9.5px] font-bold">🥫 Canned</span>`;
+      } else if (fmt === 'frozen') {
+        formatBadge = `<span class="px-1.5 py-0.2 rounded-md bg-sky-500/15 border border-sky-500/30 text-sky-300 text-[9.5px] font-bold">🧊 Frozen</span>`;
+      } else if (fmt === 'dried') {
+        formatBadge = `<span class="px-1.5 py-0.2 rounded-md bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 text-[9.5px] font-bold">🌾 Dried</span>`;
+      } else if (fmt === 'cooked') {
+        formatBadge = `<span class="px-1.5 py-0.2 rounded-md bg-orange-500/15 border border-orange-500/30 text-orange-300 text-[9.5px] font-bold">🍳 Cooked</span>`;
+      }
+
+      // Clean generic display name for list (strip long marketing words/brand prefix if already in brand)
+      const rawName = item.name || '';
+      let displayName = rawName;
+      if (item.brand && rawName.toLowerCase().startsWith(item.brand.toLowerCase())) {
+        displayName = rawName.slice(item.brand.length).trim().replace(/^[-:,]\s*/, '') || rawName;
+      }
+      // If name is very long (over 30 chars), clean up repetitive marketing words
+      if (displayName.length > 32) {
+        displayName = displayName.replace(/\b(organic|100%|all natural|non-gmo|original|traditional|classic|premium|grade a)\b/gi, '').trim().replace(/\s{2,}/g, ' ');
+      }
+
       return `
         <div class="flex items-center gap-1.5 min-w-0 flex-1">
-          <span class="text-slate-200 font-semibold truncate group-hover:text-pastel-mint transition ${isOutOfStock ? 'line-through text-slate-400' : ''}">${item.name}</span>
+          <span class="text-slate-200 font-semibold truncate group-hover:text-pastel-mint transition ${isOutOfStock ? 'line-through text-slate-400' : ''}" title="${rawName}${item.brand ? ' (' + item.brand + ')' : ''}">${displayName}</span>
+          ${formatBadge}
           ${expiryBadge}
         </div>
         <div class="flex items-center gap-1.5 shrink-0" onclick="event.stopPropagation()">
@@ -2012,8 +2052,18 @@
           matchesType = itemTypes.includes(typeFilter);
         }
 
-        // Cross-filtering pass: must satisfy both filters
-        if (!matchesZone || !matchesType) return;
+        // Format filter check:
+        const formatFilter = state.pantryFormatFilter || 'all';
+        let matchesFormat = false;
+        const itemFormat = (item.format || (typeof inferFoodFormat === 'function' ? inferFoodFormat(item.name, item.storage, item.category) : 'fresh')).toLowerCase();
+        if (formatFilter === 'all') {
+          matchesFormat = true;
+        } else {
+          matchesFormat = (itemFormat === formatFilter);
+        }
+
+        // Cross-filtering pass: must satisfy zone, type, and format filters
+        if (!matchesZone || !matchesType || !matchesFormat) return;
 
         // Populate Zone View:
         if (zoneLists[itemZone]) {
@@ -2489,6 +2539,9 @@
       const activeStorage = item.storage || getItemZone(item);
       setPantryDetailStorage(activeStorage);
 
+      const activeFormat = item.format || (typeof inferFoodFormat === 'function' ? inferFoodFormat(item.name, activeStorage, item.category) : 'fresh');
+      setPantryDetailFormat(activeFormat);
+
       if (modal) modal.classList.remove('hidden');
       if (window.lucide) lucide.createIcons();
       playChime('bell');
@@ -2507,6 +2560,20 @@
         const btn = document.getElementById(`btn-pantry-storage-${s}`);
         if (!btn) return;
         if (s === storageType) {
+          btn.className = "p-1.5 rounded-xl border-2 border-pastel-mint bg-pastel-mint/15 text-white font-bold text-center text-[10px] shadow-sm";
+        } else {
+          btn.className = "p-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-400 text-center text-[10px]";
+        }
+      });
+    }
+
+    function setPantryDetailFormat(formatType) {
+      if (state.activePantryDetailItem) state.activePantryDetailItem.format = formatType;
+      const formats = ['fresh', 'canned', 'frozen', 'dried', 'cooked'];
+      formats.forEach(f => {
+        const btn = document.getElementById(`btn-pantry-format-${f}`);
+        if (!btn) return;
+        if (f === formatType) {
           btn.className = "p-1.5 rounded-xl border-2 border-pastel-mint bg-pastel-mint/15 text-white font-bold text-center text-[10px] shadow-sm";
         } else {
           btn.className = "p-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-400 text-center text-[10px]";
@@ -3757,6 +3824,8 @@ RULES:
     }
 
     if (typeof window !== 'undefined') {
+      window.setPantryFormatFilter = setPantryFormatFilter;
+      window.setPantryDetailFormat = setPantryDetailFormat;
       window.openManualNutritionForLoggedFood = openManualNutritionForLoggedFood;
       window.switchPantryMicroTab = switchPantryMicroTab;
       window.openManualNutritionModalForActivePantryItem = openManualNutritionModalForActivePantryItem;

@@ -973,7 +973,7 @@
 
             <!-- Collapsible Multi-Filter Codex Panel (Hidden unless in Multi-Filter mode) -->
             <div id="pantry-multifilter-panel" class="hidden space-y-2.5 pt-2 border-t border-dark-border/40">
-              <!-- Row 2: Physical Kitchen Zone Filter Pills -->
+              <!-- Row 1: Physical Kitchen Storage Zone Filter Pills (Where it is stored) -->
               <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-slate-400 font-semibold text-[11px] mr-1">Zone:</span>
                 <button type="button" onclick="setPantryZoneFilter('all')" id="btn-pzone-all" class="px-2.5 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition text-[11px]">All Zones</button>
@@ -985,7 +985,18 @@
                 <button type="button" onclick="setPantryZoneFilter('spices')" id="btn-pzone-spices" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧂 Spices</button>
               </div>
 
-              <!-- Row 3: Food Type Filter Pills -->
+              <!-- Row 2: Food Format & Packaging State (How it is stored/prepared) -->
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-slate-400 font-semibold text-[11px] mr-1">Format:</span>
+                <button type="button" onclick="setPantryFormatFilter('all')" id="btn-pformat-all" class="px-2.5 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition text-[11px]">All Formats</button>
+                <button type="button" onclick="setPantryFormatFilter('fresh')" id="btn-pformat-fresh" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🌿 Fresh / Raw</button>
+                <button type="button" onclick="setPantryFormatFilter('canned')" id="btn-pformat-canned" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥫 Canned / Jarred</button>
+                <button type="button" onclick="setPantryFormatFilter('frozen')" id="btn-pformat-frozen" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧊 Frozen</button>
+                <button type="button" onclick="setPantryFormatFilter('dried')" id="btn-pformat-dried" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🌾 Dried / Dry Goods</button>
+                <button type="button" onclick="setPantryFormatFilter('cooked')" id="btn-pformat-cooked" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🍳 Cooked / Leftovers</button>
+              </div>
+
+              <!-- Row 3: Standardized Food Category (What kind of food it is) -->
               <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-slate-400 font-semibold text-[11px] mr-1">Food:</span>
                 <button type="button" onclick="setPantryTypeFilter('all')" id="btn-ptype-all" class="px-2.5 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition text-[11px]">All Types</button>
@@ -994,9 +1005,9 @@
                 <button type="button" onclick="setPantryTypeFilter('vegetables')" id="btn-ptype-vegetables" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥦 Veggies</button>
                 <button type="button" onclick="setPantryTypeFilter('fruits')" id="btn-ptype-fruits" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🍎 Fruits</button>
                 <button type="button" onclick="setPantryTypeFilter('grains')" id="btn-ptype-grains" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🌾 Grains</button>
-                <button type="button" onclick="setPantryTypeFilter('canned')" id="btn-ptype-canned" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥫 Canned</button>
                 <button type="button" onclick="setPantryTypeFilter('baking')" id="btn-ptype-baking" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧂 Spices &amp; Oils</button>
                 <button type="button" onclick="setPantryTypeFilter('snacks')" id="btn-ptype-snacks" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🍿 Snacks</button>
+                <button type="button" onclick="setPantryTypeFilter('beverages')" id="btn-ptype-beverages" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥤 Beverages</button>
                 <button type="button" onclick="setPantryTypeFilter('leftovers')" id="btn-ptype-leftovers" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-amber-300 hover:text-white transition text-[11px]">🍲 Leftovers</button>
                 <button type="button" onclick="setPantryTypeFilter('expiring')" id="btn-ptype-expiring" class="px-2.5 py-1 rounded-xl bg-dark-base border border-rose-500/40 text-rose-300 hover:text-white transition text-[11px]">⚠️ Expiring</button>
               </div>
@@ -5521,6 +5532,18 @@
         </div>
       </div>
 
+      <!-- Format & Packaging State (How it is stored/prepared) -->
+      <div class="space-y-1.5 text-xs">
+        <label class="font-semibold text-slate-300">Format &amp; Preparation State:</label>
+        <div class="grid grid-cols-5 gap-1">
+          <button type="button" onclick="setPantryDetailFormat('fresh')" id="btn-pantry-format-fresh" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Fresh / Raw">🌿 Fresh</button>
+          <button type="button" onclick="setPantryDetailFormat('canned')" id="btn-pantry-format-canned" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Canned / Jarred">🥫 Canned</button>
+          <button type="button" onclick="setPantryDetailFormat('frozen')" id="btn-pantry-format-frozen" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Frozen">🧊 Frozen</button>
+          <button type="button" onclick="setPantryDetailFormat('dried')" id="btn-pantry-format-dried" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Dried / Dry Goods">🌾 Dried</button>
+          <button type="button" onclick="setPantryDetailFormat('cooked')" id="btn-pantry-format-cooked" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Cooked / Leftovers">🍳 Cooked</button>
+        </div>
+      </div>
+
       <!-- Storage Selector (7 Physical Kitchen Storage Zones) -->
       <div class="space-y-1.5 text-xs">
         <label class="font-semibold text-slate-300">Kitchen Storage Zone:</label>
@@ -5646,15 +5669,15 @@
         </div>
 
         <div class="space-y-2.5">
-          <!-- Row 1: Total Package Size and Amount Remaining Side-by-Side (Matching box formatting) -->
+          <!-- Row 1: Total Package Size and Amount Remaining Side-by-Side (Matching box formatting with wide unit font) -->
           <div class="grid grid-cols-2 gap-2">
             <!-- Total Package Size -->
             <div>
               <label class="font-semibold text-slate-300 block mb-1">Total Package Size</label>
-              <div class="flex items-center bg-dark-base border border-pastel-sky/50 focus-within:border-pastel-mint rounded-xl overflow-hidden transition shadow-sm">
-                <input type="number" id="manual-nut-amount" oninput="const rem = document.getElementById('manual-nut-amount-remaining'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0" value="1" placeholder="1" class="w-full bg-transparent px-2.5 py-1.5 text-white font-mono text-xs focus:outline-none min-w-0">
-                <div class="shrink-0 border-l border-dark-border bg-dark-elevated/70">
-                  <select id="manual-nut-unit" onchange="const uRem = document.getElementById('manual-nut-unit-display'); if (uRem) uRem.textContent = this.value;" class="bg-transparent text-pastel-sky font-semibold text-xs py-1.5 pl-2 pr-2.5 cursor-pointer focus:outline-none" title="Tap to change unit">
+              <div class="flex items-center bg-dark-base border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm">
+                <input type="number" id="manual-nut-amount" oninput="const rem = document.getElementById('manual-nut-amount-remaining'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0" value="1" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-xs focus:outline-none min-w-0">
+                <div class="shrink-0 border-l border-dark-border bg-dark-elevated/70 px-2.5 py-1.5 flex items-center justify-center">
+                  <select id="manual-nut-unit" onchange="onManualNutritionUnitChange(this.value)" class="bg-transparent text-pastel-sky font-bold text-xs py-0.5 cursor-pointer focus:outline-none" title="Tap to change unit">
                     <option value="items" selected>items</option>
                     <option value="fl oz">fl oz</option>
                     <option value="oz">oz</option>
@@ -5673,35 +5696,49 @@
             <div>
               <label class="font-semibold text-slate-300 block mb-1">Amount Remaining</label>
               <div class="flex items-center bg-dark-base border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm" title="How much of the item is currently left in your kitchen">
-                <input type="number" id="manual-nut-amount-remaining" oninput="this.dataset.linked = '0';" step="any" min="0" placeholder="1" class="w-full bg-transparent px-2.5 py-1.5 text-white font-mono text-xs focus:outline-none min-w-0">
-                <div class="shrink-0 border-l border-dark-border bg-dark-elevated/70 px-2.5 py-1.5 text-pastel-sky font-semibold text-xs cursor-pointer select-none" onclick="document.getElementById('manual-nut-unit').focus(); document.getElementById('manual-nut-unit').showPicker?.();" title="Tap unit on left to change">
+                <input type="number" id="manual-nut-amount-remaining" oninput="this.dataset.linked = '0';" step="any" min="0" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-xs focus:outline-none min-w-0">
+                <div class="shrink-0 border-l border-dark-border bg-dark-elevated/70 px-3 py-2 text-pastel-sky font-bold text-xs cursor-pointer select-none flex items-center justify-center" onclick="document.getElementById('manual-nut-unit').focus(); document.getElementById('manual-nut-unit').showPicker?.();" title="Tap unit to change">
                   <span id="manual-nut-unit-display">items</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Row 2: Category and Storage Location Placed Horizontally Side-by-Side -->
-          <div class="grid grid-cols-2 gap-2">
+          <!-- Row 2: Standardized Category, Format / State, and Storage Location -->
+          <div class="grid grid-cols-3 gap-2">
+            <!-- Category (Food Type) -->
             <div>
               <label class="font-semibold text-slate-300 block mb-1">Category</label>
               <select id="manual-nut-cat" onchange="onManualNutritionCategoryChange(this.value)" class="w-full bg-dark-base border border-dark-border rounded-xl px-2 py-1.5 text-white text-xs focus:border-pastel-mint">
-                <option value="beverages">🥤 Beverages</option>
-                <option value="produce">🥦 Produce</option>
-                <option value="protein">🍗 Protein</option>
+                <option value="protein">🥩 Protein</option>
                 <option value="dairy">🥛 Dairy</option>
+                <option value="vegetables">🥦 Veggies</option>
+                <option value="fruits">🍎 Fruits</option>
                 <option value="grains">🌾 Grains</option>
-                <option value="frozen">🧊 Frozen</option>
-                <option value="condiments">🥫 Condiments</option>
+                <option value="baking">🧂 Spices &amp; Oils</option>
                 <option value="snacks">🍿 Snacks</option>
+                <option value="beverages">🥤 Beverages</option>
+                <option value="leftovers">🍲 Leftovers</option>
                 <option value="pantry_staples" selected>🥫 Pantry</option>
               </select>
             </div>
+            <!-- Format / Packaging State (How it is stored/prepared) -->
             <div>
-              <label class="font-semibold text-slate-300 block mb-1">Storage Location</label>
+              <label class="font-semibold text-slate-300 block mb-1">Format</label>
+              <select id="manual-nut-format" onchange="onManualNutritionFormatChange(this.value)" class="w-full bg-dark-base border border-dark-border rounded-xl px-2 py-1.5 text-white text-xs focus:border-pastel-mint">
+                <option value="fresh" selected>🌿 Fresh / Raw</option>
+                <option value="canned">🥫 Canned / Jar</option>
+                <option value="frozen">🧊 Frozen</option>
+                <option value="dried">🌾 Dried / Dry</option>
+                <option value="cooked">🍳 Cooked</option>
+              </select>
+            </div>
+            <!-- Storage Location (Where it is stored) -->
+            <div>
+              <label class="font-semibold text-slate-300 block mb-1">Location</label>
               <select id="manual-nut-storage" class="w-full bg-dark-base border border-dark-border rounded-xl px-2 py-1.5 text-white text-xs focus:border-pastel-mint">
-                <option value="fridge-main" selected>❄️ Fridge - Main</option>
-                <option value="fridge-crisper">🥬 Fridge - Crisper</option>
+                <option value="fridge-main" selected>❄️ Fridge</option>
+                <option value="fridge-crisper">🥬 Crisper</option>
                 <option value="freezer">🧊 Freezer</option>
                 <option value="counter">🍌 Counter</option>
                 <option value="cupboard">🚪 Cupboard</option>
@@ -5828,9 +5865,6 @@
             <i data-lucide="info" class="w-3.5 h-3.5 shrink-0"></i>
             <span id="usda-source-attribution-text" class="font-medium leading-snug">Nutrient info supplemented by USDA</span>
           </div>
-          <button type="button" onclick="undoAutoEstimateMicros()" class="text-[10.5px] font-semibold text-slate-300 hover:text-rose-300 underline transition">
-            Revert to original
-          </button>
         </div>
       </div>
 
@@ -7116,13 +7150,13 @@
   <script src="js/sync.js?v=48"></script>
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
-  <script src="js/kitchen.js?v=67"></script>
+  <script src="js/kitchen.js?v=68"></script>
   <script src="js/recipes.js?v=62"></script>
   <script src="js/shopping.js?v=58"></script>
   <script src="js/chef.js?v=60"></script>
   <script src="js/body-profile.js?v=61"></script>
-  <script src="js/nutrition.js?v=66"></script>
-  <script src="js/barcode.js?v=69"></script>
+  <script src="js/nutrition.js?v=67"></script>
+  <script src="js/barcode.js?v=70"></script>
   <script src="js/health.js?v=48"></script>
   <script src="js/biometrics.js?v=48"></script>
   <script src="js/app.js?v=48"></script>

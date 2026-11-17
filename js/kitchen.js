@@ -1438,7 +1438,14 @@
       if (tabId === 'timeline') renderTimeline();
       if (tabId === 'matrix') renderMatrix();
       if (tabId === 'taskmaster') renderTaskmasterCalendarEvents();
-      if (tabId === 'recipes') renderRecipes();
+      if (tabId === 'recipes') {
+        if (typeof switchRecipeSectionView === 'function') {
+          switchRecipeSectionView('cookbooks');
+        } else if (typeof renderCookbooks === 'function') {
+          renderCookbooks();
+        }
+        renderRecipes();
+      }
       if (tabId === 'kitchen') renderKitchen();
       if (tabId === 'nutrition') renderNutrition();
       if (tabId === 'health') renderHealthTabUI();

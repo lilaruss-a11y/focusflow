@@ -1128,6 +1128,7 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       try { initAppleHealthSync(); } catch (e) {}
       try { renderNutrition(); } catch (e) {}
       try { renderWeightGoalTimeline(); } catch (e) {}
+      try { if (typeof renderCookbooks === 'function') renderCookbooks(); } catch (e) {}
       try { if (window.lucide) lucide.createIcons(); } catch (e) {}
       try { checkIncomingSharedRecipe(); } catch (e) {}
       try { checkAppInstallState(); } catch (e) {}
@@ -1162,6 +1163,7 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         },
         () => renderNutrition(),
         () => renderWeightGoalTimeline(),
+        () => { if (typeof renderCookbooks === 'function') renderCookbooks(); },
         () => { if (window.lucide) lucide.createIcons(); }
       ];
       steps.forEach(step => {

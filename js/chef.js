@@ -1157,7 +1157,7 @@ Return ONLY valid JSON matching this schema:
 
         try {
           const callController = new AbortController();
-          const callTimer = setTimeout(() => callController.abort(), 25000);
+          const callTimer = setTimeout(() => callController.abort(), 10000);
 
           const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`;
           

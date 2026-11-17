@@ -5560,7 +5560,6 @@
               <h3 class="text-base font-bold text-white" id="manual-nut-modal-title">Nutrition Facts &amp; Micronutrients</h3>
               <span id="manual-nut-barcode-badge" class="hidden px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-pastel-lavender/20 text-pastel-lavender border border-pastel-lavender/40">UPC</span>
             </div>
-            <p class="text-xs text-slate-400">All macro &amp; micro nutrients essential for human survival</p>
           </div>
         </div>
         <button type="button" onclick="closeManualNutritionModal()" class="text-slate-400 hover:text-white p-1">
@@ -5647,15 +5646,15 @@
         </div>
 
         <div class="space-y-2.5">
-          <!-- Row 1: Total Package Size and Amount Remaining Side-by-Side (Amount on left, Clickable Unit on right in same box) -->
+          <!-- Row 1: Total Package Size and Amount Remaining Side-by-Side (Matching box formatting) -->
           <div class="grid grid-cols-2 gap-2">
             <!-- Total Package Size -->
             <div>
               <label class="font-semibold text-slate-300 block mb-1">Total Package Size</label>
-              <div class="flex items-center bg-dark-base border border-dark-border focus-within:border-pastel-mint rounded-xl overflow-hidden transition shadow-sm">
+              <div class="flex items-center bg-dark-base border border-pastel-sky/50 focus-within:border-pastel-mint rounded-xl overflow-hidden transition shadow-sm">
                 <input type="number" id="manual-nut-amount" oninput="const rem = document.getElementById('manual-nut-amount-remaining'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0" value="1" placeholder="1" class="w-full bg-transparent px-2.5 py-1.5 text-white font-mono text-xs focus:outline-none min-w-0">
                 <div class="shrink-0 border-l border-dark-border bg-dark-elevated/70">
-                  <select id="manual-nut-unit" onchange="const uRem = document.getElementById('manual-nut-unit-display'); if (uRem) uRem.textContent = this.value;" class="bg-transparent text-pastel-mint font-semibold text-xs py-1.5 pl-2 pr-2.5 cursor-pointer focus:outline-none" title="Tap to change unit">
+                  <select id="manual-nut-unit" onchange="const uRem = document.getElementById('manual-nut-unit-display'); if (uRem) uRem.textContent = this.value;" class="bg-transparent text-pastel-sky font-semibold text-xs py-1.5 pl-2 pr-2.5 cursor-pointer focus:outline-none" title="Tap to change unit">
                     <option value="items" selected>items</option>
                     <option value="fl oz">fl oz</option>
                     <option value="oz">oz</option>
@@ -5782,51 +5781,55 @@
         </div>
       </div>
 
-      <!-- USDA Specific-Food Confirmation Prompt (Clean, Spacious Mobile Layout) -->
-      <div id="usda-supplement-confirm-card" class="hidden p-3.5 rounded-2xl bg-amber-950/40 border border-amber-400/50 space-y-2.5 text-xs shadow-lg">
-        <div class="flex items-start gap-2">
-          <i data-lucide="help-circle" class="w-4 h-4 text-amber-300 shrink-0 mt-0.5"></i>
-          <span class="font-bold text-white text-xs leading-snug" id="usda-supplement-prompt-title">Supplement nutrients with info from USDA?</span>
-        </div>
-        <div class="flex items-center justify-end gap-2 pt-1">
-          <button type="button" onclick="cancelUsdaSupplementation()" class="px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs font-semibold transition">
-            Cancel
-          </button>
-          <button type="button" id="btn-confirm-usda-supplement" onclick="confirmUsdaSupplementation()" class="px-3.5 py-1.5 rounded-xl bg-pastel-mint text-dark-base font-bold text-xs hover:bg-emerald-300 shadow-sm transition">
-            ✓ Supplement Nutrients
-          </button>
-        </div>
-      </div>
-
-      <!-- Sourced Info Attribution Badge -->
-      <div id="usda-source-attribution-pill" class="hidden p-2.5 rounded-xl bg-pastel-sky/10 border border-pastel-sky/30 text-xs flex items-center justify-between gap-2">
-        <div class="flex items-center gap-1.5 text-pastel-sky text-[11px] min-w-0">
-          <i data-lucide="info" class="w-3.5 h-3.5 shrink-0"></i>
-          <span id="usda-source-attribution-text" class="truncate font-medium">Nutrient information supplemented by USDA</span>
-        </div>
-        <button type="button" onclick="undoAutoEstimateMicros()" class="text-[10.5px] font-semibold text-slate-300 hover:text-rose-300 transition shrink-0 underline">
-          Revert to original
-        </button>
-      </div>
-
-      <!-- Quick Auto-Estimate Helper with Undo Support & Accuracy Legend -->
-      <div class="flex items-center justify-between p-2.5 rounded-xl bg-pastel-mint/10 border border-pastel-mint/30 text-xs flex-wrap gap-2">
-        <div class="flex items-center gap-2">
-          <i data-lucide="sparkles" class="w-4 h-4 text-pastel-mint shrink-0"></i>
-          <div class="text-[10.5px] text-slate-300">
-            <span class="font-bold text-white block">Nutritional Accuracy Legend:</span>
-            <span class="flex items-center gap-2 mt-0.5 text-[10px]">
-              <span class="inline-flex items-center gap-0.5 text-emerald-400 font-bold"><i data-lucide="shield-check" class="w-3 h-3 inline"></i> Verified Label</span>
-              <span class="inline-flex items-center gap-0.5 text-amber-300 font-bold font-mono">~ Estimated</span>
-            </span>
+      <!-- Unified Nutritional Estimation & Attribution Card (Mobile-Optimized Single Blue Box) -->
+      <div id="usda-unified-estimate-card" class="p-3.5 rounded-2xl bg-pastel-sky/10 border border-pastel-sky/30 space-y-3 text-xs shadow-md">
+        <!-- Header & Accuracy Legend -->
+        <div class="flex items-start justify-between gap-2 flex-wrap sm:flex-nowrap">
+          <div class="flex items-center gap-2">
+            <i data-lucide="sparkles" class="w-4 h-4 text-pastel-sky shrink-0 mt-0.5"></i>
+            <div>
+              <span class="font-bold text-white text-[11px] block">Nutritional Accuracy &amp; Estimation</span>
+              <div class="flex items-center gap-2.5 mt-0.5 text-[10px]">
+                <span class="inline-flex items-center gap-1 text-emerald-400 font-bold"><i data-lucide="shield-check" class="w-3 h-3 inline"></i> Verified Label</span>
+                <span class="inline-flex items-center gap-1 text-amber-300 font-bold font-mono">~ Estimated</span>
+              </div>
+            </div>
+          </div>
+          <!-- Action Buttons / Status -->
+          <div class="flex items-center gap-2 shrink-0 pt-0.5">
+            <button type="button" id="btn-request-usda-supplement" onclick="requestUsdaFoodSupplementation()" class="px-3 py-1.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs hover:bg-sky-200 transition shadow-sm">
+              Auto-Estimate with USDA
+            </button>
+            <button type="button" id="btn-undo-auto-estimate-micros" onclick="undoAutoEstimateMicros()" class="hidden px-2.5 py-1 rounded-lg bg-dark-base border border-dark-border text-slate-300 hover:text-white font-semibold text-[11px] transition">
+              ↺ Undo
+            </button>
           </div>
         </div>
-        <div class="flex items-center gap-1.5 shrink-0">
-          <button type="button" id="btn-undo-auto-estimate-micros" onclick="undoAutoEstimateMicros()" class="hidden px-2.5 py-1 rounded-lg bg-dark-base border border-dark-border text-slate-300 hover:text-white font-semibold text-[11px] transition" title="Revert to original micronutrient values">
-            ↺ Undo Auto-Fill
-          </button>
-          <button type="button" id="btn-request-usda-supplement" onclick="requestUsdaFoodSupplementation()" class="px-3 py-1 rounded-lg bg-pastel-mint text-dark-base font-bold text-[11px] hover:bg-emerald-300 transition">
-            Auto-Estimate with USDA
+
+        <!-- Pending Confirmation Prompt (Inside Blue Box) -->
+        <div id="usda-supplement-confirm-card" class="hidden p-3 rounded-xl bg-dark-base/80 border border-amber-400/50 space-y-2">
+          <div class="flex items-start gap-2">
+            <i data-lucide="help-circle" class="w-4 h-4 text-amber-300 shrink-0 mt-0.5"></i>
+            <span class="font-bold text-white text-xs leading-snug" id="usda-supplement-prompt-title">Supplement missing nutrients from USDA?</span>
+          </div>
+          <div class="flex items-center justify-end gap-2 pt-1">
+            <button type="button" onclick="cancelUsdaSupplementation()" class="px-3 py-1 rounded-lg bg-dark-elevated border border-dark-border text-slate-300 text-xs font-semibold">
+              Cancel
+            </button>
+            <button type="button" id="btn-confirm-usda-supplement" onclick="confirmUsdaSupplementation()" class="px-3 py-1 rounded-lg bg-pastel-mint text-dark-base font-bold text-xs hover:bg-emerald-300 shadow-sm transition">
+              ✓ Confirm Supplement
+            </button>
+          </div>
+        </div>
+
+        <!-- Attribution Pill when Supplemented (Inside Blue Box) -->
+        <div id="usda-source-attribution-pill" class="hidden pt-2 border-t border-pastel-sky/20 flex items-center justify-between gap-2 flex-wrap">
+          <div class="flex items-center gap-1.5 text-pastel-sky text-[11px]">
+            <i data-lucide="info" class="w-3.5 h-3.5 shrink-0"></i>
+            <span id="usda-source-attribution-text" class="font-medium leading-snug">Nutrient info supplemented by USDA</span>
+          </div>
+          <button type="button" onclick="undoAutoEstimateMicros()" class="text-[10.5px] font-semibold text-slate-300 hover:text-rose-300 underline transition">
+            Revert to original
           </button>
         </div>
       </div>
@@ -7116,10 +7119,10 @@
   <script src="js/kitchen.js?v=66"></script>
   <script src="js/recipes.js?v=62"></script>
   <script src="js/shopping.js?v=58"></script>
-  <script src="js/chef.js?v=58"></script>
+  <script src="js/chef.js?v=60"></script>
   <script src="js/body-profile.js?v=61"></script>
-  <script src="js/nutrition.js?v=65"></script>
-  <script src="js/barcode.js?v=68"></script>
+  <script src="js/nutrition.js?v=66"></script>
+  <script src="js/barcode.js?v=69"></script>
   <script src="js/health.js?v=48"></script>
   <script src="js/biometrics.js?v=48"></script>
   <script src="js/app.js?v=48"></script>

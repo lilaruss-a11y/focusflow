@@ -181,6 +181,7 @@
           const bookTitleBtn = document.getElementById('cookbook-crumb-book-btn');
           if (bookTitleBtn) bookTitleBtn.textContent = cb ? cb.title : 'Cookbook';
 
+          const backText = document.getElementById('cookbook-breadcrumb-back-text');
           const subcrumb = document.getElementById('cookbook-format-subcrumb');
           if (state.activeCookbookFormat && subcrumb) {
             subcrumb.classList.remove('hidden');
@@ -193,8 +194,13 @@
             const customCat = (cb && cb.customCategories) ? cb.customCategories.find(c => c.key === state.activeCookbookFormat) : null;
             const formatTitle = customCat ? customCat.name : ((isFam && famCatNames[state.activeCookbookFormat]) ? famCatNames[state.activeCookbookFormat] : state.activeCookbookFormat);
             document.getElementById('cookbook-active-format-title').textContent = formatTitle;
+
+            // Inside a category folder: Back button returns to the cookbook's category shelf
+            if (backText) backText.textContent = cb ? cb.title : 'Cookbook';
           } else if (subcrumb) {
             subcrumb.classList.add('hidden');
+            // Inside cookbook category shelf: Back button returns to All Cookbooks directory
+            if (backText) backText.textContent = 'All Cookbooks';
           }
         }
 
@@ -219,11 +225,23 @@
       playChime('bell');
     }
 
+    // Step-by-step hierarchical back navigation
+    function recipeBreadcrumbBack() {
+      if (state.activeCookbookFormat) {
+        // Step back from Category Folder -> Cookbook Category Shelf
+        state.activeCookbookFormat = null;
+      } else if (state.activeCookbook) {
+        // Step back from Cookbook -> All Cookbooks Shelf
+        state.activeCookbook = null;
+        state.activeCookbookFormat = null;
+      }
+      renderCookbooks();
+      renderRecipes();
+    }
+
     function backToAllCookbooks() {
       state.activeCookbook = null;
       state.activeCookbookFormat = null;
-      const searchSortBar = document.getElementById('recipe-search-sort-bar');
-      if (searchSortBar) searchSortBar.classList.add('hidden');
       const actionBar = document.getElementById('recipe-format-action-bar');
       if (actionBar) actionBar.classList.add('hidden');
       renderCookbooks();
@@ -1384,6 +1402,7 @@ if (typeof window !== 'undefined') {
   window.setCookbookModalIcon = setCookbookModalIcon;
   window.saveCookbookModal = saveCookbookModal;
   window.deleteCurrentCookbook = deleteCurrentCookbook;
+  window.recipeBreadcrumbBack = recipeBreadcrumbBack;
   window.backToCookbookFormats = backToCookbookFormats;
   window.editCurrentCookbookFromBreadcrumb = editCurrentCookbookFromBreadcrumb;
   window.openAddCategoryModal = openAddCategoryModal;

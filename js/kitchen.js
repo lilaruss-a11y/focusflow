@@ -1838,6 +1838,39 @@
            </button>`
         : '';
 
+      const totalAmt = (item.amount != null && !isNaN(parseFloat(item.amount))) ? parseFloat(item.amount) : 1;
+      const remAmt = (item.amountRemaining != null && !isNaN(parseFloat(item.amountRemaining))) ? parseFloat(item.amountRemaining) : totalAmt;
+      
+      let pct = 100;
+      if (totalAmt > 0) {
+        pct = Math.min(100, Math.max(0, Math.round((remAmt / totalAmt) * 100)));
+      }
+
+      // Display formatted quantity: e.g. "12 / 16 oz" if used, or "16 oz" if full
+      let displayLabel = '';
+      if (item.amountRemaining != null && remAmt < totalAmt) {
+        displayLabel = `${remAmt} / ${formatPantryAmountAndUnit(totalAmt, item.unit)}`;
+      } else {
+        displayLabel = formatPantryAmountAndUnit(remAmt, item.unit);
+      }
+
+      // Color code by stock level
+      let barColor = 'bg-pastel-mint';
+      let badgeTextColor = 'text-pastel-mint';
+      if (pct <= 25) {
+        barColor = 'bg-pastel-coral';
+        badgeTextColor = 'text-pastel-coral';
+      } else if (pct <= 50) {
+        barColor = 'bg-pastel-butter';
+        badgeTextColor = 'text-pastel-butter';
+      }
+
+      const bottomProgressBar = `
+        <div class="absolute bottom-0 left-0 right-0 h-[3px] bg-dark-border/60 overflow-hidden rounded-b-xl">
+          <div class="h-full ${barColor} transition-all duration-300" style="width: ${pct}%;"></div>
+        </div>
+      `;
+
       return `
         <div class="flex items-center gap-1.5 min-w-0 flex-1">
           <span class="text-slate-200 font-semibold truncate group-hover:text-pastel-mint transition ${isOutOfStock ? 'line-through text-slate-400' : ''}">${item.name}</span>
@@ -1845,15 +1878,16 @@
         </div>
         <div class="flex items-center gap-1.5 shrink-0" onclick="event.stopPropagation()">
           ${outOfStockAction}
-          <!-- Amount Display (Tapping the item opens details to edit) -->
-          <span class="text-pastel-mint font-bold px-2 py-0.5 rounded-lg bg-dark-elevated border border-dark-border font-mono text-[10.5px]" title="Amount remaining: ${formatPantryAmountAndUnit(item.amountRemaining != null ? item.amountRemaining : item.amount, item.unit)}">
-            ${formatPantryAmountAndUnit(item.amountRemaining != null ? item.amountRemaining : item.amount, item.unit)}
+          <!-- Amount Display with stock percentage tooltip -->
+          <span class="${badgeTextColor} font-bold px-2 py-0.5 rounded-lg bg-dark-elevated border border-dark-border font-mono text-[10.5px]" title="${remAmt} left of ${totalAmt} ${item.unit || 'items'} (${pct}% remaining)">
+            ${displayLabel}
           </span>
           <!-- Delete -->
           <button type="button" onclick="event.stopPropagation(); deletePantryItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-0.5" title="Remove ingredient">
             <i data-lucide="x" class="w-3.5 h-3.5"></i>
           </button>
         </div>
+        ${bottomProgressBar}
       `;
     }
 
@@ -1985,7 +2019,7 @@
         if (zoneLists[itemZone]) {
           zoneCounts[itemZone] = (zoneCounts[itemZone] || 0) + 1;
           const pill = document.createElement('div');
-          pill.className = "flex items-center justify-between p-2.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm group";
+          pill.className = "relative overflow-hidden flex items-center justify-between p-2.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm group";
           pill.onclick = () => openPantryItemDetailModal(item.id);
           pill.innerHTML = buildPantryItemPillHtml(item, expiryBadge);
           zoneLists[itemZone].appendChild(pill);
@@ -1997,7 +2031,7 @@
           if (typeLists[t]) {
             typeCounts[t] = (typeCounts[t] || 0) + 1;
             const pill = document.createElement('div');
-            pill.className = "flex items-center justify-between p-2.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm group";
+            pill.className = "relative overflow-hidden flex items-center justify-between p-2.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm group";
             pill.onclick = () => openPantryItemDetailModal(item.id);
             pill.innerHTML = buildPantryItemPillHtml(item, expiryBadge);
             typeLists[t].appendChild(pill);

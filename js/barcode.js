@@ -1046,7 +1046,6 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
           <div class="flex items-center justify-between p-2.5 rounded-xl bg-pastel-lavender/10 border border-pastel-lavender/30 text-[11px]">
             <div class="text-slate-300">
               <span class="font-bold text-white block">Detailed Nutritional Analysis</span>
-              <span class="text-slate-400 text-[10px]">Vitamins, Minerals, Sugars, Sodium, Serving Size</span>
             </div>
             <button type="button" onclick="inspectScannedProductFullDetails()" class="px-3 py-1.5 rounded-xl bg-pastel-lavender text-dark-base font-bold text-xs flex items-center gap-1.5 hover:bg-purple-300 transition shrink-0 shadow-sm">
               <i data-lucide="eye" class="w-3.5 h-3.5"></i>
@@ -1058,7 +1057,7 @@ Return ONLY a valid JSON object (no markdown, no backticks, no markdown code blo
           <div class="pt-1 flex flex-col sm:flex-row gap-2 justify-between items-center">
             <button type="button" onclick="cancelScannedBarcodeResult()" class="px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border text-rose-400 hover:text-rose-300 text-xs flex items-center justify-center gap-1.5 transition" title="Discard this scan and restart camera">
               <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
-              <span>✕ Cancel Scan</span>
+              <span>Cancel Scan</span>
             </button>
             <div class="flex gap-2 w-full sm:w-auto justify-end">
               <button type="button" onclick="startBarcodeCamera()" class="px-3 py-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white text-xs flex items-center justify-center gap-1.5">

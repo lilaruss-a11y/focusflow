@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=89">
+  <link rel="stylesheet" href="css/styles.css?v=91">
   <script>
     function resetViewportZoom() {
       try {
@@ -5061,7 +5061,7 @@
             </div>
           </div>
           <button type="button" onclick="prioritizeExpiringIngredients()" class="px-3.5 py-2 rounded-xl bg-amber-400 text-dark-base font-bold text-xs shrink-0 hover:bg-amber-300 transition flex items-center gap-1.5 shadow-sm">
-            <span>⚡ Use Expiring Items</span>
+            <span>Use Expiring Items</span>
             <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
           </button>
         </div>
@@ -5139,13 +5139,10 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="pt-2 flex flex-col sm:flex-row gap-2 border-t border-dark-border">
-          <button type="button" onclick="goToReverseChefStep(2)" class="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-pastel-coral via-pastel-peach to-pastel-mint text-dark-base font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-pastel-coral/20 hover:opacity-95 transition">
+        <div class="pt-2 flex flex-col gap-2 border-t border-dark-border">
+          <button type="button" onclick="goToReverseChefStep(2)" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-pastel-coral via-pastel-peach to-pastel-mint text-dark-base font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-pastel-coral/20 hover:opacity-95 transition">
             <span>Next: Brainstorm Meal Ideas with Chef</span>
             <i data-lucide="arrow-right" class="w-4 h-4"></i>
-          </button>
-          <button type="button" onclick="generateDefaultAndGoToRecipe()" class="px-4 py-3 rounded-2xl bg-dark-base border border-dark-border hover:border-slate-500 text-slate-300 text-xs font-semibold">
-            Skip to Step-by-Step Cooking ➔
           </button>
         </div>
       </div>
@@ -5222,7 +5219,7 @@
           <!-- Stage 2 verify button if active -->
           <button type="button" onclick="verifyChoreographyOrder()" id="btn-verify-choreo" class="hidden px-3 py-1.5 rounded-xl bg-pastel-butter text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-sm">
             <i data-lucide="check" class="w-3.5 h-3.5"></i>
-            <span>💡 Hint: Check Order</span>
+            <span>Check Order Hint</span>
           </button>
         </div>
 
@@ -5305,7 +5302,7 @@
         <!-- Finish Cooking Button -->
         <button type="button" onclick="finishCookingAndOpenWrapup()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-pastel-mint via-emerald-300 to-pastel-sky text-dark-base font-black text-xs flex items-center justify-center gap-2 shadow-xl shadow-pastel-mint/20 hover:opacity-95 transition active:scale-[0.98]">
           <i data-lucide="award" class="w-4 h-4"></i>
-          <span>🎉 Finished Cooking! (Save, Log Nutrition &amp; Store Leftovers)</span>
+          <span>Finished Cooking (Save, Log Nutrition &amp; Store Leftovers)</span>
         </button>
       </div>
 
@@ -5669,15 +5666,15 @@
         </div>
 
         <div class="space-y-2.5">
-          <!-- Row 1: Total Package Size and Amount Remaining Side-by-Side (Matching box formatting with wide unit font) -->
+          <!-- Row 1: Total Package Size and Amount Remaining Side-by-Side (100% Identical Matching Container & Font Styling) -->
           <div class="grid grid-cols-2 gap-2">
             <!-- Total Package Size -->
             <div>
               <label class="font-semibold text-slate-300 block mb-1">Total Package Size</label>
-              <div class="flex items-center bg-dark-base border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm">
+              <div class="flex items-center bg-dark-base border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm h-10">
                 <input type="number" id="manual-nut-amount" oninput="const rem = document.getElementById('manual-nut-amount-remaining'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0" value="1" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-xs focus:outline-none min-w-0">
-                <div class="shrink-0 border-l border-dark-border bg-dark-elevated/70 px-2.5 py-1.5 flex items-center justify-center">
-                  <select id="manual-nut-unit" onchange="onManualNutritionUnitChange(this.value)" class="bg-transparent text-pastel-sky font-bold text-xs py-0.5 cursor-pointer focus:outline-none" title="Tap to change unit">
+                <div class="shrink-0 border-l border-dark-border bg-dark-elevated/70 px-3 py-2 flex items-center justify-center min-w-[70px]">
+                  <select id="manual-nut-unit" onchange="onManualNutritionUnitChange(this.value)" class="bg-transparent text-pastel-sky font-bold text-xs py-0 cursor-pointer focus:outline-none" title="Tap to change unit">
                     <option value="items" selected>items</option>
                     <option value="fl oz">fl oz</option>
                     <option value="oz">oz</option>
@@ -5695,9 +5692,9 @@
             <!-- Amount Remaining -->
             <div>
               <label class="font-semibold text-slate-300 block mb-1">Amount Remaining</label>
-              <div class="flex items-center bg-dark-base border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm" title="How much of the item is currently left in your kitchen">
+              <div class="flex items-center bg-dark-base border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm h-10" title="How much of the item is currently left in your kitchen">
                 <input type="number" id="manual-nut-amount-remaining" oninput="this.dataset.linked = '0';" step="any" min="0" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-xs focus:outline-none min-w-0">
-                <div class="shrink-0 border-l border-dark-border bg-dark-elevated/70 px-3 py-2 text-pastel-sky font-bold text-xs cursor-pointer select-none flex items-center justify-center" onclick="document.getElementById('manual-nut-unit').focus(); document.getElementById('manual-nut-unit').showPicker?.();" title="Tap unit to change">
+                <div class="shrink-0 border-l border-dark-border bg-dark-elevated/70 px-3 py-2 text-pastel-sky font-bold text-xs cursor-pointer select-none flex items-center justify-center min-w-[70px]" onclick="document.getElementById('manual-nut-unit').focus(); document.getElementById('manual-nut-unit').showPicker?.();" title="Tap unit to change">
                   <span id="manual-nut-unit-display">items</span>
                 </div>
               </div>
@@ -5833,7 +5830,10 @@
             </div>
           </div>
           <!-- Action Buttons / Status -->
-          <div class="flex items-center gap-2 shrink-0 pt-0.5">
+          <div class="flex items-center gap-1.5 shrink-0 pt-0.5 flex-wrap">
+            <button type="button" onclick="requestWholeFoodLookupModal()" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-pastel-mint/40 text-pastel-mint hover:bg-pastel-mint/10 font-bold text-xs transition shadow-sm" title="Search official clinical USDA reference data for fresh produce or whole foods without labels">
+              🌱 Whole Food / No Label
+            </button>
             <button type="button" id="btn-request-usda-supplement" onclick="requestUsdaFoodSupplementation()" class="px-3 py-1.5 rounded-xl bg-pastel-sky text-dark-base font-bold text-xs hover:bg-sky-200 transition shadow-sm">
               Auto-Estimate with USDA
             </button>
@@ -6359,10 +6359,10 @@
           <div class="flex items-center gap-2">
             <button type="button" onclick="calibrateFastestVisionModel()" class="text-pastel-mint hover:underline font-semibold flex items-center gap-1">
               <i data-lucide="zap" class="w-3.5 h-3.5"></i>
-              <span>Calibrate ⚡</span>
+              <span>Calibrate</span>
             </button>
             <span class="text-slate-600">•</span>
-            <button type="button" onclick="openApiKeyModal()" class="text-pastel-sky hover:underline font-mono font-semibold">Manage Key 🔑</button>
+            <button type="button" onclick="openApiKeyModal()" class="text-pastel-sky hover:underline font-mono font-semibold">Manage Key</button>
           </div>
         </div>
 
@@ -7150,13 +7150,13 @@
   <script src="js/sync.js?v=48"></script>
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
-  <script src="js/kitchen.js?v=89"></script>
-  <script src="js/recipes.js?v=89"></script>
-  <script src="js/shopping.js?v=89"></script>
-  <script src="js/chef.js?v=89"></script>
-  <script src="js/body-profile.js?v=89"></script>
-  <script src="js/nutrition.js?v=89"></script>
-  <script src="js/barcode.js?v=89"></script>
+  <script src="js/kitchen.js?v=90"></script>
+  <script src="js/recipes.js?v=90"></script>
+  <script src="js/shopping.js?v=90"></script>
+  <script src="js/chef.js?v=90"></script>
+  <script src="js/body-profile.js?v=90"></script>
+  <script src="js/nutrition.js?v=90"></script>
+  <script src="js/barcode.js?v=90"></script>
   <script src="js/health.js?v=89"></script>
   <script src="js/biometrics.js?v=89"></script>
   <script src="js/app.js?v=89"></script>

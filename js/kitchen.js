@@ -1886,29 +1886,29 @@
         </div>
       `;
 
-      // Format state badge (e.g. 🥫 Canned, 🧊 Frozen, 🌾 Dried)
-      const fmt = (item.format || '').toLowerCase();
+      // Format state badge (e.g. 🥫 Canned, 🧊 Frozen, 🌾 Dried, 🌿 Fresh, 🍳 Cooked)
+      const fmt = (item.format || (typeof inferFoodFormat === 'function' ? inferFoodFormat(item.name, item.storage, item.category) : 'fresh')).toLowerCase();
       let formatBadge = '';
       if (fmt === 'canned') {
-        formatBadge = `<span class="px-1.5 py-0.2 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[9.5px] font-bold">🥫 Canned</span>`;
+        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[9.5px] font-bold shrink-0">🥫 Canned</span>`;
       } else if (fmt === 'frozen') {
-        formatBadge = `<span class="px-1.5 py-0.2 rounded-md bg-sky-500/15 border border-sky-500/30 text-sky-300 text-[9.5px] font-bold">🧊 Frozen</span>`;
+        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-sky-500/15 border border-sky-500/30 text-sky-300 text-[9.5px] font-bold shrink-0">🧊 Frozen</span>`;
       } else if (fmt === 'dried') {
-        formatBadge = `<span class="px-1.5 py-0.2 rounded-md bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 text-[9.5px] font-bold">🌾 Dried</span>`;
+        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 text-[9.5px] font-bold shrink-0">🌾 Dried</span>`;
       } else if (fmt === 'cooked') {
-        formatBadge = `<span class="px-1.5 py-0.2 rounded-md bg-orange-500/15 border border-orange-500/30 text-orange-300 text-[9.5px] font-bold">🍳 Cooked</span>`;
+        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-orange-500/15 border border-orange-500/30 text-orange-300 text-[9.5px] font-bold shrink-0">🍳 Cooked</span>`;
+      } else if (fmt === 'fresh') {
+        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[9.5px] font-bold shrink-0">🌿 Fresh</span>`;
       }
 
-      // Clean generic display name for list (strip long marketing words/brand prefix if already in brand)
+      // Clean generic display name for list (strip brand, marketing, sizes)
       const rawName = item.name || '';
       let displayName = rawName;
-      if (item.brand && rawName.toLowerCase().startsWith(item.brand.toLowerCase())) {
-        displayName = rawName.slice(item.brand.length).trim().replace(/^[-:,]\s*/, '') || rawName;
+      if (item.brand && displayName.toLowerCase().includes(item.brand.toLowerCase())) {
+        displayName = displayName.replace(new RegExp(`\\b${item.brand}\\b`, 'gi'), '').trim();
       }
-      // If name is very long (over 30 chars), clean up repetitive marketing words
-      if (displayName.length > 32) {
-        displayName = displayName.replace(/\b(organic|100%|all natural|non-gmo|original|traditional|classic|premium|grade a)\b/gi, '').trim().replace(/\s{2,}/g, ' ');
-      }
+      displayName = displayName.replace(/\b(organic|100%|all natural|non-gmo|original|traditional|classic|premium|grade a|crunchy|delicious|style|creamy|extra firm|whole grain|fat free|low fat|non-fat|gluten free)\b/gi, '').trim().replace(/^[-:,]\s*/, '').replace(/\s{2,}/g, ' ');
+      if (!displayName || displayName.length < 2) displayName = rawName;
 
       return `
         <div class="flex items-center gap-1.5 min-w-0 flex-1">
@@ -2582,12 +2582,45 @@
     }
 
     function setPantryDetailUnit(unitVal) {
+      const oldUnit = (state.activePantryDetailItem && state.activePantryDetailItem.unit) || 'items';
       if (state.activePantryDetailItem) state.activePantryDetailItem.unit = unitVal;
       const unitInput = document.getElementById('pantry-detail-unit');
       let mapped = unitVal || 'items';
       if (mapped === 'item' || mapped === 'each' || mapped === 'ea' || mapped === 'count') mapped = 'items';
       if (mapped === 'serving') mapped = 'servings';
       if (unitInput) unitInput.value = mapped;
+
+      // Auto-convert amount proportionally when unit is changed
+      const amtInput = document.getElementById('pantry-detail-amount');
+      if (amtInput && amtInput.value && oldUnit !== mapped) {
+        const num = parseFloat(amtInput.value);
+        if (!isNaN(num) && num > 0) {
+          const toStd = (v, u) => {
+            if (u === 'oz') return v * 28.3495;
+            if (u === 'g') return v;
+            if (u === 'fl oz') return v * 29.5735;
+            if (u === 'ml') return v;
+            if (u === 'cup') return v * 240;
+            return null;
+          };
+          const fromStd = (std, u) => {
+            if (u === 'oz') return std / 28.3495;
+            if (u === 'g') return std;
+            if (u === 'fl oz') return std / 29.5735;
+            if (u === 'ml') return std;
+            if (u === 'cup') return std / 240;
+            return null;
+          };
+          const std = toStd(num, oldUnit);
+          if (std != null) {
+            const converted = fromStd(std, mapped);
+            if (converted != null) {
+              amtInput.value = converted >= 10 ? Math.round(converted * 10) / 10 : Math.round(converted * 100) / 100;
+              if (state.activePantryDetailItem) state.activePantryDetailItem.amount = parseFloat(amtInput.value);
+            }
+          }
+        }
+      }
 
       const unitBtnMap = {
         'oz': 'btn-punit-oz',

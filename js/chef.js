@@ -116,8 +116,24 @@
       if (chips) {
         chips.innerHTML = '';
         state.pantry.forEach(item => {
-          const isFrozen = item.storage === 'frozen' || (item.name || '').toLowerCase().includes('frozen');
+          const rawStorage = (item.storage || '').toLowerCase();
+          const isFrozen = rawStorage === 'frozen' || rawStorage === 'freezer' || (item.name || '').toLowerCase().includes('frozen');
           const isExpiring = expiringSoon.some(e => e.id === item.id || e.name.toLowerCase() === item.name.toLowerCase());
+          
+          // Determine storage icon accurately:
+          let storageIcon = '🥫 ';
+          if (isFrozen) {
+            storageIcon = '🧊 ';
+          } else if (rawStorage.includes('fridge') || rawStorage.includes('crisper')) {
+            storageIcon = '❄️ ';
+          } else if (rawStorage === 'counter') {
+            storageIcon = '🍌 ';
+          } else if (rawStorage === 'spices') {
+            storageIcon = '🧂 ';
+          } else {
+            // Dry pantry, shelf, cupboard
+            storageIcon = '🥫 ';
+          }
           
           // Categorize item cleanly
           const nameLower = (item.name || '').toLowerCase();
@@ -129,7 +145,7 @@
             cleanCat = 'protein';
           } else if (/milk|cheese|yogurt|butter|cream|cheddar|parmesan|sour cream/i.test(nameLower) || rawCat === 'dairy') {
             cleanCat = 'dairy';
-          } else if (/rice|pasta|noodle|spaghetti|bread|tortilla|bagel|oat|quinoa|grain/i.test(nameLower) || rawCat === 'grains' || rawCat === 'bakery') {
+          } else if (/rice|pasta|noodle|spaghetti|bread|tortilla|bagel|oat|quinoa|grain|granola|cereal/i.test(nameLower) || rawCat === 'grains' || rawCat === 'bakery') {
             cleanCat = 'grains';
           }
 
@@ -138,8 +154,8 @@
           chip.setAttribute('data-is-frozen', isFrozen ? 'true' : 'false');
           chip.className = `flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-elevated border text-slate-200 text-xs cursor-pointer hover:border-pastel-coral/50 transition ${isExpiring ? 'border-amber-400/60 bg-amber-950/20 text-amber-200' : (isFrozen ? 'border-sky-400/40 text-sky-200' : 'border-dark-border')}`;
           chip.innerHTML = `
-            <input type="checkbox" checked value="${item.name}" data-storage="${item.storage || 'fridge'}" onchange="checkFrozenSelectionAlert(); updateReverseChefSelectedCount();" class="w-4 h-4 rounded text-pastel-coral focus:ring-0">
-            <span>${isExpiring ? '⚠️ ' : (isFrozen ? '🧊 ' : (item.storage === 'shelf' ? '🥫 ' : '❄️ '))}${item.name}${isExpiring ? ' <em class="text-[10px] text-amber-300 not-italic font-bold">(exp. soon)</em>' : ''}</span>
+            <input type="checkbox" checked value="${item.name}" data-storage="${item.storage || 'pantry'}" onchange="checkFrozenSelectionAlert(); updateReverseChefSelectedCount();" class="w-4 h-4 rounded text-pastel-coral focus:ring-0">
+            <span>${isExpiring ? '⚠️ ' : storageIcon}${item.name}${isExpiring ? ' <em class="text-[10px] text-amber-300 not-italic font-bold">(exp. soon)</em>' : ''}</span>
           `;
           chips.appendChild(chip);
         });
@@ -193,6 +209,27 @@
           }
         }
       });
+
+      if (stepNum === 2) {
+        // If stepping into chat, automatically initiate brainstorm with the user's craving prompt if one was provided!
+        const cravingInput = document.getElementById('reverse-chef-craving-input');
+        const cravingText = cravingInput ? cravingInput.value.trim() : '';
+        const stream = document.getElementById('sous-chef-chat-messages');
+
+        // Only auto-trigger if chat has not generated options yet for this session
+        if (cravingText && (!state.currentMealOptions || state.currentMealOptions.length === 0)) {
+          const autoPrompt = `I would love a meal featuring: ${cravingText}. What can I make with my ingredients?`;
+          appendSousChefChatMessage('user', autoPrompt);
+          generateChefMealSuggestions(autoPrompt);
+        } else if (!state.currentMealOptions || state.currentMealOptions.length === 0) {
+          // If no craving typed, start with a helpful greeting prompting them or offering quick ideas
+          if (stream && stream.children.length <= 1) {
+            const autoPrompt = `What can I make with the pantry ingredients I have on hand? Propose 3 delicious meal options!`;
+            appendSousChefChatMessage('user', autoPrompt);
+            generateChefMealSuggestions(autoPrompt);
+          }
+        }
+      }
 
       if (stepNum === 3) {
         renderCompanionRecipeViews();

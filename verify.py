@@ -399,6 +399,18 @@ if dead_calls:
 else:
     success(f"All {len(raw_onclicks)} onclick handlers in index.html resolve to valid functions.")
 
+# Verify no redundant emoji/symbol duplicates in button labels alongside icons
+emoji_pattern = re.compile(r'[\U00010000-\U0010ffff]|[\u2600-\u27ff]')
+redundant_buttons = []
+for b in re.findall(r'<button\b[^>]*>(.*?)</button>', index_html, re.DOTALL):
+    if ('data-lucide' in b or '<i ' in b) and emoji_pattern.search(b):
+        redundant_buttons.append(' '.join(b.split())[:80])
+
+if redundant_buttons:
+    error(f"Redundant emoji found inside button label alongside Lucide icon: {redundant_buttons}")
+else:
+    success("All buttons in index.html have clean text labels with zero redundant emojis.")
+
 # 5c. Verifying modal dialog stacking hierarchy and child z-index safety...
 print("\n5c. Verifying modal stacking hierarchy & z-index layering...")
 with open(os.path.join(BASE_DIR, "css/styles.css"), "r", encoding="utf-8") as f:
@@ -413,6 +425,7 @@ tier3_child_modals = [
     '#custom-food-modal',
     '#pantry-item-modal',
     '#pantry-item-detail-modal',
+    '#recipe-inspect-modal',
     '#create-choice-modal',
     '#ai-dish-estimator-modal',
     '#cooking-questions-drawer-modal',

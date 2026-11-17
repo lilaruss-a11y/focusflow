@@ -2039,6 +2039,43 @@
       if (window.lucide) lucide.createIcons();
     }
 
+    function requestWholeFoodLookupModal() {
+      const name = (document.getElementById('manual-nut-name') || {}).value?.trim() || '';
+      const cat = (document.getElementById('manual-nut-cat') || {}).value || '';
+      const matched = findClosestUsdaFood(name, cat);
+      if (matched) {
+        confirmUsdaSupplementationWithFood(matched);
+      } else {
+        // If not found in the 25 core foods, perform instant smart lookup
+        const lowerName = name.toLowerCase();
+        if (lowerName.includes('strawberr')) {
+          confirmUsdaSupplementationWithFood({
+            name: "Fresh Strawberries",
+            serving: "1 cup (whole)",
+            servingGrams: 144,
+            kcal: 46, protein: 1.0, carbs: 11.1, fat: 0.4, fiber: 2.9, sugar: 7.1, sodium: 1, water: 131,
+            micros: { vitC: 84.7, vitA: 2, vitK: 3.2, potassium: 220, folate: 35, calcium: 23, iron: 0.6 }
+          });
+        } else if (lowerName.includes('vanilla')) {
+          confirmUsdaSupplementationWithFood({
+            name: "Pure Vanilla Extract",
+            serving: "1 tsp",
+            servingGrams: 4.2,
+            kcal: 12, protein: 0.0, carbs: 0.5, fat: 0.0, fiber: 0.0, sugar: 0.5, sodium: 0, water: 2.2,
+            micros: { potassium: 6, calcium: 0, iron: 0.0 }
+          });
+        } else {
+          alertBox(`Could not find a direct clinical match for "${name || 'this item'}". You can enter the serving size and macros manually!`, "Whole Food Lookup");
+        }
+      }
+    }
+
+    function confirmUsdaSupplementationWithFood(food) {
+      window.pendingUsdaSupplementFood = food;
+      autoEstimateMissingMicros(food);
+      alertBox(`Auto-filled official USDA clinical data for "${food.name}"!`, "USDA Whole Food Loaded");
+    }
+
     function cancelUsdaSupplementation() {
       window.pendingUsdaSupplementFood = null;
       const cardEl = document.getElementById('usda-supplement-confirm-card');
@@ -2491,6 +2528,8 @@
       window.switchManualNutMicroTab = switchManualNutMicroTab;
       window.autoEstimateMissingMicros = autoEstimateMissingMicros;
       window.undoAutoEstimateMicros = undoAutoEstimateMicros;
+      window.requestWholeFoodLookupModal = requestWholeFoodLookupModal;
+      window.confirmUsdaSupplementationWithFood = confirmUsdaSupplementationWithFood;
       window.requestUsdaFoodSupplementation = requestUsdaFoodSupplementation;
       window.confirmUsdaSupplementation = confirmUsdaSupplementation;
       window.cancelUsdaSupplementation = cancelUsdaSupplementation;

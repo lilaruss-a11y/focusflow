@@ -1840,7 +1840,10 @@
         amtRemainingEl.dataset.linked = params.amountRemaining != null ? '0' : '1';
       }
 
-      setVal('manual-nut-unit', normalizeUnit(params.unit));
+      const unitVal = normalizeUnit(params.unit);
+      setVal('manual-nut-unit', unitVal);
+      const unitDisp = document.getElementById('manual-nut-unit-display');
+      if (unitDisp) unitDisp.textContent = unitVal;
       setVal('manual-nut-cat', params.category || 'pantry_staples');
       setVal('manual-nut-storage', normalizeStorage(params.storage));
 
@@ -1914,7 +1917,15 @@
     function onManualNutritionCategoryChange(cat) {
       const storEl = document.getElementById('manual-nut-storage');
       if (storEl) {
-        storEl.value = inferStorageZone(cat, '');
+        let mapped = 'pantry';
+        if (cat === 'frozen') mapped = 'freezer';
+        else if (cat === 'dairy' || cat === 'protein') mapped = 'fridge-main';
+        else if (cat === 'produce') mapped = 'fridge-crisper';
+        else if (cat === 'beverages') mapped = 'fridge-main';
+        else if (cat === 'condiments') mapped = 'fridge-main';
+        else if (cat === 'snacks') mapped = 'pantry';
+        else mapped = 'pantry';
+        storEl.value = mapped;
       }
     }
 

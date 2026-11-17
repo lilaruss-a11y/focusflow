@@ -89,5 +89,13 @@
     "check_type": "forbidden_pattern",
     "pattern": "window\\.activeManualVerifiedMap\\['water'\\]\\s*=\\s*true;",
     "is_regex": true
+  },
+  {
+    "id": "manual_nut_storage_valid_dropdown_value",
+    "description": "Never set manual-nut-storage to unmapped strings like shelf or fridge that do not match the dropdown option values",
+    "file": "js/nutrition.js",
+    "check_type": "forbidden_pattern",
+    "pattern": "storEl\\.value = inferStorageZone\\(cat",
+    "is_regex": false
   }
 ]

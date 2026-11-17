@@ -5562,63 +5562,70 @@
           </div>
         </div>
 
-        <div class="space-y-2">
-          <!-- Total Package Size & Unit in One Continuous Line -->
+        <div class="space-y-2.5">
+          <!-- Row 1: Total Package Size and Amount Remaining Side-by-Side (Amount on left, Clickable Unit on right in same box) -->
           <div class="grid grid-cols-2 gap-2">
+            <!-- Total Package Size -->
             <div>
               <label class="font-semibold text-slate-300 block mb-1">Total Package Size</label>
-              <input type="number" id="manual-nut-amount" oninput="const rem = document.getElementById('manual-nut-amount-remaining'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0" value="1" class="w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-mint">
+              <div class="flex items-center bg-dark-base border border-dark-border focus-within:border-pastel-mint rounded-xl overflow-hidden transition shadow-sm">
+                <input type="number" id="manual-nut-amount" oninput="const rem = document.getElementById('manual-nut-amount-remaining'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0" value="1" placeholder="1" class="w-full bg-transparent px-2.5 py-1.5 text-white font-mono text-xs focus:outline-none min-w-0">
+                <div class="shrink-0 border-l border-dark-border bg-dark-elevated/70">
+                  <select id="manual-nut-unit" onchange="const uRem = document.getElementById('manual-nut-unit-display'); if (uRem) uRem.textContent = this.value;" class="bg-transparent text-pastel-mint font-semibold text-xs py-1.5 pl-2 pr-2.5 cursor-pointer focus:outline-none" title="Tap to change unit">
+                    <option value="items" selected>items</option>
+                    <option value="fl oz">fl oz</option>
+                    <option value="oz">oz</option>
+                    <option value="g">g</option>
+                    <option value="ml">ml</option>
+                    <option value="cup">cup</option>
+                    <option value="servings">servings</option>
+                    <option value="bottle">bottle</option>
+                    <option value="can">can</option>
+                  </select>
+                </div>
+              </div>
             </div>
+
+            <!-- Amount Remaining -->
             <div>
-              <label class="font-semibold text-slate-300 block mb-1">Package Unit</label>
-              <select id="manual-nut-unit" class="w-full bg-dark-base border border-dark-border rounded-xl px-2 py-1.5 text-white text-xs">
-                <option value="items" selected>items</option>
-                <option value="fl oz">fl oz</option>
-                <option value="oz">oz</option>
-                <option value="g">g</option>
-                <option value="ml">ml</option>
-                <option value="cup">cup</option>
-                <option value="servings">servings</option>
-                <option value="bottle">bottle</option>
-                <option value="can">can</option>
-              </select>
+              <label class="font-semibold text-slate-300 block mb-1">Amount Remaining</label>
+              <div class="flex items-center bg-dark-base border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm" title="How much of the item is currently left in your kitchen">
+                <input type="number" id="manual-nut-amount-remaining" oninput="this.dataset.linked = '0';" step="any" min="0" placeholder="1" class="w-full bg-transparent px-2.5 py-1.5 text-white font-mono text-xs focus:outline-none min-w-0">
+                <div class="shrink-0 border-l border-dark-border bg-dark-elevated/70 px-2.5 py-1.5 text-pastel-sky font-semibold text-xs cursor-pointer select-none" onclick="document.getElementById('manual-nut-unit').focus(); document.getElementById('manual-nut-unit').showPicker?.();" title="Tap unit on left to change">
+                  <span id="manual-nut-unit-display">items</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Amount Remaining & Storage Location in One Continuous Line -->
+          <!-- Row 2: Category and Storage Location Placed Horizontally Side-by-Side -->
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="font-semibold text-slate-300 block mb-1">Amount Remaining</label>
-              <input type="number" id="manual-nut-amount-remaining" oninput="this.dataset.linked = '0';" step="any" min="0" placeholder="e.g. 1" class="w-full bg-dark-base border border-pastel-sky/50 rounded-xl px-2.5 py-1.5 text-white font-mono text-xs focus:border-pastel-sky" title="How much of the item is currently left in your kitchen">
+              <label class="font-semibold text-slate-300 block mb-1">Category</label>
+              <select id="manual-nut-cat" onchange="onManualNutritionCategoryChange(this.value)" class="w-full bg-dark-base border border-dark-border rounded-xl px-2 py-1.5 text-white text-xs focus:border-pastel-mint">
+                <option value="beverages">🥤 Beverages</option>
+                <option value="produce">🥦 Produce</option>
+                <option value="protein">🍗 Protein</option>
+                <option value="dairy">🥛 Dairy</option>
+                <option value="grains">🌾 Grains</option>
+                <option value="frozen">🧊 Frozen</option>
+                <option value="condiments">🥫 Condiments</option>
+                <option value="snacks">🍿 Snacks</option>
+                <option value="pantry_staples" selected>🥫 Pantry</option>
+              </select>
             </div>
             <div>
-              <label class="font-semibold text-slate-300 block mb-1">Storage Location in Kitchen</label>
-              <select id="manual-nut-storage" class="w-full bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs">
+              <label class="font-semibold text-slate-300 block mb-1">Storage Location</label>
+              <select id="manual-nut-storage" class="w-full bg-dark-base border border-dark-border rounded-xl px-2 py-1.5 text-white text-xs focus:border-pastel-mint">
                 <option value="fridge-main" selected>❄️ Fridge - Main</option>
                 <option value="fridge-crisper">🥬 Fridge - Crisper</option>
                 <option value="freezer">🧊 Freezer</option>
-                <option value="counter">🧺 Counter</option>
+                <option value="counter">🍌 Counter</option>
                 <option value="cupboard">🚪 Cupboard</option>
                 <option value="pantry">🥫 Pantry</option>
-                <option value="spices">🧂 Spices / Seasonings</option>
+                <option value="spices">🧂 Spices</option>
               </select>
             </div>
-          </div>
-
-          <!-- Category -->
-          <div>
-            <label class="font-semibold text-slate-300 block mb-1">Category</label>
-            <select id="manual-nut-cat" onchange="onManualNutritionCategoryChange(this.value)" class="w-full bg-dark-base border border-dark-border rounded-xl px-2 py-1.5 text-white text-xs">
-              <option value="beverages">🥤 Beverages</option>
-              <option value="produce">🥦 Produce</option>
-              <option value="protein">🍗 Protein</option>
-              <option value="dairy">🥛 Dairy</option>
-              <option value="grains">🌾 Grains</option>
-              <option value="frozen">🧊 Frozen</option>
-              <option value="condiments">🥫 Condiments</option>
-              <option value="snacks">🍿 Snacks</option>
-              <option value="pantry_staples" selected>🥫 Pantry</option>
-            </select>
           </div>
         </div>
       </div>
@@ -7027,8 +7034,8 @@
   <script src="js/shopping.js?v=58"></script>
   <script src="js/chef.js?v=58"></script>
   <script src="js/body-profile.js?v=61"></script>
-  <script src="js/nutrition.js?v=64"></script>
-  <script src="js/barcode.js?v=67"></script>
+  <script src="js/nutrition.js?v=65"></script>
+  <script src="js/barcode.js?v=68"></script>
   <script src="js/health.js?v=48"></script>
   <script src="js/biometrics.js?v=48"></script>
   <script src="js/app.js?v=48"></script>

@@ -543,7 +543,7 @@
       manual: { front: null, nutrition: null, nutrition2: null }
     };
 
-    function compressImageForVision(file, maxDimension = 1600, quality = 0.85) {
+    function compressImageForVision(file, maxDimension = 1280, quality = 0.82) {
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onerror = () => resolve(null);

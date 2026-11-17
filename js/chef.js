@@ -272,17 +272,17 @@
       if (!stream) return;
       const msgDiv = document.createElement('div');
       if (sender === 'user') {
-        msgDiv.className = "flex items-start justify-end gap-2.5 max-w-[90%] ml-auto";
+        msgDiv.className = "flex items-start justify-end gap-2.5 max-w-[90%] ml-auto min-w-0";
         msgDiv.innerHTML = `
-          <div class="p-3 rounded-2xl rounded-tr-none bg-pastel-coral/20 border border-pastel-coral/40 text-white leading-relaxed text-xs">
+          <div class="p-3 rounded-2xl rounded-tr-none bg-pastel-coral/20 border border-pastel-coral/40 text-white leading-relaxed text-xs break-words max-w-full">
             ${htmlContent}
           </div>
         `;
       } else {
-        msgDiv.className = "flex items-start gap-2.5 max-w-[92%]";
+        msgDiv.className = "flex items-start gap-2.5 max-w-full min-w-0 w-full";
         msgDiv.innerHTML = `
           <div class="w-7 h-7 rounded-full bg-pastel-coral/20 text-pastel-coral flex items-center justify-center text-xs shrink-0 font-bold">🧑‍🍳</div>
-          <div class="p-3 rounded-2xl rounded-tl-none bg-dark-elevated text-slate-200 border border-dark-border leading-relaxed text-xs space-y-2.5 flex-1">
+          <div class="p-3 rounded-2xl rounded-tl-none bg-dark-elevated text-slate-200 border border-dark-border leading-relaxed text-xs space-y-2.5 flex-1 min-w-0 max-w-full overflow-hidden">
             ${htmlContent}
           </div>
         `;
@@ -558,21 +558,21 @@ Return ONLY valid JSON matching this schema:
         chefHtml += `<p class="font-semibold text-white">Here are 3 tailored meal options using your pantry:</p>`;
       }
 
-      chefHtml += `<div class="space-y-2.5 pt-1">`;
+      chefHtml += `<div class="space-y-2.5 pt-1 w-full max-w-full">`;
 
       state.currentMealOptions.forEach((opt, idx) => {
         chefHtml += `
-          <div class="p-3 rounded-2xl bg-dark-base border border-dark-border hover:border-pastel-coral/60 transition space-y-2">
+          <div class="p-3 rounded-2xl bg-dark-base border border-dark-border hover:border-pastel-coral/60 transition space-y-2 w-full max-w-full min-w-0 overflow-hidden box-border">
             <div class="flex items-start justify-between gap-2">
-              <div>
-                <h5 class="font-bold text-white text-xs">${idx + 1}. ${opt.title}</h5>
-                <p class="text-[11px] text-slate-300 leading-snug mt-0.5">${opt.description}</p>
+              <div class="min-w-0 flex-1">
+                <h5 class="font-bold text-white text-xs break-words">${idx + 1}. ${opt.title}</h5>
+                <p class="text-[11px] text-slate-300 leading-snug mt-0.5 break-words">${opt.description}</p>
               </div>
-              <span class="px-2 py-0.5 rounded-full bg-pastel-coral/20 text-pastel-coral font-bold text-[10px] shrink-0 font-mono">${opt.cookTime}m • ${opt.kcal} kcal</span>
+              <span class="px-2 py-0.5 rounded-full bg-pastel-coral/20 text-pastel-coral font-bold text-[10px] shrink-0 font-mono whitespace-nowrap">${opt.cookTime}m • ${opt.kcal} kcal</span>
             </div>
-            <div class="flex items-center justify-between pt-1 border-t border-dark-border/40">
-              <span class="text-[10px] text-slate-400 truncate max-w-xs">${(opt.ingredients || []).slice(0, 3).join(', ')}</span>
-              <div class="flex items-center gap-2">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-dark-border/40 w-full min-w-0">
+              <span class="text-[10px] text-slate-400 truncate flex-1 min-w-0">${(opt.ingredients || []).slice(0, 3).join(', ')}</span>
+              <div class="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
                 <button type="button" onclick="inspectRecipeDetails(${idx})" class="px-2.5 py-1.5 rounded-xl bg-dark-elevated border border-dark-border text-slate-200 hover:text-white font-bold text-xs flex items-center gap-1 transition">
                   <span>🔍 Details</span>
                 </button>

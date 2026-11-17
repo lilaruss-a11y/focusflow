@@ -106,52 +106,72 @@
         if (breadcrumb) breadcrumb.classList.add('hidden');
 
         grid.innerHTML = '';
-        state.cookbooks.forEach(cb => {
-          const count = state.recipes.filter(r => cb.origin === 'all' || r.origin === cb.origin).length;
-          const card = document.createElement('div');
-          card.className = "relative p-3 sm:p-4 rounded-2xl bg-dark-base border border-dark-border hover:border-pastel-coral/60 cursor-pointer transition transform hover:-translate-y-0.5 flex flex-col justify-between group shadow-md text-left";
-          card.onclick = (e) => {
-            if (e.target.closest('.cookbook-edit-btn')) return;
-            openCookbook(cb.id);
-          };
-          card.innerHTML = `
-            <div>
-              <div class="flex items-start justify-between gap-1.5 mb-2.5">
-                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-dark-elevated border border-dark-border/80 flex items-center justify-center text-lg sm:text-xl shadow-inner group-hover:border-pastel-coral/40 group-hover:bg-pastel-coral/10 transition">
-                  ${cb.icon || '📖'}
-                </div>
-                <div class="flex items-center gap-1.5">
-                  <button type="button" onclick="event.stopPropagation(); openCookbookModal('${cb.id}')" class="cookbook-edit-btn p-1 rounded-lg hover:bg-dark-elevated text-slate-500 hover:text-white transition" title="Edit Cookbook">
-                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                  </button>
-                  <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-dark-elevated text-slate-300 font-bold group-hover:text-pastel-coral whitespace-nowrap">${count}</span>
-                </div>
-              </div>
-              <h3 class="font-bold text-white text-xs sm:text-sm group-hover:text-pastel-coral transition line-clamp-1 leading-snug">${cb.title}</h3>
-              <p class="text-[10px] sm:text-[11px] text-slate-400 mt-1 line-clamp-2 leading-tight">${cb.desc || ''}</p>
-            </div>
-            <div class="pt-2.5 mt-2 border-t border-dark-border/40 flex items-center justify-between text-[10px] sm:text-[11px] text-pastel-coral font-semibold">
-              <span>Open</span>
-              <i data-lucide="chevron-right" class="w-3 h-3"></i>
-            </div>
-          `;
-          grid.appendChild(card);
+        const q = (state.recipeSearchQuery || '').toLowerCase().trim();
+        const visibleCookbooks = state.cookbooks.filter(cb => {
+          if (!q) return true;
+          const titleMatch = (cb.title || '').toLowerCase().includes(q);
+          const descMatch = (cb.desc || '').toLowerCase().includes(q);
+          // Also match if any recipe within this cookbook contains the search query
+          const recipeMatch = state.recipes.some(r => (cb.origin === 'all' || r.origin === cb.origin) && ((r.title || '').toLowerCase().includes(q) || (r.ingredients || []).some(i => i.toLowerCase().includes(q))));
+          return titleMatch || descMatch || recipeMatch;
         });
 
-        // Add New Cookbook Card at the end of the shelf
-        const addCard = document.createElement('div');
-        addCard.className = "p-3 sm:p-4 rounded-2xl bg-dark-base/60 border border-dashed border-dark-border hover:border-pastel-coral/60 cursor-pointer transition flex flex-col items-center justify-center text-center group min-h-[130px] space-y-2";
-        addCard.onclick = () => openCookbookModal();
-        addCard.innerHTML = `
-          <div class="w-9 h-9 rounded-xl bg-dark-elevated border border-dark-border flex items-center justify-center text-pastel-coral group-hover:scale-110 transition shadow-inner">
-            <i data-lucide="plus" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <span class="text-xs font-bold text-white group-hover:text-pastel-coral transition block">Add Cookbook</span>
-            <span class="text-[10px] text-slate-500 block">Create new theme</span>
-          </div>
-        `;
-        grid.appendChild(addCard);
+        if (visibleCookbooks.length === 0) {
+          grid.innerHTML = `
+            <div class="col-span-full py-8 text-center bg-dark-base rounded-2xl border border-dashed border-dark-border space-y-2">
+              <i data-lucide="book" class="w-8 h-8 text-slate-500 mx-auto"></i>
+              <span class="text-xs font-semibold text-slate-300 block">No cookbooks match "${state.recipeSearchQuery}"</span>
+              <button type="button" onclick="clearRecipeSearchInput()" class="text-pastel-coral text-xs underline font-semibold">Clear Search</button>
+            </div>
+          `;
+        } else {
+          visibleCookbooks.forEach(cb => {
+            const count = state.recipes.filter(r => cb.origin === 'all' || r.origin === cb.origin).length;
+            const card = document.createElement('div');
+            card.className = "relative p-3 sm:p-4 rounded-2xl bg-dark-base border border-dark-border hover:border-pastel-coral/60 cursor-pointer transition transform hover:-translate-y-0.5 flex flex-col justify-between group shadow-md text-left";
+            card.onclick = (e) => {
+              if (e.target.closest('.cookbook-edit-btn')) return;
+              openCookbook(cb.id);
+            };
+            card.innerHTML = `
+              <div>
+                <div class="flex items-start justify-between gap-1.5 mb-2.5">
+                  <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-dark-elevated border border-dark-border/80 flex items-center justify-center text-lg sm:text-xl shadow-inner group-hover:border-pastel-coral/40 group-hover:bg-pastel-coral/10 transition">
+                    ${cb.icon || '📖'}
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <button type="button" onclick="event.stopPropagation(); openCookbookModal('${cb.id}')" class="cookbook-edit-btn p-1 rounded-lg hover:bg-dark-elevated text-slate-500 hover:text-white transition" title="Edit Cookbook">
+                      <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-dark-elevated text-slate-300 font-bold group-hover:text-pastel-coral whitespace-nowrap">${count}</span>
+                  </div>
+                </div>
+                <h3 class="font-bold text-white text-xs sm:text-sm group-hover:text-pastel-coral transition line-clamp-1 leading-snug">${cb.title}</h3>
+                <p class="text-[10px] sm:text-[11px] text-slate-400 mt-1 line-clamp-2 leading-tight">${cb.desc || ''}</p>
+              </div>
+              <div class="pt-2.5 mt-2 border-t border-dark-border/40 flex items-center justify-between text-[10px] sm:text-[11px] text-pastel-coral font-semibold">
+                <span>Open</span>
+                <i data-lucide="chevron-right" class="w-3 h-3"></i>
+              </div>
+            `;
+            grid.appendChild(card);
+          });
+
+          // Add New Cookbook Card at the end of the shelf
+          const addCard = document.createElement('div');
+          addCard.className = "p-3 sm:p-4 rounded-2xl bg-dark-base/60 border border-dashed border-dark-border hover:border-pastel-coral/60 cursor-pointer transition flex flex-col items-center justify-center text-center group min-h-[130px] space-y-2";
+          addCard.onclick = () => openCookbookModal();
+          addCard.innerHTML = `
+            <div class="w-9 h-9 rounded-xl bg-dark-elevated border border-dark-border flex items-center justify-center text-pastel-coral group-hover:scale-110 transition shadow-inner">
+              <i data-lucide="plus" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <span class="text-xs font-bold text-white group-hover:text-pastel-coral transition block">Add Cookbook</span>
+              <span class="text-[10px] text-slate-500 block">Create new theme</span>
+            </div>
+          `;
+          grid.appendChild(addCard);
+        }
       } else {
         // A specific cookbook is opened
         grid.classList.add('hidden');
@@ -262,48 +282,67 @@
 
       const cbRecipes = state.recipes.filter(r => !cb || cb.origin === 'all' || r.origin === cb.origin);
 
-      container.innerHTML = '';
-      formatsMeta.forEach(fmt => {
-        const count = isFamilyCookbook
-          ? cbRecipes.filter(r => r.familyCategory === fmt.key || r.format === fmt.key).length
-          : cbRecipes.filter(r => r.format === fmt.key || r.familyCategory === fmt.key).length;
-
-        const card = document.createElement('div');
-        card.className = "p-3 sm:p-4 rounded-2xl bg-dark-base border border-dark-border hover:border-pastel-coral/60 cursor-pointer transition transform hover:-translate-y-0.5 flex flex-col justify-between group shadow-md text-left";
-        card.onclick = () => openCookbookFormat(fmt.key);
-        card.innerHTML = `
-          <div>
-            <div class="flex items-start justify-between gap-1.5 mb-2.5">
-              <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-dark-elevated border border-dark-border/80 flex items-center justify-center text-lg sm:text-xl shadow-inner group-hover:border-pastel-coral/40 group-hover:bg-pastel-coral/10 transition">
-                ${fmt.icon || '📁'}
-              </div>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-dark-elevated text-slate-300 font-bold group-hover:text-pastel-coral whitespace-nowrap">${count}</span>
-            </div>
-            <h3 class="font-bold text-white text-xs sm:text-sm group-hover:text-pastel-coral transition line-clamp-1 leading-snug">${fmt.name}</h3>
-            <p class="text-[10px] text-slate-400 mt-0.5">Category folder</p>
-          </div>
-          <div class="pt-2 mt-2 border-t border-dark-border/40 flex items-center justify-between text-[10px] sm:text-[11px] text-pastel-coral font-semibold">
-            <span>Open Folder</span>
-            <i data-lucide="chevron-right" class="w-3 h-3"></i>
-          </div>
-        `;
-        container.appendChild(card);
+      const q = (state.recipeSearchQuery || '').toLowerCase().trim();
+      const visibleFormats = formatsMeta.filter(fmt => {
+        if (!q) return true;
+        const nameMatch = (fmt.name || '').toLowerCase().includes(q);
+        // Also match if any recipe in this category matches the search query
+        const recipeMatch = cbRecipes.some(r => ((r.familyCategory === fmt.key) || (r.format === fmt.key) || (r.category === fmt.key)) && ((r.title || '').toLowerCase().includes(q) || (r.ingredients || []).some(i => i.toLowerCase().includes(q))));
+        return nameMatch || recipeMatch;
       });
 
-      // Add Category Card at the end of the folder shelf
-      const addCatCard = document.createElement('div');
-      addCatCard.className = "p-3 sm:p-4 rounded-2xl bg-dark-base/60 border border-dashed border-dark-border hover:border-pastel-coral/60 cursor-pointer transition flex flex-col items-center justify-center text-center group min-h-[110px] space-y-1.5";
-      addCatCard.onclick = () => openAddCategoryModal();
-      addCatCard.innerHTML = `
-        <div class="w-8 h-8 rounded-xl bg-dark-elevated border border-dark-border flex items-center justify-center text-pastel-coral group-hover:scale-110 transition shadow-inner">
-          <i data-lucide="folder-plus" class="w-4 h-4"></i>
-        </div>
-        <div>
-          <span class="text-xs font-bold text-white group-hover:text-pastel-coral transition block">+ Category</span>
-          <span class="text-[10px] text-slate-500 block">Create folder</span>
-        </div>
-      `;
-      container.appendChild(addCatCard);
+      container.innerHTML = '';
+      if (visibleFormats.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-8 text-center bg-dark-base rounded-2xl border border-dashed border-dark-border space-y-2">
+            <i data-lucide="folder" class="w-8 h-8 text-slate-500 mx-auto"></i>
+            <span class="text-xs font-semibold text-slate-300 block">No categories match "${state.recipeSearchQuery}"</span>
+            <button type="button" onclick="clearRecipeSearchInput()" class="text-pastel-coral text-xs underline font-semibold">Clear Search</button>
+          </div>
+        `;
+      } else {
+        visibleFormats.forEach(fmt => {
+          const count = isFamilyCookbook
+            ? cbRecipes.filter(r => r.familyCategory === fmt.key || r.format === fmt.key).length
+            : cbRecipes.filter(r => r.format === fmt.key || r.familyCategory === fmt.key).length;
+
+          const card = document.createElement('div');
+          card.className = "p-3 sm:p-4 rounded-2xl bg-dark-base border border-dark-border hover:border-pastel-coral/60 cursor-pointer transition transform hover:-translate-y-0.5 flex flex-col justify-between group shadow-md text-left";
+          card.onclick = () => openCookbookFormat(fmt.key);
+          card.innerHTML = `
+            <div>
+              <div class="flex items-start justify-between gap-1.5 mb-2.5">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-dark-elevated border border-dark-border/80 flex items-center justify-center text-lg sm:text-xl shadow-inner group-hover:border-pastel-coral/40 group-hover:bg-pastel-coral/10 transition">
+                  ${fmt.icon || '📁'}
+                </div>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-dark-elevated text-slate-300 font-bold group-hover:text-pastel-coral whitespace-nowrap">${count}</span>
+              </div>
+              <h3 class="font-bold text-white text-xs sm:text-sm group-hover:text-pastel-coral transition line-clamp-1 leading-snug">${fmt.name}</h3>
+              <p class="text-[10px] text-slate-400 mt-0.5">Category folder</p>
+            </div>
+            <div class="pt-2 mt-2 border-t border-dark-border/40 flex items-center justify-between text-[10px] sm:text-[11px] text-pastel-coral font-semibold">
+              <span>Open Folder</span>
+              <i data-lucide="chevron-right" class="w-3 h-3"></i>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+
+        // Add Category Card at the end of the folder shelf
+        const addCatCard = document.createElement('div');
+        addCatCard.className = "p-3 sm:p-4 rounded-2xl bg-dark-base/60 border border-dashed border-dark-border hover:border-pastel-coral/60 cursor-pointer transition flex flex-col items-center justify-center text-center group min-h-[110px] space-y-1.5";
+        addCatCard.onclick = () => openAddCategoryModal();
+        addCatCard.innerHTML = `
+          <div class="w-8 h-8 rounded-xl bg-dark-elevated border border-dark-border flex items-center justify-center text-pastel-coral group-hover:scale-110 transition shadow-inner">
+            <i data-lucide="folder-plus" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <span class="text-xs font-bold text-white group-hover:text-pastel-coral transition block">+ Category</span>
+            <span class="text-[10px] text-slate-500 block">Create folder</span>
+          </div>
+        `;
+        container.appendChild(addCatCard);
+      }
     }
 
     function openCookbookFormat(formatKey) {
@@ -454,9 +493,53 @@
       renderRecipes();
     }
 
+    function updateRecipeSearchUI() {
+      const searchInput = document.getElementById('recipe-search-input');
+      const clearBtn = document.getElementById('recipe-search-clear-btn');
+      const sortContainer = document.getElementById('recipe-sort-container');
+
+      if (clearBtn) {
+        clearBtn.classList.toggle('hidden', !state.recipeSearchQuery);
+      }
+
+      const isCookbookView = state.recipeSectionView === 'cookbooks';
+
+      // Update placeholder dynamically based on current navigation level
+      if (searchInput) {
+        if (!isCookbookView) {
+          searchInput.placeholder = 'Search recipes in Codex by title or ingredient...';
+        } else if (!state.activeCookbook) {
+          searchInput.placeholder = 'Search cookbooks or recipes by name...';
+        } else if (!state.activeCookbookFormat) {
+          const cb = state.cookbooks.find(c => c.id === state.activeCookbook);
+          searchInput.placeholder = `Search folders or recipes in ${cb ? cb.title : 'this book'}...`;
+        } else {
+          const cb = state.cookbooks.find(c => c.id === state.activeCookbook);
+          searchInput.placeholder = `Search recipes in ${state.activeCookbookFormat}...`;
+        }
+      }
+
+      // Show sort dropdown when recipes are being displayed (in a folder, in codex, or search has matched recipes)
+      if (sortContainer) {
+        const showSort = !isCookbookView || Boolean(state.activeCookbookFormat) || Boolean(state.recipeSearchQuery && state.recipeSearchQuery.trim());
+        sortContainer.classList.toggle('hidden', !showSort);
+      }
+    }
+
     function handleRecipeSearchInput() {
       const input = document.getElementById('recipe-search-input');
       state.recipeSearchQuery = input ? input.value : '';
+      updateRecipeSearchUI();
+      renderCookbooks();
+      renderRecipes();
+    }
+
+    function clearRecipeSearchInput() {
+      const input = document.getElementById('recipe-search-input');
+      if (input) input.value = '';
+      state.recipeSearchQuery = '';
+      updateRecipeSearchUI();
+      renderCookbooks();
       renderRecipes();
     }
 
@@ -469,20 +552,22 @@
     // Main Recipes Render
     function renderRecipes() {
       const grid = document.getElementById('recipe-cards-grid');
-      const searchSortBar = document.getElementById('recipe-search-sort-bar');
       if (!grid) return;
       grid.innerHTML = '';
 
-      const isCookbookView = state.recipeSectionView === 'cookbooks';
+      updateRecipeSearchUI();
 
-      // When in Cookbooks view and no cookbook has been opened, or no format folder is open, keep recipe cards hidden
-      if (isCookbookView && (!state.activeCookbook || !state.activeCookbookFormat)) {
+      const isCookbookView = state.recipeSectionView === 'cookbooks';
+      const hasSearch = Boolean(state.recipeSearchQuery && state.recipeSearchQuery.trim());
+
+      // When in Cookbooks view without a format folder open:
+      // If the user has typed a search query, show matching recipe cards below the filtered books/folders!
+      // If no search query is typed, keep recipe cards hidden until entering a folder.
+      if (isCookbookView && (!state.activeCookbook || !state.activeCookbookFormat) && !hasSearch) {
         grid.classList.add('hidden');
-        if (searchSortBar) searchSortBar.classList.add('hidden');
         return;
       }
       grid.classList.remove('hidden');
-      if (searchSortBar) searchSortBar.classList.remove('hidden');
 
       let filtered = state.recipes.filter(r => {
         if (isCookbookView && state.activeCookbook) {
@@ -1306,5 +1391,6 @@ if (typeof window !== 'undefined') {
   window.setCategoryModalIcon = setCategoryModalIcon;
   window.saveCookbookCategory = saveCookbookCategory;
   window.handleRecipeSearchInput = handleRecipeSearchInput;
+  window.clearRecipeSearchInput = clearRecipeSearchInput;
   window.handleRecipeSortChange = handleRecipeSortChange;
 }

@@ -227,15 +227,18 @@ After the user approves your plan and you make the changes:
 4. **Provide a Testing Checklist:**
    Give the user a simple, 1-2-3 checklist of what to tap in Google Chrome on their computer or phone to verify the change.
 
-### Rule 3: Version Bump & GitHub Pages Deployment Verification
+### Rule 3: Version Bump, Anti-Overwrite Sync & GitHub Pages Deployment Verification
 After your tests pass:
 0. **Docs-Only Exception:** If the change touches ONLY `AGENTS.md`, `GEMINI.md`, `README.md`, `scripts/`, or `tests/`, skip the version bump — just run `python3 verify.py`, commit, and push.
-1. **Version Bump:**
-   - Whenever CSS, JS, HTML, or assets are modified, ALWAYS bump `CACHE_VERSION` in `sw.js`, and increment the cache-buster query on stylesheets (e.g. `css/styles.css?v=XX`) in `index.html`.
-2. **Commit & Push:**
+1. **Pull Latest Changes First (Anti-Overwrite Protection):**
+   - Before bumping versions or committing, **ALWAYS run `git pull --rebase origin main`**.
+   - If another agent pushed work while you were working, this cleanly incorporates their changes on top of your work so their files and features NEVER disappear or get overwritten!
+2. **Version Bump:**
+   - Whenever CSS, JS, HTML, or assets are modified, ALWAYS read the latest `CACHE_VERSION` in `sw.js` and bump it to a strictly higher increment, and increment the cache-buster query on stylesheets (e.g. `css/styles.css?v=XX`) in `index.html`.
+3. **Commit & Push:**
    - Commit the changes to Git with a concise, descriptive message.
-   - Push to `origin main`.
-3. **MANDATORY Deployment Gate (Never Claim "Live" Before Verifying GitHub Pages):**
+   - Push to `origin main`. If rejected due to a concurrent push, pull with rebase (`git pull --rebase origin main`) and push again.
+4. **MANDATORY Deployment Gate (Never Claim "Live" Before Verifying GitHub Pages):**
    - You are **STRICTLY FORBIDDEN** from telling the user that changes are live or ready to test immediately after pushing.
    - You MUST poll GitHub's deployment status via the API:
      ```bash

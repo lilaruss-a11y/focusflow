@@ -49,9 +49,17 @@
         }
       });
     }
+
+    // Clean slate: Purge any hardcoded demo recipes from state.recipes
+    if (Array.isArray(state.recipes)) {
+      state.recipes = state.recipes.filter(r => !['rec-1', 'rec-2', 'rec-3', 'rec-4'].includes(r.id));
+    }
+
     state.activeCookbook = null;
     state.activeCookbookFormat = null;
     state.recipeSectionView = 'cookbooks'; // 'cookbooks' or 'codex'
+    state.recipeSearchQuery = '';
+    state.recipeSortBy = 'alpha-asc';
 
     // Multi-select filters state
     if (!state.multiFilters) {
@@ -145,13 +153,14 @@
         `;
         grid.appendChild(addCard);
       } else {
-        // A specific cookbook is opened: Show formats
+        // A specific cookbook is opened
         grid.classList.add('hidden');
-        if (formatShelf) formatShelf.classList.remove('hidden');
         if (breadcrumb) {
           breadcrumb.classList.remove('hidden');
           const cb = state.cookbooks.find(c => c.id === state.activeCookbook);
-          document.getElementById('cookbook-active-title').textContent = cb ? cb.title : 'Cookbook';
+          const bookTitleBtn = document.getElementById('cookbook-crumb-book-btn');
+          if (bookTitleBtn) bookTitleBtn.textContent = cb ? cb.title : 'Cookbook';
+
           const subcrumb = document.getElementById('cookbook-format-subcrumb');
           if (state.activeCookbookFormat && subcrumb) {
             subcrumb.classList.remove('hidden');
@@ -161,12 +170,23 @@
               soup: 'Soup', pasta: 'Pasta', breads: 'Breads', breakfast: 'Breakfast', sides: 'Sides & Dips',
               desserts: 'Desserts & Treats', halloween: 'Halloween & Festive', misc: 'Misc Food & Casseroles', nonfood: 'Crafts & Non-Food'
             };
-            document.getElementById('cookbook-active-format-title').textContent = (isFam && famCatNames[state.activeCookbookFormat]) ? famCatNames[state.activeCookbookFormat] : state.activeCookbookFormat;
+            const customCat = (cb && cb.customCategories) ? cb.customCategories.find(c => c.key === state.activeCookbookFormat) : null;
+            const formatTitle = customCat ? customCat.name : ((isFam && famCatNames[state.activeCookbookFormat]) ? famCatNames[state.activeCookbookFormat] : state.activeCookbookFormat);
+            document.getElementById('cookbook-active-format-title').textContent = formatTitle;
           } else if (subcrumb) {
             subcrumb.classList.add('hidden');
           }
         }
-        renderCookbookFormats();
+
+        // Folder Mode: If a format/category folder is selected, hide the folder shelf; only show it when choosing a folder
+        if (formatShelf) {
+          if (state.activeCookbookFormat) {
+            formatShelf.classList.add('hidden');
+          } else {
+            formatShelf.classList.remove('hidden');
+            renderCookbookFormats();
+          }
+        }
       }
       if (window.lucide) lucide.createIcons();
     }
@@ -182,10 +202,24 @@
     function backToAllCookbooks() {
       state.activeCookbook = null;
       state.activeCookbookFormat = null;
+      const searchSortBar = document.getElementById('recipe-search-sort-bar');
+      if (searchSortBar) searchSortBar.classList.add('hidden');
       const actionBar = document.getElementById('recipe-format-action-bar');
       if (actionBar) actionBar.classList.add('hidden');
       renderCookbooks();
       renderRecipes();
+    }
+
+    function backToCookbookFormats() {
+      state.activeCookbookFormat = null;
+      renderCookbooks();
+      renderRecipes();
+    }
+
+    function editCurrentCookbookFromBreadcrumb() {
+      if (state.activeCookbook) {
+        openCookbookModal(state.activeCookbook);
+      }
     }
 
     function renderCookbookFormats() {
@@ -193,6 +227,7 @@
       if (!container) return;
 
       const isFamilyCookbook = state.activeCookbook === 'cb-family';
+      const cb = state.cookbooks.find(c => c.id === state.activeCookbook);
 
       const familyCategoriesMeta = [
         { key: 'beef', name: 'Beef', icon: '🥩' },
@@ -212,70 +247,121 @@
       ];
 
       const standardFormatsMeta = [
-        { key: 'smoothie', name: 'Smoothies', icon: '🥤', color: 'text-pastel-sky border-pastel-sky/30' },
-        { key: 'soup', name: 'Soups & Stews', icon: '🥣', color: 'text-pastel-coral border-pastel-coral/30' },
-        { key: 'sandwich', name: 'Sandwiches & Wraps', icon: '🥪', color: 'text-pastel-butter border-pastel-butter/30' },
-        { key: 'skillet', name: 'Skillets & One-Pot', icon: '🍳', color: 'text-pastel-mint border-pastel-mint/30' },
-        { key: 'bowl', name: 'Grain & Salad Bowls', icon: '🥗', color: 'text-pastel-mint border-pastel-mint/30' },
-        { key: 'bake', name: 'Bakes & Snacks', icon: '🧁', color: 'text-pastel-peach border-pastel-peach/30' }
+        { key: 'smoothie', name: 'Smoothies', icon: '🥤' },
+        { key: 'soup', name: 'Soups & Stews', icon: '🥣' },
+        { key: 'sandwich', name: 'Sandwiches & Wraps', icon: '🥪' },
+        { key: 'skillet', name: 'Skillets & One-Pot', icon: '🍳' },
+        { key: 'bowl', name: 'Grain & Salad Bowls', icon: '🥗' },
+        { key: 'bake', name: 'Bakes & Snacks', icon: '🧁' }
       ];
 
-      const formatsMeta = isFamilyCookbook ? familyCategoriesMeta : standardFormatsMeta;
+      let formatsMeta = isFamilyCookbook ? [...familyCategoriesMeta] : [...standardFormatsMeta];
+      if (cb && Array.isArray(cb.customCategories)) {
+        formatsMeta = formatsMeta.concat(cb.customCategories);
+      }
 
-      const cb = state.cookbooks.find(c => c.id === state.activeCookbook);
       const cbRecipes = state.recipes.filter(r => !cb || cb.origin === 'all' || r.origin === cb.origin);
 
       container.innerHTML = '';
       formatsMeta.forEach(fmt => {
         const count = isFamilyCookbook
-          ? cbRecipes.filter(r => r.familyCategory === fmt.key).length
-          : cbRecipes.filter(r => r.format === fmt.key).length;
-        const isSelected = state.activeCookbookFormat === fmt.key;
+          ? cbRecipes.filter(r => r.familyCategory === fmt.key || r.format === fmt.key).length
+          : cbRecipes.filter(r => r.format === fmt.key || r.familyCategory === fmt.key).length;
+
         const card = document.createElement('div');
-        card.className = `p-3 rounded-2xl bg-dark-base border cursor-pointer transition transform hover:-translate-y-0.5 text-center space-y-1.5 ${isSelected ? 'border-2 border-pastel-coral bg-pastel-coral/15' : 'border-dark-border hover:border-slate-500'}`;
+        card.className = "p-3 sm:p-4 rounded-2xl bg-dark-base border border-dark-border hover:border-pastel-coral/60 cursor-pointer transition transform hover:-translate-y-0.5 flex flex-col justify-between group shadow-md text-left";
         card.onclick = () => openCookbookFormat(fmt.key);
         card.innerHTML = `
-          <span class="text-2xl block">${fmt.icon}</span>
-          <span class="font-bold text-white text-xs block truncate">${fmt.name}</span>
-          <span class="text-[10px] font-mono text-slate-400 block">${count} recipes</span>
+          <div>
+            <div class="flex items-start justify-between gap-1.5 mb-2.5">
+              <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-dark-elevated border border-dark-border/80 flex items-center justify-center text-lg sm:text-xl shadow-inner group-hover:border-pastel-coral/40 group-hover:bg-pastel-coral/10 transition">
+                ${fmt.icon || '📁'}
+              </div>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-dark-elevated text-slate-300 font-bold group-hover:text-pastel-coral whitespace-nowrap">${count}</span>
+            </div>
+            <h3 class="font-bold text-white text-xs sm:text-sm group-hover:text-pastel-coral transition line-clamp-1 leading-snug">${fmt.name}</h3>
+            <p class="text-[10px] text-slate-400 mt-0.5">Category folder</p>
+          </div>
+          <div class="pt-2 mt-2 border-t border-dark-border/40 flex items-center justify-between text-[10px] sm:text-[11px] text-pastel-coral font-semibold">
+            <span>Open Folder</span>
+            <i data-lucide="chevron-right" class="w-3 h-3"></i>
+          </div>
         `;
         container.appendChild(card);
       });
 
-      // Update format action bar
-      const actionBar = document.getElementById('recipe-format-action-bar');
-      if (actionBar) {
-        if (state.activeCookbookFormat) {
-          const curFmt = formatsMeta.find(f => f.key === state.activeCookbookFormat);
-          document.getElementById('format-action-icon').textContent = curFmt ? curFmt.icon : '🍽️';
-          document.getElementById('format-action-name').textContent = curFmt ? curFmt.name : 'Category';
-          const matchCount = isFamilyCookbook
-            ? cbRecipes.filter(r => r.familyCategory === state.activeCookbookFormat).length
-            : cbRecipes.filter(r => r.format === state.activeCookbookFormat).length;
-          document.getElementById('format-action-count').textContent = `${matchCount} recipes found in this category`;
-          actionBar.classList.remove('hidden');
-        } else {
-          actionBar.classList.add('hidden');
-        }
-      }
+      // Add Category Card at the end of the folder shelf
+      const addCatCard = document.createElement('div');
+      addCatCard.className = "p-3 sm:p-4 rounded-2xl bg-dark-base/60 border border-dashed border-dark-border hover:border-pastel-coral/60 cursor-pointer transition flex flex-col items-center justify-center text-center group min-h-[110px] space-y-1.5";
+      addCatCard.onclick = () => openAddCategoryModal();
+      addCatCard.innerHTML = `
+        <div class="w-8 h-8 rounded-xl bg-dark-elevated border border-dark-border flex items-center justify-center text-pastel-coral group-hover:scale-110 transition shadow-inner">
+          <i data-lucide="folder-plus" class="w-4 h-4"></i>
+        </div>
+        <div>
+          <span class="text-xs font-bold text-white group-hover:text-pastel-coral transition block">+ Category</span>
+          <span class="text-[10px] text-slate-500 block">Create folder</span>
+        </div>
+      `;
+      container.appendChild(addCatCard);
     }
 
     function openCookbookFormat(formatKey) {
-      if (state.activeCookbookFormat === formatKey) {
-        state.activeCookbookFormat = null; // toggle off
-      } else {
-        state.activeCookbookFormat = formatKey;
-      }
+      state.activeCookbookFormat = formatKey;
       renderCookbooks();
       renderRecipes();
       playChime('bell');
     }
 
+    // Modal controls for adding a category to current cookbook
+    function openAddCategoryModal() {
+      const modal = document.getElementById('cookbook-category-modal');
+      const input = document.getElementById('cookbook-category-name-input');
+      const iconInput = document.getElementById('cookbook-category-icon-input');
+      if (input) input.value = '';
+      if (iconInput) iconInput.value = '📁';
+      if (modal) modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeAddCategoryModal() {
+      const modal = document.getElementById('cookbook-category-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function setCategoryModalIcon(emoji) {
+      const iconInput = document.getElementById('cookbook-category-icon-input');
+      if (iconInput) iconInput.value = emoji;
+    }
+
+    function saveCookbookCategory() {
+      const input = document.getElementById('cookbook-category-name-input');
+      const iconInput = document.getElementById('cookbook-category-icon-input');
+      const name = (input?.value || '').trim();
+      const icon = (iconInput?.value || '📁').trim();
+
+      if (!name) {
+        alertBox('Please enter a category name.', 'Name Required');
+        return;
+      }
+
+      const cb = (state.cookbooks || []).find(c => c.id === state.activeCookbook);
+      if (!cb) return;
+
+      cb.customCategories = cb.customCategories || [];
+      const key = `cat-${Date.now()}`;
+      cb.customCategories.push({ key, name, icon });
+
+      if (typeof saveAppState === 'function') saveAppState();
+      closeAddCategoryModal();
+      renderCookbookFormats();
+      playChime('bell');
+      alertBox(`Added category "${name}" to ${cb.title}!`, 'Category Created');
+    }
+
     function openAddRecipeForCurrentFormat() {
       openAddRecipeModal();
       if (state.activeCookbookFormat) {
-        const occInput = document.getElementById('recipe-occasion-input');
-        // If there is format input
         const fmtInput = document.getElementById('recipe-format-input');
         if (fmtInput) fmtInput.value = state.activeCookbookFormat;
       }
@@ -368,31 +454,43 @@
       renderRecipes();
     }
 
+    function handleRecipeSearchInput() {
+      const input = document.getElementById('recipe-search-input');
+      state.recipeSearchQuery = input ? input.value : '';
+      renderRecipes();
+    }
+
+    function handleRecipeSortChange() {
+      const select = document.getElementById('recipe-sort-select');
+      state.recipeSortBy = select ? select.value : 'alpha-asc';
+      renderRecipes();
+    }
+
     // Main Recipes Render
     function renderRecipes() {
       const grid = document.getElementById('recipe-cards-grid');
+      const searchSortBar = document.getElementById('recipe-search-sort-bar');
       if (!grid) return;
       grid.innerHTML = '';
 
       const isCookbookView = state.recipeSectionView === 'cookbooks';
 
-      // When in Cookbooks view and no cookbook has been opened yet, keep the recipe cards shelf clean
-      if (isCookbookView && !state.activeCookbook) {
+      // When in Cookbooks view and no cookbook has been opened, or no format folder is open, keep recipe cards hidden
+      if (isCookbookView && (!state.activeCookbook || !state.activeCookbookFormat)) {
         grid.classList.add('hidden');
+        if (searchSortBar) searchSortBar.classList.add('hidden');
         return;
       }
       grid.classList.remove('hidden');
+      if (searchSortBar) searchSortBar.classList.remove('hidden');
 
-      const filtered = state.recipes.filter(r => {
+      let filtered = state.recipes.filter(r => {
         if (isCookbookView && state.activeCookbook) {
           const cb = state.cookbooks.find(c => c.id === state.activeCookbook);
           if (cb && cb.origin !== 'all' && r.origin !== cb.origin) return false;
           if (state.activeCookbookFormat) {
-            if (cb && cb.id === 'cb-family') {
-              if (r.familyCategory !== state.activeCookbookFormat) return false;
-            } else {
-              if (r.format !== state.activeCookbookFormat) return false;
-            }
+            const matchesCat = (r.familyCategory === state.activeCookbookFormat) || (r.format === state.activeCookbookFormat) || (r.category === state.activeCookbookFormat);
+            if (!matchesCat) return false;
           }
           return true;
         }
@@ -406,13 +504,41 @@
         return occMatch && fmtMatch && origMatch;
       });
 
+      // Search Query Filtering
+      if (state.recipeSearchQuery && state.recipeSearchQuery.trim()) {
+        const q = state.recipeSearchQuery.toLowerCase().trim();
+        filtered = filtered.filter(r => {
+          const titleMatch = (r.title || '').toLowerCase().includes(q);
+          const authorMatch = (r.author || '').toLowerCase().includes(q);
+          const ingMatch = (r.ingredients || []).some(i => i.toLowerCase().includes(q));
+          return titleMatch || authorMatch || ingMatch;
+        });
+      }
+
+      // Sorting
+      const sortBy = state.recipeSortBy || 'alpha-asc';
+      filtered.sort((a, b) => {
+        if (sortBy === 'alpha-asc') {
+          return (a.title || '').localeCompare(b.title || '');
+        } else if (sortBy === 'alpha-desc') {
+          return (b.title || '').localeCompare(a.title || '');
+        } else if (sortBy === 'cooktime-asc') {
+          return (a.cookTime || 0) - (b.cookTime || 0);
+        } else if (sortBy === 'kcal-asc') {
+          return (a.kcal || 0) - (b.kcal || 0);
+        } else if (sortBy === 'recent') {
+          return (b.id || '').localeCompare(a.id || '');
+        }
+        return 0;
+      });
+
       if (filtered.length === 0) {
         grid.innerHTML = `
           <div class="col-span-full py-12 text-center bg-dark-base rounded-2xl border border-dashed border-dark-border space-y-3">
             <i data-lucide="book-open" class="w-10 h-10 text-slate-500 mx-auto"></i>
-            <span class="text-sm font-semibold text-slate-300 block">No recipes match the active filters</span>
-            <p class="text-xs text-slate-500 max-w-sm mx-auto">Try selecting another category, clearing filters, or adding a new recipe right here!</p>
-            <button type="button" onclick="openAddRecipeModal()" class="px-4 py-2 rounded-xl bg-pastel-coral text-dark-base font-bold text-xs inline-flex items-center gap-1.5 shadow-sm">
+            <span class="text-sm font-semibold text-slate-300 block">No recipes found</span>
+            <p class="text-xs text-slate-500 max-w-sm mx-auto">Try a different search, switch categories, or add a new recipe to this folder!</p>
+            <button type="button" onclick="openAddRecipeForCurrentFormat()" class="px-4 py-2 rounded-xl bg-pastel-coral text-dark-base font-bold text-xs inline-flex items-center gap-1.5 shadow-sm">
               <i data-lucide="plus" class="w-4 h-4"></i>
               <span>Add Recipe</span>
             </button>
@@ -1173,4 +1299,12 @@ if (typeof window !== 'undefined') {
   window.setCookbookModalIcon = setCookbookModalIcon;
   window.saveCookbookModal = saveCookbookModal;
   window.deleteCurrentCookbook = deleteCurrentCookbook;
+  window.backToCookbookFormats = backToCookbookFormats;
+  window.editCurrentCookbookFromBreadcrumb = editCurrentCookbookFromBreadcrumb;
+  window.openAddCategoryModal = openAddCategoryModal;
+  window.closeAddCategoryModal = closeAddCategoryModal;
+  window.setCategoryModalIcon = setCategoryModalIcon;
+  window.saveCookbookCategory = saveCookbookCategory;
+  window.handleRecipeSearchInput = handleRecipeSearchInput;
+  window.handleRecipeSortChange = handleRecipeSortChange;
 }

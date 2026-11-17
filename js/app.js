@@ -406,6 +406,11 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         if (state.cookbooks) {
           localStorage.setItem('focusflow_cookbooks', JSON.stringify(state.cookbooks));
         }
+        if (state.recipes) {
+          // Filter out demo recipes
+          const customRecipes = state.recipes.filter(r => !['rec-1', 'rec-2', 'rec-3', 'rec-4'].includes(r.id) && r.origin !== 'family');
+          localStorage.setItem('focusflow_recipes', JSON.stringify(customRecipes));
+        }
         if (typeof ffOnLocalChange === 'function') {
           try { ffOnLocalChange(); } catch(e) {}
         }
@@ -770,6 +775,25 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
           if (Array.isArray(parsed) && parsed.length > 0) {
             state.cookbooks = parsed;
           }
+        }
+      } catch (e) {}
+
+      // 14. Saved Custom Recipes (Clean slate: purge demo recipes rec-1..4)
+      try {
+        const savedRecipes = localStorage.getItem('focusflow_recipes');
+        if (savedRecipes) {
+          const parsed = JSON.parse(savedRecipes);
+          if (Array.isArray(parsed)) {
+            const cleanCustom = parsed.filter(r => !['rec-1', 'rec-2', 'rec-3', 'rec-4'].includes(r.id));
+            state.recipes = (state.recipes || []).filter(r => !['rec-1', 'rec-2', 'rec-3', 'rec-4'].includes(r.id));
+            cleanCustom.forEach(cr => {
+              if (!state.recipes.some(r => r.id === cr.id)) {
+                state.recipes.push(cr);
+              }
+            });
+          }
+        } else if (state.recipes) {
+          state.recipes = state.recipes.filter(r => !['rec-1', 'rec-2', 'rec-3', 'rec-4'].includes(r.id));
         }
       } catch (e) {}
     }

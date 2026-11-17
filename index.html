@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=80">
+  <link rel="stylesheet" href="css/styles.css?v=83">
   <script>
     function resetViewportZoom() {
       try {
@@ -732,17 +732,24 @@
         <!-- VIEW A: THEMATIC COOKBOOKS SHELF -->
         <div id="recipe-view-cookbooks" class="pt-3 space-y-3">
           <!-- Breadcrumb inside Cookbooks -->
-          <div id="cookbook-breadcrumb" class="hidden flex items-center gap-2 text-xs pb-1">
-            <button type="button" onclick="backToAllCookbooks()" class="text-pastel-coral hover:underline font-semibold flex items-center gap-1">
-              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
-              <span>All Cookbooks</span>
-            </button>
-            <span class="text-slate-600">/</span>
-            <span id="cookbook-active-title" class="text-white font-bold">Cookbook Title</span>
-            <span id="cookbook-format-subcrumb" class="hidden text-slate-400 flex items-center gap-1">
+          <div id="cookbook-breadcrumb" class="hidden flex items-center justify-between text-xs pb-1">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" onclick="backToAllCookbooks()" class="text-pastel-coral hover:underline font-semibold flex items-center gap-1">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+                <span>All Cookbooks</span>
+              </button>
               <span class="text-slate-600">/</span>
-              <span id="cookbook-active-format-title" class="text-pastel-sky font-semibold">Format</span>
-            </span>
+              <button type="button" id="cookbook-crumb-book-btn" onclick="backToCookbookFormats()" class="text-white font-bold hover:underline">Cookbook Title</button>
+              <span id="cookbook-format-subcrumb" class="hidden text-slate-400 flex items-center gap-1">
+                <span class="text-slate-600">/</span>
+                <span id="cookbook-active-format-title" class="text-pastel-sky font-semibold">Format</span>
+              </span>
+            </div>
+            <!-- Edit current cookbook button -->
+            <button type="button" id="cookbook-breadcrumb-edit-btn" onclick="editCurrentCookbookFromBreadcrumb()" class="px-2.5 py-1 rounded-lg bg-dark-base border border-dark-border text-slate-300 hover:text-white hover:border-pastel-coral/50 flex items-center gap-1 text-[11px] font-medium transition" title="Edit this cookbook">
+              <i data-lucide="pencil" class="w-3 h-3"></i>
+              <span>Edit Book</span>
+            </button>
           </div>
 
           <!-- Cookbooks Grid: 2 columns everywhere -->
@@ -750,14 +757,20 @@
             <!-- Populated dynamically: ADHD Staples, Friends & Family, Campus Meals, Low Energy -->
           </div>
 
-          <!-- Format Shelf (Appears when a Cookbook is opened) -->
+          <!-- Format/Category Shelf (Appears when a Cookbook is opened - Folder selector) -->
           <div id="cookbook-format-shelf" class="hidden space-y-3 pt-2">
             <div class="flex items-center justify-between">
-              <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Browse by Format:</h4>
-              <span class="text-[11px] text-slate-400">Tap an icon to explore recipes or add a new one</span>
+              <div>
+                <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Categories &amp; Folders:</h4>
+                <p class="text-[11px] text-slate-400">Select a folder to browse recipes or add a new category</p>
+              </div>
+              <button type="button" onclick="openAddCategoryModal()" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-pastel-coral/40 text-pastel-coral hover:bg-slate-800 text-[11px] font-bold flex items-center gap-1 shadow-sm transition">
+                <i data-lucide="folder-plus" class="w-3.5 h-3.5"></i>
+                <span>+ New Category</span>
+              </button>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5" id="cookbook-formats-grid">
-              <!-- Format Icon Cards: Smoothies, Soups, Sandwiches, Skillets, Bowls, Bakes -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3" id="cookbook-formats-grid">
+              <!-- Format/Category Folder Cards -->
             </div>
           </div>
         </div>
@@ -799,19 +812,37 @@
         </div>
       </div>
 
+      <!-- Format Quick Action Bar & Recipe Search/Sort Bar (Appears when browsing a format in a cookbook or in Codex) -->
+      <div id="recipe-search-sort-bar" class="hidden flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 rounded-2xl bg-dark-base border border-dark-border">
+        <div class="relative flex-1">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+          <input type="text" id="recipe-search-input" oninput="handleRecipeSearchInput()" placeholder="Search recipes by name or ingredient..." class="w-full bg-dark-elevated border border-dark-border rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-pastel-coral">
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <label class="text-[11px] text-slate-400 font-semibold shrink-0">Sort:</label>
+          <select id="recipe-sort-select" onchange="handleRecipeSortChange()" class="bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-pastel-coral">
+            <option value="alpha-asc">A → Z (Alphabetical)</option>
+            <option value="alpha-desc">Z → A</option>
+            <option value="cooktime-asc">Fastest Cook Time</option>
+            <option value="kcal-asc">Lowest Calories</option>
+            <option value="recent">Recently Added</option>
+          </select>
+          <button type="button" onclick="openAddRecipeForCurrentFormat()" class="px-3 py-1.5 rounded-xl bg-pastel-coral hover:bg-rose-300 text-dark-base font-bold text-xs flex items-center gap-1 shadow-sm transition shrink-0" title="Add recipe to this folder">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>Add Recipe</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Format Quick Action Bar (Appears when browsing a format in a cookbook) -->
-      <div id="recipe-format-action-bar" class="hidden p-3.5 rounded-2xl bg-dark-base border border-pastel-coral/30 flex items-center justify-between">
+      <div id="recipe-format-action-bar" class="hidden p-3 rounded-2xl bg-dark-base/80 border border-pastel-coral/30 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <span id="format-action-icon" class="text-lg">🥤</span>
           <div>
             <span id="format-action-name" class="font-bold text-white text-xs block">Smoothies</span>
-            <span id="format-action-count" class="text-[11px] text-slate-400">Showing options in this cookbook</span>
+            <span id="format-action-count" class="text-[11px] text-slate-400">Showing options in this folder</span>
           </div>
         </div>
-        <button type="button" onclick="openAddRecipeForCurrentFormat()" class="px-3.5 py-1.5 rounded-xl bg-pastel-coral hover:bg-rose-300 text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-sm transition">
-          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-          <span>Add New to this Format</span>
-        </button>
       </div>
 
       <!-- Recipe Cards Grid -->
@@ -2667,6 +2698,59 @@
             <span id="cookbook-save-btn-text">Save Book</span>
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT COOKBOOK CATEGORY -->
+  <div id="cookbook-category-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
+    <div class="bg-dark-elevated border border-pastel-coral/40 rounded-3xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-pastel-coral/20 border border-pastel-coral/40 flex items-center justify-center text-pastel-coral">
+            <i data-lucide="folder-plus" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Add Category Folder</h3>
+            <p class="text-xs text-slate-400">Organize recipes in this cookbook</p>
+          </div>
+        </div>
+        <button onclick="closeAddCategoryModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3.5 text-xs">
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Category Name</label>
+          <input type="text" id="cookbook-category-name-input" placeholder="e.g. Sourdough, Air Fryer, Grilling" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-pastel-coral">
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1.5">Category Emoji / Icon</label>
+          <div class="flex items-center gap-2 mb-2">
+            <input type="text" id="cookbook-category-icon-input" value="📁" maxlength="4" class="w-14 text-center text-xl bg-dark-base border border-dark-border rounded-xl py-1.5 text-white focus:outline-none focus:border-pastel-coral">
+            <span class="text-slate-400 text-[11px]">Select or choose preset:</span>
+          </div>
+          <div class="flex flex-wrap gap-2 text-lg">
+            <button type="button" onclick="setCategoryModalIcon('📁')" class="w-9 h-9 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-coral flex items-center justify-center">📁</button>
+            <button type="button" onclick="setCategoryModalIcon('🍞')" class="w-9 h-9 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-coral flex items-center justify-center">🍞</button>
+            <button type="button" onclick="setCategoryModalIcon('🥩')" class="w-9 h-9 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-coral flex items-center justify-center">🥩</button>
+            <button type="button" onclick="setCategoryModalIcon('🍗')" class="w-9 h-9 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-coral flex items-center justify-center">🍗</button>
+            <button type="button" onclick="setCategoryModalIcon('🥗')" class="w-9 h-9 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-coral flex items-center justify-center">🥗</button>
+            <button type="button" onclick="setCategoryModalIcon('🍲')" class="w-9 h-9 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-coral flex items-center justify-center">🍲</button>
+            <button type="button" onclick="setCategoryModalIcon('🍝')" class="w-9 h-9 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-coral flex items-center justify-center">🍝</button>
+            <button type="button" onclick="setCategoryModalIcon('🧁')" class="w-9 h-9 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-coral flex items-center justify-center">🧁</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-dark-border flex items-center justify-end gap-2">
+        <button type="button" onclick="closeAddCategoryModal()" class="px-4 py-2 rounded-xl bg-dark-base text-slate-400 text-xs font-semibold hover:text-white">Cancel</button>
+        <button type="button" onclick="saveCookbookCategory()" class="px-5 py-2 rounded-xl bg-pastel-coral hover:bg-rose-300 text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-md shadow-pastel-coral/20 transition">
+          <i data-lucide="check" class="w-4 h-4 stroke-[2.5]"></i>
+          <span>Add Category</span>
+        </button>
       </div>
     </div>
   </div>

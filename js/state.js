@@ -81,52 +81,7 @@
       },
       selectedFoodForDetail: null,
       events: [],
-      recipes: [
-        {
-          id: 'rec-1',
-          title: 'Golden Turmeric Lemon Lentil Pot',
-          occasion: 'dinner',
-          format: 'soup',
-          origin: 'mine',
-          cookTime: 25,
-          kcal: 420,
-          ingredients: ['1 cup red lentils', '1 chopped yellow onion', '2 carrots sliced', '1 tsp turmeric', '1/2 lemon juiced', '3 cups vegetable broth'],
-          instructions: '1. Sauté onion and carrots in 1 pot.\n2. Add turmeric and washed lentils with broth.\n3. Simmer 18 mins (WASH CUTTING BOARD AND KNIVES HERE).\n4. Squeeze fresh lemon and serve.'
-        },
-        {
-          id: 'rec-2',
-          title: 'Creamy Berry Dopamine Power Smoothie',
-          occasion: 'breakfast',
-          format: 'smoothie',
-          origin: 'mine',
-          cookTime: 5,
-          kcal: 360,
-          ingredients: ['1 cup Greek yogurt', '1/2 cup blueberries', '1 tbsp chia seeds', '1 scoop protein powder', '1 cup almond milk'],
-          instructions: '1. Place all items into blender pitcher.\n2. Blend on high for 45 seconds.\n3. Rinse blender immediately so no dried residue remains.'
-        },
-        {
-          id: 'rec-3',
-          title: 'Campus Dining Style Crispy Chickpea Wrap',
-          occasion: 'lunch',
-          format: 'sandwich',
-          origin: 'school',
-          cookTime: 12,
-          kcal: 480,
-          ingredients: ['1 large tortilla', '1/2 can chickpeas seasoned with smoked paprika', 'Handful baby spinach', '2 tbsp hummus', 'Cucumber slices'],
-          instructions: '1. Warm tortilla in dry skillet.\n2. Spread hummus, layer spinach, cucumber, and chickpeas.\n3. Fold tightly and slice diagonally.'
-        },
-        {
-          id: 'rec-4',
-          title: "Mom's Honey Dijon Salmon & Broccoli Skillet",
-          occasion: 'dinner',
-          format: 'skillet',
-          origin: 'shared',
-          cookTime: 20,
-          kcal: 520,
-          ingredients: ['6 oz salmon fillet', '1 head broccoli florets', '1 tbsp Dijon mustard', '1 tsp honey', '1 tbsp olive oil'],
-          instructions: '1. Chop broccoli into bite-sized florets.\n2. Whisk Dijon and honey.\n3. Sear salmon skin-side down for 5 mins.\n4. Toss broccoli into skillet, cover with lid to steam (WASH PREP BOWLS NOW).\n5. Drizzle glaze and serve.'
-        }
-      ],
+      recipes: [],
       matrixTasks: [
         { id: 'm-1', text: 'Prepare dinner & wash prep pans', quadrant: 'important-noturgent', estMinutes: 35 },
         { id: 'm-2', text: 'Hydrate & 10-minute stretch', quadrant: 'important-noturgent', estMinutes: 10 },

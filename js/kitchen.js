@@ -1843,6 +1843,41 @@
       playChime('bell');
     }
 
+    function getExpirationGlowStyle(expirationDate) {
+      if (!expirationDate) return { border: 'border-dark-border', glow: '' };
+      const now = new Date();
+      const exp = new Date(expirationDate);
+      const diffDays = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
+
+      // Color gradient from green (10+ days) -> yellow (4-6 days) -> orange (2-3 days) -> rose/red (<= 1 day or expired)
+      if (diffDays <= 0) {
+        return {
+          border: 'border-rose-500/80',
+          glow: 'box-shadow: 0 0 10px rgba(244, 63, 94, 0.45), inset 0 0 6px rgba(244, 63, 94, 0.25);'
+        };
+      } else if (diffDays <= 2) {
+        return {
+          border: 'border-rose-400/70',
+          glow: 'box-shadow: 0 0 8px rgba(251, 113, 133, 0.4);'
+        };
+      } else if (diffDays <= 4) {
+        return {
+          border: 'border-amber-400/60',
+          glow: 'box-shadow: 0 0 8px rgba(251, 191, 36, 0.35);'
+        };
+      } else if (diffDays <= 7) {
+        return {
+          border: 'border-yellow-400/50',
+          glow: 'box-shadow: 0 0 6px rgba(250, 204, 21, 0.25);'
+        };
+      } else {
+        return {
+          border: 'border-emerald-500/40',
+          glow: 'box-shadow: 0 0 6px rgba(16, 185, 129, 0.2);'
+        };
+      }
+    }
+
     function buildPantryItemPillHtml(item, expiryBadge) {
       const isOutOfStock = (item.amount == null || item.amount <= 0);
 
@@ -2080,11 +2115,15 @@
         // Cross-filtering pass: must satisfy zone, type, and format filters
         if (!matchesZone || !matchesType || !matchesFormat) return;
 
+        // Compute dynamic expiration glow and border
+        const expStyle = getExpirationGlowStyle(item.expirationDate);
+
         // Populate Zone View:
         if (zoneLists[itemZone]) {
           zoneCounts[itemZone] = (zoneCounts[itemZone] || 0) + 1;
           const pill = document.createElement('div');
-          pill.className = "relative overflow-hidden flex items-center justify-between p-2.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm group";
+          pill.className = `relative overflow-hidden flex items-center justify-between p-2.5 rounded-xl bg-dark-base border ${expStyle.border} hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm group`;
+          if (expStyle.glow) pill.style.cssText = expStyle.glow;
           pill.onclick = () => openPantryItemDetailModal(item.id);
           pill.innerHTML = buildPantryItemPillHtml(item, expiryBadge);
           zoneLists[itemZone].appendChild(pill);
@@ -2096,7 +2135,8 @@
           if (typeLists[t]) {
             typeCounts[t] = (typeCounts[t] || 0) + 1;
             const pill = document.createElement('div');
-            pill.className = "relative overflow-hidden flex items-center justify-between p-2.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm group";
+            pill.className = `relative overflow-hidden flex items-center justify-between p-2.5 rounded-xl bg-dark-base border ${expStyle.border} hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm group`;
+            if (expStyle.glow) pill.style.cssText = expStyle.glow;
             pill.onclick = () => openPantryItemDetailModal(item.id);
             pill.innerHTML = buildPantryItemPillHtml(item, expiryBadge);
             typeLists[t].appendChild(pill);

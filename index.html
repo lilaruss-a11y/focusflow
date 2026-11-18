@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=97">
+  <link rel="stylesheet" href="css/styles.css?v=98">
   <script>
     function resetViewportZoom() {
       try {
@@ -3422,33 +3422,46 @@
           </div>
         </div>
 
-        <!-- Amount and Unit Controls -->
-        <div class="grid grid-cols-2 gap-2.5">
+        <!-- Amount and Unit Controls (Standardized Twin Matching Boxes: Total Package Size & Amount Remaining) -->
+        <div class="grid grid-cols-2 gap-2">
+          <!-- Total Package Size -->
           <div>
-            <label class="block text-slate-300 mb-1 font-semibold">Amount to Add</label>
-            <input type="number" id="verify-item-amount-input" step="any" min="0.1" value="1" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-pastel-mint font-bold">
+            <label class="font-semibold text-slate-300 block mb-1">Total Package Size</label>
+            <div class="flex items-center bg-dark-base border border-pastel-mint/50 focus-within:border-pastel-mint rounded-xl overflow-hidden transition shadow-sm h-11 w-full">
+              <input type="number" id="verify-item-amount-input" oninput="const rem = document.getElementById('verify-item-amount-remaining-input'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0.1" value="1" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-sm font-semibold focus:outline-none min-w-0">
+              <div class="shrink-0 border-l border-dark-border bg-dark-elevated/80 h-full px-2.5 flex items-center justify-center min-w-[80px] select-none">
+                <select id="pantry-category-input" onchange="const d = document.getElementById('verify-item-unit-display'); if (d) d.textContent = this.value;" class="w-full bg-transparent text-pastel-mint font-bold font-mono text-sm py-1 text-center cursor-pointer focus:outline-none" title="Tap to change unit">
+                  <optgroup label="Count &amp; Servings">
+                    <option value="items" selected>items</option>
+                    <option value="servings">servings</option>
+                    <option value="pack">pack</option>
+                    <option value="can">can</option>
+                    <option value="bottle">bottle</option>
+                  </optgroup>
+                  <optgroup label="Weight (Solid Foods)">
+                    <option value="oz">oz</option>
+                    <option value="g">g</option>
+                    <option value="lb">lb</option>
+                  </optgroup>
+                  <optgroup label="Volume (Liquids &amp; Drinks)">
+                    <option value="fl oz">fl oz</option>
+                    <option value="ml">ml</option>
+                    <option value="cup">cup</option>
+                  </optgroup>
+                </select>
+              </div>
+            </div>
           </div>
+
+          <!-- Amount Remaining -->
           <div>
-            <label class="block text-slate-300 mb-1 font-semibold">Unit</label>
-            <select id="pantry-category-input" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-mint">
-              <optgroup label="Count & Servings">
-                <option value="items" selected>Items (each)</option>
-                <option value="servings">Servings</option>
-                <option value="pack">Pack / Box</option>
-                <option value="can">Can</option>
-                <option value="bottle">Bottle</option>
-              </optgroup>
-              <optgroup label="Weight (Solid Foods)">
-                <option value="oz">Ounces (oz)</option>
-                <option value="g">Grams (g)</option>
-                <option value="lb">Pounds (lb)</option>
-              </optgroup>
-              <optgroup label="Volume (Liquids & Drinks)">
-                <option value="fl oz">Fluid Ounces (fl oz)</option>
-                <option value="ml">Milliliters (ml)</option>
-                <option value="cup">Cup(s)</option>
-              </optgroup>
-            </select>
+            <label class="font-semibold text-slate-300 block mb-1">Amount Remaining</label>
+            <div class="flex items-center bg-dark-base border border-pastel-mint/50 focus-within:border-pastel-mint rounded-xl overflow-hidden transition shadow-sm h-11 w-full" title="Current amount left in kitchen">
+              <input type="number" id="verify-item-amount-remaining-input" oninput="this.dataset.linked = '0';" step="any" min="0" value="1" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-sm font-semibold focus:outline-none min-w-0">
+              <div class="shrink-0 border-l border-dark-border bg-dark-elevated/80 h-full px-2.5 flex items-center justify-center min-w-[80px] select-none cursor-pointer" onclick="document.getElementById('pantry-category-input').focus(); document.getElementById('pantry-category-input').showPicker?.();" title="Tap unit to change">
+                <span id="verify-item-unit-display" class="text-pastel-mint font-bold font-mono text-sm py-1 text-center block">items</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -5459,37 +5472,50 @@
         <div class="text-[10px] text-slate-400 font-mono pt-0.5" id="pantry-detail-micros"></div>
       </div>
 
-      <!-- Quantity / Amount & Unit -->
+      <!-- Quantity / Amount & Unit (Standardized Twin Matching Boxes: Total Package Size & Amount Remaining) -->
       <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-2.5 text-xs">
-        <span class="font-bold text-white block">Quantity, Weight or Volume:</span>
+        <span class="font-bold text-white block">Quantity &amp; Stock Levels:</span>
         <div class="grid grid-cols-2 gap-2">
+          <!-- Total Package Size -->
           <div>
-            <label class="text-[11px] text-slate-400 block mb-0.5">Amount:</label>
-            <input type="number" id="pantry-detail-amount" step="any" min="0" placeholder="e.g. 1, 16, 500" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs">
+            <label class="font-semibold text-slate-300 block mb-1">Total Package Size</label>
+            <div class="flex items-center bg-dark-elevated border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm h-11 w-full">
+              <input type="number" id="pantry-detail-amount" oninput="const rem = document.getElementById('pantry-detail-amount-remaining'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-sm font-semibold focus:outline-none min-w-0">
+              <div class="shrink-0 border-l border-dark-border bg-dark-base/80 h-full px-2.5 flex items-center justify-center min-w-[80px] select-none">
+                <select id="pantry-detail-unit" onchange="setPantryDetailUnit(this.value)" class="w-full bg-transparent text-pastel-sky font-bold font-mono text-sm py-1 text-center cursor-pointer focus:outline-none" title="Tap to change unit">
+                  <optgroup label="Weight (Solid Foods)">
+                    <option value="oz">oz</option>
+                    <option value="g">g</option>
+                    <option value="lb">lb</option>
+                  </optgroup>
+                  <optgroup label="Volume (Liquids &amp; Drinks)">
+                    <option value="fl oz">fl oz</option>
+                    <option value="ml">ml</option>
+                    <option value="l">L</option>
+                    <option value="cup">cup</option>
+                    <option value="gal">gal</option>
+                  </optgroup>
+                  <optgroup label="Count &amp; Portions">
+                    <option value="items" selected>items</option>
+                    <option value="servings">servings</option>
+                    <option value="pack">pack</option>
+                    <option value="can">can</option>
+                    <option value="bottle">bottle</option>
+                  </optgroup>
+                </select>
+              </div>
+            </div>
           </div>
+
+          <!-- Amount Remaining -->
           <div>
-            <label class="text-[11px] text-slate-400 block mb-0.5">Unit:</label>
-            <select id="pantry-detail-unit" onchange="setPantryDetailUnit(this.value)" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white text-xs">
-              <optgroup label="Weight (Solid Foods)">
-                <option value="oz">Ounces (oz)</option>
-                <option value="g">Grams (g)</option>
-                <option value="lb">Pounds (lb)</option>
-              </optgroup>
-              <optgroup label="Volume (Liquids &amp; Drinks)">
-                <option value="fl oz">Fluid Ounces (fl oz)</option>
-                <option value="ml">Milliliters (ml)</option>
-                <option value="l">Liters (L)</option>
-                <option value="cup">Cup(s)</option>
-                <option value="gal">Gallon(s)</option>
-              </optgroup>
-              <optgroup label="Count &amp; Portions">
-                <option value="items">Items (each)</option>
-                <option value="servings">Servings</option>
-                <option value="pack">Pack / Box</option>
-                <option value="can">Can</option>
-                <option value="bottle">Bottle</option>
-              </optgroup>
-            </select>
+            <label class="font-semibold text-slate-300 block mb-1">Amount Remaining</label>
+            <div class="flex items-center bg-dark-elevated border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm h-11 w-full" title="Current stock left in your kitchen">
+              <input type="number" id="pantry-detail-amount-remaining" oninput="this.dataset.linked = '0';" step="any" min="0" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-sm font-semibold focus:outline-none min-w-0">
+              <div class="shrink-0 border-l border-dark-border bg-dark-base/80 h-full px-2.5 flex items-center justify-center min-w-[80px] select-none cursor-pointer" onclick="document.getElementById('pantry-detail-unit').focus(); document.getElementById('pantry-detail-unit').showPicker?.();" title="Tap unit to change">
+                <span id="pantry-detail-unit-display" class="text-pastel-sky font-bold font-mono text-sm py-1 text-center block">items</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -6535,6 +6561,12 @@
         </label>
 
         <div class="pl-6 space-y-2.5">
+          <!-- Leftover Dish Name (Editable) -->
+          <div>
+            <label class="text-[10.5px] text-slate-400 block mb-0.5 font-semibold">Leftover Dish Name:</label>
+            <input type="text" id="wrapup-leftover-name" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-3 py-1.5 text-white text-xs font-semibold focus:outline-none focus:border-pastel-lavender transition" placeholder="e.g. Leftover Chicken & Broccoli">
+          </div>
+
           <p class="text-[11px] text-slate-400">Portion remaining from meal: <strong class="text-white" id="wrapup-leftovers-servings-txt">1 serving</strong></p>
 
           <!-- Amount and Unit Categorization -->

@@ -670,6 +670,33 @@
           ? `<span class="text-pastel-coral font-bold uppercase">${recipe.familyCategory}</span>` 
           : `<span class="text-pastel-coral font-bold uppercase">${recipe.format}</span>`;
 
+        // Calculate pantry match rate
+        const pantryItems = (window.state && window.state.pantry) || [];
+        const ingredients = recipe.ingredients || [];
+        let matchedCount = 0;
+        if (ingredients.length > 0 && pantryItems.length > 0) {
+          ingredients.forEach(ing => {
+            const cleanIng = ing.toLowerCase();
+            const hasMatch = pantryItems.some(p => {
+              if (p.amount != null && p.amount <= 0) return false;
+              const pName = (p.name || '').toLowerCase();
+              const pGen = (p.genericName || '').toLowerCase();
+              return cleanIng.includes(pName) || (pGen && cleanIng.includes(pGen)) || pName.includes(cleanIng);
+            });
+            if (hasMatch) matchedCount++;
+          });
+        }
+        let matchBadge = '';
+        if (ingredients.length > 0) {
+          if (matchedCount === ingredients.length) {
+            matchBadge = `<span class="text-[9.5px] px-1.5 py-0.5 rounded-md font-bold bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/40" title="All ${ingredients.length} ingredients are in your pantry!">In Stock</span>`;
+          } else if (matchedCount > 0) {
+            matchBadge = `<span class="text-[9.5px] px-1.5 py-0.5 rounded-md font-bold bg-pastel-butter/20 text-pastel-butter border border-pastel-butter/40" title="${matchedCount} of ${ingredients.length} ingredients in stock">${matchedCount}/${ingredients.length} in stock</span>`;
+          } else {
+            matchBadge = `<span class="text-[9.5px] px-1.5 py-0.5 rounded-md font-bold bg-dark-elevated text-slate-400 border border-dark-border" title="Missing ingredients in pantry">0/${ingredients.length} in stock</span>`;
+          }
+        }
+
         card.innerHTML = `
           <div class="space-y-2.5 cursor-pointer" onclick="viewRecipeDetails('${recipe.id}')" title="Click to view full recipe ingredients & instructions">
             <div class="flex items-start justify-between gap-2">
@@ -677,11 +704,12 @@
                 <span class="text-xl">${formatIcon}</span>
                 <div>
                   <h3 class="font-bold text-slate-100 text-sm leading-snug hover:text-pastel-coral transition">${recipe.title}</h3>
-                  <div class="flex items-center gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
+                  <div class="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-400 font-mono mt-0.5">
                     ${catBadge}
                     <span>•</span>
                     <span>${recipe.cookTime || 20}m cook</span>
                     ${recipe.kcal ? `<span>•</span><span class="text-pastel-mint">${recipe.kcal} kcal</span>` : ''}
+                    ${matchBadge ? `<span>•</span>${matchBadge}` : ''}
                     ${authorBadge ? `<span>•</span>${authorBadge}` : ''}
                   </div>
                 </div>

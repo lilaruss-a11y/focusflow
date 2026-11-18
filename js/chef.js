@@ -1642,6 +1642,9 @@ Return strictly the raw JSON array.`;
       if (portionInput) portionInput.value = "1.0";
       if (leftoverAmtInput) leftoverAmtInput.value = Math.max(0.5, totalServings - 1.0);
 
+      const leftoverNameInput = document.getElementById('wrapup-leftover-name');
+      if (leftoverNameInput) leftoverNameInput.value = `Leftover: ${recipe.title || 'Cooked Dish'}`;
+
       setWrapupLeftoverUnit('servings');
       updateWrapupNutritionPreview();
       modal.classList.remove('hidden');
@@ -1792,17 +1795,24 @@ Return strictly the raw JSON array.`;
         const dest = document.querySelector('input[name="wrapup-leftover-dest"]:checked') ? document.querySelector('input[name="wrapup-leftover-dest"]:checked').value : 'fridge';
         const leftoverAmtInput = document.getElementById('wrapup-leftover-amount');
         const leftoverUnitSelect = document.getElementById('wrapup-leftover-unit');
+        const leftoverNameInput = document.getElementById('wrapup-leftover-name');
         const chosenAmount = leftoverAmtInput ? (parseFloat(leftoverAmtInput.value) || 1) : 1;
         const chosenUnit = leftoverUnitSelect ? leftoverUnitSelect.value : 'servings';
+        const chosenName = (leftoverNameInput && leftoverNameInput.value.trim()) ? leftoverNameInput.value.trim() : `Leftover: ${r.title}`;
+
+        // Set realistic 4-day freshness window for fridge or 90 days for freezer
+        const expDate = new Date();
+        expDate.setDate(expDate.getDate() + (dest === 'frozen' ? 90 : 4));
 
         state.pantry.push({
           id: `p-${Date.now()}-leftover`,
-          name: `Leftover: ${r.title}`,
+          name: chosenName,
           category: 'leftovers',
           storage: dest,
           amount: chosenAmount,
           unit: chosenUnit,
-          dateAdded: new Date().toISOString().split('T')[0]
+          dateAdded: new Date().toISOString().split('T')[0],
+          expirationDate: expDate.toISOString().split('T')[0]
         });
         renderPantry();
       }

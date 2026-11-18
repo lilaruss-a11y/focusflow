@@ -1943,31 +1943,31 @@
       const exp = new Date(expirationDate);
       const diffDays = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
 
-      // Highly distinctive, unmistakable neon halo gradient
+      // Elegant, tight ambient halo that hugs the pill without bleeding into adjacent cards
       if (diffDays <= 0) {
         return {
           border: 'border-rose-500 !border-2',
-          glow: 'box-shadow: 0 0 16px rgba(244, 63, 94, 0.7), 0 0 28px rgba(244, 63, 94, 0.4), inset 0 0 8px rgba(244, 63, 94, 0.35);'
+          glow: 'box-shadow: 0 0 6px rgba(244, 63, 94, 0.35);'
         };
       } else if (diffDays <= 2) {
         return {
           border: 'border-rose-400 !border-2',
-          glow: 'box-shadow: 0 0 14px rgba(251, 113, 133, 0.65), 0 0 24px rgba(251, 113, 133, 0.35);'
+          glow: 'box-shadow: 0 0 6px rgba(251, 113, 133, 0.3);'
         };
       } else if (diffDays <= 5) {
         return {
           border: 'border-amber-400 !border-2',
-          glow: 'box-shadow: 0 0 13px rgba(251, 191, 36, 0.6), 0 0 22px rgba(251, 191, 36, 0.3);'
+          glow: 'box-shadow: 0 0 5px rgba(251, 191, 36, 0.28);'
         };
       } else if (diffDays <= 8) {
         return {
           border: 'border-yellow-400 !border-[1.5px]',
-          glow: 'box-shadow: 0 0 11px rgba(250, 204, 21, 0.5), 0 0 18px rgba(250, 204, 21, 0.25);'
+          glow: 'box-shadow: 0 0 5px rgba(250, 204, 21, 0.22);'
         };
       } else {
         return {
           border: 'border-emerald-400 !border-[1.5px]',
-          glow: 'box-shadow: 0 0 11px rgba(52, 211, 153, 0.45), 0 0 18px rgba(52, 211, 153, 0.2);'
+          glow: 'box-shadow: 0 0 5px rgba(52, 211, 153, 0.2);'
         };
       }
     }

@@ -2652,6 +2652,8 @@
 
       const unitDisp = document.getElementById('pantry-detail-unit-display');
       if (unitDisp) unitDisp.textContent = mapped;
+      const unitDispPkg = document.getElementById('pantry-detail-unit-display-pkg');
+      if (unitDispPkg) unitDispPkg.textContent = mapped;
 
       // Auto-convert amount proportionally when unit is changed
       const amtInput = document.getElementById('pantry-detail-amount');

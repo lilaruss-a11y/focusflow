@@ -1848,6 +1848,8 @@
       setVal('manual-nut-unit', unitVal);
       const unitDisp = document.getElementById('manual-nut-unit-display');
       if (unitDisp) unitDisp.textContent = unitVal;
+      const unitDispPkg = document.getElementById('manual-nut-unit-display-pkg');
+      if (unitDispPkg) unitDispPkg.textContent = unitVal;
       setVal('manual-nut-cat', params.category || 'vegetables');
       setVal('manual-nut-format', params.format || 'fresh');
       setVal('manual-nut-storage', normalizeStorage(params.storage));
@@ -1952,6 +1954,8 @@
     function onManualNutritionUnitChange(newUnit) {
       const uDisp = document.getElementById('manual-nut-unit-display');
       if (uDisp) uDisp.textContent = newUnit;
+      const uDispPkg = document.getElementById('manual-nut-unit-display-pkg');
+      if (uDispPkg) uDispPkg.textContent = newUnit;
 
       const oldUnit = window._lastManualNutUnit || 'items';
       window._lastManualNutUnit = newUnit;

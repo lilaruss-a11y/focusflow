@@ -1843,6 +1843,100 @@
       playChime('bell');
     }
 
+    function calculateSmartExpiration(foodName, category, storage, format) {
+      const name = (foodName || '').toLowerCase();
+      const cat = (category || 'produce').toLowerCase();
+      const stor = (storage || 'fridge-main').toLowerCase();
+      const fmt = (format || 'fresh').toLowerCase();
+
+      // 1. Storage zone overrides
+      if (stor === 'freezer' || fmt === 'frozen') {
+        return { days: 270, label: '~9 months in freezer' };
+      }
+      if (fmt === 'canned' || stor === 'pantry' && (cat === 'canned' || name.includes('can ') || name.includes('canned'))) {
+        return { days: 730, label: '~2 years canned shelf-life' };
+      }
+      if (fmt === 'dried' || cat === 'grains' || cat === 'baking' || stor === 'cupboard' && (name.includes('pasta') || name.includes('rice') || name.includes('flour') || name.includes('oats') || name.includes('bean') || name.includes('lentil'))) {
+        return { days: 365, label: '~1 year dry storage' };
+      }
+      if (stor === 'spices' || cat === 'condiments' || cat === 'spices') {
+        if (name.includes('sauce') || name.includes('mayo') || name.includes('dressing')) {
+          return { days: 90, label: '~3 months opened sauce' };
+        }
+        return { days: 365, label: '~1 year spice/condiment' };
+      }
+
+      // 2. Specific produce intelligence (berries, hardy fruits, greens)
+      if (cat === 'produce' || cat === 'fruits') {
+        // Berries (strawberries, blueberries, blackberries, raspberries)
+        if (name.includes('berr') || name.includes('strawberr') || name.includes('blueberr') || name.includes('raspberr') || name.includes('blackberr') || name.includes('grape')) {
+          if (stor.includes('fridge') || stor === 'counter') {
+            return { days: 14, label: '1–3 weeks (refrigerated berries)' };
+          }
+          return { days: 7, label: '~7 days (room temp berries)' };
+        }
+        // Hardy fruits: apples, citrus (orange, lemon, lime), melons
+        if (name.includes('apple') || name.includes('orange') || name.includes('lemon') || name.includes('lime') || name.includes('grapefruit') || name.includes('pear') || name.includes('melon')) {
+          if (stor.includes('fridge')) return { days: 28, label: '3–5 weeks (refrigerated fruit)' };
+          return { days: 14, label: '1–2 weeks (countertop fruit)' };
+        }
+        // Root vegetables: carrots, beets, celery, cabbage, radishes
+        if (name.includes('carrot') || name.includes('celery') || name.includes('cabbage') || name.includes('beet') || name.includes('radish') || name.includes('turnip')) {
+          if (stor.includes('fridge')) return { days: 30, label: '4–5 weeks (crisper drawer)' };
+          return { days: 14, label: '1–2 weeks (cool pantry)' };
+        }
+        // Pantry root veg: potatoes, onions, garlic, squash
+        if (name.includes('potato') || name.includes('onion') || name.includes('garlic') || name.includes('squash') || name.includes('sweet potato')) {
+          return { days: 45, label: '1–2 months (cool dry pantry)' };
+        }
+        // Tender greens & herbs: spinach, lettuce, kale, cilantro, parsley
+        if (name.includes('spinach') || name.includes('lettuce') || name.includes('salad') || name.includes('kale') || name.includes('arugula') || name.includes('herb') || name.includes('cilantro') || name.includes('parsley')) {
+          if (stor.includes('fridge')) return { days: 10, label: '7–12 days (crisper greens)' };
+          return { days: 3, label: '2–3 days (greens)' };
+        }
+        // General fresh produce default
+        if (stor.includes('fridge')) return { days: 14, label: '~2 weeks (refrigerated produce)' };
+        return { days: 7, label: '~1 week (countertop produce)' };
+      }
+
+      // 3. Dairy & Eggs
+      if (cat === 'dairy' || name.includes('milk') || name.includes('yogurt') || name.includes('cheese') || name.includes('egg') || name.includes('butter')) {
+        if (name.includes('egg')) return { days: 35, label: '4–5 weeks (fresh eggs)' };
+        if (name.includes('butter')) return { days: 90, label: '~3 months (butter)' };
+        if (name.includes('hard cheese') || name.includes('parmesan') || name.includes('cheddar')) return { days: 60, label: '1–2 months (hard cheese)' };
+        if (name.includes('yogurt')) return { days: 21, label: '2–3 weeks (yogurt)' };
+        if (name.includes('milk')) return { days: 12, label: '10–14 days (milk)' };
+        return { days: 14, label: '2–3 weeks (refrigerated dairy)' };
+      }
+
+      // 4. Protein / Meat / Seafood
+      if (cat === 'protein' || name.includes('chicken') || name.includes('beef') || name.includes('pork') || name.includes('fish') || name.includes('salmon') || name.includes('steak') || name.includes('tofu')) {
+        if (fmt === 'cooked' || name.includes('leftover') || name.includes('cooked')) {
+          return { days: 5, label: '4–6 days (cooked protein)' };
+        }
+        if (stor.includes('fridge')) {
+          if (name.includes('fish') || name.includes('salmon') || name.includes('shrimp')) return { days: 3, label: '2–3 days (fresh seafood)' };
+          if (name.includes('ground beef') || name.includes('poultry') || name.includes('chicken')) return { days: 4, label: '3–4 days (raw poultry/mince)' };
+          return { days: 6, label: '5–7 days (fresh meat)' };
+        }
+      }
+
+      // 5. Bread & Bakery
+      if (name.includes('bread') || name.includes('bagel') || name.includes('tortilla') || name.includes('roll')) {
+        if (stor.includes('fridge')) return { days: 14, label: '2–3 weeks (refrigerated bread)' };
+        return { days: 7, label: '5–7 days (fresh bakery)' };
+      }
+
+      // 6. Cooked leftovers general
+      if (fmt === 'cooked' || name.includes('soup') || name.includes('stew') || name.includes('casserole') || name.includes('cooked')) {
+        return { days: 5, label: '4–6 days (cooked leftovers)' };
+      }
+
+      // General fallback
+      if (stor.includes('fridge')) return { days: 14, label: '~2 weeks in fridge' };
+      return { days: 30, label: '~1 month in pantry' };
+    }
+
     function getExpirationGlowStyle(expirationDate) {
       if (!expirationDate) return { border: 'border-dark-border', glow: '' };
       const now = new Date();
@@ -2480,6 +2574,79 @@
       }
     }
 
+    function updatePantryDetailSmartExpirationTip() {
+      if (!state.activePantryDetailItem) return;
+      const item = state.activePantryDetailItem;
+      const nameInput = document.getElementById('pantry-detail-name-input');
+      const catSelect = document.getElementById('pantry-detail-category-select');
+      const name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : (item.name || '');
+      const cat = catSelect ? catSelect.value : (item.category || 'produce');
+      const storage = item.storage || 'fridge-main';
+      const format = item.format || 'fresh';
+
+      const est = calculateSmartExpiration(name, cat, storage, format);
+      const pill = document.getElementById('pantry-detail-smart-exp-pill');
+      if (pill) {
+        pill.textContent = `Est: ${est.label}`;
+      }
+      return est;
+    }
+
+    function applySmartPantryDetailExpiration() {
+      if (!state.activePantryDetailItem) return;
+      const est = updatePantryDetailSmartExpirationTip();
+      if (!est) return;
+      const dateExpInput = document.getElementById('pantry-detail-date-exp');
+      if (dateExpInput) {
+        const d = new Date();
+        d.setDate(d.getDate() + est.days);
+        dateExpInput.value = d.toISOString().split('T')[0];
+        if (state.activePantryDetailItem) {
+          state.activePantryDetailItem.expirationDate = dateExpInput.value;
+        }
+      }
+      playChime('bell');
+    }
+
+    function markPantryDetailEmpty() {
+      const remInput = document.getElementById('pantry-detail-amount-remaining');
+      if (remInput) {
+        remInput.value = 0;
+        remInput.dataset.linked = '0';
+      }
+      if (state.activePantryDetailItem) {
+        state.activePantryDetailItem.amountRemaining = 0;
+      }
+      playChime('bell');
+      alertBox("Item marked as empty (0 remaining). You can save or add it to your shopping list.", "Stock Updated");
+    }
+
+    function moveActivePantryDetailToShoppingList() {
+      if (!state.activePantryDetailItem) return;
+      const item = state.activePantryDetailItem;
+      const nameInput = document.getElementById('pantry-detail-name-input');
+      const catSelect = document.getElementById('pantry-detail-category-select');
+      const finalName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : item.name;
+      const finalCat = (catSelect && catSelect.value) ? catSelect.value : (item.category || 'produce');
+
+      if (!Array.isArray(state.shoppingList)) state.shoppingList = [];
+      const qtyStr = `${item.amount || 1} ${item.unit || 'items'}`;
+      state.shoppingList.push({
+        id: `shop-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        name: finalName,
+        quantity: qtyStr,
+        category: finalCat,
+        checked: false,
+        source: 'Pantry Detail Restock'
+      });
+
+      saveAppState();
+      if (typeof renderShoppingList === 'function') renderShoppingList();
+      if (typeof updateShoppingBadges === 'function') updateShoppingBadges();
+      playChime('bell');
+      alertBox(`Added "${finalName}" (${qtyStr}) to your Shopping List!`, "Added to Groceries");
+    }
+
     function openPantryItemDetailModal(id) {
       const item = (state.pantry || []).find(p => p.id === id);
       if (!item) return;
@@ -2487,14 +2654,16 @@
       state.activePantryPortionScale = 1.0;
 
       const modal = document.getElementById('pantry-item-detail-modal');
-      const nameEl = document.getElementById('pantry-detail-name');
+      const nameInput = document.getElementById('pantry-detail-name-input');
+      const catSelect = document.getElementById('pantry-detail-category-select');
       const verifiedBadge = document.getElementById('pantry-detail-verified-badge');
       const freshnessBadge = document.getElementById('pantry-detail-freshness-badge');
       const dateAddedInput = document.getElementById('pantry-detail-date-added');
       const dateOpenedInput = document.getElementById('pantry-detail-date-opened');
       const dateExpInput = document.getElementById('pantry-detail-date-exp');
 
-      if (nameEl) nameEl.textContent = item.name;
+      if (nameInput) nameInput.value = item.name || '';
+      if (catSelect) catSelect.value = item.category || 'produce';
       const amtInput = document.getElementById('pantry-detail-amount');
       if (amtInput) amtInput.value = item.amount != null ? item.amount : 1;
       const amtRemInput = document.getElementById('pantry-detail-amount-remaining');
@@ -2572,8 +2741,9 @@
       if (dateOpenedInput) dateOpenedInput.value = item.dateOpened || '';
       if (dateExpInput) {
         if (!item.expirationDate) {
+          const est = calculateSmartExpiration(item.name, item.category, item.storage, item.format);
           const recExp = new Date();
-          recExp.setDate(recExp.getDate() + (item.category === 'produce' ? 7 : (item.storage === 'frozen' ? 90 : 14)));
+          recExp.setDate(recExp.getDate() + est.days);
           item.expirationDate = recExp.toISOString().split('T')[0];
         }
         dateExpInput.value = item.expirationDate;
@@ -2601,6 +2771,8 @@
 
       const activeFormat = item.format || (typeof inferFoodFormat === 'function' ? inferFoodFormat(item.name, activeStorage, item.category) : 'fresh');
       setPantryDetailFormat(activeFormat);
+
+      updatePantryDetailSmartExpirationTip();
 
       if (modal) modal.classList.remove('hidden');
       if (window.lucide) lucide.createIcons();
@@ -2728,10 +2900,14 @@
     function savePantryItemDetail() {
       if (!state.activePantryDetailItem) return;
       const item = state.activePantryDetailItem;
+      const nameInput = document.getElementById('pantry-detail-name-input');
+      const catSelect = document.getElementById('pantry-detail-category-select');
       const dateAddedInput = document.getElementById('pantry-detail-date-added');
       const dateOpenedInput = document.getElementById('pantry-detail-date-opened');
       const dateExpInput = document.getElementById('pantry-detail-date-exp');
 
+      if (nameInput && nameInput.value.trim()) item.name = nameInput.value.trim();
+      if (catSelect && catSelect.value) item.category = catSelect.value;
       if (dateAddedInput) item.dateAdded = dateAddedInput.value;
       if (dateOpenedInput) item.dateOpened = dateOpenedInput.value;
       if (dateExpInput) item.expirationDate = dateExpInput.value;
@@ -2757,7 +2933,7 @@
       renderPantry();
       closePantryItemDetailModal();
       playChime('bell');
-      alertBox(`Updated freshness and dates for "${item.name}".`, "Item Saved");
+      alertBox(`Updated freshness and details for "${item.name}".`, "Item Saved");
     }
 
     function deletePantryItemFromDetail() {
@@ -3152,6 +3328,83 @@
       collapseKitchenHeaderSearch();
     }
 
+    function updateVerifySmartExpirationTip() {
+      const m = state._pendingVerifyItem;
+      const nameInput = document.getElementById('pantry-name-input');
+      const storageSelect = document.getElementById('verify-item-storage-select');
+      const name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : (m ? m.name : '');
+      const cat = (m && m.category) ? m.category : 'produce';
+      const storage = storageSelect ? storageSelect.value : 'fridge-main';
+
+      const est = calculateSmartExpiration(name, cat, storage, 'fresh');
+      const pill = document.getElementById('verify-expiration-estimate-pill');
+      if (pill) {
+        pill.textContent = `Est: ${est.label}`;
+      }
+      const expInput = document.getElementById('verify-item-expiration-date');
+      if (expInput && (!expInput.value || expInput.dataset.autoSet === '1')) {
+        const d = new Date();
+        d.setDate(d.getDate() + est.days);
+        expInput.value = d.toISOString().split('T')[0];
+        expInput.dataset.autoSet = '1';
+      }
+      return est;
+    }
+
+    function updateVerifyItemDynamicNutrients() {
+      const m = state._pendingVerifyItem;
+      if (!m) return;
+      const amtInput = document.getElementById('verify-item-amount-input');
+      const unitSelect = document.getElementById('pantry-category-input');
+      const srvLabel = document.getElementById('verify-item-serving-label');
+      const kcalEl = document.getElementById('verify-item-kcal');
+      const protEl = document.getElementById('verify-item-protein');
+      const carbsEl = document.getElementById('verify-item-carbs');
+      const fatEl = document.getElementById('verify-item-fat');
+
+      const srvG = m.servingGrams || m.nutrition?.servingGrams || 100;
+      const baseKcal = (m.kcal != null) ? m.kcal : (m.nutrition?.kcal || 0);
+      const baseProt = (m.protein != null) ? m.protein : (m.nutrition?.protein || 0);
+      const baseCarbs = (m.carbs != null) ? m.carbs : (m.nutrition?.carbs || 0);
+      const baseFat = (m.fat != null) ? m.fat : (m.nutrition?.fat || 0);
+
+      const amtVal = amtInput ? parseFloat(amtInput.value) : 1;
+      const numAmt = (!isNaN(amtVal) && amtVal > 0) ? amtVal : 1;
+      const unitVal = unitSelect ? unitSelect.value : 'items';
+
+      // Compute nutrient multiplier
+      let multiplier = 1.0;
+      if (unitVal === 'servings') {
+        multiplier = numAmt;
+      } else if (unitVal === 'g') {
+        multiplier = numAmt / (srvG || 100);
+      } else if (unitVal === 'oz') {
+        multiplier = (numAmt * 28.3495) / (srvG || 100);
+      } else if (unitVal === 'lb') {
+        multiplier = (numAmt * 453.592) / (srvG || 100);
+      } else if (unitVal === 'ml') {
+        multiplier = numAmt / (srvG || 100);
+      } else if (unitVal === 'fl oz') {
+        multiplier = (numAmt * 29.5735) / (srvG || 100);
+      } else {
+        // Items / cans / bottles / packs
+        multiplier = numAmt;
+      }
+
+      if (srvLabel) {
+        if (Math.abs(multiplier - 1.0) < 0.05) {
+          srvLabel.textContent = "1 Serving Reference:";
+        } else {
+          srvLabel.textContent = `Total Package (${numAmt} ${unitVal}):`;
+        }
+      }
+
+      if (kcalEl) kcalEl.textContent = Math.round(baseKcal * multiplier);
+      if (protEl) protEl.textContent = `${Math.round(baseProt * multiplier * 10) / 10}g`;
+      if (carbsEl) carbsEl.textContent = `${Math.round(baseCarbs * multiplier * 10) / 10}g`;
+      if (fatEl) fatEl.textContent = `${Math.round(baseFat * multiplier * 10) / 10}g`;
+    }
+
     function openVerifyFoodModalBeforeAdding(matchIdx) {
       const list = state._activeSearchResults || [];
       const m = list[matchIdx];
@@ -3206,30 +3459,42 @@
       if (unitSelect) {
         if (m.type === 'recipe') unitSelect.value = 'servings';
         else unitSelect.value = 'items';
+        const d = document.getElementById('verify-item-unit-display');
+        if (d) d.textContent = unitSelect.value;
+        const dp = document.getElementById('verify-item-unit-display-pkg');
+        if (dp) dp.textContent = unitSelect.value;
       }
 
       // Destination is automatically inferred by currently open kitchen subtab
       const curSub = state.kitchenSubTab || 'pantry';
       const destLabel = document.getElementById('verify-destination-label');
       const storageRow = document.getElementById('verify-storage-row');
+      const expRow = document.getElementById('verify-expiration-row');
       if (destLabel) {
         if (curSub === 'shopping') {
           destLabel.innerHTML = '<span>🛒 Shopping List (Need to buy)</span>';
           destLabel.className = 'font-bold text-pastel-sky flex items-center gap-1.5';
           if (storageRow) storageRow.classList.add('hidden');
+          if (expRow) expRow.classList.add('hidden');
         } else {
           destLabel.innerHTML = '<span>🥫 Pantry Inventory (On-hand in kitchen)</span>';
           destLabel.className = 'font-bold text-pastel-mint flex items-center gap-1.5';
           if (storageRow) storageRow.classList.remove('hidden');
+          if (expRow) expRow.classList.remove('hidden');
         }
       }
 
       if (storageSelect) {
         let cat = m.category || 'produce';
         if (m.storage) storageSelect.value = m.storage;
-        else if (cat === 'protein' || cat === 'produce' || cat === 'dairy') storageSelect.value = 'fridge';
-        else storageSelect.value = 'shelf';
+        else if (cat === 'protein' || cat === 'produce' || cat === 'dairy') storageSelect.value = 'fridge-main';
+        else storageSelect.value = 'pantry';
       }
+
+      const expInput = document.getElementById('verify-item-expiration-date');
+      if (expInput) expInput.dataset.autoSet = '1';
+      updateVerifySmartExpirationTip();
+      updateVerifyItemDynamicNutrients();
 
       if (modal) {
         modal.classList.remove('hidden');
@@ -3250,7 +3515,15 @@
       const finalAmt = (amtInput && !isNaN(parseFloat(amtInput.value))) ? parseFloat(amtInput.value) : 1;
       const finalRemAmt = (amtRemInput && !isNaN(parseFloat(amtRemInput.value))) ? parseFloat(amtRemInput.value) : finalAmt;
       const finalUnit = (unitSelect && unitSelect.value) ? unitSelect.value : 'items';
-      const finalStorage = (storageSelect && storageSelect.value) ? storageSelect.value : 'fridge';
+      const finalStorage = (storageSelect && storageSelect.value) ? storageSelect.value : 'fridge-main';
+      const expInput = document.getElementById('verify-item-expiration-date');
+      let finalExp = (expInput && expInput.value) ? expInput.value : '';
+      if (!finalExp) {
+        const est = calculateSmartExpiration(finalName, (m && m.category) || 'produce', finalStorage, 'fresh');
+        const d = new Date();
+        d.setDate(d.getDate() + est.days);
+        finalExp = d.toISOString().split('T')[0];
+      }
 
       if (isShopping) {
         if (!Array.isArray(state.shoppingList)) state.shoppingList = [];
@@ -3289,6 +3562,7 @@
           serving: srv,
           servingGrams: srvG,
           dateAdded: new Date().toISOString().split('T')[0],
+          expirationDate: finalExp,
           kcal: baseKcal,
           protein: baseProt,
           carbs: baseCarbs,
@@ -3910,6 +4184,7 @@ RULES:
           serving: staged.portion || '1 serving',
           servingGrams: servingGrams,
           dateAdded: new Date().toISOString().split('T')[0],
+          expirationDate: finalExp,
           kcal: kcal,
           protein: prot,
           carbs: carbs,

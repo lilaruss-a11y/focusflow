@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=101">
+  <link rel="stylesheet" href="css/styles.css?v=102">
   <script>
     function resetViewportZoom() {
       try {
@@ -3400,7 +3400,7 @@
         <!-- Serving & Nutritional Continuity Summary Card -->
         <div class="p-3 rounded-2xl bg-dark-base border border-dark-border/80 space-y-2">
           <div class="flex items-center justify-between text-[11px]">
-            <span class="text-slate-400">1 Serving Reference:</span>
+            <span class="text-slate-400" id="verify-item-serving-label">1 Serving Reference:</span>
             <span id="verify-item-serving-info" class="font-mono text-pastel-sky font-semibold">1 serving = 100g</span>
           </div>
           <div class="grid grid-cols-4 gap-1.5 text-center font-mono">
@@ -3429,10 +3429,10 @@
           <div>
             <label class="font-semibold text-slate-300 block mb-1">Total Package Size</label>
             <div class="flex items-center bg-dark-base border border-pastel-mint/50 focus-within:border-pastel-mint rounded-xl overflow-hidden transition shadow-sm h-11 w-full">
-              <input type="number" id="verify-item-amount-input" oninput="const rem = document.getElementById('verify-item-amount-remaining-input'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0.1" value="1" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-sm font-semibold focus:outline-none min-w-0">
+              <input type="number" id="verify-item-amount-input" oninput="updateVerifyItemDynamicNutrients(); const rem = document.getElementById('verify-item-amount-remaining-input'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0.1" value="1" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-sm font-semibold focus:outline-none min-w-0">
               <div class="relative shrink-0 border-l border-dark-border bg-dark-elevated/80 h-full px-2.5 flex items-center justify-center min-w-[80px] select-none cursor-pointer">
                 <span id="verify-item-unit-display-pkg" class="text-pastel-mint font-bold font-mono text-sm py-1 text-center pointer-events-none block">items</span>
-                <select id="pantry-category-input" onchange="const d = document.getElementById('verify-item-unit-display'); if (d) d.textContent = this.value; const dp = document.getElementById('verify-item-unit-display-pkg'); if (dp) dp.textContent = this.value;" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10" title="Tap to change unit">
+                <select id="pantry-category-input" onchange="const d = document.getElementById('verify-item-unit-display'); if (d) d.textContent = this.value; const dp = document.getElementById('verify-item-unit-display-pkg'); if (dp) dp.textContent = this.value; updateVerifyItemDynamicNutrients();" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10" title="Tap to change unit">
                   <optgroup label="Count &amp; Servings">
                     <option value="items" selected>items</option>
                     <option value="servings">servings</option>
@@ -3478,7 +3478,7 @@
         <!-- Storage Location (for Pantry) -->
         <div id="verify-storage-row">
           <label class="block text-slate-300 mb-1 font-semibold">Storage Zone</label>
-          <select id="verify-item-storage-select" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-mint">
+          <select id="verify-item-storage-select" onchange="updateVerifySmartExpirationTip()" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-mint">
             <option value="fridge-crisper">🥬 Fridge - Crisper</option>
             <option value="fridge-main" selected>❄️ Fridge - Main</option>
             <option value="freezer">🧊 Freezer</option>
@@ -3487,6 +3487,15 @@
             <option value="pantry">🥫 Pantry</option>
             <option value="spices">🧂 Spices / Seasonings</option>
           </select>
+        </div>
+
+        <!-- Smart Expiration Date Selector -->
+        <div id="verify-expiration-row" class="space-y-1">
+          <div class="flex items-center justify-between">
+            <label class="block text-slate-300 font-semibold">Expiration / Best By Date</label>
+            <span id="verify-expiration-estimate-pill" class="text-[10px] text-pastel-mint font-mono">Estimated: ~14 days</span>
+          </div>
+          <input type="date" id="verify-item-expiration-date" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-mint font-mono">
         </div>
       </div>
 
@@ -5364,14 +5373,27 @@
   <div id="pantry-item-detail-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
     <div class="bg-dark-elevated border border-pastel-mint/50 rounded-3xl w-full max-w-md p-5 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
-        <div class="flex items-center gap-2">
-          <span class="text-xl" id="pantry-detail-icon">🥗</span>
-          <div>
-            <h3 class="text-base font-bold text-white" id="pantry-detail-name">Fresh Broccoli</h3>
-            <span id="pantry-detail-verified-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30">✓ Verified Nutrition</span>
+        <div class="flex items-center gap-2 flex-1 min-w-0 pr-2">
+          <span class="text-xl shrink-0" id="pantry-detail-icon">🥗</span>
+          <div class="min-w-0 flex-1">
+            <input type="text" id="pantry-detail-name-input" class="text-base font-bold text-white bg-transparent border-b border-dashed border-dark-border hover:border-pastel-mint focus:border-pastel-mint focus:bg-dark-base px-1 py-0.5 rounded transition w-full outline-none" title="Tap to rename item" placeholder="Item Name">
+            <div class="flex items-center gap-2 mt-1">
+              <span id="pantry-detail-verified-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30">✓ Verified Nutrition</span>
+              <select id="pantry-detail-category-select" onchange="if (state.activePantryDetailItem) state.activePantryDetailItem.category = this.value; updatePantryDetailSmartExpirationTip();" class="bg-dark-base text-slate-300 border border-dark-border rounded-lg text-[10px] font-semibold px-2 py-0.5 focus:border-pastel-mint outline-none">
+                <option value="produce">🥬 Produce</option>
+                <option value="protein">🥩 Protein</option>
+                <option value="dairy">🥛 Dairy</option>
+                <option value="grains">🌾 Grains</option>
+                <option value="canned">🥫 Canned</option>
+                <option value="condiments">🧂 Condiments</option>
+                <option value="beverages">🧃 Beverages</option>
+                <option value="snacks">🍿 Snacks</option>
+                <option value="baking">🧁 Baking</option>
+              </select>
+            </div>
           </div>
         </div>
-        <button onclick="closePantryItemDetailModal()" class="text-slate-400 hover:text-white p-1">
+        <button onclick="closePantryItemDetailModal()" class="text-slate-400 hover:text-white p-1 shrink-0">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
@@ -5522,6 +5544,18 @@
           </div>
         </div>
 
+        <!-- Quick Stock Actions: Mark Empty & Move to Grocery List -->
+        <div class="grid grid-cols-2 gap-2 pt-0.5">
+          <button type="button" onclick="markPantryDetailEmpty()" class="py-2 px-3 rounded-xl bg-dark-elevated hover:bg-rose-950/30 border border-dark-border hover:border-rose-400/40 text-rose-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
+            <span>Mark Empty</span>
+          </button>
+          <button type="button" onclick="moveActivePantryDetailToShoppingList()" class="py-2 px-3 rounded-xl bg-pastel-sky/15 hover:bg-pastel-sky/25 border border-pastel-sky/30 text-pastel-sky text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
+            <span>Add to Grocery List</span>
+          </button>
+        </div>
+
         <!-- Quick Select Unit Chips: Weight, Liquid, Portions -->
         <div>
           <label class="text-[10.5px] text-slate-400 block mb-1 font-semibold">Quick Select Unit:</label>
@@ -5540,7 +5574,10 @@
       <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-2.5 text-xs">
         <div class="flex items-center justify-between">
           <span class="font-bold text-white">Freshness &amp; Dates:</span>
-          <span id="pantry-detail-freshness-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30">✓ Fresh</span>
+          <div class="flex items-center gap-1.5">
+            <span id="pantry-detail-smart-exp-pill" class="text-[10px] text-pastel-mint font-mono"></span>
+            <span id="pantry-detail-freshness-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30">✓ Fresh</span>
+          </div>
         </div>
         <div class="space-y-2">
           <div>
@@ -5552,7 +5589,10 @@
             <input type="date" id="pantry-detail-date-opened" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs">
           </div>
           <div>
-            <label class="text-[11px] text-slate-400 block mb-0.5">Recommended / Expiration Date:</label>
+            <div class="flex items-center justify-between mb-0.5">
+              <label class="text-[11px] text-slate-400 block">Recommended / Expiration Date:</label>
+              <button type="button" onclick="applySmartPantryDetailExpiration()" class="text-[10px] text-pastel-sky hover:underline font-mono">Recalculate Estimate</button>
+            </div>
             <input type="date" id="pantry-detail-date-exp" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs">
           </div>
         </div>

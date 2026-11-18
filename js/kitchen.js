@@ -2497,6 +2497,11 @@
       if (nameEl) nameEl.textContent = item.name;
       const amtInput = document.getElementById('pantry-detail-amount');
       if (amtInput) amtInput.value = item.amount != null ? item.amount : 1;
+      const amtRemInput = document.getElementById('pantry-detail-amount-remaining');
+      if (amtRemInput) {
+        amtRemInput.value = item.amountRemaining != null ? item.amountRemaining : (item.amount != null ? item.amount : 1);
+        amtRemInput.dataset.linked = item.amountRemaining != null ? '0' : '1';
+      }
       setPantryDetailUnit(item.unit || 'items');
 
       // Find unified match across recipes, USDA whole foods, or barcode catalog
@@ -2645,33 +2650,54 @@
       if (mapped === 'serving') mapped = 'servings';
       if (unitInput) unitInput.value = mapped;
 
+      const unitDisp = document.getElementById('pantry-detail-unit-display');
+      if (unitDisp) unitDisp.textContent = mapped;
+
       // Auto-convert amount proportionally when unit is changed
       const amtInput = document.getElementById('pantry-detail-amount');
-      if (amtInput && amtInput.value && oldUnit !== mapped) {
-        const num = parseFloat(amtInput.value);
-        if (!isNaN(num) && num > 0) {
-          const toStd = (v, u) => {
-            if (u === 'oz') return v * 28.3495;
-            if (u === 'g') return v;
-            if (u === 'fl oz') return v * 29.5735;
-            if (u === 'ml') return v;
-            if (u === 'cup') return v * 240;
-            return null;
-          };
-          const fromStd = (std, u) => {
-            if (u === 'oz') return std / 28.3495;
-            if (u === 'g') return std;
-            if (u === 'fl oz') return std / 29.5735;
-            if (u === 'ml') return std;
-            if (u === 'cup') return std / 240;
-            return null;
-          };
-          const std = toStd(num, oldUnit);
-          if (std != null) {
-            const converted = fromStd(std, mapped);
-            if (converted != null) {
-              amtInput.value = converted >= 10 ? Math.round(converted * 10) / 10 : Math.round(converted * 100) / 100;
-              if (state.activePantryDetailItem) state.activePantryDetailItem.amount = parseFloat(amtInput.value);
+      const remInput = document.getElementById('pantry-detail-amount-remaining');
+      if (oldUnit !== mapped) {
+        const toStd = (v, u) => {
+          if (u === 'oz') return v * 28.3495;
+          if (u === 'g') return v;
+          if (u === 'fl oz') return v * 29.5735;
+          if (u === 'ml') return v;
+          if (u === 'cup') return v * 240;
+          return null;
+        };
+        const fromStd = (std, u) => {
+          if (u === 'oz') return std / 28.3495;
+          if (u === 'g') return std;
+          if (u === 'fl oz') return std / 29.5735;
+          if (u === 'ml') return std;
+          if (u === 'cup') return std / 240;
+          return null;
+        };
+
+        if (amtInput && amtInput.value) {
+          const num = parseFloat(amtInput.value);
+          if (!isNaN(num) && num > 0) {
+            const std = toStd(num, oldUnit);
+            if (std != null) {
+              const converted = fromStd(std, mapped);
+              if (converted != null) {
+                amtInput.value = converted >= 10 ? Math.round(converted * 10) / 10 : Math.round(converted * 100) / 100;
+                if (state.activePantryDetailItem) state.activePantryDetailItem.amount = parseFloat(amtInput.value);
+              }
+            }
+          }
+        }
+
+        if (remInput && remInput.value) {
+          const numRem = parseFloat(remInput.value);
+          if (!isNaN(numRem) && numRem > 0) {
+            const stdRem = toStd(numRem, oldUnit);
+            if (stdRem != null) {
+              const convertedRem = fromStd(stdRem, mapped);
+              if (convertedRem != null) {
+                remInput.value = convertedRem >= 10 ? Math.round(convertedRem * 10) / 10 : Math.round(convertedRem * 100) / 100;
+                if (state.activePantryDetailItem) state.activePantryDetailItem.amountRemaining = parseFloat(remInput.value);
+              }
             }
           }
         }
@@ -2708,10 +2734,15 @@
       if (dateOpenedInput) item.dateOpened = dateOpenedInput.value;
       if (dateExpInput) item.expirationDate = dateExpInput.value;
       const amtInput = document.getElementById('pantry-detail-amount');
+      const amtRemInput = document.getElementById('pantry-detail-amount-remaining');
       const unitInput = document.getElementById('pantry-detail-unit');
       if (amtInput) {
         const val = parseFloat(amtInput.value);
         item.amount = !isNaN(val) ? val : 1;
+      }
+      if (amtRemInput) {
+        const remVal = parseFloat(amtRemInput.value);
+        item.amountRemaining = !isNaN(remVal) ? remVal : item.amount;
       }
       if (unitInput) {
         let uVal = unitInput.value || 'items';
@@ -3208,12 +3239,14 @@
       const m = state._pendingVerifyItem;
       const nameInput = document.getElementById('pantry-name-input');
       const amtInput = document.getElementById('verify-item-amount-input');
+      const amtRemInput = document.getElementById('verify-item-amount-remaining-input');
       const unitSelect = document.getElementById('pantry-category-input');
       const storageSelect = document.getElementById('verify-item-storage-select');
       const curSub = state.kitchenSubTab || 'pantry';
       const isShopping = (curSub === 'shopping');
       const finalName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : (m ? m.name : 'Food Item');
       const finalAmt = (amtInput && !isNaN(parseFloat(amtInput.value))) ? parseFloat(amtInput.value) : 1;
+      const finalRemAmt = (amtRemInput && !isNaN(parseFloat(amtRemInput.value))) ? parseFloat(amtRemInput.value) : finalAmt;
       const finalUnit = (unitSelect && unitSelect.value) ? unitSelect.value : 'items';
       const finalStorage = (storageSelect && storageSelect.value) ? storageSelect.value : 'fridge';
 

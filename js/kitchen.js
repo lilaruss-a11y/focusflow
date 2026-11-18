@@ -1849,31 +1849,31 @@
       const exp = new Date(expirationDate);
       const diffDays = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
 
-      // Color gradient from green (10+ days) -> yellow (4-6 days) -> orange (2-3 days) -> rose/red (<= 1 day or expired)
+      // Highly distinctive, unmistakable neon halo gradient
       if (diffDays <= 0) {
         return {
-          border: 'border-rose-500/80',
-          glow: 'box-shadow: 0 0 10px rgba(244, 63, 94, 0.45), inset 0 0 6px rgba(244, 63, 94, 0.25);'
+          border: 'border-rose-500 !border-2',
+          glow: 'box-shadow: 0 0 16px rgba(244, 63, 94, 0.7), 0 0 28px rgba(244, 63, 94, 0.4), inset 0 0 8px rgba(244, 63, 94, 0.35);'
         };
       } else if (diffDays <= 2) {
         return {
-          border: 'border-rose-400/70',
-          glow: 'box-shadow: 0 0 8px rgba(251, 113, 133, 0.4);'
+          border: 'border-rose-400 !border-2',
+          glow: 'box-shadow: 0 0 14px rgba(251, 113, 133, 0.65), 0 0 24px rgba(251, 113, 133, 0.35);'
         };
-      } else if (diffDays <= 4) {
+      } else if (diffDays <= 5) {
         return {
-          border: 'border-amber-400/60',
-          glow: 'box-shadow: 0 0 8px rgba(251, 191, 36, 0.35);'
+          border: 'border-amber-400 !border-2',
+          glow: 'box-shadow: 0 0 13px rgba(251, 191, 36, 0.6), 0 0 22px rgba(251, 191, 36, 0.3);'
         };
-      } else if (diffDays <= 7) {
+      } else if (diffDays <= 8) {
         return {
-          border: 'border-yellow-400/50',
-          glow: 'box-shadow: 0 0 6px rgba(250, 204, 21, 0.25);'
+          border: 'border-yellow-400 !border-[1.5px]',
+          glow: 'box-shadow: 0 0 11px rgba(250, 204, 21, 0.5), 0 0 18px rgba(250, 204, 21, 0.25);'
         };
       } else {
         return {
-          border: 'border-emerald-500/40',
-          glow: 'box-shadow: 0 0 6px rgba(16, 185, 129, 0.2);'
+          border: 'border-emerald-400 !border-[1.5px]',
+          glow: 'box-shadow: 0 0 11px rgba(52, 211, 153, 0.45), 0 0 18px rgba(52, 211, 153, 0.2);'
         };
       }
     }

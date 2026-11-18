@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=100">
+  <link rel="stylesheet" href="css/styles.css?v=101">
   <script>
     function resetViewportZoom() {
       try {
@@ -741,6 +741,7 @@
           <div id="recipe-sort-container" class="hidden flex items-center gap-2 shrink-0">
             <label class="text-[11px] text-slate-400 font-semibold shrink-0">Sort:</label>
             <select id="recipe-sort-select" onchange="handleRecipeSortChange()" class="bg-dark-base border border-dark-border rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-pastel-coral shadow-inner">
+              <option value="pantry-match">🥫 Most Ingredients in Stock</option>
               <option value="alpha-asc">A → Z (Alphabetical)</option>
               <option value="alpha-desc">Z → A</option>
               <option value="cooktime-asc">Fastest Cook Time</option>

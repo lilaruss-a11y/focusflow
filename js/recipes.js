@@ -620,8 +620,33 @@
 
       // Sorting
       const sortBy = state.recipeSortBy || 'alpha-asc';
+      const pantryList = (window.state && window.state.pantry) || [];
+
+      // Helper to compute match score for sorting
+      const getPantryMatchRatio = (rec) => {
+        const ings = rec.ingredients || [];
+        if (ings.length === 0) return 0;
+        let hits = 0;
+        ings.forEach(ing => {
+          const clean = ing.toLowerCase();
+          const match = pantryList.some(p => {
+            if (p.amount != null && p.amount <= 0) return false;
+            const pName = (p.name || '').toLowerCase();
+            const pGen = (p.genericName || '').toLowerCase();
+            return clean.includes(pName) || (pGen && clean.includes(pGen)) || pName.includes(clean);
+          });
+          if (match) hits++;
+        });
+        return hits / ings.length;
+      };
+
       filtered.sort((a, b) => {
-        if (sortBy === 'alpha-asc') {
+        if (sortBy === 'pantry-match') {
+          const ratioA = getPantryMatchRatio(a);
+          const ratioB = getPantryMatchRatio(b);
+          if (ratioB !== ratioA) return ratioB - ratioA; // Higher match ratio first
+          return (a.title || '').localeCompare(b.title || '');
+        } else if (sortBy === 'alpha-asc') {
           return (a.title || '').localeCompare(b.title || '');
         } else if (sortBy === 'alpha-desc') {
           return (b.title || '').localeCompare(a.title || '');
@@ -689,11 +714,11 @@
         let matchBadge = '';
         if (ingredients.length > 0) {
           if (matchedCount === ingredients.length) {
-            matchBadge = `<span class="text-[9.5px] px-1.5 py-0.5 rounded-md font-bold bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/40" title="All ${ingredients.length} ingredients are in your pantry!">In Stock</span>`;
+            matchBadge = `<span class="text-[9.5px] px-1.5 py-0.5 rounded-md font-black bg-emerald-500/25 text-emerald-300 border border-emerald-400/60 shadow-[0_0_8px_rgba(52,211,153,0.3)]" title="All ${ingredients.length} ingredients are in your pantry!">In Stock</span>`;
           } else if (matchedCount > 0) {
-            matchBadge = `<span class="text-[9.5px] px-1.5 py-0.5 rounded-md font-bold bg-pastel-butter/20 text-pastel-butter border border-pastel-butter/40" title="${matchedCount} of ${ingredients.length} ingredients in stock">${matchedCount}/${ingredients.length} in stock</span>`;
+            matchBadge = `<span class="text-[9.5px] px-1.5 py-0.5 rounded-md font-bold bg-amber-500/25 text-amber-300 border border-amber-400/60 shadow-[0_0_6px_rgba(251,191,36,0.25)]" title="${matchedCount} of ${ingredients.length} ingredients in stock">${matchedCount}/${ingredients.length} in stock</span>`;
           } else {
-            matchBadge = `<span class="text-[9.5px] px-1.5 py-0.5 rounded-md font-bold bg-dark-elevated text-slate-400 border border-dark-border" title="Missing ingredients in pantry">0/${ingredients.length} in stock</span>`;
+            matchBadge = `<span class="text-[9.5px] px-1.5 py-0.5 rounded-md font-medium bg-rose-500/15 text-rose-300/80 border border-rose-500/30" title="Missing ingredients in pantry">0/${ingredients.length} in stock</span>`;
           }
         }
 

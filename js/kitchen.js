@@ -3277,10 +3277,12 @@
         state.pantry.push({
           id: `p-${Date.now()}`,
           name: finalName,
+          genericName: (typeof extractGenericFoodName === 'function') ? extractGenericFoodName(finalName) : finalName,
           recipeId: (m && m.recipeId) || null,
           category: (m && m.category) || 'produce',
           storage: finalStorage,
           amount: finalAmt,
+          amountRemaining: finalRemAmt,
           unit: finalUnit,
           serving: srv,
           servingGrams: srvG,

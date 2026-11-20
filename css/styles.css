@@ -287,12 +287,29 @@ div[id$="-modal"] input[type="date"] {
   min-width: 0 !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
+  font-size: 10px !important;
+  letter-spacing: -0.3px !important;
+  padding: 3px 5px !important;
+}
+
+div[id$="-modal"] input[type="date"]::-webkit-datetime-edit,
+div[id$="-modal"] input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  padding: 0 !important;
+}
+
+div[id$="-modal"] input[type="date"]::-webkit-datetime-edit-text,
+div[id$="-modal"] input[type="date"]::-webkit-datetime-edit-month-field,
+div[id$="-modal"] input[type="date"]::-webkit-datetime-edit-day-field,
+div[id$="-modal"] input[type="date"]::-webkit-datetime-edit-year-field {
+  padding: 0 1px !important;
 }
 
 div[id$="-modal"] input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
-  padding: 0;
-  margin: 0;
+  padding: 0 !important;
+  margin: 0 0 0 2px !important;
+  width: 12px !important;
+  height: 12px !important;
   opacity: 0.7;
 }
 

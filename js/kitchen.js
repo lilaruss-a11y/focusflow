@@ -2635,7 +2635,7 @@
         if (icon) icon.setAttribute('data-lucide', 'chevron-up');
       } else {
         panel.classList.add('hidden');
-        if (text) text.textContent = 'View Full Nutrition Breakdown (All 27 Nutrients)';
+        if (text) text.textContent = 'View Full Nutrition Breakdown';
         if (icon) icon.setAttribute('data-lucide', 'chevron-down');
       }
       if (window.lucide) lucide.createIcons();
@@ -2840,7 +2840,7 @@
 
       const microEl = document.getElementById('pantry-detail-micros');
       if (microEl) {
-        microEl.textContent = `All 13 essential vitamins & 14 minerals tracked for complete human survival.`;
+        microEl.textContent = '';
       }
 
       if (verifiedBadge) {

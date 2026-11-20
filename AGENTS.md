@@ -7,6 +7,12 @@ Before touching any code:
 1. **Inspect & Diagnose:** Read relevant code.
 2. **Diagnosis & Proposed Solution (No Redundant Step-by-Step Plans):** 
    - State what is wrong (or what the feature will do) and clearly describe your proposed solution in everyday English.
+   - **Mandatory Pairing & Title Format:** Always pair each problem/item directly with its proposed fix side-by-side using a clear descriptive heading (never separate all problems from all solutions). For each item use:
+     ```markdown
+     ### 1. [Descriptive Topic Title]
+     - **Problem:** [Clear explanation of what is wrong or what feature is needed]
+     - **Proposed Fix:** [Concrete proposed solution in plain English]
+     ```
    - **STRICTLY FORBIDDEN:** Do NOT add a redundant second "step-by-step plan" or duplicate your explanation. Keep it to a single, concise section.
 3. **Plain English Permission & Action Explanations:**
    - Any pop-up approval prompt must have a simple, everyday title (e.g. *"Upload updates to GitHub"*, *"Save changes to computer"*, *"Check if website update finished"*).
@@ -188,6 +194,12 @@ Before changing ANY code:
 1. **Inspect & Diagnose:** Read the relevant file(s) and locate the exact functions/lines involved. *Read-only actions (reading files, `grep`, `git status`/`git log`, running `python3 verify.py`) NEVER require approval — only edits, file creation/deletion, commits, and pushes do.*
 2. **Diagnosis & Proposed Solution (No Redundant Plan Section):** 
    - State what is causing the issue (or what the new feature will do) and clearly explain your proposed solution in plain English.
+   - **Mandatory Pairing & Title Format:** Always pair each problem/item directly with its proposed fix side-by-side using a clear descriptive heading (never separate all problems from all solutions). For each item use:
+     ```markdown
+     ### 1. [Descriptive Topic Title]
+     - **Problem:** [Clear explanation of what is wrong or what feature is needed]
+     - **Proposed Fix:** [Concrete proposed solution in plain English]
+     ```
    - **STRICTLY FORBIDDEN:** Do NOT write a redundant second "step-by-step plan" that re-explains the same ideas. Deliver a single, clear diagnosis and solution.
 3. **Plain English Permission Titles & Action Descriptions:** 
    - Every system approval prompt must have its title written in **100% everyday English** (e.g. *"Upload app changes to GitHub"*, *"Save edits to your project"*, *"Check if live website is updated"*). 

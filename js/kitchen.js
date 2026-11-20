@@ -94,7 +94,7 @@
 
     function setPantryTypeFilter(type) {
       state.pantryTypeFilter = type;
-      const types = ['all', 'protein', 'dairy', 'vegetables', 'fruits', 'grains', 'baking', 'snacks', 'beverages', 'leftovers', 'expiring'];
+      const types = ['all', 'protein', 'dairy', 'vegetables', 'fruits', 'grains', 'baking', 'spices', 'snacks', 'beverages', 'leftovers', 'supplements', 'canned', 'expiring'];
       types.forEach(t => {
         const btn = document.getElementById(`btn-ptype-${t}`);
         if (!btn) return;
@@ -1702,49 +1702,64 @@
       const cat = (item.category || '').toLowerCase();
       const types = [];
 
+      // Explicit category assignment wins first
+      if (cat === 'supplements' || /supplement|vitamin|iron supplement|magnesium|zinc|multivitamin|omega|fish oil|electrolyte|capsule|tablet|probiotic|adderall|ritalin|vyvanse|concerta|strattera|medication|pill/i.test(name)) {
+        types.push('supplements');
+      }
+
       // 1. Leftovers & Prepared Meals
-      if (/leftover|cooked|meal prep|\(1 serving\)|\bserving\b/i.test(name) || cat === 'leftovers') {
+      if (cat === 'leftovers' || /leftover|cooked|meal prep|\(1 serving\)|\bserving\b/i.test(name)) {
         types.push('leftovers');
       }
 
       // 2. Fruits & Berries
-      if (/apple|banana|berry|berries|strawberry|strawberries|blueberry|blueberries|raspberry|raspberries|blackberry|blackberries|orange|lemon|lime|avocado|grape|grapes|watermelon|melon|peach|pear|mango|pineapple|kiwi|plum|cherry|cherries|fruit|raisin|cranberr/i.test(name) || cat === 'fruits' || cat === 'fruit') {
+      if (cat === 'fruits' || cat === 'fruit' || /apple|banana|berry|berries|strawberry|strawberries|blueberry|blueberries|raspberry|raspberries|blackberry|blackberries|orange|lemon|lime|avocado|grape|grapes|watermelon|melon|peach|pear|mango|pineapple|kiwi|plum|cherry|cherries|fruit|raisin|cranberr/i.test(name)) {
         types.push('fruits');
       }
 
       // 3. Vegetables & Greens
-      if (/spinach|kale|lettuce|broccoli|carrot|onion|garlic|tomato|pepper|cucumber|zucchini|cauliflower|celery|potato|sweet potato|mushroom|asparagus|cabbage|green bean|pea|corn|veggie|vegetable|salad|arugula|scallion|shallot|radish|sprout/i.test(name) || cat === 'vegetables' || (cat === 'produce' && !types.includes('fruits'))) {
+      if (cat === 'vegetables' || (cat === 'produce' && !types.includes('fruits')) || /spinach|kale|lettuce|broccoli|carrot|onion|garlic|tomato|pepper|cucumber|zucchini|cauliflower|celery|potato|sweet potato|mushroom|asparagus|cabbage|green bean|pea|corn|veggie|vegetable|salad|arugula|scallion|shallot|radish|sprout/i.test(name)) {
         types.push('vegetables');
       }
 
       // 4. Proteins & Meats
-      if (/chicken|breast|thigh|beef|steak|ground beef|turkey|pork|bacon|sausage|ham|egg|eggs|salmon|tuna|shrimp|fish|tilapia|cod|tofu|tempeh|whey|protein/i.test(name) || cat === 'protein') {
+      if (cat === 'protein' || /chicken|breast|thigh|beef|steak|ground beef|turkey|pork|bacon|sausage|ham|egg|eggs|salmon|tuna|shrimp|fish|tilapia|cod|tofu|tempeh|whey|protein/i.test(name)) {
         types.push('protein');
       }
 
       // 5. Dairy & Alternatives
-      if (/milk|cheese|cheddar|mozzarella|parmesan|swiss|gouda|feta|yogurt|butter|cream|sour cream|heavy cream|oat milk|oatmilk|almond milk|soy milk|cottage cheese/i.test(name) || cat === 'dairy') {
+      if (cat === 'dairy' || /milk|cheese|cheddar|mozzarella|parmesan|swiss|gouda|feta|yogurt|butter|cream|sour cream|heavy cream|oat milk|oatmilk|almond milk|soy milk|cottage cheese/i.test(name)) {
         types.push('dairy');
       }
 
       // 6. Grains, Breads & Starches
-      if (/rice|jasmine|brown rice|bread|toast|loaf|pasta|noodle|spaghetti|penne|macaroni|oat|oatmeal|rolled oats|quinoa|flour|tortilla|bagel|english muffin|cereal|grain|couscous|barley|wrap/i.test(name) || cat === 'grains') {
+      if (cat === 'grains' || /rice|jasmine|brown rice|bread|toast|loaf|pasta|noodle|spaghetti|penne|macaroni|oat|oatmeal|rolled oats|quinoa|tortilla|bagel|english muffin|cereal|grain|couscous|barley|wrap/i.test(name)) {
         types.push('grains');
       }
 
-      // 7. Canned & Jarred Goods
-      if (/can\b|canned|jar\b|jarred|diced tomato|tomato paste|black bean|kidney bean|chickpea|broth|soup|marinara|pasta sauce|salsa|pickles|olives|tuna can/i.test(name) || cat === 'canned') {
-        types.push('canned');
-      }
-
-      // 8. Baking, Oils & Seasonings
-      if (/oil|olive oil|canola oil|avocado oil|vinegar|salt|pepper|spice|seasoning|garlic powder|onion powder|cinnamon|oregano|cumin|paprika|chili powder|sugar|honey|maple syrup|baking powder|baking soda|yeast|vanilla|extract|soy sauce|hot sauce|sriracha|mustard|ketchup|mayo|mayonnaise|dressing/i.test(name) || cat === 'condiments' || cat === 'baking' || cat === 'spices') {
+      // 7. Baking & Staples (flour, sugar, baking soda, yeast, vanilla, cocoa, chocolate chips)
+      if (cat === 'baking' || /flour|sugar|baking powder|baking soda|yeast|vanilla|extract|cocoa powder|chocolate chip|chocolate chips|cornstarch|baking/i.test(name)) {
         types.push('baking');
       }
 
-      // 9. Snacks & Drinks
-      if (/chip|chips|pretzel|popcorn|cracker|crackers|nuts|almond|walnut|peanut|cashew|trail mix|snack|bar\b|granola bar|protein bar|cookie|cookies|chocolate|candy|soda|sparkling|seltzer|coffee|tea|juice/i.test(name) || cat === 'snacks') {
+      // 8. Spices, Oils & Seasonings (olive oil, vinegars, seasonings, lemon juice, sauces)
+      if (cat === 'spices' || cat === 'condiments' || /oil|olive oil|canola oil|avocado oil|vinegar|salt|pepper|spice|seasoning|garlic powder|onion powder|cinnamon|oregano|cumin|paprika|chili powder|honey|maple syrup|soy sauce|hot sauce|sriracha|mustard|ketchup|mayo|mayonnaise|dressing|lemon juice|lime juice/i.test(name)) {
+        types.push('spices');
+      }
+
+      // 9. Snacks, Nuts & Seeds
+      if (cat === 'snacks' || /chip|chips|pretzel|popcorn|cracker|crackers|nut\b|nuts|almond|walnut|peanut|cashew|pecan|pistachio|seed|seeds|sunflower seed|chia|flax|pumpkin seed|trail mix|snack|bar\b|granola bar|protein bar|cookie|cookies|chocolate|candy/i.test(name)) {
         types.push('snacks');
+      }
+
+      // 10. Beverages & Drinks
+      if (cat === 'beverages' || /water|soda|sparkling|seltzer|coffee|tea|juice|kombucha|drink|smoothie/i.test(name)) {
+        types.push('beverages');
+      }
+
+      // 11. Canned & Jarred Goods
+      if (cat === 'canned' || /can\b|canned|jar\b|jarred|diced tomato|tomato paste|black bean|kidney bean|chickpea|broth|soup|marinara|pasta sauce|salsa|pickles|olives|tuna can/i.test(name)) {
+        types.push('canned');
       }
 
       // Fallback if none matched
@@ -1752,7 +1767,11 @@
         if (cat === 'produce') types.push('vegetables');
         else if (cat === 'protein') types.push('protein');
         else if (cat === 'grains') types.push('grains');
-        else if (cat === 'condiments') types.push('baking');
+        else if (cat === 'baking') types.push('baking');
+        else if (cat === 'spices') types.push('spices');
+        else if (cat === 'snacks') types.push('snacks');
+        else if (cat === 'beverages') types.push('beverages');
+        else if (cat === 'supplements') types.push('supplements');
         else types.push('canned');
       }
 
@@ -1975,6 +1994,13 @@
     function buildPantryItemPillHtml(item, expiryBadge) {
       const isOutOfStock = (item.amount == null || item.amount <= 0);
 
+      const isLowStock = pct <= 25 || isOutOfStock;
+      const lowStockCartAction = isLowStock
+        ? `<button type="button" onclick="event.stopPropagation(); addPantryItemToShoppingList('${item.id}')" class="p-1 rounded-lg bg-pastel-sky/15 hover:bg-pastel-sky/30 border border-pastel-sky/35 text-pastel-sky transition shrink-0 flex items-center justify-center" title="Low stock! Tap to add to shopping list">
+             <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
+           </button>`
+        : '';
+
       const outOfStockAction = isOutOfStock
         ? `<button type="button" onclick="event.stopPropagation(); addPantryItemToShoppingList('${item.id}')" class="px-2 py-0.5 rounded-lg bg-pastel-coral/20 hover:bg-pastel-coral/30 border border-pastel-coral/40 text-pastel-coral text-[10px] font-bold flex items-center gap-1 transition" title="Item is out of stock! Tap to add to shopping list">
              <i data-lucide="shopping-cart" class="w-3 h-3"></i>
@@ -2061,7 +2087,7 @@
           ${expiryBadge}
         </div>
         <div class="flex items-center gap-1.5 shrink-0" onclick="event.stopPropagation()">
-          ${outOfStockAction}
+          ${lowStockCartAction}
           <!-- Amount Display with stock percentage tooltip -->
           <span class="${badgeTextColor} font-bold px-2 py-0.5 rounded-lg bg-dark-elevated border border-dark-border font-mono text-[10.5px]" title="${remAmt} left of ${totalAmt} ${item.unit || 'items'} (${pct}% remaining)">
             ${displayLabel}
@@ -2090,6 +2116,22 @@
       renderPantry();
     }
 
+    function setPantrySearchQuery(query) {
+      state.pantrySearchQuery = (query || '').trim().toLowerCase();
+      const clearBtn = document.getElementById('btn-clear-pantry-search');
+      if (clearBtn) {
+        if (state.pantrySearchQuery) clearBtn.classList.remove('hidden');
+        else clearBtn.classList.add('hidden');
+      }
+      renderPantry();
+    }
+
+    function clearPantrySearch() {
+      const input = document.getElementById('pantry-search-input');
+      if (input) input.value = '';
+      setPantrySearchQuery('');
+    }
+
     function renderPantry() {
       // 1. Zone Lists (7 Zones)
       const zoneLists = {
@@ -2104,20 +2146,23 @@
       Object.keys(zoneLists).forEach(k => { if (zoneLists[k]) zoneLists[k].innerHTML = ''; });
       const zoneCounts = { 'fridge-crisper': 0, 'fridge-main': 0, freezer: 0, counter: 0, cupboard: 0, pantry: 0, spices: 0 };
 
-      // 2. Type Lists
+      // 2. Type Lists (Standardized Food Categories)
       const typeLists = {
         protein: document.getElementById('list-type-protein'),
         dairy: document.getElementById('list-type-dairy'),
         vegetables: document.getElementById('list-type-vegetables'),
         fruits: document.getElementById('list-type-fruits'),
         grains: document.getElementById('list-type-grains'),
-        canned: document.getElementById('list-type-canned'),
         baking: document.getElementById('list-type-baking'),
+        spices: document.getElementById('list-type-spices'),
         snacks: document.getElementById('list-type-snacks'),
-        leftovers: document.getElementById('list-type-leftovers')
+        beverages: document.getElementById('list-type-beverages'),
+        leftovers: document.getElementById('list-type-leftovers'),
+        supplements: document.getElementById('list-type-supplements'),
+        canned: document.getElementById('list-type-canned')
       };
       Object.keys(typeLists).forEach(k => { if (typeLists[k]) typeLists[k].innerHTML = ''; });
-      const typeCounts = { protein: 0, dairy: 0, vegetables: 0, fruits: 0, grains: 0, canned: 0, baking: 0, snacks: 0, leftovers: 0 };
+      const typeCounts = { protein: 0, dairy: 0, vegetables: 0, fruits: 0, grains: 0, baking: 0, spices: 0, snacks: 0, beverages: 0, leftovers: 0, supplements: 0, canned: 0 };
 
       const now = new Date();
       const expiringSoonItems = [];
@@ -2125,6 +2170,7 @@
       const typeFilter = state.pantryTypeFilter || 'all';
       const viewMode = state.pantryViewGroup || 'zone';
       const sortOrder = state.pantrySortOrder || 'expiring';
+      const searchQ = (state.pantrySearchQuery || '').toLowerCase();
 
       // Sort pantry items according to chosen sortOrder
       const sortedItems = [...(state.pantry || [])].sort((a, b) => {
@@ -2206,8 +2252,17 @@
           matchesFormat = (itemFormat === formatFilter);
         }
 
-        // Cross-filtering pass: must satisfy zone, type, and format filters
-        if (!matchesZone || !matchesType || !matchesFormat) return;
+        // Live Pantry Search check:
+        let matchesSearch = true;
+        if (searchQ) {
+          const itemName = (item.name || '').toLowerCase();
+          const itemBrand = (item.brand || '').toLowerCase();
+          const itemCat = (item.category || '').toLowerCase();
+          matchesSearch = itemName.includes(searchQ) || itemBrand.includes(searchQ) || itemCat.includes(searchQ);
+        }
+
+        // Cross-filtering pass: must satisfy zone, type, format, and search filters
+        if (!matchesZone || !matchesType || !matchesFormat || !matchesSearch) return;
 
         // Compute dynamic expiration glow and border
         const expStyle = getExpirationGlowStyle(item.expirationDate);
@@ -2253,10 +2308,13 @@
       setTxt('count-type-vegetables', typeCounts.vegetables);
       setTxt('count-type-fruits', typeCounts.fruits);
       setTxt('count-type-grains', typeCounts.grains);
-      setTxt('count-type-canned', typeCounts.canned);
       setTxt('count-type-baking', typeCounts.baking);
+      setTxt('count-type-spices', typeCounts.spices);
       setTxt('count-type-snacks', typeCounts.snacks);
+      setTxt('count-type-beverages', typeCounts.beverages);
       setTxt('count-type-leftovers', typeCounts.leftovers);
+      setTxt('count-type-supplements', typeCounts.supplements);
+      setTxt('count-type-canned', typeCounts.canned);
 
       setTxt('pantry-total-count-badge', (state.pantry || []).length);
 
@@ -2959,19 +3017,25 @@
       if (catSelect) catSelect.value = catVal;
 
       const catLabelMap = {
-        'produce': '🥬 Produce',
-        'protein': '🥩 Protein',
-        'dairy': '🥛 Dairy',
-        'grains': '🌾 Grains',
-        'canned': '🥫 Canned',
-        'condiments': '🧂 Condiments',
-        'beverages': '🧃 Beverages',
-        'snacks': '🍿 Snacks',
-        'baking': '🧁 Baking'
+        'protein': { icon: '🥩', label: 'Protein' },
+        'dairy': { icon: '🥛', label: 'Dairy' },
+        'vegetables': { icon: '🥦', label: 'Veggies' },
+        'fruits': { icon: '🍎', label: 'Fruits' },
+        'grains': { icon: '🌾', label: 'Grains' },
+        'baking': { icon: '🧁', label: 'Baking' },
+        'spices': { icon: '🧂', label: 'Spices & Oils' },
+        'snacks': { icon: '🍿', label: 'Snacks & Nuts' },
+        'beverages': { icon: '🥤', label: 'Beverages' },
+        'leftovers': { icon: '🍲', label: 'Leftovers' },
+        'supplements': { icon: '💊', label: 'Supplements' },
+        'canned': { icon: '🥫', label: 'Canned' }
       };
 
+      const pillIcon = document.getElementById('pantry-pill-category-icon');
       const pillLabel = document.getElementById('pantry-pill-category-label');
-      if (pillLabel) pillLabel.textContent = catLabelMap[catVal] || catVal;
+      const catInfo = catLabelMap[catVal] || { icon: '🥗', label: catVal };
+      if (pillIcon) pillIcon.textContent = catInfo.icon;
+      if (pillLabel) pillLabel.textContent = catInfo.label;
 
       Object.keys(catLabelMap).forEach(c => {
         const btn = document.getElementById(`btn-pantry-cat-${c}`);
@@ -2996,17 +3060,20 @@
       if (state.activePantryDetailItem) state.activePantryDetailItem.storage = storageType;
       const zones = ['fridge-crisper', 'fridge-main', 'freezer', 'counter', 'cupboard', 'pantry', 'spices'];
       const zoneLabels = {
-        'fridge-crisper': '🥬 Crisper',
-        'fridge-main': '❄️ Fridge',
-        'freezer': '🧊 Freezer',
-        'counter': '🧺 Counter',
-        'cupboard': '🚪 Cupboard',
-        'pantry': '🥫 Pantry',
-        'spices': '🧂 Spices'
+        'fridge-crisper': { icon: '🥬', label: 'Crisper' },
+        'fridge-main': { icon: '❄️', label: 'Fridge' },
+        'freezer': { icon: '🧊', label: 'Freezer' },
+        'counter': { icon: '🧺', label: 'Counter' },
+        'cupboard': { icon: '🚪', label: 'Cupboard' },
+        'pantry': { icon: '🥫', label: 'Pantry' },
+        'spices': { icon: '🧂', label: 'Spices' }
       };
 
+      const pillIcon = document.getElementById('pantry-pill-storage-icon');
       const pillLabel = document.getElementById('pantry-pill-storage-label');
-      if (pillLabel) pillLabel.textContent = zoneLabels[storageType] || storageType;
+      const zoneInfo = zoneLabels[storageType] || { icon: '❄️', label: storageType };
+      if (pillIcon) pillIcon.textContent = zoneInfo.icon;
+      if (pillLabel) pillLabel.textContent = zoneInfo.label;
 
       zones.forEach(s => {
         const btn = document.getElementById(`btn-pantry-storage-${s}`);
@@ -3024,15 +3091,18 @@
       if (state.activePantryDetailItem) state.activePantryDetailItem.format = formatType;
       const formats = ['fresh', 'canned', 'frozen', 'dried', 'cooked'];
       const formatLabels = {
-        'fresh': '🌿 Fresh',
-        'canned': '🥫 Canned',
-        'frozen': '🧊 Frozen',
-        'dried': '🌾 Dried',
-        'cooked': '🍳 Cooked'
+        'fresh': { icon: '🌿', label: 'Fresh' },
+        'canned': { icon: '🥫', label: 'Canned' },
+        'frozen': { icon: '🧊', label: 'Frozen' },
+        'dried': { icon: '🌾', label: 'Dried' },
+        'cooked': { icon: '🍳', label: 'Cooked' }
       };
 
+      const pillIcon = document.getElementById('pantry-pill-format-icon');
       const pillLabel = document.getElementById('pantry-pill-format-label');
-      if (pillLabel) pillLabel.textContent = formatLabels[formatType] || formatType;
+      const fmtInfo = formatLabels[formatType] || { icon: '🌿', label: formatType };
+      if (pillIcon) pillIcon.textContent = fmtInfo.icon;
+      if (pillLabel) pillLabel.textContent = fmtInfo.label;
 
       formats.forEach(f => {
         const btn = document.getElementById(`btn-pantry-format-${f}`);

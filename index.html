@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=115">
+  <link rel="stylesheet" href="css/styles.css?v=117">
   <script>
     function resetViewportZoom() {
       try {
@@ -943,6 +943,14 @@
       <div id="kitchen-view-pantry" class="space-y-5">
         <!-- Storage Filters & Sorting Control Panel -->
         <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3">
+          <!-- Live Pantry Search Bar -->
+          <div class="relative w-full">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            <input type="text" id="pantry-search-input" oninput="setPantrySearchQuery(this.value)" placeholder="Search your pantry items (e.g. eggs, olive oil, spinach, vitamin d)..." class="w-full bg-dark-base border border-dark-border rounded-xl pl-9 pr-9 py-2 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-pastel-mint transition">
+            <button type="button" id="btn-clear-pantry-search" onclick="clearPantrySearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" title="Clear search">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
 
           <!-- Top View Mode, Sorting & Multi-Filter Control Panel -->
           <div class="space-y-3 pt-2 border-t border-dark-border/60 text-xs">
@@ -1006,10 +1014,13 @@
                 <button type="button" onclick="setPantryTypeFilter('vegetables')" id="btn-ptype-vegetables" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥦 Veggies</button>
                 <button type="button" onclick="setPantryTypeFilter('fruits')" id="btn-ptype-fruits" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🍎 Fruits</button>
                 <button type="button" onclick="setPantryTypeFilter('grains')" id="btn-ptype-grains" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🌾 Grains</button>
-                <button type="button" onclick="setPantryTypeFilter('baking')" id="btn-ptype-baking" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧂 Spices &amp; Oils</button>
-                <button type="button" onclick="setPantryTypeFilter('snacks')" id="btn-ptype-snacks" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🍿 Snacks</button>
+                <button type="button" onclick="setPantryTypeFilter('baking')" id="btn-ptype-baking" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧁 Baking</button>
+                <button type="button" onclick="setPantryTypeFilter('spices')" id="btn-ptype-spices" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🧂 Spices &amp; Oils</button>
+                <button type="button" onclick="setPantryTypeFilter('snacks')" id="btn-ptype-snacks" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🍿 Snacks &amp; Nuts</button>
                 <button type="button" onclick="setPantryTypeFilter('beverages')" id="btn-ptype-beverages" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥤 Beverages</button>
                 <button type="button" onclick="setPantryTypeFilter('leftovers')" id="btn-ptype-leftovers" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-amber-300 hover:text-white transition text-[11px]">🍲 Leftovers</button>
+                <button type="button" onclick="setPantryTypeFilter('supplements')" id="btn-ptype-supplements" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-pastel-sky hover:text-white transition text-[11px]">💊 Supplements</button>
+                <button type="button" onclick="setPantryTypeFilter('canned')" id="btn-ptype-canned" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥫 Canned</button>
                 <button type="button" onclick="setPantryTypeFilter('expiring')" id="btn-ptype-expiring" class="px-2.5 py-1 rounded-xl bg-dark-base border border-rose-500/40 text-rose-300 hover:text-white transition text-[11px]">⚠️ Expiring</button>
               </div>
             </div>
@@ -1175,7 +1186,73 @@
             <div id="list-type-grains" class="space-y-2 min-h-[100px]"></div>
           </div>
 
-          <!-- 6. Canned & Jarred Goods -->
+          <!-- 6. Baking & Staples -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-pastel-butter flex items-center gap-1.5">
+                <span>🧁</span> Baking &amp; Staples
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-baking">0</span>
+            </div>
+            <div id="list-type-baking" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 7. Spices, Oils & Condiments -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-pastel-lavender flex items-center gap-1.5">
+                <span>🧂</span> Spices, Oils &amp; Condiments
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-spices">0</span>
+            </div>
+            <div id="list-type-spices" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 8. Snacks, Nuts & Seeds -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-pastel-peach flex items-center gap-1.5">
+                <span>🍿</span> Snacks, Nuts &amp; Seeds
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-snacks">0</span>
+            </div>
+            <div id="list-type-snacks" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 9. Beverages & Drinks -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-pastel-sky flex items-center gap-1.5">
+                <span>🥤</span> Beverages &amp; Drinks
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-beverages">0</span>
+            </div>
+            <div id="list-type-beverages" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 10. Leftovers & Prepared Meals -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                <span>🍲</span> Leftovers &amp; Prepared Meals
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-leftovers">0</span>
+            </div>
+            <div id="list-type-leftovers" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 11. Supplements & Medications -->
+          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-xs font-bold text-pastel-mint flex items-center gap-1.5">
+                <span>💊</span> Supplements &amp; Medications
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-supplements">0</span>
+            </div>
+            <div id="list-type-supplements" class="space-y-2 min-h-[100px]"></div>
+          </div>
+
+          <!-- 12. Canned & Jarred Goods -->
           <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
             <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
               <span class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
@@ -1184,39 +1261,6 @@
               <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-canned">0</span>
             </div>
             <div id="list-type-canned" class="space-y-2 min-h-[100px]"></div>
-          </div>
-
-          <!-- 7. Baking, Oils & Seasonings -->
-          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
-            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
-              <span class="text-xs font-bold text-pastel-lavender flex items-center gap-1.5">
-                <span>🧂</span> Baking, Oils &amp; Seasonings
-              </span>
-              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-baking">0</span>
-            </div>
-            <div id="list-type-baking" class="space-y-2 min-h-[100px]"></div>
-          </div>
-
-          <!-- 8. Snacks & Drinks -->
-          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
-            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
-              <span class="text-xs font-bold text-pastel-peach flex items-center gap-1.5">
-                <span>🍿</span> Snacks &amp; Drinks
-              </span>
-              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-snacks">0</span>
-            </div>
-            <div id="list-type-snacks" class="space-y-2 min-h-[100px]"></div>
-          </div>
-
-          <!-- 9. Leftovers & Prepared Meals -->
-          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
-            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
-              <span class="text-xs font-bold text-pastel-mint flex items-center gap-1.5">
-                <span>🍲</span> Leftovers &amp; Prepared Meals
-              </span>
-              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-leftovers">0</span>
-            </div>
-            <div id="list-type-leftovers" class="space-y-2 min-h-[100px]"></div>
           </div>
         </div>
       </div>
@@ -5430,21 +5474,21 @@
 
       <!-- 2. Unified 3-in-1 Location, Format & Category Row (Right Under Title) -->
       <div class="space-y-2 text-xs">
-        <div class="grid grid-cols-3 gap-1.5 p-1 bg-dark-base rounded-2xl border border-dark-border">
+        <div class="grid grid-cols-3 gap-2 p-1 bg-dark-base rounded-2xl border border-dark-border">
           <!-- Button 1: Storage Zone -->
-          <button type="button" id="btn-toggle-pantry-storage-open" onclick="togglePantryDetailSection('storage')" class="py-1.5 px-2 rounded-xl bg-dark-elevated hover:bg-slate-700/70 border border-dark-border text-center transition flex items-center justify-center gap-1 shadow-sm min-w-0 truncate">
-            <span id="pantry-pill-storage-label" class="font-bold text-pastel-sky text-[11px] truncate">Fridge</span>
-            <span id="icon-chevron-storage" class="text-slate-400 text-[10px] shrink-0 transition-transform">▼</span>
+          <button type="button" id="btn-toggle-pantry-storage-open" onclick="togglePantryDetailSection('storage')" class="h-14 py-1.5 px-2 rounded-xl bg-dark-elevated hover:bg-slate-700/70 border border-dark-border transition flex flex-col items-center justify-center gap-0.5 shadow-sm min-w-0">
+            <span id="pantry-pill-storage-icon" class="text-base leading-none">❄️</span>
+            <span id="pantry-pill-storage-label" class="font-bold text-pastel-sky text-[11px] truncate w-full text-center">Fridge</span>
           </button>
           <!-- Button 2: Format -->
-          <button type="button" id="btn-toggle-pantry-format-open" onclick="togglePantryDetailSection('format')" class="py-1.5 px-2 rounded-xl bg-dark-elevated hover:bg-slate-700/70 border border-dark-border text-center transition flex items-center justify-center gap-1 shadow-sm min-w-0 truncate">
-            <span id="pantry-pill-format-label" class="font-bold text-pastel-mint text-[11px] truncate">Fresh</span>
-            <span id="icon-chevron-format" class="text-slate-400 text-[10px] shrink-0 transition-transform">▼</span>
+          <button type="button" id="btn-toggle-pantry-format-open" onclick="togglePantryDetailSection('format')" class="h-14 py-1.5 px-2 rounded-xl bg-dark-elevated hover:bg-slate-700/70 border border-dark-border transition flex flex-col items-center justify-center gap-0.5 shadow-sm min-w-0">
+            <span id="pantry-pill-format-icon" class="text-base leading-none">🌿</span>
+            <span id="pantry-pill-format-label" class="font-bold text-pastel-mint text-[11px] truncate w-full text-center">Fresh</span>
           </button>
           <!-- Button 3: Category -->
-          <button type="button" id="btn-toggle-pantry-category-open" onclick="togglePantryDetailSection('category')" class="py-1.5 px-2 rounded-xl bg-dark-elevated hover:bg-slate-700/70 border border-dark-border text-center transition flex items-center justify-center gap-1 shadow-sm min-w-0 truncate">
-            <span id="pantry-pill-category-label" class="font-bold text-pastel-butter text-[11px] truncate">Produce</span>
-            <span id="icon-chevron-category" class="text-slate-400 text-[10px] shrink-0 transition-transform">▼</span>
+          <button type="button" id="btn-toggle-pantry-category-open" onclick="togglePantryDetailSection('category')" class="h-14 py-1.5 px-2 rounded-xl bg-dark-elevated hover:bg-slate-700/70 border border-dark-border transition flex flex-col items-center justify-center gap-0.5 shadow-sm min-w-0">
+            <span id="pantry-pill-category-icon" class="text-base leading-none">🥬</span>
+            <span id="pantry-pill-category-label" class="font-bold text-pastel-butter text-[11px] truncate w-full text-center">Produce</span>
           </button>
         </div>
 
@@ -5478,26 +5522,32 @@
         <div id="pantry-detail-section-category" class="hidden p-2.5 rounded-2xl bg-dark-base border border-pastel-butter/40 space-y-1.5">
           <span class="text-[10px] font-bold text-pastel-butter uppercase tracking-wider block">Food Category:</span>
           <select id="pantry-detail-category-select" class="hidden">
-            <option value="produce">produce</option>
             <option value="protein">protein</option>
             <option value="dairy">dairy</option>
+            <option value="vegetables">vegetables</option>
+            <option value="fruits">fruits</option>
             <option value="grains">grains</option>
-            <option value="canned">canned</option>
-            <option value="condiments">condiments</option>
-            <option value="beverages">beverages</option>
-            <option value="snacks">snacks</option>
             <option value="baking">baking</option>
+            <option value="spices">spices</option>
+            <option value="snacks">snacks</option>
+            <option value="beverages">beverages</option>
+            <option value="leftovers">leftovers</option>
+            <option value="supplements">supplements</option>
+            <option value="canned">canned</option>
           </select>
           <div class="grid grid-cols-3 gap-1">
-            <button type="button" onclick="setPantryDetailCategory('produce')" id="btn-pantry-cat-produce" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center text-[10px]">🥬 Produce</button>
             <button type="button" onclick="setPantryDetailCategory('protein')" id="btn-pantry-cat-protein" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center text-[10px]">🥩 Protein</button>
             <button type="button" onclick="setPantryDetailCategory('dairy')" id="btn-pantry-cat-dairy" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center text-[10px]">🥛 Dairy</button>
+            <button type="button" onclick="setPantryDetailCategory('vegetables')" id="btn-pantry-cat-vegetables" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center text-[10px]">🥦 Veggies</button>
+            <button type="button" onclick="setPantryDetailCategory('fruits')" id="btn-pantry-cat-fruits" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center text-[10px]">🍎 Fruits</button>
             <button type="button" onclick="setPantryDetailCategory('grains')" id="btn-pantry-cat-grains" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center text-[10px]">🌾 Grains</button>
-            <button type="button" onclick="setPantryDetailCategory('canned')" id="btn-pantry-cat-canned" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center text-[10px]">🥫 Canned</button>
-            <button type="button" onclick="setPantryDetailCategory('condiments')" id="btn-pantry-cat-condiments" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center text-[10px]">🧂 Condiments</button>
-            <button type="button" onclick="setPantryDetailCategory('beverages')" id="btn-pantry-cat-beverages" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center text-[10px]">🧃 Beverages</button>
-            <button type="button" onclick="setPantryDetailCategory('snacks')" id="btn-pantry-cat-snacks" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center text-[10px]">🍿 Snacks</button>
             <button type="button" onclick="setPantryDetailCategory('baking')" id="btn-pantry-cat-baking" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center text-[10px]">🧁 Baking</button>
+            <button type="button" onclick="setPantryDetailCategory('spices')" id="btn-pantry-cat-spices" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center text-[10px]">🧂 Spices &amp; Oils</button>
+            <button type="button" onclick="setPantryDetailCategory('snacks')" id="btn-pantry-cat-snacks" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center text-[10px]">🍿 Snacks &amp; Nuts</button>
+            <button type="button" onclick="setPantryDetailCategory('beverages')" id="btn-pantry-cat-beverages" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center text-[10px]">🥤 Beverages</button>
+            <button type="button" onclick="setPantryDetailCategory('leftovers')" id="btn-pantry-cat-leftovers" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center text-[10px]">🍲 Leftovers</button>
+            <button type="button" onclick="setPantryDetailCategory('supplements')" id="btn-pantry-cat-supplements" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center text-[10px]">💊 Supplements</button>
+            <button type="button" onclick="setPantryDetailCategory('canned')" id="btn-pantry-cat-canned" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center text-[10px]">🥫 Canned</button>
           </div>
         </div>
       </div>
@@ -5596,19 +5646,19 @@
           </button>
         </div>
         <!-- Tucked Extra Dates Container -->
-        <div id="pantry-extra-dates-container" class="hidden pt-1.5 border-t border-dark-border/60 grid grid-cols-2 gap-2">
+        <div id="pantry-extra-dates-container" class="hidden pt-2 border-t border-dark-border/60 space-y-2">
           <div>
-            <label class="text-[9.5px] text-slate-400 block mb-0.5 uppercase tracking-wider font-semibold">Date Added</label>
-            <input type="date" id="pantry-detail-date-added" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2 py-1 text-white font-mono text-[11px]">
+            <label class="text-[9.5px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">Date Added</label>
+            <input type="date" id="pantry-detail-date-added" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-3 py-1.5 text-white font-mono text-xs shadow-sm">
           </div>
           <div>
-            <label class="text-[9.5px] text-slate-400 block mb-0.5 uppercase tracking-wider font-semibold">First Opened</label>
-            <input type="date" id="pantry-detail-date-opened" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2 py-1 text-white font-mono text-[11px]">
+            <label class="text-[9.5px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">First Opened (Optional)</label>
+            <input type="date" id="pantry-detail-date-opened" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-3 py-1.5 text-white font-mono text-xs shadow-sm">
           </div>
         </div>
       </div>
 
-      <!-- 5. Nutritional Profile at Bottom (Clean Summary + Highlights, Collapsible Full Breakdown) -->
+      <!-- 5. Nutritional Profile at Bottom (Macro Donut + Core Health Metrics + Highlights) -->
       <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-2.5 text-xs">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-1.5">
@@ -5621,43 +5671,32 @@
           </button>
         </div>
 
-        <!-- Main Macros Summary Row (Energy, Protein, Carbs, Fat) -->
-        <div class="grid grid-cols-4 gap-1.5 text-center font-mono">
-          <div class="p-2 rounded-xl bg-dark-elevated">
-            <span class="text-[9px] text-pastel-lavender block font-bold">Energy</span>
-            <span class="text-xs sm:text-sm font-bold text-white" id="pantry-detail-kcal">45</span>
-          </div>
-          <div class="p-2 rounded-xl bg-dark-elevated">
-            <span class="text-[9px] text-pastel-coral block font-bold">Protein</span>
-            <span class="text-xs sm:text-sm font-bold text-white" id="pantry-detail-protein">3.5g</span>
-          </div>
-          <div class="p-2 rounded-xl bg-dark-elevated">
-            <span class="text-[9px] text-pastel-mint block font-bold">Carbs</span>
-            <span class="text-xs sm:text-sm font-bold text-white" id="pantry-detail-carbs">8.0g</span>
-          </div>
-          <div class="p-2 rounded-xl bg-dark-elevated">
-            <span class="text-[9px] text-pastel-butter block font-bold">Fat</span>
-            <span class="text-xs sm:text-sm font-bold text-white" id="pantry-detail-fat">0.4g</span>
-          </div>
-        </div>
+        <!-- Cronometer-style Macro Donut Chart Front-and-Center -->
+        <div id="pantry-detail-macro-donut" class="flex items-center justify-center"></div>
 
-        <!-- Additional Macro Summary (Fiber, Sugar, Sat Fat, Sodium) -->
+        <!-- Hidden elements to preserve state for calculations if needed -->
+        <span class="hidden" id="pantry-detail-kcal">0</span>
+        <span class="hidden" id="pantry-detail-protein">0</span>
+        <span class="hidden" id="pantry-detail-carbs">0</span>
+        <span class="hidden" id="pantry-detail-fat">0</span>
+
+        <!-- Core Health Metrics Summary (Fiber, Sugar, Sat Fat, Sodium) -->
         <div class="grid grid-cols-4 gap-1.5 text-center font-mono text-[10px]">
-          <div class="p-1 rounded-lg bg-dark-elevated/70">
-            <span class="text-slate-400 block text-[8.5px]">Fiber</span>
-            <span class="font-bold text-pastel-mint text-[11px]" id="pantry-detail-fiber">3.0g</span>
+          <div class="p-1.5 rounded-xl bg-dark-elevated/80 border border-dark-border/60">
+            <span class="text-slate-400 block text-[9px] font-sans font-semibold">Fiber</span>
+            <span class="font-bold text-pastel-mint text-xs" id="pantry-detail-fiber">3.0g</span>
           </div>
-          <div class="p-1 rounded-lg bg-dark-elevated/70">
-            <span class="text-slate-400 block text-[8.5px]">Sugars</span>
-            <span class="font-bold text-pastel-butter text-[11px]" id="pantry-detail-sugar">1.2g</span>
+          <div class="p-1.5 rounded-xl bg-dark-elevated/80 border border-dark-border/60">
+            <span class="text-slate-400 block text-[9px] font-sans font-semibold">Sugars</span>
+            <span class="font-bold text-pastel-butter text-xs" id="pantry-detail-sugar">1.2g</span>
           </div>
-          <div class="p-1 rounded-lg bg-dark-elevated/70">
-            <span class="text-slate-400 block text-[8.5px]">Sat Fat</span>
-            <span class="font-bold text-pastel-peach text-[11px]" id="pantry-detail-sat-fat">0.1g</span>
+          <div class="p-1.5 rounded-xl bg-dark-elevated/80 border border-dark-border/60">
+            <span class="text-slate-400 block text-[9px] font-sans font-semibold">Sat Fat</span>
+            <span class="font-bold text-pastel-peach text-xs" id="pantry-detail-sat-fat">0.1g</span>
           </div>
-          <div class="p-1 rounded-lg bg-dark-elevated/70">
-            <span class="text-slate-400 block text-[8.5px]">Sodium</span>
-            <span class="font-bold text-slate-200 text-[11px]" id="pantry-detail-sodium">45mg</span>
+          <div class="p-1.5 rounded-xl bg-dark-elevated/80 border border-dark-border/60">
+            <span class="text-slate-400 block text-[9px] font-sans font-semibold">Sodium</span>
+            <span class="font-bold text-slate-200 text-xs" id="pantry-detail-sodium">45mg</span>
           </div>
         </div>
 
@@ -5697,9 +5736,6 @@
             </div>
           </div>
 
-          <!-- Cronometer-style Mini Macro Donut & Split -->
-          <div id="pantry-detail-macro-donut" class="flex items-center justify-center"></div>
-
           <!-- Unified Macronutrient Daily Goal Contribution Bars -->
           <div class="pt-1.5 border-t border-dark-border/60 space-y-1.5">
             <span class="text-[10.5px] font-bold text-white flex items-center gap-1">
@@ -5722,8 +5758,8 @@
               </div>
             </div>
 
-            <div id="pantry-micro-vitamins-grid" class="space-y-1 max-h-48 overflow-y-auto pr-1"></div>
-            <div id="pantry-micro-minerals-grid" class="space-y-1 max-h-48 overflow-y-auto pr-1 hidden"></div>
+            <div id="pantry-micro-vitamins-grid" class="space-y-1 pr-1"></div>
+            <div id="pantry-micro-minerals-grid" class="space-y-1 pr-1 hidden"></div>
           </div>
         </div>
 
@@ -7343,7 +7379,7 @@
   <script src="js/sync.js?v=48"></script>
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
-  <script src="js/kitchen.js?v=116"></script>
+  <script src="js/kitchen.js?v=118"></script>
   <script src="js/recipes.js?v=94"></script>
   <script src="js/shopping.js?v=94"></script>
   <script src="js/chef.js?v=94"></script>

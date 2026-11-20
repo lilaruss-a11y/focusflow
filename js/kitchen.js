@@ -2891,11 +2891,99 @@
       const activeFormat = item.format || (typeof inferFoodFormat === 'function' ? inferFoodFormat(item.name, activeStorage, item.category) : 'fresh');
       setPantryDetailFormat(activeFormat);
 
+      const activeCategory = item.category || 'produce';
+      setPantryDetailCategory(activeCategory);
+
+      // Ensure all 3 open layout sections and date details start closed on open
+      ['storage', 'format', 'category'].forEach(s => {
+        const c = document.getElementById(`pantry-detail-section-${s}`);
+        const ch = document.getElementById(`icon-chevron-${s}`);
+        if (c) c.classList.add('hidden');
+        if (ch) ch.style.transform = '';
+      });
+      const extraDates = document.getElementById('pantry-extra-dates-container');
+      const datesChevron = document.getElementById('icon-chevron-dates');
+      if (extraDates) extraDates.classList.add('hidden');
+      if (datesChevron) datesChevron.style.transform = '';
+
+      // Ensure full nutrition panel starts collapsed on open
+      const nutPanel = document.getElementById('pantry-full-nutrition-panel');
+      const nutText = document.getElementById('text-toggle-pantry-full-nutrition');
+      const nutIcon = document.getElementById('icon-toggle-pantry-full-nutrition');
+      if (nutPanel) nutPanel.classList.add('hidden');
+      if (nutText) nutText.textContent = 'View Full Nutrition Breakdown';
+      if (nutIcon) nutIcon.setAttribute('data-lucide', 'chevron-down');
+
       updatePantryDetailSmartExpirationTip();
 
       if (modal) modal.classList.remove('hidden');
       if (window.lucide) lucide.createIcons();
       playChime('bell');
+    }
+
+    function togglePantryDetailSection(section) {
+      const sections = ['storage', 'format', 'category'];
+      sections.forEach(s => {
+        const container = document.getElementById(`pantry-detail-section-${s}`);
+        const chevron = document.getElementById(`icon-chevron-${s}`);
+        if (!container) return;
+        if (s === section) {
+          const isHidden = container.classList.contains('hidden');
+          container.classList.toggle('hidden', !isHidden);
+          if (chevron) {
+            chevron.style.transform = isHidden ? 'rotate(180deg)' : '';
+          }
+        } else {
+          container.classList.add('hidden');
+          if (chevron) chevron.style.transform = '';
+        }
+      });
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function togglePantryDateDetails() {
+      const container = document.getElementById('pantry-extra-dates-container');
+      const chevron = document.getElementById('icon-chevron-dates');
+      if (!container) return;
+      const isHidden = container.classList.contains('hidden');
+      container.classList.toggle('hidden', !isHidden);
+      if (chevron) {
+        chevron.style.transform = isHidden ? 'rotate(180deg)' : '';
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function setPantryDetailCategory(catVal) {
+      if (state.activePantryDetailItem) state.activePantryDetailItem.category = catVal;
+      const catSelect = document.getElementById('pantry-detail-category-select');
+      if (catSelect) catSelect.value = catVal;
+
+      const catLabelMap = {
+        'produce': '🥬 Produce',
+        'protein': '🥩 Protein',
+        'dairy': '🥛 Dairy',
+        'grains': '🌾 Grains',
+        'canned': '🥫 Canned',
+        'condiments': '🧂 Condiments',
+        'beverages': '🧃 Beverages',
+        'snacks': '🍿 Snacks',
+        'baking': '🧁 Baking'
+      };
+
+      const pillLabel = document.getElementById('pantry-pill-category-label');
+      if (pillLabel) pillLabel.textContent = catLabelMap[catVal] || catVal;
+
+      Object.keys(catLabelMap).forEach(c => {
+        const btn = document.getElementById(`btn-pantry-cat-${c}`);
+        if (!btn) return;
+        if (c === catVal) {
+          btn.className = "p-1.5 rounded-xl border-2 border-pastel-butter bg-pastel-butter/20 text-white font-bold text-center text-[10px] shadow-sm";
+        } else {
+          btn.className = "p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-slate-400 text-center text-[10px]";
+        }
+      });
+
+      updatePantryDetailSmartExpirationTip();
     }
 
     function closePantryItemDetailModal() {
@@ -2907,29 +2995,55 @@
     function setPantryDetailStorage(storageType) {
       if (state.activePantryDetailItem) state.activePantryDetailItem.storage = storageType;
       const zones = ['fridge-crisper', 'fridge-main', 'freezer', 'counter', 'cupboard', 'pantry', 'spices'];
+      const zoneLabels = {
+        'fridge-crisper': '🥬 Crisper',
+        'fridge-main': '❄️ Fridge',
+        'freezer': '🧊 Freezer',
+        'counter': '🧺 Counter',
+        'cupboard': '🚪 Cupboard',
+        'pantry': '🥫 Pantry',
+        'spices': '🧂 Spices'
+      };
+
+      const pillLabel = document.getElementById('pantry-pill-storage-label');
+      if (pillLabel) pillLabel.textContent = zoneLabels[storageType] || storageType;
+
       zones.forEach(s => {
         const btn = document.getElementById(`btn-pantry-storage-${s}`);
         if (!btn) return;
         if (s === storageType) {
-          btn.className = "p-1.5 rounded-xl border-2 border-pastel-mint bg-pastel-mint/15 text-white font-bold text-center text-[10px] shadow-sm";
+          btn.className = "p-1.5 rounded-xl border-2 border-pastel-sky bg-pastel-sky/20 text-white font-bold text-center text-[10px] shadow-sm";
         } else {
-          btn.className = "p-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-400 text-center text-[10px]";
+          btn.className = "p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-slate-400 text-center text-[10px]";
         }
       });
+      updatePantryDetailSmartExpirationTip();
     }
 
     function setPantryDetailFormat(formatType) {
       if (state.activePantryDetailItem) state.activePantryDetailItem.format = formatType;
       const formats = ['fresh', 'canned', 'frozen', 'dried', 'cooked'];
+      const formatLabels = {
+        'fresh': '🌿 Fresh',
+        'canned': '🥫 Canned',
+        'frozen': '🧊 Frozen',
+        'dried': '🌾 Dried',
+        'cooked': '🍳 Cooked'
+      };
+
+      const pillLabel = document.getElementById('pantry-pill-format-label');
+      if (pillLabel) pillLabel.textContent = formatLabels[formatType] || formatType;
+
       formats.forEach(f => {
         const btn = document.getElementById(`btn-pantry-format-${f}`);
         if (!btn) return;
         if (f === formatType) {
-          btn.className = "p-1.5 rounded-xl border-2 border-pastel-mint bg-pastel-mint/15 text-white font-bold text-center text-[10px] shadow-sm";
+          btn.className = "p-1.5 rounded-xl border-2 border-pastel-mint bg-pastel-mint/20 text-white font-bold text-center text-[10px] shadow-sm";
         } else {
-          btn.className = "p-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-400 text-center text-[10px]";
+          btn.className = "p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-slate-400 text-center text-[10px]";
         }
       });
+      updatePantryDetailSmartExpirationTip();
     }
 
     function setPantryDetailUnit(unitVal) {

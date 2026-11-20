@@ -3678,23 +3678,16 @@
       }
       setVerifyItemStorage(initStorage);
 
-      // Destination is automatically inferred by currently open kitchen subtab
+      // Adapt view if triggered from shopping list
       const curSub = state.kitchenSubTab || 'pantry';
-      const destLabel = document.getElementById('verify-destination-label');
       const storageRow = document.getElementById('verify-storage-row');
       const expRow = document.getElementById('verify-expiration-row');
-      if (destLabel) {
-        if (curSub === 'shopping') {
-          destLabel.innerHTML = '<span>🛒 Shopping List (Need to buy)</span>';
-          destLabel.className = 'font-bold text-pastel-sky flex items-center gap-1.5';
-          if (storageRow) storageRow.classList.add('hidden');
-          if (expRow) expRow.classList.add('hidden');
-        } else {
-          destLabel.innerHTML = '<span>🥫 Pantry Inventory (On-hand in kitchen)</span>';
-          destLabel.className = 'font-bold text-pastel-mint flex items-center gap-1.5';
-          if (storageRow) storageRow.classList.remove('hidden');
-          if (expRow) expRow.classList.remove('hidden');
-        }
+      if (curSub === 'shopping') {
+        if (storageRow) storageRow.classList.add('hidden');
+        if (expRow) expRow.classList.add('hidden');
+      } else {
+        if (storageRow) storageRow.classList.remove('hidden');
+        if (expRow) expRow.classList.remove('hidden');
       }
 
       const expInput = document.getElementById('verify-item-expiration-date');

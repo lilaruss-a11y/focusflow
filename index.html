@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=110">
+  <link rel="stylesheet" href="css/styles.css?v=111">
   <script>
     function resetViewportZoom() {
       try {
@@ -3487,24 +3487,24 @@
           </div>
         </div>
 
-        <!-- Dates & Freshness Tracking -->
-        <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-2.5 text-xs">
+        <!-- Dates & Freshness Tracking (Best By) -->
+        <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-2.5 text-xs" id="verify-expiration-row">
           <div class="flex items-center justify-between">
-            <span class="font-bold text-white">Freshness &amp; Dates:</span>
+            <span class="font-bold text-white">Best By:</span>
             <div class="flex items-center gap-1.5">
               <span id="verify-expiration-estimate-pill" class="text-[10px] text-pastel-mint font-mono"></span>
               <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30">✓ Fresh</span>
             </div>
           </div>
-          <div class="space-y-2">
+          <div class="grid grid-cols-2 gap-2.5">
             <div>
-              <label class="text-[11px] text-slate-400 block mb-0.5">Date Added to Pantry:</label>
+              <label class="text-[11px] text-slate-400 block mb-0.5 truncate">Date Added:</label>
               <input type="date" id="verify-item-date-added" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs">
             </div>
             <div>
               <div class="flex items-center justify-between mb-0.5">
-                <label class="text-[11px] text-slate-400 block">Recommended / Expiration Date:</label>
-                <button type="button" onclick="updateVerifySmartExpirationTip(true)" class="text-[10px] text-pastel-sky hover:underline font-mono">Recalculate Estimate</button>
+                <label class="text-[11px] text-slate-400 block truncate">Best By Date:</label>
+                <button type="button" onclick="updateVerifySmartExpirationTip(true)" class="text-[10px] text-pastel-sky hover:underline font-mono shrink-0">Estimate</button>
               </div>
               <input type="date" id="verify-item-expiration-date" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs">
             </div>
@@ -5635,31 +5635,31 @@
         </div>
       </div>
 
-      <!-- Dates & Freshness Tracking -->
+      <!-- Dates & Freshness Tracking (Best By) -->
       <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-2.5 text-xs">
         <div class="flex items-center justify-between">
-          <span class="font-bold text-white">Freshness &amp; Dates:</span>
+          <span class="font-bold text-white">Best By:</span>
           <div class="flex items-center gap-1.5">
             <span id="pantry-detail-smart-exp-pill" class="text-[10px] text-pastel-mint font-mono"></span>
             <span id="pantry-detail-freshness-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30">✓ Fresh</span>
           </div>
         </div>
-        <div class="space-y-2">
+        <div class="grid grid-cols-2 gap-2.5">
           <div>
-            <label class="text-[11px] text-slate-400 block mb-0.5">Date Added to Pantry:</label>
+            <label class="text-[11px] text-slate-400 block mb-0.5 truncate">Date Added:</label>
             <input type="date" id="pantry-detail-date-added" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs">
           </div>
           <div>
-            <label class="text-[11px] text-slate-400 block mb-0.5">Date First Opened / Used:</label>
-            <input type="date" id="pantry-detail-date-opened" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs">
-          </div>
-          <div>
             <div class="flex items-center justify-between mb-0.5">
-              <label class="text-[11px] text-slate-400 block">Recommended / Expiration Date:</label>
-              <button type="button" onclick="applySmartPantryDetailExpiration()" class="text-[10px] text-pastel-sky hover:underline font-mono">Recalculate Estimate</button>
+              <label class="text-[11px] text-slate-400 block truncate">Best By Date:</label>
+              <button type="button" onclick="applySmartPantryDetailExpiration()" class="text-[10px] text-pastel-sky hover:underline font-mono shrink-0">Estimate</button>
             </div>
             <input type="date" id="pantry-detail-date-exp" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs">
           </div>
+        </div>
+        <div class="pt-1 border-t border-dark-border/50">
+          <label class="text-[11px] text-slate-400 block mb-0.5">Date First Opened / Used (Optional):</label>
+          <input type="date" id="pantry-detail-date-opened" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs">
         </div>
       </div>
 
@@ -7300,7 +7300,7 @@
   <script src="js/sync.js?v=48"></script>
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
-  <script src="js/kitchen.js?v=110"></script>
+  <script src="js/kitchen.js?v=111"></script>
   <script src="js/recipes.js?v=94"></script>
   <script src="js/shopping.js?v=94"></script>
   <script src="js/chef.js?v=94"></script>

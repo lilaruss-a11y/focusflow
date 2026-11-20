@@ -16,7 +16,8 @@ Before touching any code:
    - **STRICTLY FORBIDDEN:** Do NOT add a redundant second "step-by-step plan" or duplicate your explanation. Keep it to a single, concise section.
 3. **Plain English Permission & Action Explanations:**
    - Any pop-up approval prompt must have a simple, everyday title (e.g. *"Upload updates to GitHub"*, *"Save changes to computer"*, *"Check if website update finished"*).
-   - Technical terms (like *staging*, *commit*, *push*, *poll deploy*, *sandbox bypass*, or script names) are **STRICTLY FORBIDDEN** in the prompt title. The user should be able to look only at the title and instantly know what they are approving without looking at the code.
+   - Technical terms (like *staging*, *commit*, *push*, *poll deploy*, *sandbox bypass*, or script names) and generic automated phrases (like *"Allow running this workflow script?"*) are **STRICTLY FORBIDDEN**.
+   - If calling any tool (such as `run_command` or `run_workflow`), agents must provide a clear, descriptive, plain-English summary (e.g. `toolSummary` or `Description`) stating exactly what action is being performed so the user knows what they are approving without reading technical code.
    - Restrict all file inspections strictly inside the `FocusFlow/` directory so security alerts for external reads never trigger.
 4. **Ask for Approval:** End with: *"Would you like me to proceed with this solution?"*
 5. **WAIT:** Do not touch any code until the user explicitly says YES or approves.
@@ -203,7 +204,8 @@ Before changing ANY code:
    - **STRICTLY FORBIDDEN:** Do NOT write a redundant second "step-by-step plan" that re-explains the same ideas. Deliver a single, clear diagnosis and solution.
 3. **Plain English Permission Titles & Action Descriptions:** 
    - Every system approval prompt must have its title written in **100% everyday English** (e.g. *"Upload app changes to GitHub"*, *"Save edits to your project"*, *"Check if live website is updated"*). 
-   - Never use technical jargon, terminal command names, or script flags in prompt titles so the user can comfortably approve without reading code.
+   - Technical terms (like *staging*, *commit*, *push*, *poll deploy*, *sandbox bypass*, or script names) and generic automated phrases (like *"Allow running this workflow script?"*) are **STRICTLY FORBIDDEN**.
+   - If calling any tool (such as `run_command` or `run_workflow`), agents must provide a clear, descriptive, plain-English summary (e.g. `toolSummary` or `Description`) stating exactly what action is being performed so the user knows what they are approving without reading technical code.
    - All diagnostic reads must stay strictly inside `FocusFlow/` so security alerts never pop up for reading files.
 4. **ASK FOR APPROVAL:** End your response by asking the user:
    > *"Would you like me to proceed with this solution?"*

@@ -2505,6 +2505,106 @@
       const micros = nut.micros || {};
       const vitGrid = document.getElementById('pantry-micro-vitamins-grid');
       const minGrid = document.getElementById('pantry-micro-minerals-grid');
+      const topNutrientsList = document.getElementById('pantry-top-nutrients-list');
+
+      // Calculate Top 4 Nutritional Contributions by % Daily Value
+      if (topNutrientsList) {
+        const candidateNutrients = [];
+
+        // 1. Core macros with meaningful targets
+        if (scaledProt > 0) {
+          const dvP = profile.dailyProteinTarget || 135;
+          candidateNutrients.push({
+            name: 'Protein',
+            val: parseFloat(scaledProt),
+            unit: 'g',
+            dv: dvP,
+            pct: Math.round((parseFloat(scaledProt) / dvP) * 100),
+            icon: '🥩',
+            color: 'text-pastel-coral',
+            barColor: 'bg-pastel-coral',
+            isVerified: Boolean(verifiedMap.protein)
+          });
+        }
+        if (scaledFiber > 0) {
+          const dvFib = profile.dailyFiberTarget || 30;
+          candidateNutrients.push({
+            name: 'Dietary Fiber',
+            val: parseFloat(scaledFiber),
+            unit: 'g',
+            dv: dvFib,
+            pct: Math.round((parseFloat(scaledFiber) / dvFib) * 100),
+            icon: '🌾',
+            color: 'text-pastel-mint',
+            barColor: 'bg-emerald-400',
+            isVerified: Boolean(verifiedMap.fiber)
+          });
+        }
+
+        // 2. All vitamins & minerals
+        if (standards) {
+          Object.keys(standards).forEach(k => {
+            const rawVal = micros[k];
+            if (rawVal != null && rawVal > 0) {
+              const scaledVal = rawVal * scale;
+              const def = standards[k];
+              const pct = Math.round((scaledVal / def.dv) * 100);
+              const icon = def.type === 'vitamin' ? '☀️' : '⚡';
+              candidateNutrients.push({
+                name: def.name,
+                val: scaledVal >= 10 ? Math.round(scaledVal) : parseFloat(scaledVal.toFixed(1)),
+                unit: def.unit,
+                dv: def.dv,
+                pct: pct,
+                icon: icon,
+                color: def.color || 'text-pastel-sky',
+                barColor: def.barColor || 'bg-pastel-sky',
+                isVerified: Boolean(verifiedMap[k])
+              });
+            }
+          });
+        }
+
+        // Sort by highest % Daily Value first
+        candidateNutrients.sort((a, b) => b.pct - a.pct);
+        const top4 = candidateNutrients.slice(0, 4);
+
+        if (top4.length > 0) {
+          topNutrientsList.innerHTML = top4.map(n => {
+            const widthPct = Math.min(100, Math.max(8, n.pct));
+            const indicator = n.isVerified
+              ? ((typeof renderVerifiedShieldIcon === 'function') ? renderVerifiedShieldIcon() : '<span class="text-emerald-400 font-bold mr-0.5">✓</span>')
+              : ((typeof renderEstimatedTildeIcon === 'function') ? renderEstimatedTildeIcon() : '<span class="text-amber-300 font-bold mr-0.5">~</span>');
+
+            return `
+              <div class="p-2 rounded-xl bg-dark-elevated border border-dark-border/70 text-xs shadow-sm">
+                <div class="flex items-center justify-between mb-1">
+                  <div class="flex items-center gap-1.5 font-bold text-white min-w-0 truncate">
+                    <span class="text-xs shrink-0">${n.icon}</span>
+                    <span class="truncate">${n.name}</span>
+                    ${indicator}
+                  </div>
+                  <div class="flex items-center gap-1.5 font-mono shrink-0">
+                    <span class="text-white font-bold">${n.val} ${n.unit}</span>
+                    <span class="${n.color} font-extrabold text-[11px] bg-dark-base px-1.5 py-0.5 rounded-md border border-dark-border/50">
+                      ${n.pct}% DV
+                    </span>
+                  </div>
+                </div>
+                <div class="w-full bg-dark-base rounded-full h-1.5 overflow-hidden">
+                  <div class="${n.barColor} h-1.5 rounded-full transition-all duration-300" style="width: ${widthPct}%"></div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          topNutrientsList.innerHTML = `
+            <div class="p-2.5 rounded-xl bg-dark-elevated/40 border border-dark-border/40 text-center text-[11px] text-slate-400">
+              No significant vitamins, minerals, or active fiber recorded for this item.
+            </div>
+          `;
+        }
+      }
 
       if (standards) {
         if (vitGrid) {
@@ -2520,6 +2620,25 @@
             .join('');
         }
       }
+    }
+
+    function togglePantryFullNutritionBreakdown() {
+      const panel = document.getElementById('pantry-full-nutrition-panel');
+      const text = document.getElementById('text-toggle-pantry-full-nutrition');
+      const icon = document.getElementById('icon-toggle-pantry-full-nutrition');
+      if (!panel) return;
+
+      const isHidden = panel.classList.contains('hidden');
+      if (isHidden) {
+        panel.classList.remove('hidden');
+        if (text) text.textContent = 'Collapse to Top 4 Highlights';
+        if (icon) icon.setAttribute('data-lucide', 'chevron-up');
+      } else {
+        panel.classList.add('hidden');
+        if (text) text.textContent = 'View Full Nutrition Breakdown (All 27 Nutrients)';
+        if (icon) icon.setAttribute('data-lucide', 'chevron-down');
+      }
+      if (window.lucide) lucide.createIcons();
     }
 
     function switchPantryMicroTab(tab) {
@@ -3328,13 +3447,65 @@
       collapseKitchenHeaderSearch();
     }
 
-    function updateVerifySmartExpirationTip() {
+    function setVerifyItemStorage(storageZone) {
+      const storageInput = document.getElementById('verify-item-storage-select');
+      if (storageInput) storageInput.value = storageZone;
+      const zones = ['fridge-crisper', 'fridge-main', 'freezer', 'counter', 'cupboard', 'pantry', 'spices'];
+      zones.forEach(z => {
+        const btn = document.getElementById(`btn-vstorage-${z}`);
+        if (!btn) return;
+        if (z === storageZone) {
+          btn.className = "p-1.5 rounded-xl border-2 border-pastel-mint bg-pastel-mint/15 text-white font-bold text-center text-[10px] shadow-sm";
+        } else {
+          btn.className = "p-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-400 text-center text-[10px]";
+        }
+      });
+      updateVerifySmartExpirationTip(true);
+    }
+
+    function setVerifyItemUnit(unit) {
+      let mapped = unit || 'items';
+      if (mapped === 'item' || mapped === 'each' || mapped === 'ea' || mapped === 'count') mapped = 'items';
+      if (mapped === 'serving') mapped = 'servings';
+
+      const select = document.getElementById('pantry-category-input');
+      if (select) select.value = mapped;
+
+      const d = document.getElementById('verify-item-unit-display');
+      if (d) d.textContent = mapped;
+      const dp = document.getElementById('verify-item-unit-display-pkg');
+      if (dp) dp.textContent = mapped;
+
+      const unitBtnMap = {
+        'oz': 'btn-vunit-oz',
+        'g': 'btn-vunit-g',
+        'fl oz': 'btn-vunit-fl-oz',
+        'ml': 'btn-vunit-ml',
+        'items': 'btn-vunit-items',
+        'servings': 'btn-vunit-servings'
+      };
+
+      Object.keys(unitBtnMap).forEach(u => {
+        const btn = document.getElementById(unitBtnMap[u]);
+        if (!btn) return;
+        if (u === mapped) {
+          btn.className = "py-1.5 px-0.5 rounded-xl border border-pastel-mint bg-pastel-mint/20 text-[11px] text-center text-pastel-mint font-bold transition shadow-sm truncate";
+        } else {
+          btn.className = "py-1.5 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint/50 text-[11px] text-center text-slate-300 font-semibold transition truncate";
+        }
+      });
+
+      updateVerifyItemDynamicNutrients();
+    }
+
+    function updateVerifySmartExpirationTip(forceSet = false) {
       const m = state._pendingVerifyItem;
       const nameInput = document.getElementById('pantry-name-input');
-      const storageSelect = document.getElementById('verify-item-storage-select');
+      const catSelect = document.getElementById('verify-item-category-select');
+      const storageInput = document.getElementById('verify-item-storage-select');
       const name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : (m ? m.name : '');
-      const cat = (m && m.category) ? m.category : 'produce';
-      const storage = storageSelect ? storageSelect.value : 'fridge-main';
+      const cat = catSelect ? catSelect.value : ((m && m.category) ? m.category : 'produce');
+      const storage = storageInput ? storageInput.value : 'fridge-main';
 
       const est = calculateSmartExpiration(name, cat, storage, 'fresh');
       const pill = document.getElementById('verify-expiration-estimate-pill');
@@ -3342,7 +3513,7 @@
         pill.textContent = `Est: ${est.label}`;
       }
       const expInput = document.getElementById('verify-item-expiration-date');
-      if (expInput && (!expInput.value || expInput.dataset.autoSet === '1')) {
+      if (expInput && (forceSet || !expInput.value || expInput.dataset.autoSet === '1')) {
         const d = new Date();
         d.setDate(d.getDate() + est.days);
         expInput.value = d.toISOString().split('T')[0];
@@ -3405,9 +3576,14 @@
       if (fatEl) fatEl.textContent = `${Math.round(baseFat * multiplier * 10) / 10}g`;
     }
 
-    function openVerifyFoodModalBeforeAdding(matchIdx) {
-      const list = state._activeSearchResults || [];
-      const m = list[matchIdx];
+    function openVerifyFoodModalBeforeAdding(matchIdxOrItem) {
+      let m = null;
+      if (typeof matchIdxOrItem === 'number') {
+        const list = state._activeSearchResults || [];
+        m = list[matchIdxOrItem];
+      } else if (matchIdxOrItem && typeof matchIdxOrItem === 'object') {
+        m = matchIdxOrItem;
+      }
       if (!m) return;
 
       state._pendingVerifyItem = JSON.parse(JSON.stringify(m));
@@ -3415,6 +3591,7 @@
       const modal = document.getElementById('pantry-item-modal');
       const titleEl = document.getElementById('verify-item-title');
       const nameInput = document.getElementById('pantry-name-input');
+      const catSelect = document.getElementById('verify-item-category-select');
       const badgeEl = document.getElementById('verify-item-badge');
       const sourceEl = document.getElementById('verify-item-source-tag');
       const srvEl = document.getElementById('verify-item-serving-info');
@@ -3423,8 +3600,7 @@
       const carbsEl = document.getElementById('verify-item-carbs');
       const fatEl = document.getElementById('verify-item-fat');
       const amtInput = document.getElementById('verify-item-amount-input');
-      const unitSelect = document.getElementById('pantry-category-input');
-      const storageSelect = document.getElementById('verify-item-storage-select');
+      const dateAddedInput = document.getElementById('verify-item-date-added');
       const iconEl = document.getElementById('verify-item-icon');
 
       const srv = m.serving || m.nutrition?.serving || '1 serving';
@@ -3432,6 +3608,8 @@
 
       if (titleEl) titleEl.textContent = m.name;
       if (nameInput) nameInput.value = m.name;
+      if (catSelect) catSelect.value = m.category || 'produce';
+
       if (badgeEl) {
         badgeEl.textContent = m.isVerified ? "✓ Verified Reference" : "~ Clinical / Recipe Estimate";
         badgeEl.className = m.isVerified
@@ -3444,7 +3622,8 @@
       if (protEl) protEl.textContent = `${m.protein || 0}g`;
       if (carbsEl) carbsEl.textContent = `${m.carbs || 0}g`;
       if (fatEl) fatEl.textContent = `${m.fat || 0}g`;
-      if (amtInput) amtInput.value = '1';
+      if (amtInput) amtInput.value = m.amount != null ? m.amount : '1';
+      if (dateAddedInput) dateAddedInput.value = new Date().toISOString().split('T')[0];
 
       if (iconEl) {
         let cat = m.category || 'produce';
@@ -3456,14 +3635,16 @@
         else iconEl.textContent = '🥗';
       }
 
-      if (unitSelect) {
-        if (m.type === 'recipe') unitSelect.value = 'servings';
-        else unitSelect.value = 'items';
-        const d = document.getElementById('verify-item-unit-display');
-        if (d) d.textContent = unitSelect.value;
-        const dp = document.getElementById('verify-item-unit-display-pkg');
-        if (dp) dp.textContent = unitSelect.value;
+      setVerifyItemUnit(m.unit || (m.type === 'recipe' ? 'servings' : 'items'));
+
+      // Storage zone initialization
+      let initStorage = m.storage || 'fridge-main';
+      if (!m.storage) {
+        let cat = m.category || 'produce';
+        if (cat === 'protein' || cat === 'produce' || cat === 'dairy') initStorage = 'fridge-main';
+        else initStorage = 'pantry';
       }
+      setVerifyItemStorage(initStorage);
 
       // Destination is automatically inferred by currently open kitchen subtab
       const curSub = state.kitchenSubTab || 'pantry';
@@ -3484,16 +3665,9 @@
         }
       }
 
-      if (storageSelect) {
-        let cat = m.category || 'produce';
-        if (m.storage) storageSelect.value = m.storage;
-        else if (cat === 'protein' || cat === 'produce' || cat === 'dairy') storageSelect.value = 'fridge-main';
-        else storageSelect.value = 'pantry';
-      }
-
       const expInput = document.getElementById('verify-item-expiration-date');
       if (expInput) expInput.dataset.autoSet = '1';
-      updateVerifySmartExpirationTip();
+      updateVerifySmartExpirationTip(true);
       updateVerifyItemDynamicNutrients();
 
       if (modal) {
@@ -3628,17 +3802,22 @@
       closeCreateChoiceModal();
       collapseKitchenHeaderSearch();
       const q = state._pendingCreateQuery || '';
-      if (typeof openManualNutritionModal === 'function') {
-        openManualNutritionModal({
-          name: q,
-          serving: '1 serving',
-          servingGrams: 100,
-          category: 'produce',
-          storage: 'fridge-main'
-        });
-      } else if (typeof openCustomFoodModal === 'function') {
-        openCustomFoodModal(q);
-      }
+      // Open the unified creation popup with clean defaults
+      openVerifyFoodModalBeforeAdding({
+        name: q || 'Custom Food',
+        category: 'produce',
+        storage: 'fridge-main',
+        amount: 1,
+        unit: 'items',
+        kcal: 100,
+        protein: 2,
+        carbs: 15,
+        fat: 1,
+        serving: '1 serving',
+        servingGrams: 100,
+        source: 'Custom Pantry Food',
+        isVerified: false
+      });
     }
 
     function proceedToCreateCustomRecipe() {
@@ -4228,6 +4407,7 @@ RULES:
       window.setPantryDetailFormat = setPantryDetailFormat;
       window.openManualNutritionForLoggedFood = openManualNutritionForLoggedFood;
       window.switchPantryMicroTab = switchPantryMicroTab;
+      window.togglePantryFullNutritionBreakdown = togglePantryFullNutritionBreakdown;
       window.openManualNutritionModalForActivePantryItem = openManualNutritionModalForActivePantryItem;
       window.renderMicroBarRow = renderMicroBarRow;
       window.scalePantryDetailPortion = scalePantryDetailPortion;

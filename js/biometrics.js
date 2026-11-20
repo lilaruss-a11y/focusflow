@@ -434,6 +434,24 @@
 
 
     function openCustomFoodModal(query) {
+      if (typeof openVerifyFoodModalBeforeAdding === 'function') {
+        openVerifyFoodModalBeforeAdding({
+          name: query || 'Custom Food',
+          category: 'produce',
+          storage: 'fridge-main',
+          amount: 1,
+          unit: 'items',
+          kcal: 100,
+          protein: 2,
+          carbs: 15,
+          fat: 1,
+          serving: '1 serving',
+          servingGrams: 100,
+          source: 'Custom Pantry Food',
+          isVerified: false
+        });
+        return;
+      }
       const nameIn = document.getElementById('custom-food-input-name');
       if (nameIn && query) nameIn.value = query;
       const modal = document.getElementById('custom-food-modal');

@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=105">
+  <link rel="stylesheet" href="css/styles.css?v=107">
   <script>
     function resetViewportZoom() {
       try {
@@ -3371,100 +3371,160 @@
 
   <!-- MODAL: VERIFY ITEM & ADJUST AMOUNT BEFORE ADDING TO KITCHEN -->
   <div id="pantry-item-modal" class="hidden fixed inset-0 z-[70] bg-black/90 flex items-start justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-16 overflow-y-auto">
-    <div class="bg-dark-elevated border border-pastel-mint/50 rounded-3xl w-full max-w-md p-5 sm:p-6 space-y-4 shadow-2xl">
+    <div class="bg-dark-elevated border border-pastel-mint/50 rounded-3xl w-full max-w-md p-5 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <div class="w-10 h-10 rounded-2xl bg-pastel-mint/20 border border-pastel-mint/40 flex items-center justify-center text-pastel-mint shrink-0 text-xl" id="verify-item-icon">
-            🥗
-          </div>
-          <div class="min-w-0">
-            <h3 class="text-base font-bold text-white truncate" id="verify-item-title">Add to Kitchen</h3>
-            <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+        <div class="flex items-center gap-2 flex-1 min-w-0 pr-2">
+          <span class="text-xl shrink-0" id="verify-item-icon">🥗</span>
+          <div class="min-w-0 flex-1">
+            <input type="text" id="pantry-name-input" oninput="updateVerifySmartExpirationTip()" class="text-base font-bold text-white bg-transparent border-b border-dashed border-dark-border hover:border-pastel-mint focus:border-pastel-mint focus:bg-dark-base px-1 py-0.5 rounded transition w-full outline-none" title="Item name" placeholder="e.g. Fresh Spinach, Strawberries">
+            <div class="flex items-center gap-2 mt-1">
               <span id="verify-item-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30">✓ Verified Reference</span>
+              <select id="verify-item-category-select" onchange="updateVerifySmartExpirationTip()" class="bg-dark-base text-slate-300 border border-dark-border rounded-lg text-[10px] font-semibold px-2 py-0.5 focus:border-pastel-mint outline-none">
+                <option value="produce" selected>🥬 Produce</option>
+                <option value="protein">🥩 Protein</option>
+                <option value="dairy">🥛 Dairy</option>
+                <option value="grains">🌾 Grains</option>
+                <option value="canned">🥫 Canned</option>
+                <option value="condiments">🧂 Condiments</option>
+                <option value="beverages">🧃 Beverages</option>
+                <option value="snacks">🍿 Snacks</option>
+                <option value="baking">🧁 Baking</option>
+              </select>
               <span id="verify-item-source-tag" class="text-[10px] text-slate-400 font-mono">USDA</span>
             </div>
           </div>
         </div>
-        <button type="button" onclick="closeAddPantryItemModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
-          <i data-lucide="x" class="w-5 h-5"></i>
+        <button type="button" onclick="closeAddPantryItemModal()" class="text-slate-400 hover:text-white p-1 rounded-lg shrink-0">
+          <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
 
-      <!-- Item Identification & Verification Name -->
+      <!-- Item Identification & Verification Body -->
       <div class="space-y-3 text-xs">
-        <div>
-          <label class="block text-slate-300 mb-1 font-semibold">Item / Ingredient Name</label>
-          <input type="text" id="pantry-name-input" placeholder="e.g. Fresh Spinach, Quinoa, Soy Sauce" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-mint">
-        </div>
-
         <!-- Serving & Nutritional Continuity Summary Card -->
-        <div class="p-3 rounded-2xl bg-dark-base border border-dark-border/80 space-y-2">
+        <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-2.5 text-xs">
           <div class="flex items-center justify-between text-[11px]">
-            <span class="text-slate-400" id="verify-item-serving-label">1 Serving Reference:</span>
+            <span class="text-slate-400 font-semibold" id="verify-item-serving-label">1 Serving Reference:</span>
             <span id="verify-item-serving-info" class="font-mono text-pastel-sky font-semibold">1 serving = 100g</span>
           </div>
           <div class="grid grid-cols-4 gap-1.5 text-center font-mono">
-            <div class="p-1.5 rounded-lg bg-dark-elevated">
-              <span class="text-[9px] text-pastel-lavender block font-bold">Calories</span>
-              <span class="text-xs font-bold text-white" id="verify-item-kcal">0</span>
+            <div class="p-2 rounded-xl bg-dark-elevated">
+              <span class="text-[9.5px] text-pastel-lavender block font-bold">Energy</span>
+              <span class="text-sm font-bold text-white" id="verify-item-kcal">0</span>
             </div>
-            <div class="p-1.5 rounded-lg bg-dark-elevated">
-              <span class="text-[9px] text-pastel-coral block font-bold">Protein</span>
-              <span class="text-xs font-bold text-white" id="verify-item-protein">0g</span>
+            <div class="p-2 rounded-xl bg-dark-elevated">
+              <span class="text-[9.5px] text-pastel-coral block font-bold">Protein</span>
+              <span class="text-sm font-bold text-white" id="verify-item-protein">0g</span>
             </div>
-            <div class="p-1.5 rounded-lg bg-dark-elevated">
-              <span class="text-[9px] text-pastel-mint block font-bold">Carbs</span>
-              <span class="text-xs font-bold text-white" id="verify-item-carbs">0g</span>
+            <div class="p-2 rounded-xl bg-dark-elevated">
+              <span class="text-[9.5px] text-pastel-mint block font-bold">Carbs</span>
+              <span class="text-sm font-bold text-white" id="verify-item-carbs">0g</span>
             </div>
-            <div class="p-1.5 rounded-lg bg-dark-elevated">
-              <span class="text-[9px] text-pastel-butter block font-bold">Fat</span>
-              <span class="text-xs font-bold text-white" id="verify-item-fat">0g</span>
+            <div class="p-2 rounded-xl bg-dark-elevated">
+              <span class="text-[9.5px] text-pastel-butter block font-bold">Fat</span>
+              <span class="text-sm font-bold text-white" id="verify-item-fat">0g</span>
             </div>
           </div>
         </div>
 
-        <!-- Amount and Unit Controls (Standardized Twin Matching Boxes: Total Package Size & Amount Remaining) -->
-        <div class="grid grid-cols-2 gap-2">
-          <!-- Total Package Size -->
-          <div>
-            <label class="font-semibold text-slate-300 block mb-1">Total Package Size</label>
-            <div class="flex items-center bg-dark-base border border-pastel-mint/50 focus-within:border-pastel-mint rounded-xl overflow-hidden transition shadow-sm h-11 w-full">
-              <input type="number" id="verify-item-amount-input" oninput="updateVerifyItemDynamicNutrients(); const rem = document.getElementById('verify-item-amount-remaining-input'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0.1" value="1" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-sm font-semibold focus:outline-none min-w-0">
-              <div class="relative shrink-0 border-l border-dark-border bg-dark-elevated/80 h-full px-2.5 flex items-center justify-center min-w-[80px] select-none cursor-pointer">
-                <span id="verify-item-unit-display-pkg" class="text-pastel-mint font-bold font-mono text-sm py-1 text-center pointer-events-none block">items</span>
-                <select id="pantry-category-input" onchange="const d = document.getElementById('verify-item-unit-display'); if (d) d.textContent = this.value; const dp = document.getElementById('verify-item-unit-display-pkg'); if (dp) dp.textContent = this.value; updateVerifyItemDynamicNutrients();" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10" title="Tap to change unit">
-                  <optgroup label="Count &amp; Servings">
-                    <option value="items" selected>items</option>
-                    <option value="servings">servings</option>
-                    <option value="pack">pack</option>
-                    <option value="can">can</option>
-                    <option value="bottle">bottle</option>
-                  </optgroup>
-                  <optgroup label="Weight (Solid Foods)">
-                    <option value="oz">oz</option>
-                    <option value="g">g</option>
-                    <option value="lb">lb</option>
-                  </optgroup>
-                  <optgroup label="Volume (Liquids &amp; Drinks)">
-                    <option value="fl oz">fl oz</option>
-                    <option value="ml">ml</option>
-                    <option value="cup">cup</option>
-                  </optgroup>
-                </select>
+        <!-- Quantity & Stock Levels (Standardized Matching Twin Boxes) -->
+        <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-2.5 text-xs">
+          <span class="font-bold text-white block">Quantity &amp; Stock Levels:</span>
+          <div class="grid grid-cols-2 gap-2">
+            <!-- Total Package Size -->
+            <div>
+              <label class="font-semibold text-slate-300 block mb-1">Total Package Size</label>
+              <div class="flex items-center bg-dark-elevated border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm h-11 w-full">
+                <input type="number" id="verify-item-amount-input" oninput="updateVerifyItemDynamicNutrients(); const rem = document.getElementById('verify-item-amount-remaining-input'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0.1" value="1" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-sm font-semibold focus:outline-none min-w-0">
+                <div class="relative shrink-0 border-l border-dark-border bg-dark-base/80 h-full px-2.5 flex items-center justify-center min-w-[80px] select-none cursor-pointer">
+                  <span id="verify-item-unit-display-pkg" class="text-pastel-sky font-bold font-mono text-sm py-1 text-center pointer-events-none block">items</span>
+                  <select id="pantry-category-input" onchange="setVerifyItemUnit(this.value)" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10" title="Tap to change unit">
+                    <optgroup label="Weight (Solid Foods)">
+                      <option value="oz">oz</option>
+                      <option value="g">g</option>
+                      <option value="lb">lb</option>
+                    </optgroup>
+                    <optgroup label="Volume (Liquids &amp; Drinks)">
+                      <option value="fl oz">fl oz</option>
+                      <option value="ml">ml</option>
+                      <option value="cup">cup</option>
+                    </optgroup>
+                    <optgroup label="Count &amp; Servings">
+                      <option value="items" selected>items</option>
+                      <option value="servings">servings</option>
+                      <option value="pack">pack</option>
+                      <option value="can">can</option>
+                      <option value="bottle">bottle</option>
+                    </optgroup>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Amount Remaining -->
+            <div>
+              <label class="font-semibold text-slate-300 block mb-1">Amount Remaining</label>
+              <div class="flex items-center bg-dark-elevated border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm h-11 w-full" title="Current amount left in kitchen">
+                <input type="number" id="verify-item-amount-remaining-input" oninput="this.dataset.linked = '0';" step="any" min="0" value="1" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-sm font-semibold focus:outline-none min-w-0">
+                <div class="relative shrink-0 border-l border-dark-border bg-dark-base/80 h-full px-2.5 flex items-center justify-center min-w-[80px] select-none cursor-pointer" onclick="document.getElementById('pantry-category-input').focus(); document.getElementById('pantry-category-input').showPicker?.();" title="Tap unit to change">
+                  <span id="verify-item-unit-display" class="text-pastel-sky font-bold font-mono text-sm py-1 text-center block">items</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Amount Remaining -->
+          <!-- Quick Select Unit Chips -->
           <div>
-            <label class="font-semibold text-slate-300 block mb-1">Amount Remaining</label>
-            <div class="flex items-center bg-dark-base border border-pastel-mint/50 focus-within:border-pastel-mint rounded-xl overflow-hidden transition shadow-sm h-11 w-full" title="Current amount left in kitchen">
-              <input type="number" id="verify-item-amount-remaining-input" oninput="this.dataset.linked = '0';" step="any" min="0" value="1" placeholder="1" class="w-full bg-transparent px-3 py-2 text-white font-mono text-sm font-semibold focus:outline-none min-w-0">
-              <div class="relative shrink-0 border-l border-dark-border bg-dark-elevated/80 h-full px-2.5 flex items-center justify-center min-w-[80px] select-none cursor-pointer" onclick="document.getElementById('pantry-category-input').focus(); document.getElementById('pantry-category-input').showPicker?.();" title="Tap unit to change">
-                <span id="verify-item-unit-display" class="text-pastel-mint font-bold font-mono text-sm py-1 text-center block">items</span>
-              </div>
+            <label class="text-[10.5px] text-slate-400 block mb-1 font-semibold">Quick Select Unit:</label>
+            <div class="grid grid-cols-6 gap-1">
+              <button type="button" onclick="setVerifyItemUnit('oz')" id="btn-vunit-oz" class="py-1.5 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition">oz</button>
+              <button type="button" onclick="setVerifyItemUnit('g')" id="btn-vunit-g" class="py-1.5 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition">g</button>
+              <button type="button" onclick="setVerifyItemUnit('fl oz')" id="btn-vunit-fl-oz" class="py-1.5 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition">fl oz</button>
+              <button type="button" onclick="setVerifyItemUnit('ml')" id="btn-vunit-ml" class="py-1.5 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition">ml</button>
+              <button type="button" onclick="setVerifyItemUnit('items')" id="btn-vunit-items" class="py-1.5 px-0.5 rounded-xl border border-pastel-mint bg-pastel-mint/20 text-[11px] text-center text-pastel-mint font-bold transition truncate">items</button>
+              <button type="button" onclick="setVerifyItemUnit('servings')" id="btn-vunit-servings" class="py-1.5 px-0.5 rounded-xl border border-dark-border bg-dark-elevated hover:border-pastel-mint text-[11px] text-center text-slate-300 font-semibold transition truncate">servings</button>
             </div>
           </div>
+        </div>
+
+        <!-- Dates & Freshness Tracking -->
+        <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-2.5 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white">Freshness &amp; Dates:</span>
+            <div class="flex items-center gap-1.5">
+              <span id="verify-expiration-estimate-pill" class="text-[10px] text-pastel-mint font-mono"></span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30">✓ Fresh</span>
+            </div>
+          </div>
+          <div class="space-y-2">
+            <div>
+              <label class="text-[11px] text-slate-400 block mb-0.5">Date Added to Pantry:</label>
+              <input type="date" id="verify-item-date-added" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs">
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-0.5">
+                <label class="text-[11px] text-slate-400 block">Recommended / Expiration Date:</label>
+                <button type="button" onclick="updateVerifySmartExpirationTip(true)" class="text-[10px] text-pastel-sky hover:underline font-mono">Recalculate Estimate</button>
+              </div>
+              <input type="date" id="verify-item-expiration-date" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs">
+            </div>
+          </div>
+        </div>
+
+        <!-- Format & Storage Zone (Identical to Detail View) -->
+        <div class="space-y-1.5 text-xs" id="verify-storage-row">
+          <label class="font-semibold text-slate-300">Kitchen Storage Zone:</label>
+          <div class="grid grid-cols-4 sm:grid-cols-7 gap-1">
+            <button type="button" onclick="setVerifyItemStorage('fridge-crisper')" id="btn-vstorage-fridge-crisper" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Crisper Drawer">🥬 Crisper</button>
+            <button type="button" onclick="setVerifyItemStorage('fridge-main')" id="btn-vstorage-fridge-main" class="p-1.5 rounded-xl border-2 border-pastel-mint bg-pastel-mint/15 text-white font-bold text-center text-[10px] shadow-sm" title="Main Fridge & Deli">❄️ Fridge</button>
+            <button type="button" onclick="setVerifyItemStorage('freezer')" id="btn-vstorage-freezer" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Deep Freeze">🧊 Freezer</button>
+            <button type="button" onclick="setVerifyItemStorage('counter')" id="btn-vstorage-counter" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Countertop">🧺 Counter</button>
+            <button type="button" onclick="setVerifyItemStorage('cupboard')" id="btn-vstorage-cupboard" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Cupboard">🚪 Cupboard</button>
+            <button type="button" onclick="setVerifyItemStorage('pantry')" id="btn-vstorage-pantry" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Dry Pantry Shelf">🥫 Pantry</button>
+            <button type="button" onclick="setVerifyItemStorage('spices')" id="btn-vstorage-spices" class="p-1.5 rounded-xl bg-dark-base border border-dark-border text-center text-[10px]" title="Spice Rack & Condiments">🧂 Spices</button>
+          </div>
+          <!-- Hidden storage select for legacy and programmatic bindings -->
+          <input type="hidden" id="verify-item-storage-select" value="fridge-main">
         </div>
 
         <!-- Inferred Destination Banner -->
@@ -3473,29 +3533,6 @@
           <span id="verify-destination-label" class="font-bold text-pastel-mint flex items-center gap-1.5">
             <span>🥫 Pantry Inventory</span>
           </span>
-        </div>
-
-        <!-- Storage Location (for Pantry) -->
-        <div id="verify-storage-row">
-          <label class="block text-slate-300 mb-1 font-semibold">Storage Zone</label>
-          <select id="verify-item-storage-select" onchange="updateVerifySmartExpirationTip()" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-mint">
-            <option value="fridge-crisper">🥬 Fridge - Crisper</option>
-            <option value="fridge-main" selected>❄️ Fridge - Main</option>
-            <option value="freezer">🧊 Freezer</option>
-            <option value="counter">🧺 Counter</option>
-            <option value="cupboard">🚪 Cupboard</option>
-            <option value="pantry">🥫 Pantry</option>
-            <option value="spices">🧂 Spices / Seasonings</option>
-          </select>
-        </div>
-
-        <!-- Smart Expiration Date Selector -->
-        <div id="verify-expiration-row" class="space-y-1">
-          <div class="flex items-center justify-between">
-            <label class="block text-slate-300 font-semibold">Expiration / Best By Date</label>
-            <span id="verify-expiration-estimate-pill" class="text-[10px] text-pastel-mint font-mono">Estimated: ~14 days</span>
-          </div>
-          <input type="date" id="verify-item-expiration-date" class="w-full bg-dark-base border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:border-pastel-mint font-mono">
         </div>
       </div>
 
@@ -5467,30 +5504,53 @@
           </div>
         </div>
 
-        <!-- Unified Macronutrient Daily Goal Contribution Bars -->
+        <!-- Top 4 Nutritional Highlights (Default Clean Summary View) -->
         <div class="pt-2 border-t border-dark-border/60 space-y-1.5">
-          <span class="text-[10.5px] font-bold text-white flex items-center gap-1">
-            <i data-lucide="activity" class="w-3.5 h-3.5 text-pastel-lavender"></i>
-            Macronutrients &amp; Daily Goal Contribution
-          </span>
-          <div id="pantry-macro-bars-grid" class="space-y-1"></div>
-        </div>
-
-        <!-- Essential Human Survival Micronutrients Tabbed Section -->
-        <div class="pt-2 border-t border-dark-border/60 space-y-2">
           <div class="flex items-center justify-between">
             <span class="text-[10.5px] font-bold text-white flex items-center gap-1">
-              <i data-lucide="shield" class="w-3.5 h-3.5 text-pastel-sky"></i>
-              Human Survival Micronutrients
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-pastel-butter"></i>
+              Top Nutritional Contributions
             </span>
-            <div class="flex gap-1 text-[10px] font-semibold">
-              <button type="button" id="tab-pantry-micro-vitamins" onclick="switchPantryMicroTab('vitamins')" class="px-2 py-0.5 rounded-md bg-pastel-sky text-dark-base font-bold transition">Vitamins (13)</button>
-              <button type="button" id="tab-pantry-micro-minerals" onclick="switchPantryMicroTab('minerals')" class="px-2 py-0.5 rounded-md text-slate-400 hover:text-white transition">Minerals (14)</button>
-            </div>
+            <span class="text-[9.5px] text-pastel-lavender font-semibold">Highest % Daily Value</span>
+          </div>
+          <div id="pantry-top-nutrients-list" class="space-y-1"></div>
+        </div>
+
+        <!-- 1-Click Expand / Collapse Full Nutrition Breakdown Button -->
+        <div class="pt-1 flex justify-center">
+          <button type="button" id="btn-toggle-pantry-full-nutrition" onclick="togglePantryFullNutritionBreakdown()" class="w-full py-1.5 px-3 rounded-xl bg-dark-elevated hover:bg-slate-700/80 border border-dark-border hover:border-pastel-mint/40 text-slate-300 hover:text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition shadow-sm">
+            <i id="icon-toggle-pantry-full-nutrition" data-lucide="chevron-down" class="w-3.5 h-3.5 text-pastel-mint"></i>
+            <span id="text-toggle-pantry-full-nutrition">View Full Nutrition Breakdown (All 27 Nutrients)</span>
+          </button>
+        </div>
+
+        <!-- Collapsible Full Nutritional Breakdown (Hidden by default) -->
+        <div id="pantry-full-nutrition-panel" class="hidden space-y-2.5 pt-1">
+          <!-- Unified Macronutrient Daily Goal Contribution Bars -->
+          <div class="pt-1.5 border-t border-dark-border/60 space-y-1.5">
+            <span class="text-[10.5px] font-bold text-white flex items-center gap-1">
+              <i data-lucide="activity" class="w-3.5 h-3.5 text-pastel-lavender"></i>
+              Macronutrients &amp; Daily Goal Contribution
+            </span>
+            <div id="pantry-macro-bars-grid" class="space-y-1"></div>
           </div>
 
-          <div id="pantry-micro-vitamins-grid" class="space-y-1 max-h-36 overflow-y-auto pr-1"></div>
-          <div id="pantry-micro-minerals-grid" class="space-y-1 max-h-36 overflow-y-auto pr-1 hidden"></div>
+          <!-- Essential Human Survival Micronutrients Tabbed Section -->
+          <div class="pt-1.5 border-t border-dark-border/60 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[10.5px] font-bold text-white flex items-center gap-1">
+                <i data-lucide="shield" class="w-3.5 h-3.5 text-pastel-sky"></i>
+                Human Survival Micronutrients
+              </span>
+              <div class="flex gap-1 text-[10px] font-semibold">
+                <button type="button" id="tab-pantry-micro-vitamins" onclick="switchPantryMicroTab('vitamins')" class="px-2 py-0.5 rounded-md bg-pastel-sky text-dark-base font-bold transition">Vitamins (13)</button>
+                <button type="button" id="tab-pantry-micro-minerals" onclick="switchPantryMicroTab('minerals')" class="px-2 py-0.5 rounded-md text-slate-400 hover:text-white transition">Minerals (14)</button>
+              </div>
+            </div>
+
+            <div id="pantry-micro-vitamins-grid" class="space-y-1 max-h-48 overflow-y-auto pr-1"></div>
+            <div id="pantry-micro-minerals-grid" class="space-y-1 max-h-48 overflow-y-auto pr-1 hidden"></div>
+          </div>
         </div>
 
         <div class="text-[10px] text-slate-400 font-mono pt-0.5" id="pantry-detail-micros"></div>
@@ -7235,12 +7295,12 @@
   <script src="js/sync.js?v=48"></script>
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
-  <script src="js/kitchen.js?v=104"></script>
+  <script src="js/kitchen.js?v=107"></script>
   <script src="js/recipes.js?v=94"></script>
   <script src="js/shopping.js?v=94"></script>
   <script src="js/chef.js?v=94"></script>
   <script src="js/body-profile.js?v=94"></script>
-  <script src="js/nutrition.js?v=104"></script>
+  <script src="js/nutrition.js?v=107"></script>
   <script src="js/barcode.js?v=94"></script>
   <script src="js/health.js?v=94"></script>
   <script src="js/biometrics.js?v=94"></script>

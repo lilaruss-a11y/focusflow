@@ -3447,6 +3447,32 @@
       collapseKitchenHeaderSearch();
     }
 
+    function setVerifyItemFormat(formatType) {
+      const formatInput = document.getElementById('verify-item-format-input');
+      if (formatInput) formatInput.value = formatType;
+      const formats = ['fresh', 'canned', 'frozen', 'dried', 'cooked'];
+      formats.forEach(f => {
+        const btn = document.getElementById(`btn-vformat-${f}`);
+        if (!btn) return;
+        if (f === formatType) {
+          btn.className = "p-1.5 rounded-xl border-2 border-pastel-mint bg-pastel-mint/15 text-white font-bold text-center text-[10px] shadow-sm";
+        } else {
+          btn.className = "p-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-400 text-center text-[10px]";
+        }
+      });
+
+      // Intelligent storage zone coupling
+      if (formatType === 'frozen') {
+        setVerifyItemStorage('freezer');
+      } else if (formatType === 'canned' || formatType === 'dried') {
+        const curStorage = (document.getElementById('verify-item-storage-select') || {}).value || '';
+        if (curStorage === 'freezer' || curStorage === 'fridge-crisper' || curStorage === 'fridge-main') {
+          setVerifyItemStorage('pantry');
+        }
+      }
+      updateVerifySmartExpirationTip(true);
+    }
+
     function setVerifyItemStorage(storageZone) {
       const storageInput = document.getElementById('verify-item-storage-select');
       if (storageInput) storageInput.value = storageZone;
@@ -3503,11 +3529,13 @@
       const nameInput = document.getElementById('pantry-name-input');
       const catSelect = document.getElementById('verify-item-category-select');
       const storageInput = document.getElementById('verify-item-storage-select');
+      const formatInput = document.getElementById('verify-item-format-input');
       const name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : (m ? m.name : '');
       const cat = catSelect ? catSelect.value : ((m && m.category) ? m.category : 'produce');
       const storage = storageInput ? storageInput.value : 'fridge-main';
+      const format = formatInput ? formatInput.value : 'fresh';
 
-      const est = calculateSmartExpiration(name, cat, storage, 'fresh');
+      const est = calculateSmartExpiration(name, cat, storage, format);
       const pill = document.getElementById('verify-expiration-estimate-pill');
       if (pill) {
         pill.textContent = `Est: ${est.label}`;
@@ -3637,6 +3665,10 @@
 
       setVerifyItemUnit(m.unit || (m.type === 'recipe' ? 'servings' : 'items'));
 
+      // Format initialization
+      const initFormat = m.format || (typeof inferFoodFormat === 'function' ? inferFoodFormat(m.name, m.storage || '', m.category || '') : 'fresh');
+      setVerifyItemFormat(initFormat);
+
       // Storage zone initialization
       let initStorage = m.storage || 'fridge-main';
       if (!m.storage) {
@@ -3690,10 +3722,12 @@
       const finalRemAmt = (amtRemInput && !isNaN(parseFloat(amtRemInput.value))) ? parseFloat(amtRemInput.value) : finalAmt;
       const finalUnit = (unitSelect && unitSelect.value) ? unitSelect.value : 'items';
       const finalStorage = (storageSelect && storageSelect.value) ? storageSelect.value : 'fridge-main';
+      const formatInput = document.getElementById('verify-item-format-input');
+      const finalFormat = (formatInput && formatInput.value) ? formatInput.value : 'fresh';
       const expInput = document.getElementById('verify-item-expiration-date');
       let finalExp = (expInput && expInput.value) ? expInput.value : '';
       if (!finalExp) {
-        const est = calculateSmartExpiration(finalName, (m && m.category) || 'produce', finalStorage, 'fresh');
+        const est = calculateSmartExpiration(finalName, (m && m.category) || 'produce', finalStorage, finalFormat);
         const d = new Date();
         d.setDate(d.getDate() + est.days);
         finalExp = d.toISOString().split('T')[0];
@@ -3730,6 +3764,7 @@
           recipeId: (m && m.recipeId) || null,
           category: (m && m.category) || 'produce',
           storage: finalStorage,
+          format: finalFormat,
           amount: finalAmt,
           amountRemaining: finalRemAmt,
           unit: finalUnit,

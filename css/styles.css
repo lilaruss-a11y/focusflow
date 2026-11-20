@@ -282,35 +282,21 @@ div[id$="-popup"] {
   z-index: 200 !important;
 }
 
-/* Compact Chrome Date Inputs in Dialogs */
+/* Balanced Chrome Date Inputs in Dialogs */
 div[id$="-modal"] input[type="date"] {
   min-width: 0 !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
-  font-size: 10px !important;
-  letter-spacing: -0.3px !important;
-  padding: 3px 5px !important;
-}
-
-div[id$="-modal"] input[type="date"]::-webkit-datetime-edit,
-div[id$="-modal"] input[type="date"]::-webkit-datetime-edit-fields-wrapper {
-  padding: 0 !important;
-}
-
-div[id$="-modal"] input[type="date"]::-webkit-datetime-edit-text,
-div[id$="-modal"] input[type="date"]::-webkit-datetime-edit-month-field,
-div[id$="-modal"] input[type="date"]::-webkit-datetime-edit-day-field,
-div[id$="-modal"] input[type="date"]::-webkit-datetime-edit-year-field {
-  padding: 0 1px !important;
+  font-size: 12px !important;
 }
 
 div[id$="-modal"] input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
   padding: 0 !important;
-  margin: 0 0 0 2px !important;
-  width: 12px !important;
-  height: 12px !important;
-  opacity: 0.7;
+  margin-left: 4px !important;
+  width: 14px !important;
+  height: 14px !important;
+  opacity: 0.75;
 }
 
 div[id$="-modal"] input[type="date"]::-webkit-calendar-picker-indicator:hover {

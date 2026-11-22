@@ -1993,6 +1993,13 @@
 
     function buildPantryItemPillHtml(item, expiryBadge) {
       const isOutOfStock = (item.amount == null || item.amount <= 0);
+      const totalAmt = (item.amount != null && !isNaN(parseFloat(item.amount))) ? parseFloat(item.amount) : 1;
+      const remAmt = (item.amountRemaining != null && !isNaN(parseFloat(item.amountRemaining))) ? parseFloat(item.amountRemaining) : totalAmt;
+      
+      let pct = 100;
+      if (totalAmt > 0) {
+        pct = Math.min(100, Math.max(0, Math.round((remAmt / totalAmt) * 100)));
+      }
 
       const isLowStock = pct <= 25 || isOutOfStock;
       const lowStockCartAction = isLowStock
@@ -2007,14 +2014,6 @@
              <span>+ Add to Shopping List</span>
            </button>`
         : '';
-
-      const totalAmt = (item.amount != null && !isNaN(parseFloat(item.amount))) ? parseFloat(item.amount) : 1;
-      const remAmt = (item.amountRemaining != null && !isNaN(parseFloat(item.amountRemaining))) ? parseFloat(item.amountRemaining) : totalAmt;
-      
-      let pct = 100;
-      if (totalAmt > 0) {
-        pct = Math.min(100, Math.max(0, Math.round((remAmt / totalAmt) * 100)));
-      }
 
       // Display formatted quantity: e.g. "12 / 16 oz" if used, or "16 oz" if full
       let displayLabel = '';

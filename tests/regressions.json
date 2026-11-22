@@ -105,5 +105,13 @@
     "check_type": "forbidden_pattern",
     "pattern": "div\\[id\\$\\=\"-modal\"\\]\\s*\\{[^}]*overflow-x:\\s*scroll",
     "is_regex": true
+  },
+  {
+    "id": "pantry_pill_pct_init_order",
+    "description": "Never reference pct before declaration in buildPantryItemPillHtml in js/kitchen.js",
+    "file": "js/kitchen.js",
+    "check_type": "forbidden_pattern",
+    "pattern": "function buildPantryItemPillHtml[^{]*\\{[^}]*const isLowStock = pct",
+    "is_regex": true
   }
 ]

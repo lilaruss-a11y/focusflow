@@ -14,10 +14,11 @@ Before touching any code:
      - **Proposed Fix:** [Concrete proposed solution in plain English]
      ```
    - **STRICTLY FORBIDDEN:** Do NOT add a redundant second "step-by-step plan" or duplicate your explanation. Keep it to a single, concise section.
-3. **Plain English Permission & Action Explanations:**
+3. **Plain English Permission & Action Explanations (Zero Unnecessary Approvals):**
    - Any pop-up approval prompt must have a simple, everyday title (e.g. *"Upload updates to GitHub"*, *"Save changes to computer"*, *"Check if website update finished"*).
    - Technical terms (like *staging*, *commit*, *push*, *poll deploy*, *sandbox bypass*, or script names) and generic automated phrases (like *"Allow running this workflow script?"*) are **STRICTLY FORBIDDEN**.
-   - If calling any tool (such as `run_command` or `run_workflow`), agents must provide a clear, descriptive, plain-English summary (e.g. `toolSummary` or `Description`) stating exactly what action is being performed so the user knows what they are approving without reading technical code.
+   - **Strictly Prohibit `run_workflow` & Multi-Agent Swarms for Code Tasks:** Agents MUST use direct, silent sandboxed tools (`read_file`, `edit_file`, and standard `run_command`). Do NOT invoke `run_workflow` or swarm orchestration, which trigger repetitive approval pop-ups.
+   - If calling any tool (such as `run_command`), agents must provide a clear, descriptive, plain-English summary (e.g. `toolSummary`) stating exactly what action is being performed so the user knows what they are approving without reading technical code.
    - Restrict all file inspections strictly inside the `FocusFlow/` directory so security alerts for external reads never trigger.
 4. **Ask for Approval:** End with: *"Would you like me to proceed with this solution?"*
 5. **WAIT:** Do not touch any code until the user explicitly says YES or approves.
@@ -202,10 +203,11 @@ Before changing ANY code:
      - **Proposed Fix:** [Concrete proposed solution in plain English]
      ```
    - **STRICTLY FORBIDDEN:** Do NOT write a redundant second "step-by-step plan" that re-explains the same ideas. Deliver a single, clear diagnosis and solution.
-3. **Plain English Permission Titles & Action Descriptions:** 
+3. **Plain English Permission Titles & Action Descriptions (Zero Unnecessary Approvals):** 
    - Every system approval prompt must have its title written in **100% everyday English** (e.g. *"Upload app changes to GitHub"*, *"Save edits to your project"*, *"Check if live website is updated"*). 
    - Technical terms (like *staging*, *commit*, *push*, *poll deploy*, *sandbox bypass*, or script names) and generic automated phrases (like *"Allow running this workflow script?"*) are **STRICTLY FORBIDDEN**.
-   - If calling any tool (such as `run_command` or `run_workflow`), agents must provide a clear, descriptive, plain-English summary (e.g. `toolSummary` or `Description`) stating exactly what action is being performed so the user knows what they are approving without reading technical code.
+   - **Strictly Prohibit `run_workflow` & Multi-Agent Swarms for Code Tasks:** Agents MUST use direct, silent sandboxed tools (`read_file`, `edit_file`, and standard `run_command`). Do NOT invoke `run_workflow` or swarm orchestration, which trigger repetitive approval pop-ups.
+   - If calling any tool (such as `run_command`), agents must provide a clear, descriptive, plain-English summary (e.g. `toolSummary`) stating exactly what action is being performed so the user knows what they are approving without reading technical code.
    - All diagnostic reads must stay strictly inside `FocusFlow/` so security alerts never pop up for reading files.
 4. **ASK FOR APPROVAL:** End your response by asking the user:
    > *"Would you like me to proceed with this solution?"*
@@ -313,6 +315,6 @@ To ensure the project never degenerates into a monolithic mess again, you MUST o
 ### Rule 8 – Token & Step Conservation
 1. **Code‑Map First:** Always consult the Table of Contents in `AGENTS.md` to locate the exact file before any search.
 2. **Targeted Line Reads:** Use `grep -n` to find line numbers, then read only the 30‑60 lines surrounding the target.
-3. **Batch Execution After Approval:** Combine file copies, version bump, and `python3 verify.py` into one command. Then run each Git step as its **own separate command** (`git add <files>`, `git commit -m "..."`, `git push origin main`) with no `cd` prefix or `&&` chaining, so the user's "Always allow" approvals apply automatically.
+3. **Batch Execution After Approval & Prompt Elimination:** Combine file copies, version bump, and `python3 verify.py` into one command. Then run each Git step as its **own separate command** (`git add <files>`, `git commit -m "..."`, `git push origin main`) with no `cd` prefix or `&&` chaining, so the user's "Always allow" approvals apply automatically. Never invoke `run_workflow` or run looped external network polling scripts that barrage the user with permission modals.
 4. **Prompt Compaction Before Model Switches:** The agent cannot run slash commands itself. When a conversation gets long or a model switch is coming, **remind the user** to run `/compact`.
 ---

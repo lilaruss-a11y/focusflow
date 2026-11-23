@@ -2541,7 +2541,7 @@
       let next;
       if (delta > 0) {
         next = isHalfStep ? cur + 0.5 : Math.ceil(cur * 2) / 2;
-        if (cur <= 2.0 && next > 2.0) next = 2.0;
+        if (cur <= 3.0 && next > 3.0) next = 3.0;
       } else {
         next = isHalfStep ? cur - 0.5 : Math.floor(cur * 2) / 2;
         if (next < 0) next = 0;

@@ -2011,13 +2011,8 @@
            </button>`
         : '';
 
-      // Display formatted quantity: e.g. "12 / 16 oz" if used, or "16 oz" if full
-      let displayLabel = '';
-      if (item.amountRemaining != null && remAmt < totalAmt) {
-        displayLabel = `${remAmt} / ${formatPantryAmountAndUnit(totalAmt, item.unit)}`;
-      } else {
-        displayLabel = formatPantryAmountAndUnit(remAmt, item.unit);
-      }
+      // Display formatted remaining quantity: e.g. "12 oz"
+      const displayLabel = formatPantryAmountAndUnit(remAmt, item.unit);
 
       // Color code by stock level
       let barColor = 'bg-pastel-mint';

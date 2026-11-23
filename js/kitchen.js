@@ -1774,6 +1774,45 @@
       return types;
     }
 
+    function isLiquidPantryItem(item) {
+      if (!item) return false;
+      const u = (item.unit || '').toLowerCase().trim();
+      if (['fl oz', 'fl. oz', 'fluid oz', 'fluid ounce', 'fluid ounces', 'floz', 'ml', 'milliliter', 'milliliters', 'l', 'liter', 'liters', 'gal', 'gallon', 'gallons', 'qt', 'quart', 'quarts', 'pt', 'pint', 'pints'].includes(u)) {
+        return true;
+      }
+      if (['oz', 'ounce', 'ounces', 'g', 'gram', 'grams', 'lb', 'lbs', 'pound', 'pounds'].includes(u)) {
+        return false;
+      }
+      const cat = (item.category || '').toLowerCase();
+      if (cat === 'beverages') return true;
+      const name = (item.name || '').toLowerCase();
+      return /\b(milk|water|juice|oil|vinegar|broth|stock|soup|coffee|tea|soda|seltzer|sparkling|kombucha|cream|half & half|syrup|sauce|dressing|wine|beer|milkshake|smoothie)\b/i.test(name);
+    }
+
+    function getMetricEquivalentLabel(amount, unit, item) {
+      const amt = (amount != null && !isNaN(parseFloat(amount))) ? parseFloat(amount) : 0;
+      const u = (unit || '').toLowerCase().trim();
+      if (amt <= 0) return '';
+      // Already in g or ml -> no duplicate label needed
+      if (u === 'g' || u === 'gram' || u === 'grams' || u === 'ml' || u === 'milliliter' || u === 'milliliters') {
+        return '';
+      }
+      const isLiquid = isLiquidPantryItem(item);
+      const metricUnit = isLiquid ? 'ml' : 'g';
+      let converted = null;
+      if (u === 'oz' || u === 'ounce' || u === 'ounces') converted = amt * 28.3495;
+      else if (u === 'lb' || u === 'lbs' || u === 'pound' || u === 'pounds') converted = amt * 453.592;
+      else if (u === 'fl oz' || u === 'fl. oz' || u === 'fluid oz' || u === 'fluid ounce' || u === 'fluid ounces' || u === 'floz') converted = amt * 29.5735;
+      else if (u === 'l' || u === 'liter' || u === 'liters') converted = amt * 1000;
+      else if (u === 'cup' || u === 'cups') converted = amt * 236.588;
+      else if (u === 'gal' || u === 'gallon' || u === 'gallons') converted = amt * 3785.41;
+      else if (u === 'qt' || u === 'quart' || u === 'quarts') converted = amt * 946.353;
+      else if (u === 'pt' || u === 'pint' || u === 'pints') converted = amt * 473.176;
+
+      if (converted === null) return '';
+      return `${Math.round(converted)} ${metricUnit}`;
+    }
+
     function formatPantryAmountAndUnit(amount, unit) {
       const amt = (amount != null && !isNaN(parseFloat(amount))) ? parseFloat(amount) : 1;
       const u = (unit || 'items').toLowerCase().trim();
@@ -2011,8 +2050,10 @@
            </button>`
         : '';
 
-      // Display formatted remaining quantity: e.g. "12 oz"
+      // Display formatted remaining quantity: e.g. "12 oz" and smaller metric equivalent
       const displayLabel = formatPantryAmountAndUnit(remAmt, item.unit);
+      const metricLabel = getMetricEquivalentLabel(remAmt, item.unit, item);
+      const metricSubHtml = metricLabel ? ` <span class="text-[9px] text-slate-400 font-normal ml-0.5">${metricLabel}</span>` : '';
 
       // Color code by stock level
       let barColor = 'bg-pastel-mint';
@@ -2080,7 +2121,7 @@
           ${lowStockCartAction}
           <!-- Amount Display with stock percentage tooltip -->
           <span class="${badgeTextColor} font-bold px-2 py-0.5 rounded-lg bg-dark-elevated border border-dark-border font-mono text-[10.5px]" title="${remAmt} left of ${totalAmt} ${item.unit || 'items'} (${pct}% remaining)">
-            ${displayLabel}
+            ${displayLabel}${metricSubHtml}
           </span>
           <!-- Delete -->
           <button type="button" onclick="event.stopPropagation(); deletePantryItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-0.5" title="Remove ingredient">
@@ -2479,13 +2520,14 @@
       if (!item || !item.nutrition) return;
       const nut = item.nutrition;
       const servingDesc = item.serving || nut.serving || '1 serving';
-      const baseGrams = item.servingGrams || nut.servingGrams || (item.unit === 'g' ? (parseFloat(item.amount) || 100) : 100);
+      const metricUnit = isLiquidPantryItem(item) ? 'ml' : 'g';
+      const baseGrams = item.servingGrams || nut.servingGrams || ((item.unit === 'g' || item.unit === 'ml') ? (parseFloat(item.amount) || 100) : 100);
       const viewGrams = Math.round(baseGrams * scale);
 
       const baseLabel = document.getElementById('pantry-detail-base-serving');
-      if (baseLabel) baseLabel.textContent = `• Base: 1 serving = ${servingDesc} (${baseGrams} g)`;
+      if (baseLabel) baseLabel.textContent = `• Base: 1 serving = ${servingDesc} (${baseGrams} ${metricUnit})`;
       const viewLabel = document.getElementById('pantry-detail-serving-display');
-      if (viewLabel) viewLabel.textContent = `${scale}x serving = ${servingDesc} (${viewGrams} g)`;
+      if (viewLabel) viewLabel.textContent = `${scale}x serving = ${servingDesc} (${viewGrams} ${metricUnit})`;
 
       const isVerified = Boolean(item.isVerified || (item.sourceBadge && item.sourceBadge.includes('✓')));
       const verifiedMap = item.verifiedNutrients || nut.verifiedNutrients || (isVerified ? { kcal: true, protein: true, carbs: true, fat: true, fiber: true, sugar: true, satFat: true, sodium: true } : {});

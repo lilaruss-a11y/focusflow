@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=129">
+  <link rel="stylesheet" href="css/styles.css?v=130">
   <script>
     function resetViewportZoom() {
       try {
@@ -5741,14 +5741,35 @@
 
       <!-- 5. Nutritional Profile at Bottom (Macro Donut + Core Health Metrics + Highlights) -->
       <div class="p-3.5 rounded-2xl bg-dark-base border border-dark-border space-y-2.5 text-xs">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-1.5">
+        <div class="flex items-start justify-between gap-2">
+          <div class="min-w-0">
             <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">Nutritional Facts</span>
-            <span id="pantry-detail-base-serving" class="text-slate-400 font-mono text-[10px]">• Base: 1 serving (100g)</span>
+            <span id="pantry-detail-base-serving" class="text-slate-400 font-mono text-[10px] block truncate">Base: 1 serving (100g)</span>
           </div>
-          <button type="button" onclick="openManualNutritionModalForActivePantryItem()" class="px-2 py-0.5 rounded-lg bg-dark-elevated hover:bg-pastel-mint/20 border border-dark-border hover:border-pastel-mint/40 text-[10px] text-pastel-mint font-semibold flex items-center gap-1 transition">
-            <i data-lucide="edit-3" class="w-3 h-3"></i>
-            <span>Edit Nutrition</span>
+          <button type="button" onclick="openManualNutritionModalForActivePantryItem()" title="Edit Nutrition" class="p-1.5 rounded-lg bg-dark-elevated hover:bg-pastel-mint/20 border border-dark-border hover:border-pastel-mint/40 text-pastel-mint transition shrink-0 flex items-center justify-center">
+            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+
+        <!-- Compact Portion Stepper & Quick Log -->
+        <div class="p-2 rounded-xl bg-dark-elevated/80 border border-dark-border flex items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span class="text-slate-300 font-semibold text-[11px] shrink-0">Portion:</span>
+            <div class="flex items-center bg-dark-base border border-dark-border rounded-lg overflow-hidden h-7">
+              <button type="button" onclick="stepPantryDetailPortion(-0.5)" class="px-1.5 h-full text-slate-400 hover:text-white hover:bg-slate-700/60 transition flex items-center justify-center" title="Decrease by 0.5x">
+                <i data-lucide="chevron-down" class="w-3 h-3"></i>
+              </button>
+              <input type="number" id="pantry-detail-portion-input" value="1" step="any" min="0" oninput="handlePantryDetailPortionInput(this.value)" class="w-11 bg-transparent text-center font-mono font-bold text-pastel-mint text-[11px] focus:outline-none">
+              <span class="text-[10px] text-slate-400 font-mono pr-1">x</span>
+              <button type="button" onclick="stepPantryDetailPortion(0.5)" class="px-1.5 h-full text-slate-400 hover:text-white hover:bg-slate-700/60 transition flex items-center justify-center" title="Increase by 0.5x">
+                <i data-lucide="chevron-up" class="w-3 h-3"></i>
+              </button>
+            </div>
+            <span id="pantry-detail-serving-display" class="font-mono text-slate-400 text-[10px] truncate hidden sm:inline">1.0 serving (100g)</span>
+          </div>
+          <button type="button" onclick="logActivePantryDetailPortion()" class="px-2.5 py-1 rounded-lg bg-pastel-mint/20 hover:bg-pastel-mint/30 border border-pastel-mint/40 text-pastel-mint font-bold text-[10.5px] flex items-center gap-1 transition shrink-0" title="Log this portion to today's Nutrition">
+            <i data-lucide="plus-circle" class="w-3 h-3"></i>
+            <span>Log</span>
           </button>
         </div>
 
@@ -5761,23 +5782,54 @@
         <span class="hidden" id="pantry-detail-carbs">0</span>
         <span class="hidden" id="pantry-detail-fat">0</span>
 
-        <!-- Core Health Metrics Summary (Fiber, Sugar, Sat Fat, Sodium) -->
-        <div class="grid grid-cols-4 gap-1.5 text-center font-mono text-[10px]">
-          <div class="p-1.5 rounded-xl bg-dark-elevated/80 border border-dark-border/60">
-            <span class="text-slate-400 block text-[9px] font-sans font-semibold">Fiber</span>
-            <span class="font-bold text-pastel-mint text-xs" id="pantry-detail-fiber">3.0g</span>
+        <!-- Swipeable Watch-Out vs Healthy Boosters Summary -->
+        <div id="pantry-nutrient-swipe-wrap" class="space-y-1.5" ontouchstart="this.dataset.tx = event.touches[0].clientX" ontouchend="const dx = event.changedTouches[0].clientX - (parseFloat(this.dataset.tx)||0); if (dx < -35) switchPantryNutrientSummaryPage(1); else if (dx > 35) switchPantryNutrientSummaryPage(0);">
+          <div class="flex items-center justify-between px-0.5">
+            <span id="pantry-nutrient-page-title" class="text-[10px] font-bold text-pastel-peach uppercase tracking-wider">Watch Out</span>
+            <div class="flex items-center gap-1.5">
+              <button type="button" id="dot-pantry-nut-0" onclick="switchPantryNutrientSummaryPage(0)" class="w-2 h-2 rounded-full bg-pastel-peach transition" title="Watch Out Nutrients"></button>
+              <button type="button" id="dot-pantry-nut-1" onclick="switchPantryNutrientSummaryPage(1)" class="w-2 h-2 rounded-full bg-slate-600 transition" title="Healthy Boosters"></button>
+            </div>
           </div>
-          <div class="p-1.5 rounded-xl bg-dark-elevated/80 border border-dark-border/60">
-            <span class="text-slate-400 block text-[9px] font-sans font-semibold">Sugars</span>
-            <span class="font-bold text-pastel-butter text-xs" id="pantry-detail-sugar">1.2g</span>
+
+          <!-- Page 0: Watch Out (Sugars, Sat Fat, Sodium, Cholesterol/Trans) -->
+          <div id="pantry-nutrient-page-0" class="grid grid-cols-4 gap-1.5 text-center font-mono text-[10px]">
+            <div class="p-1.5 rounded-xl bg-dark-elevated/80 border border-pastel-butter/30">
+              <span class="text-slate-400 block text-[9px] font-sans font-semibold">Sugars</span>
+              <span class="font-bold text-pastel-butter text-xs" id="pantry-detail-sugar">1.2g</span>
+            </div>
+            <div class="p-1.5 rounded-xl bg-dark-elevated/80 border border-pastel-peach/30">
+              <span class="text-slate-400 block text-[9px] font-sans font-semibold">Sat Fat</span>
+              <span class="font-bold text-pastel-peach text-xs" id="pantry-detail-sat-fat">0.1g</span>
+            </div>
+            <div class="p-1.5 rounded-xl bg-dark-elevated/80 border border-pastel-coral/30">
+              <span class="text-slate-400 block text-[9px] font-sans font-semibold">Sodium</span>
+              <span class="font-bold text-slate-200 text-xs" id="pantry-detail-sodium">45mg</span>
+            </div>
+            <div class="p-1.5 rounded-xl bg-dark-elevated/80 border border-dark-border/60">
+              <span class="text-slate-400 block text-[9px] font-sans font-semibold">Net Carb</span>
+              <span class="font-bold text-pastel-lavender text-xs" id="pantry-detail-net-carbs">0g</span>
+            </div>
           </div>
-          <div class="p-1.5 rounded-xl bg-dark-elevated/80 border border-dark-border/60">
-            <span class="text-slate-400 block text-[9px] font-sans font-semibold">Sat Fat</span>
-            <span class="font-bold text-pastel-peach text-xs" id="pantry-detail-sat-fat">0.1g</span>
-          </div>
-          <div class="p-1.5 rounded-xl bg-dark-elevated/80 border border-dark-border/60">
-            <span class="text-slate-400 block text-[9px] font-sans font-semibold">Sodium</span>
-            <span class="font-bold text-slate-200 text-xs" id="pantry-detail-sodium">45mg</span>
+
+          <!-- Page 1: Healthy Boosters (Fiber, Omega-3, Potassium, Protein) -->
+          <div id="pantry-nutrient-page-1" class="hidden grid grid-cols-4 gap-1.5 text-center font-mono text-[10px]">
+            <div class="p-1.5 rounded-xl bg-dark-elevated/80 border border-pastel-mint/30">
+              <span class="text-slate-400 block text-[9px] font-sans font-semibold">Fiber</span>
+              <span class="font-bold text-pastel-mint text-xs" id="pantry-detail-fiber">3.0g</span>
+            </div>
+            <div class="p-1.5 rounded-xl bg-dark-elevated/80 border border-pastel-sky/30">
+              <span class="text-slate-400 block text-[9px] font-sans font-semibold">Omega-3</span>
+              <span class="font-bold text-pastel-sky text-xs" id="pantry-detail-omega3">0g</span>
+            </div>
+            <div class="p-1.5 rounded-xl bg-dark-elevated/80 border border-pastel-mint/30">
+              <span class="text-slate-400 block text-[9px] font-sans font-semibold">Potassium</span>
+              <span class="font-bold text-pastel-mint text-xs" id="pantry-detail-potassium">0mg</span>
+            </div>
+            <div class="p-1.5 rounded-xl bg-dark-elevated/80 border border-pastel-sky/30">
+              <span class="text-slate-400 block text-[9px] font-sans font-semibold">Protein</span>
+              <span class="font-bold text-pastel-sky text-xs" id="pantry-detail-protein-card">0g</span>
+            </div>
           </div>
         </div>
 
@@ -5790,7 +5842,7 @@
             </span>
             <span class="text-[9px] text-pastel-lavender font-semibold">Highest % Daily Value</span>
           </div>
-          <div id="pantry-top-nutrients-list" class="space-y-1"></div>
+          <div id="pantry-top-nutrients-list" class="grid grid-cols-2 gap-1.5"></div>
         </div>
 
         <!-- 1-Click Expand / Collapse Full Nutrition Breakdown Button -->
@@ -5803,19 +5855,6 @@
 
         <!-- Collapsible Full Nutritional Breakdown (Hidden by default) -->
         <div id="pantry-full-nutrition-panel" class="hidden space-y-2.5 pt-1">
-          <!-- Independent Viewing Portion Scaler -->
-          <div class="p-2 rounded-xl bg-dark-elevated/80 border border-dark-border flex items-center justify-between gap-2 text-xs">
-            <div class="flex items-center gap-1.5 min-w-0">
-              <span class="text-slate-300 font-semibold text-[11px] shrink-0">Viewing Portion:</span>
-              <span id="pantry-detail-serving-display" class="font-mono text-pastel-mint font-bold text-[11px] truncate">1.0 serving (100g)</span>
-            </div>
-            <div class="flex items-center gap-1 shrink-0">
-              <button type="button" onclick="scalePantryDetailPortion(0.5)" class="px-1.5 py-0.5 rounded bg-dark-base hover:bg-slate-700 text-[10px] font-mono text-slate-300 transition">0.5x</button>
-              <button type="button" onclick="scalePantryDetailPortion(1.0)" class="px-1.5 py-0.5 rounded bg-pastel-mint/20 border border-pastel-mint/40 text-[10px] font-mono text-pastel-mint font-bold transition">1.0x</button>
-              <button type="button" onclick="scalePantryDetailPortion(1.5)" class="px-1.5 py-0.5 rounded bg-dark-base hover:bg-slate-700 text-[10px] font-mono text-slate-300 transition">1.5x</button>
-              <button type="button" onclick="scalePantryDetailPortion(2.0)" class="px-1.5 py-0.5 rounded bg-dark-base hover:bg-slate-700 text-[10px] font-mono text-slate-300 transition">2.0x</button>
-            </div>
-          </div>
 
           <!-- Unified Macronutrient Daily Goal Contribution Bars -->
           <div class="pt-1.5 border-t border-dark-border/60 space-y-1.5">

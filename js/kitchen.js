@@ -2511,9 +2511,110 @@
 
     function scalePantryDetailPortion(scale = 1.0) {
       state.activePantryPortionScale = scale;
+      const inp = document.getElementById('pantry-detail-portion-input');
+      if (inp && document.activeElement !== inp) {
+        inp.value = Math.round(scale * 100) / 100;
+      }
       if (state.activePantryDetailItem) {
         renderPantryItemDetailNutrients(state.activePantryDetailItem, scale);
       }
+    }
+
+    function stepPantryDetailPortion(delta) {
+      const inp = document.getElementById('pantry-detail-portion-input');
+      let cur = inp ? parseFloat(inp.value) : (state.activePantryPortionScale ?? 1.0);
+      if (isNaN(cur) || cur < 0) cur = 1.0;
+
+      const isHalfStep = Math.abs(cur * 2 - Math.round(cur * 2)) < 1e-6;
+      let next;
+      if (delta > 0) {
+        next = isHalfStep ? cur + 0.5 : Math.ceil(cur * 2) / 2;
+        if (cur <= 2.0 && next > 2.0) next = 2.0;
+      } else {
+        next = isHalfStep ? cur - 0.5 : Math.floor(cur * 2) / 2;
+        if (next < 0) next = 0;
+      }
+      next = Math.round(next * 100) / 100;
+      if (inp) inp.value = next;
+      scalePantryDetailPortion(next);
+    }
+
+    function handlePantryDetailPortionInput(val) {
+      const num = parseFloat(val);
+      if (isNaN(num) || num < 0) return;
+      scalePantryDetailPortion(num);
+    }
+
+    function switchPantryNutrientSummaryPage(pageIdx) {
+      const p0 = document.getElementById('pantry-nutrient-page-0');
+      const p1 = document.getElementById('pantry-nutrient-page-1');
+      const title = document.getElementById('pantry-nutrient-page-title');
+      const d0 = document.getElementById('dot-pantry-nut-0');
+      const d1 = document.getElementById('dot-pantry-nut-1');
+      if (!p0 || !p1) return;
+
+      if (pageIdx === 1) {
+        p0.classList.add('hidden');
+        p1.classList.remove('hidden');
+        if (title) {
+          title.textContent = 'Healthy Boosters';
+          title.className = 'text-[10px] font-bold text-pastel-mint uppercase tracking-wider';
+        }
+        if (d0) d0.className = 'w-2 h-2 rounded-full bg-slate-600 transition';
+        if (d1) d1.className = 'w-2 h-2 rounded-full bg-pastel-mint transition';
+      } else {
+        p1.classList.add('hidden');
+        p0.classList.remove('hidden');
+        if (title) {
+          title.textContent = 'Watch Out';
+          title.className = 'text-[10px] font-bold text-pastel-peach uppercase tracking-wider';
+        }
+        if (d0) d0.className = 'w-2 h-2 rounded-full bg-pastel-peach transition';
+        if (d1) d1.className = 'w-2 h-2 rounded-full bg-slate-600 transition';
+      }
+    }
+
+    function logActivePantryDetailPortion() {
+      if (!state.activePantryDetailItem) return;
+      const item = state.activePantryDetailItem;
+      const nut = item.nutrition || {};
+      const scale = state.activePantryPortionScale != null ? state.activePantryPortionScale : 1.0;
+      if (scale <= 0) {
+        alertBox("Set a portion greater than 0 to log.", "Nothing to Log");
+        return;
+      }
+
+      const todayStr = (typeof getTodayStr === 'function') ? getTodayStr() : new Date().toISOString().split('T')[0];
+      if (!Array.isArray(state.foodLog)) state.foodLog = [];
+
+      state.foodLog.push({
+        id: `fl-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        date: todayStr,
+        name: `${item.name} (${scale}x)`,
+        kcal: Math.round((nut.kcal || 0) * scale),
+        protein: Math.round((nut.protein || 0) * scale * 10) / 10,
+        carbs: Math.round((nut.carbs || 0) * scale * 10) / 10,
+        fat: Math.round((nut.fat || 0) * scale * 10) / 10,
+        fiber: Math.round((nut.fiber || 0) * scale * 10) / 10,
+        sugar: Math.round((nut.sugar || 0) * scale * 10) / 10,
+        satFat: Math.round((nut.satFat || 0) * scale * 10) / 10,
+        sodium: Math.round((nut.sodium || 0) * scale),
+        meal: 'snack'
+      });
+
+      const remInput = document.getElementById('pantry-detail-amount-remaining');
+      const curRem = item.amountRemaining != null ? parseFloat(item.amountRemaining) : (parseFloat(item.amount) || 1);
+      const newRem = Math.max(0, Math.round((curRem - scale) * 100) / 100);
+      item.amountRemaining = newRem;
+      if (remInput) {
+        remInput.value = newRem;
+        remInput.dataset.linked = '0';
+      }
+      updatePantryDetailStockBar();
+      saveAppState();
+      if (typeof renderNutrition === 'function') renderNutrition();
+      playChime('bell');
+      alertBox(`Logged ${scale}x serving of "${item.name}" to today's Nutrition.`, "Logged to Today");
     }
 
     function renderPantryItemDetailNutrients(item, scale = 1.0) {

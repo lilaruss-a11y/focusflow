@@ -2,11 +2,11 @@
 // - The app page (index.html): network-first, falls back to the cached copy when offline.
 // - Libraries from CDNs (Tailwind, Lucide, Firebase SDK, fonts): cache-first.
 // - Google sign-in, Firestore and other API traffic is never touched (always goes to the network).
-const CACHE_VERSION = 'focusflow-v127-fridge-door-and-standardized-categories';
+const CACHE_VERSION = 'focusflow-v128-pantry-dates-mobile-stack';
 const APP_SHELL = [
   './',
   './index.html',
-  './css/styles.css?v=127',
+  './css/styles.css?v=128',
   './data/family-cookbook.js?v=48',
   './data/usda-foods.js?v=59',
   './js/audio.js?v=48',

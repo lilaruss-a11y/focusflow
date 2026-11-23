@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=121">
+  <link rel="stylesheet" href="css/styles.css?v=122">
   <script>
     function resetViewportZoom() {
       try {
@@ -5464,51 +5464,51 @@
       <div class="space-y-2 text-xs">
         <div class="grid grid-cols-3 gap-1.5 p-1 bg-dark-base rounded-2xl border border-dark-border">
           <!-- Button 1: Storage Zone -->
-          <button type="button" id="btn-toggle-pantry-storage-open" onclick="togglePantryDetailSection('storage')" class="py-1.5 px-2 rounded-xl bg-dark-elevated hover:bg-slate-700/70 border border-dark-border text-center transition flex items-center justify-center gap-1 shadow-sm min-w-0 truncate">
+          <button type="button" id="btn-toggle-pantry-storage-open" onclick="togglePantryDetailSection('storage')" class="py-1.5 px-2 rounded-xl bg-dark-elevated hover:bg-slate-700/70 border border-dark-border text-center transition flex items-center justify-center gap-1.5 shadow-sm min-w-0">
+            <span id="pantry-pill-storage-icon" class="text-sm leading-none shrink-0">❄️</span>
             <span id="pantry-pill-storage-label" class="font-bold text-pastel-sky text-[11px] truncate">Fridge</span>
-            <span id="icon-chevron-storage" class="text-slate-400 text-[10px] shrink-0 transition-transform">▼</span>
           </button>
           <!-- Button 2: Format -->
-          <button type="button" id="btn-toggle-pantry-format-open" onclick="togglePantryDetailSection('format')" class="py-1.5 px-2 rounded-xl bg-dark-elevated hover:bg-slate-700/70 border border-dark-border text-center transition flex items-center justify-center gap-1 shadow-sm min-w-0 truncate">
+          <button type="button" id="btn-toggle-pantry-format-open" onclick="togglePantryDetailSection('format')" class="py-1.5 px-2 rounded-xl bg-dark-elevated hover:bg-slate-700/70 border border-dark-border text-center transition flex items-center justify-center gap-1.5 shadow-sm min-w-0">
+            <span id="pantry-pill-format-icon" class="text-sm leading-none shrink-0">🌿</span>
             <span id="pantry-pill-format-label" class="font-bold text-pastel-mint text-[11px] truncate">Fresh</span>
-            <span id="icon-chevron-format" class="text-slate-400 text-[10px] shrink-0 transition-transform">▼</span>
           </button>
           <!-- Button 3: Category -->
-          <button type="button" id="btn-toggle-pantry-category-open" onclick="togglePantryDetailSection('category')" class="py-1.5 px-2 rounded-xl bg-dark-elevated hover:bg-slate-700/70 border border-dark-border text-center transition flex items-center justify-center gap-1 shadow-sm min-w-0 truncate">
-            <span id="pantry-pill-category-label" class="font-bold text-pastel-butter text-[11px] truncate">Produce</span>
-            <span id="icon-chevron-category" class="text-slate-400 text-[10px] shrink-0 transition-transform">▼</span>
+          <button type="button" id="btn-toggle-pantry-category-open" onclick="togglePantryDetailSection('category')" class="py-1.5 px-2 rounded-xl bg-dark-elevated hover:bg-slate-700/70 border border-dark-border text-center transition flex items-center justify-center gap-1.5 shadow-sm min-w-0">
+            <span id="pantry-pill-category-icon" class="text-sm leading-none shrink-0">🥦</span>
+            <span id="pantry-pill-category-label" class="font-bold text-pastel-butter text-[11px] truncate">Veggies</span>
           </button>
         </div>
 
         <!-- Open Layout Container A: Storage Zones (7 Zones) -->
         <div id="pantry-detail-section-storage" class="hidden p-2.5 rounded-2xl bg-dark-base border border-pastel-sky/40 space-y-1.5">
           <span class="text-[10px] font-bold text-pastel-sky uppercase tracking-wider block">Kitchen Storage Zone:</span>
-          <div class="grid grid-cols-4 sm:grid-cols-7 gap-1">
-            <button type="button" onclick="setPantryDetailStorage('fridge-crisper')" id="btn-pantry-storage-fridge-crisper" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Crisper Drawer">
+          <div class="grid grid-cols-4 gap-1.5">
+            <button type="button" onclick="setPantryDetailStorage('fridge-crisper')" id="btn-pantry-storage-fridge-crisper" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Crisper Drawer">
               <span class="text-base leading-none">🥬</span>
               <span class="text-[10px] truncate w-full text-center">Crisper</span>
             </button>
-            <button type="button" onclick="setPantryDetailStorage('fridge-main')" id="btn-pantry-storage-fridge-main" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Main Fridge &amp; Deli">
+            <button type="button" onclick="setPantryDetailStorage('fridge-main')" id="btn-pantry-storage-fridge-main" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Main Fridge &amp; Deli">
               <span class="text-base leading-none">❄️</span>
               <span class="text-[10px] truncate w-full text-center">Fridge</span>
             </button>
-            <button type="button" onclick="setPantryDetailStorage('freezer')" id="btn-pantry-storage-freezer" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Deep Freeze">
+            <button type="button" onclick="setPantryDetailStorage('freezer')" id="btn-pantry-storage-freezer" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Deep Freeze">
               <span class="text-base leading-none">🧊</span>
               <span class="text-[10px] truncate w-full text-center">Freezer</span>
             </button>
-            <button type="button" onclick="setPantryDetailStorage('counter')" id="btn-pantry-storage-counter" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Countertop">
+            <button type="button" onclick="setPantryDetailStorage('counter')" id="btn-pantry-storage-counter" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Countertop">
               <span class="text-base leading-none">🧺</span>
               <span class="text-[10px] truncate w-full text-center">Counter</span>
             </button>
-            <button type="button" onclick="setPantryDetailStorage('cupboard')" id="btn-pantry-storage-cupboard" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Cupboard">
+            <button type="button" onclick="setPantryDetailStorage('cupboard')" id="btn-pantry-storage-cupboard" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Cupboard">
               <span class="text-base leading-none">🚪</span>
               <span class="text-[10px] truncate w-full text-center">Cupboard</span>
             </button>
-            <button type="button" onclick="setPantryDetailStorage('pantry')" id="btn-pantry-storage-pantry" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Dry Pantry Shelf">
+            <button type="button" onclick="setPantryDetailStorage('pantry')" id="btn-pantry-storage-pantry" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Dry Pantry Shelf">
               <span class="text-base leading-none">🥫</span>
               <span class="text-[10px] truncate w-full text-center">Pantry</span>
             </button>
-            <button type="button" onclick="setPantryDetailStorage('spices')" id="btn-pantry-storage-spices" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Spice Rack &amp; Condiments">
+            <button type="button" onclick="setPantryDetailStorage('spices')" id="btn-pantry-storage-spices" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Spice Rack &amp; Condiments">
               <span class="text-base leading-none">🧂</span>
               <span class="text-[10px] truncate w-full text-center">Spices</span>
             </button>
@@ -5518,24 +5518,24 @@
         <!-- Open Layout Container B: Format (5 Preparation States) -->
         <div id="pantry-detail-section-format" class="hidden p-2.5 rounded-2xl bg-dark-base border border-pastel-mint/40 space-y-1.5">
           <span class="text-[10px] font-bold text-pastel-mint uppercase tracking-wider block">Format &amp; Preparation State:</span>
-          <div class="grid grid-cols-5 gap-1">
-            <button type="button" onclick="setPantryDetailFormat('fresh')" id="btn-pantry-format-fresh" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Fresh / Raw">
+          <div class="grid grid-cols-4 gap-1.5">
+            <button type="button" onclick="setPantryDetailFormat('fresh')" id="btn-pantry-format-fresh" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Fresh / Raw">
               <span class="text-base leading-none">🌿</span>
               <span class="text-[10px] truncate w-full text-center">Fresh</span>
             </button>
-            <button type="button" onclick="setPantryDetailFormat('canned')" id="btn-pantry-format-canned" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Canned / Jarred">
+            <button type="button" onclick="setPantryDetailFormat('canned')" id="btn-pantry-format-canned" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Canned / Jarred">
               <span class="text-base leading-none">🥫</span>
               <span class="text-[10px] truncate w-full text-center">Canned</span>
             </button>
-            <button type="button" onclick="setPantryDetailFormat('frozen')" id="btn-pantry-format-frozen" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Frozen">
+            <button type="button" onclick="setPantryDetailFormat('frozen')" id="btn-pantry-format-frozen" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Frozen">
               <span class="text-base leading-none">🧊</span>
               <span class="text-[10px] truncate w-full text-center">Frozen</span>
             </button>
-            <button type="button" onclick="setPantryDetailFormat('dried')" id="btn-pantry-format-dried" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Dried / Dry Goods">
+            <button type="button" onclick="setPantryDetailFormat('dried')" id="btn-pantry-format-dried" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Dried / Dry Goods">
               <span class="text-base leading-none">🌾</span>
               <span class="text-[10px] truncate w-full text-center">Dried</span>
             </button>
-            <button type="button" onclick="setPantryDetailFormat('cooked')" id="btn-pantry-format-cooked" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Cooked / Leftovers">
+            <button type="button" onclick="setPantryDetailFormat('cooked')" id="btn-pantry-format-cooked" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5" title="Cooked / Leftovers">
               <span class="text-base leading-none">🍳</span>
               <span class="text-[10px] truncate w-full text-center">Cooked</span>
             </button>
@@ -5558,48 +5558,48 @@
             <option value="leftovers">leftovers</option>
             <option value="supplements">supplements</option>
           </select>
-          <div class="grid grid-cols-3 gap-1">
-            <button type="button" onclick="setPantryDetailCategory('protein')" id="btn-pantry-cat-protein" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
+          <div class="grid grid-cols-4 gap-1.5">
+            <button type="button" onclick="setPantryDetailCategory('protein')" id="btn-pantry-cat-protein" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
               <span class="text-base leading-none">🥩</span>
               <span class="text-[10px] truncate w-full text-center">Protein</span>
             </button>
-            <button type="button" onclick="setPantryDetailCategory('dairy')" id="btn-pantry-cat-dairy" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
+            <button type="button" onclick="setPantryDetailCategory('dairy')" id="btn-pantry-cat-dairy" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
               <span class="text-base leading-none">🥛</span>
               <span class="text-[10px] truncate w-full text-center">Dairy</span>
             </button>
-            <button type="button" onclick="setPantryDetailCategory('vegetables')" id="btn-pantry-cat-vegetables" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
+            <button type="button" onclick="setPantryDetailCategory('vegetables')" id="btn-pantry-cat-vegetables" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
               <span class="text-base leading-none">🥦</span>
               <span class="text-[10px] truncate w-full text-center">Veggies</span>
             </button>
-            <button type="button" onclick="setPantryDetailCategory('fruits')" id="btn-pantry-cat-fruits" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
+            <button type="button" onclick="setPantryDetailCategory('fruits')" id="btn-pantry-cat-fruits" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
               <span class="text-base leading-none">🍎</span>
               <span class="text-[10px] truncate w-full text-center">Fruits</span>
             </button>
-            <button type="button" onclick="setPantryDetailCategory('grains')" id="btn-pantry-cat-grains" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
+            <button type="button" onclick="setPantryDetailCategory('grains')" id="btn-pantry-cat-grains" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
               <span class="text-base leading-none">🌾</span>
               <span class="text-[10px] truncate w-full text-center">Grains</span>
             </button>
-            <button type="button" onclick="setPantryDetailCategory('baking')" id="btn-pantry-cat-baking" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
+            <button type="button" onclick="setPantryDetailCategory('baking')" id="btn-pantry-cat-baking" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
               <span class="text-base leading-none">🧁</span>
               <span class="text-[10px] truncate w-full text-center">Baking</span>
             </button>
-            <button type="button" onclick="setPantryDetailCategory('spices')" id="btn-pantry-cat-spices" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
+            <button type="button" onclick="setPantryDetailCategory('spices')" id="btn-pantry-cat-spices" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
               <span class="text-base leading-none">🧂</span>
               <span class="text-[10px] truncate w-full text-center">Spices &amp; Oils</span>
             </button>
-            <button type="button" onclick="setPantryDetailCategory('snacks')" id="btn-pantry-cat-snacks" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
+            <button type="button" onclick="setPantryDetailCategory('snacks')" id="btn-pantry-cat-snacks" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
               <span class="text-base leading-none">🍿</span>
               <span class="text-[10px] truncate w-full text-center">Snacks &amp; Nuts</span>
             </button>
-            <button type="button" onclick="setPantryDetailCategory('beverages')" id="btn-pantry-cat-beverages" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
+            <button type="button" onclick="setPantryDetailCategory('beverages')" id="btn-pantry-cat-beverages" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
               <span class="text-base leading-none">🥤</span>
               <span class="text-[10px] truncate w-full text-center">Beverages</span>
             </button>
-            <button type="button" onclick="setPantryDetailCategory('leftovers')" id="btn-pantry-cat-leftovers" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
+            <button type="button" onclick="setPantryDetailCategory('leftovers')" id="btn-pantry-cat-leftovers" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
               <span class="text-base leading-none">🍲</span>
               <span class="text-[10px] truncate w-full text-center">Leftovers</span>
             </button>
-            <button type="button" onclick="setPantryDetailCategory('supplements')" id="btn-pantry-cat-supplements" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
+            <button type="button" onclick="setPantryDetailCategory('supplements')" id="btn-pantry-cat-supplements" class="h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
               <span class="text-base leading-none">💊</span>
               <span class="text-[10px] truncate w-full text-center">Supplements</span>
             </button>
@@ -7434,7 +7434,7 @@
   <script src="js/sync.js?v=48"></script>
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
-  <script src="js/kitchen.js?v=121"></script>
+  <script src="js/kitchen.js?v=122"></script>
   <script src="js/recipes.js?v=94"></script>
   <script src="js/shopping.js?v=94"></script>
   <script src="js/chef.js?v=94"></script>

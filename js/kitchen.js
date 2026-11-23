@@ -2941,15 +2941,25 @@
       const activeFormat = item.format || (typeof inferFoodFormat === 'function' ? inferFoodFormat(item.name, activeStorage, item.category) : 'fresh');
       setPantryDetailFormat(activeFormat);
 
-      const activeCategory = item.category || 'produce';
+      const activeCategory = (item.category === 'produce' || !item.category)
+        ? (typeof getItemTypes === 'function' && getItemTypes(item).includes('fruits') ? 'fruits' : 'vegetables')
+        : (item.category === 'condiments' ? 'spices' : item.category);
       setPantryDetailCategory(activeCategory);
 
       // Ensure all 3 open layout sections and date details start closed on open
+      const tabActiveBorders = {
+        storage: 'border-pastel-sky',
+        format: 'border-pastel-mint',
+        category: 'border-pastel-butter'
+      };
       ['storage', 'format', 'category'].forEach(s => {
         const c = document.getElementById(`pantry-detail-section-${s}`);
-        const ch = document.getElementById(`icon-chevron-${s}`);
+        const tabBtn = document.getElementById(`btn-toggle-pantry-${s}-open`);
         if (c) c.classList.add('hidden');
-        if (ch) ch.style.transform = '';
+        if (tabBtn) {
+          tabBtn.classList.remove(tabActiveBorders[s]);
+          tabBtn.classList.add('border-dark-border');
+        }
       });
       const extraDates = document.getElementById('pantry-extra-dates-container');
       const datesChevron = document.getElementById('icon-chevron-dates');
@@ -2973,19 +2983,28 @@
 
     function togglePantryDetailSection(section) {
       const sections = ['storage', 'format', 'category'];
+      const tabActiveBorders = {
+        storage: 'border-pastel-sky',
+        format: 'border-pastel-mint',
+        category: 'border-pastel-butter'
+      };
       sections.forEach(s => {
         const container = document.getElementById(`pantry-detail-section-${s}`);
-        const chevron = document.getElementById(`icon-chevron-${s}`);
+        const tabBtn = document.getElementById(`btn-toggle-pantry-${s}-open`);
         if (!container) return;
         if (s === section) {
           const isHidden = container.classList.contains('hidden');
           container.classList.toggle('hidden', !isHidden);
-          if (chevron) {
-            chevron.style.transform = isHidden ? 'rotate(180deg)' : '';
+          if (tabBtn) {
+            tabBtn.classList.toggle(tabActiveBorders[s], isHidden);
+            tabBtn.classList.toggle('border-dark-border', !isHidden);
           }
         } else {
           container.classList.add('hidden');
-          if (chevron) chevron.style.transform = '';
+          if (tabBtn) {
+            tabBtn.classList.remove(tabActiveBorders[s]);
+            tabBtn.classList.add('border-dark-border');
+          }
         }
       });
       if (window.lucide) lucide.createIcons();
@@ -3022,17 +3041,19 @@
         'supplements': { icon: '💊', label: 'Supplements' }
       };
 
+      const pillIcon = document.getElementById('pantry-pill-category-icon');
       const pillLabel = document.getElementById('pantry-pill-category-label');
-      const catInfo = catLabelMap[catVal] || { icon: '🥗', label: catVal };
+      const catInfo = catLabelMap[catVal] || { icon: '🥦', label: catVal };
+      if (pillIcon) pillIcon.textContent = catInfo.icon;
       if (pillLabel) pillLabel.textContent = catInfo.label;
 
       Object.keys(catLabelMap).forEach(c => {
         const btn = document.getElementById(`btn-pantry-cat-${c}`);
         if (!btn) return;
         if (c === catVal) {
-          btn.className = "p-1.5 rounded-xl border-2 border-pastel-butter bg-pastel-butter/20 text-white font-bold text-center text-[10px] shadow-sm";
+          btn.className = "h-14 p-1.5 rounded-xl border border-pastel-butter bg-pastel-butter/20 text-white font-bold text-center text-[10px] shadow-sm flex flex-col items-center justify-center gap-0.5";
         } else {
-          btn.className = "p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-slate-400 text-center text-[10px]";
+          btn.className = "h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-slate-400 text-center text-[10px] flex flex-col items-center justify-center gap-0.5";
         }
       });
 
@@ -3058,17 +3079,19 @@
         'spices': { icon: '🧂', label: 'Spices' }
       };
 
+      const pillIcon = document.getElementById('pantry-pill-storage-icon');
       const pillLabel = document.getElementById('pantry-pill-storage-label');
       const zoneInfo = zoneLabels[storageType] || { icon: '❄️', label: storageType };
+      if (pillIcon) pillIcon.textContent = zoneInfo.icon;
       if (pillLabel) pillLabel.textContent = zoneInfo.label;
 
       zones.forEach(s => {
         const btn = document.getElementById(`btn-pantry-storage-${s}`);
         if (!btn) return;
         if (s === storageType) {
-          btn.className = "p-1.5 rounded-xl border-2 border-pastel-sky bg-pastel-sky/20 text-white font-bold text-center text-[10px] shadow-sm";
+          btn.className = "h-14 p-1.5 rounded-xl border border-pastel-sky bg-pastel-sky/20 text-white font-bold text-center text-[10px] shadow-sm flex flex-col items-center justify-center gap-0.5";
         } else {
-          btn.className = "p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-slate-400 text-center text-[10px]";
+          btn.className = "h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-slate-400 text-center text-[10px] flex flex-col items-center justify-center gap-0.5";
         }
       });
       updatePantryDetailSmartExpirationTip();
@@ -3085,17 +3108,19 @@
         'cooked': { icon: '🍳', label: 'Cooked' }
       };
 
+      const pillIcon = document.getElementById('pantry-pill-format-icon');
       const pillLabel = document.getElementById('pantry-pill-format-label');
       const fmtInfo = formatLabels[formatType] || { icon: '🌿', label: formatType };
+      if (pillIcon) pillIcon.textContent = fmtInfo.icon;
       if (pillLabel) pillLabel.textContent = fmtInfo.label;
 
       formats.forEach(f => {
         const btn = document.getElementById(`btn-pantry-format-${f}`);
         if (!btn) return;
         if (f === formatType) {
-          btn.className = "p-1.5 rounded-xl border-2 border-pastel-mint bg-pastel-mint/20 text-white font-bold text-center text-[10px] shadow-sm";
+          btn.className = "h-14 p-1.5 rounded-xl border border-pastel-mint bg-pastel-mint/20 text-white font-bold text-center text-[10px] shadow-sm flex flex-col items-center justify-center gap-0.5";
         } else {
-          btn.className = "p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-slate-400 text-center text-[10px]";
+          btn.className = "h-14 p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-slate-400 text-center text-[10px] flex flex-col items-center justify-center gap-0.5";
         }
       });
       updatePantryDetailSmartExpirationTip();

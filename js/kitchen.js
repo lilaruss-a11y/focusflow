@@ -2777,6 +2777,63 @@
       playChime('bell');
     }
 
+    function updatePantryDetailStockBar() {
+      const amtInput = document.getElementById('pantry-detail-amount');
+      const remInput = document.getElementById('pantry-detail-amount-remaining');
+      const bar = document.getElementById('pantry-detail-stock-bar');
+      const pctLabel = document.getElementById('pantry-detail-stock-pct');
+      if (!bar || !pctLabel) return;
+
+      const totalAmt = amtInput ? (parseFloat(amtInput.value) || 0) : 1;
+      const remAmt = remInput ? (parseFloat(remInput.value) || 0) : 0;
+      let pct = 100;
+      if (totalAmt > 0) {
+        pct = Math.min(100, Math.max(0, Math.round((remAmt / totalAmt) * 100)));
+      } else if (remAmt <= 0) {
+        pct = 0;
+      }
+
+      let barColor = 'bg-pastel-mint';
+      let textColor = 'text-pastel-mint';
+      if (pct <= 25) {
+        barColor = 'bg-pastel-coral';
+        textColor = 'text-pastel-coral';
+      } else if (pct <= 50) {
+        barColor = 'bg-amber-400';
+        textColor = 'text-amber-300';
+      }
+
+      bar.style.width = `${pct}%`;
+      bar.className = `h-full ${barColor} rounded-full transition-all duration-300`;
+      pctLabel.textContent = `${pct}%`;
+      pctLabel.className = `text-[10px] font-mono font-bold ${textColor} shrink-0`;
+    }
+
+    function showPantryDetailFreshnessInfo() {
+      if (!state.activePantryDetailItem) return;
+      const item = state.activePantryDetailItem;
+      const nameInput = document.getElementById('pantry-detail-name-input');
+      const catSelect = document.getElementById('pantry-detail-category-select');
+      const name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : (item.name || 'this item');
+      const cat = catSelect ? catSelect.value : (item.category || 'produce');
+      const storage = item.storage || 'fridge-main';
+      const format = item.format || 'fresh';
+
+      const est = calculateSmartExpiration(name, cat, storage, format);
+      const dateExpInput = document.getElementById('pantry-detail-date-exp');
+      let daysMsg = '';
+      if (dateExpInput && dateExpInput.value) {
+        const exp = new Date(dateExpInput.value);
+        const now = new Date();
+        const diff = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
+        if (diff < 0) daysMsg = `Expired ${Math.abs(diff)} day(s) ago based on the Best By Date.`;
+        else if (diff === 0) daysMsg = `Expires today based on the Best By Date.`;
+        else daysMsg = `${diff} day(s) remaining until the Best By Date.`;
+      }
+
+      alertBox(`${daysMsg}\n\nSmart Shelf-Life Estimate: ${est.label} (based on ${format} ${cat} stored in ${storage.replace('-', ' ')}).`, "How Freshness is Calculated");
+    }
+
     function markPantryDetailEmpty() {
       const remInput = document.getElementById('pantry-detail-amount-remaining');
       if (remInput) {
@@ -2786,6 +2843,7 @@
       if (state.activePantryDetailItem) {
         state.activePantryDetailItem.amountRemaining = 0;
       }
+      updatePantryDetailStockBar();
       playChime('bell');
       alertBox("Item marked as empty (0 remaining). You can save or add it to your shopping list.", "Stock Updated");
     }
@@ -2841,6 +2899,7 @@
         amtRemInput.dataset.linked = item.amountRemaining != null ? '0' : '1';
       }
       setPantryDetailUnit(item.unit || 'items');
+      updatePantryDetailStockBar();
 
       // Find unified match across recipes, USDA whole foods, or barcode catalog
       const unifiedMatches = (typeof getUnifiedFoodOrMeal === 'function') ? getUnifiedFoodOrMeal(item.name) : [];

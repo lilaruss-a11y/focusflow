@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=124">
+  <link rel="stylesheet" href="css/styles.css?v=125">
   <script>
     function resetViewportZoom() {
       try {
@@ -5625,7 +5625,7 @@
           <div>
             <label class="font-semibold text-slate-300 block mb-1 text-[11px]">Total Package Size</label>
             <div class="flex items-center bg-dark-elevated border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm h-10 w-full">
-              <input type="number" id="pantry-detail-amount" oninput="const rem = document.getElementById('pantry-detail-amount-remaining'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; }" step="any" min="0" placeholder="1" class="w-full bg-transparent px-3 py-1.5 text-white font-mono text-xs font-semibold focus:outline-none min-w-0">
+              <input type="number" id="pantry-detail-amount" oninput="const rem = document.getElementById('pantry-detail-amount-remaining'); if (rem && (!rem.value || rem.dataset.linked === '1')) { rem.value = this.value; rem.dataset.linked = '1'; } updatePantryDetailStockBar();" step="any" min="0" placeholder="1" class="w-full bg-transparent px-3 py-1.5 text-white font-mono text-xs font-semibold focus:outline-none min-w-0">
               <div class="relative shrink-0 border-l border-dark-border bg-dark-base/80 h-full px-2 flex items-center justify-center min-w-[70px] select-none cursor-pointer">
                 <span id="pantry-detail-unit-display-pkg" class="text-pastel-sky font-bold font-mono text-xs py-1 text-center pointer-events-none block">items</span>
                 <select id="pantry-detail-unit" onchange="setPantryDetailUnit(this.value)" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10" title="Tap to change unit">
@@ -5657,12 +5657,19 @@
           <div>
             <label class="font-semibold text-slate-300 block mb-1 text-[11px]">Amount Remaining</label>
             <div class="flex items-center bg-dark-elevated border border-pastel-sky/50 focus-within:border-pastel-sky rounded-xl overflow-hidden transition shadow-sm h-10 w-full" title="Current stock left in your kitchen">
-              <input type="number" id="pantry-detail-amount-remaining" oninput="this.dataset.linked = '0';" step="any" min="0" placeholder="1" class="w-full bg-transparent px-3 py-1.5 text-white font-mono text-xs font-semibold focus:outline-none min-w-0">
+              <input type="number" id="pantry-detail-amount-remaining" oninput="this.dataset.linked = '0'; updatePantryDetailStockBar();" step="any" min="0" placeholder="1" class="w-full bg-transparent px-3 py-1.5 text-white font-mono text-xs font-semibold focus:outline-none min-w-0">
               <div class="relative shrink-0 border-l border-dark-border bg-dark-base/80 h-full px-2 flex items-center justify-center min-w-[70px] select-none cursor-pointer" onclick="document.getElementById('pantry-detail-unit').focus(); document.getElementById('pantry-detail-unit').showPicker?.();" title="Tap unit to change">
                 <span id="pantry-detail-unit-display" class="text-pastel-sky font-bold font-mono text-xs py-1 text-center block">items</span>
               </div>
             </div>
           </div>
+        </div>
+        <!-- Visual Stock Bar -->
+        <div class="pt-0.5 flex items-center gap-2">
+          <div class="flex-1 h-1.5 bg-dark-elevated rounded-full overflow-hidden border border-dark-border/60">
+            <div id="pantry-detail-stock-bar" class="h-full bg-pastel-mint rounded-full transition-all duration-300" style="width: 100%;"></div>
+          </div>
+          <span id="pantry-detail-stock-pct" class="text-[10px] font-mono font-bold text-pastel-mint shrink-0">100%</span>
         </div>
       </div>
 
@@ -5672,7 +5679,7 @@
           <span class="font-bold text-white text-[11px]">Best By Date:</span>
           <div class="flex items-center gap-1.5">
             <button type="button" onclick="applySmartPantryDetailExpiration()" class="text-[10px] text-pastel-sky hover:underline font-mono">Estimate</button>
-            <span id="pantry-detail-freshness-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30">✓ Fresh</span>
+            <button type="button" id="pantry-detail-freshness-badge" onclick="showPantryDetailFreshnessInfo()" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30 cursor-pointer hover:opacity-80 transition" title="Tap to see how this was calculated">✓ Fresh</button>
           </div>
         </div>
         <div class="flex items-center gap-2">
@@ -5684,13 +5691,13 @@
         </div>
         <!-- Tucked Extra Dates Container -->
         <div id="pantry-extra-dates-container" class="hidden pt-2 border-t border-dark-border/60 grid grid-cols-2 gap-2">
-          <div>
+          <div class="min-w-0">
             <label class="text-[9.5px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">Date Added</label>
-            <input type="date" id="pantry-detail-date-added" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs shadow-sm">
+            <input type="date" id="pantry-detail-date-added" class="w-full min-w-0 bg-dark-elevated border border-dark-border rounded-xl px-2 py-1.5 text-white font-mono text-[11px] shadow-sm">
           </div>
-          <div>
+          <div class="min-w-0">
             <label class="text-[9.5px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">First Opened</label>
-            <input type="date" id="pantry-detail-date-opened" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs shadow-sm">
+            <input type="date" id="pantry-detail-date-opened" class="w-full min-w-0 bg-dark-elevated border border-dark-border rounded-xl px-2 py-1.5 text-white font-mono text-[11px] shadow-sm">
           </div>
         </div>
       </div>
@@ -7416,7 +7423,7 @@
   <script src="js/sync.js?v=48"></script>
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
-  <script src="js/kitchen.js?v=122"></script>
+  <script src="js/kitchen.js?v=125"></script>
   <script src="js/recipes.js?v=94"></script>
   <script src="js/shopping.js?v=94"></script>
   <script src="js/chef.js?v=94"></script>

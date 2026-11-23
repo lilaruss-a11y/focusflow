@@ -2592,20 +2592,51 @@
 
     function logActivePantryDetailPortion() {
       if (!state.activePantryDetailItem) return;
+      const scale = state.activePantryPortionScale != null ? state.activePantryPortionScale : 1.0;
+      if (scale <= 0) {
+        alertBox("Set servings greater than 0 to log.", "Nothing to Log");
+        return;
+      }
+      const panel = document.getElementById('pantry-detail-log-panel');
+      const dateInput = document.getElementById('pantry-log-date');
+      if (dateInput) {
+        dateInput.value = (typeof getTodayStr === 'function') ? getTodayStr() : new Date().toISOString().split('T')[0];
+      }
+      if (panel) {
+        panel.classList.toggle('hidden');
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    function closePantryDetailLogPanel() {
+      const panel = document.getElementById('pantry-detail-log-panel');
+      if (panel) panel.classList.add('hidden');
+    }
+
+    function confirmPantryDetailLog() {
+      if (!state.activePantryDetailItem) return;
       const item = state.activePantryDetailItem;
       const nut = item.nutrition || {};
       const scale = state.activePantryPortionScale != null ? state.activePantryPortionScale : 1.0;
       if (scale <= 0) {
-        alertBox("Set a portion greater than 0 to log.", "Nothing to Log");
+        alertBox("Set servings greater than 0 to log.", "Nothing to Log");
         return;
       }
 
+      const mealSelect = document.getElementById('pantry-log-meal');
+      const dateInput = document.getElementById('pantry-log-date');
+      const subCheckbox = document.getElementById('pantry-log-subtract');
+
+      const meal = mealSelect ? mealSelect.value : 'snack';
       const todayStr = (typeof getTodayStr === 'function') ? getTodayStr() : new Date().toISOString().split('T')[0];
+      const logDate = (dateInput && dateInput.value) ? dateInput.value : todayStr;
+      const shouldSubtract = subCheckbox ? subCheckbox.checked : true;
+
       if (!Array.isArray(state.foodLog)) state.foodLog = [];
 
       state.foodLog.push({
         id: `fl-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        date: todayStr,
+        date: logDate,
         name: `${item.name} (${scale}x)`,
         kcal: Math.round((nut.kcal || 0) * scale),
         protein: Math.round((nut.protein || 0) * scale * 10) / 10,
@@ -2615,22 +2646,26 @@
         sugar: Math.round((nut.sugar || 0) * scale * 10) / 10,
         satFat: Math.round((nut.satFat || 0) * scale * 10) / 10,
         sodium: Math.round((nut.sodium || 0) * scale),
-        meal: 'snack'
+        meal: meal
       });
 
-      const remInput = document.getElementById('pantry-detail-amount-remaining');
-      const curRem = item.amountRemaining != null ? parseFloat(item.amountRemaining) : (parseFloat(item.amount) || 1);
-      const newRem = Math.max(0, Math.round((curRem - scale) * 100) / 100);
-      item.amountRemaining = newRem;
-      if (remInput) {
-        remInput.value = newRem;
-        remInput.dataset.linked = '0';
+      if (shouldSubtract) {
+        const remInput = document.getElementById('pantry-detail-amount-remaining');
+        const curRem = item.amountRemaining != null ? parseFloat(item.amountRemaining) : (parseFloat(item.amount) || 1);
+        const newRem = Math.max(0, Math.round((curRem - scale) * 100) / 100);
+        item.amountRemaining = newRem;
+        if (remInput) {
+          remInput.value = newRem;
+          remInput.dataset.linked = '0';
+        }
+        updatePantryDetailStockBar();
       }
-      updatePantryDetailStockBar();
+
+      closePantryDetailLogPanel();
       saveAppState();
       if (typeof renderNutrition === 'function') renderNutrition();
       playChime('bell');
-      alertBox(`Logged ${scale}x serving of "${item.name}" to today's Nutrition.`, "Logged to Today");
+      alertBox(`Logged ${scale} serving(s) of "${item.name}" to ${meal}.`, "Logged to Nutrition");
     }
 
     function renderPantryItemDetailNutrients(item, scale = 1.0) {
@@ -3199,6 +3234,7 @@
       if (extraDates) extraDates.classList.add('hidden');
       if (datesChevron) datesChevron.style.transform = '';
       closePantryDetailFreshnessOverlay();
+      closePantryDetailLogPanel();
 
       // Ensure full nutrition panel starts collapsed on open
       const nutPanel = document.getElementById('pantry-full-nutrition-panel');

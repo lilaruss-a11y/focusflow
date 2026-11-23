@@ -1620,6 +1620,14 @@
       if (modal) modal.classList.remove('hidden');
       if (window.lucide) lucide.createIcons();
       playChime('bell');
+
+      if (options && options.focusAmountRemaining && amtRemInput) {
+        setTimeout(() => {
+          amtRemInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          amtRemInput.focus();
+          amtRemInput.select();
+        }, 60);
+      }
     }
 
     function openManualNutritionForLoggedFood() {
@@ -2120,7 +2128,7 @@
         <div class="flex items-center gap-1.5 shrink-0" onclick="event.stopPropagation()">
           ${lowStockCartAction}
           <!-- Amount Display with stock percentage tooltip -->
-          <span class="${badgeTextColor} font-bold px-2 py-0.5 rounded-lg bg-dark-elevated border border-dark-border font-mono text-[10.5px]" title="${remAmt} left of ${totalAmt} ${item.unit || 'items'} (${pct}% remaining)">
+          <span onclick="event.stopPropagation(); openPantryItemDetailModal('${item.id}', { focusAmountRemaining: true })" class="${badgeTextColor} font-bold px-2 py-0.5 rounded-lg bg-dark-elevated border border-dark-border hover:border-pastel-sky/60 cursor-pointer font-mono text-[10.5px] transition" title="${remAmt} left of ${totalAmt} ${item.unit || 'items'} (${pct}% remaining) — Tap to edit amount remaining">
             ${displayLabel}${metricSubHtml}
           </span>
           <!-- Delete -->
@@ -3032,7 +3040,7 @@
       alertBox(`Added "${finalName}" (${qtyStr}) to your Shopping List!`, "Added to Groceries");
     }
 
-    function openPantryItemDetailModal(id) {
+    function openPantryItemDetailModal(id, options = {}) {
       const item = (state.pantry || []).find(p => p.id === id);
       if (!item) return;
       state.activePantryDetailItem = item;
@@ -3197,6 +3205,14 @@
       if (modal) modal.classList.remove('hidden');
       if (window.lucide) lucide.createIcons();
       playChime('bell');
+
+      if (options && options.focusAmountRemaining && amtRemInput) {
+        setTimeout(() => {
+          amtRemInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          amtRemInput.focus();
+          amtRemInput.select();
+        }, 60);
+      }
     }
 
     function togglePantryDetailSection(section) {

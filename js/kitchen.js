@@ -79,7 +79,7 @@
 
     function setPantryZoneFilter(zone) {
       state.pantryZoneFilter = zone;
-      const zones = ['all', 'fridge', 'freezer', 'counter', 'cupboard', 'pantry', 'spices'];
+      const zones = ['all', 'fridge', 'fridge-door', 'freezer', 'counter', 'cupboard', 'pantry', 'spices'];
       zones.forEach(z => {
         const btn = document.getElementById(`btn-pzone-${z}`);
         if (!btn) return;
@@ -1676,6 +1676,7 @@
 
       if (s === 'fridge-crisper' || s === 'crisper') return 'fridge-crisper';
       if (s === 'fridge-main') return 'fridge-main';
+      if (s === 'fridge-door' || s === 'door') return 'fridge-door';
       if (s === 'cupboard') return 'cupboard';
       if (s === 'frozen' || s === 'freezer') return 'freezer';
       if (s === 'counter') return 'counter';
@@ -2127,10 +2128,11 @@
     }
 
     function renderPantry() {
-      // 1. Zone Lists (7 Zones)
+      // 1. Zone Lists (8 Zones)
       const zoneLists = {
         'fridge-crisper': document.getElementById('list-zone-fridge-crisper'),
         'fridge-main': document.getElementById('list-zone-fridge-main'),
+        'fridge-door': document.getElementById('list-zone-fridge-door'),
         'freezer': document.getElementById('list-zone-freezer'),
         'counter': document.getElementById('list-zone-counter'),
         'cupboard': document.getElementById('list-zone-cupboard'),
@@ -2138,7 +2140,7 @@
         'spices': document.getElementById('list-zone-spices')
       };
       Object.keys(zoneLists).forEach(k => { if (zoneLists[k]) zoneLists[k].innerHTML = ''; });
-      const zoneCounts = { 'fridge-crisper': 0, 'fridge-main': 0, freezer: 0, counter: 0, cupboard: 0, pantry: 0, spices: 0 };
+      const zoneCounts = { 'fridge-crisper': 0, 'fridge-main': 0, 'fridge-door': 0, freezer: 0, counter: 0, cupboard: 0, pantry: 0, spices: 0 };
 
       // 2. Type Lists (Standardized Food Categories)
       const typeLists = {
@@ -2212,7 +2214,9 @@
         if (zoneFilter === 'all') {
           matchesZone = true;
         } else if (zoneFilter === 'fridge') {
-          matchesZone = (itemZone === 'fridge-crisper' || itemZone === 'fridge-main' || item.storage === 'fridge');
+          matchesZone = (itemZone === 'fridge-crisper' || itemZone === 'fridge-main' || itemZone === 'fridge-door' || item.storage === 'fridge');
+        } else if (zoneFilter === 'fridge-door') {
+          matchesZone = (itemZone === 'fridge-door');
         } else if (zoneFilter === 'freezer') {
           matchesZone = (itemZone === 'freezer' || item.storage === 'frozen');
         } else if (zoneFilter === 'counter') {
@@ -2290,6 +2294,7 @@
       const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
       setTxt('count-zone-fridge-crisper', zoneCounts['fridge-crisper']);
       setTxt('count-zone-fridge-main', zoneCounts['fridge-main']);
+      setTxt('count-zone-fridge-door', zoneCounts['fridge-door']);
       setTxt('count-zone-freezer', zoneCounts.freezer);
       setTxt('count-zone-counter', zoneCounts.counter);
       setTxt('count-zone-cupboard', zoneCounts.cupboard);
@@ -2810,7 +2815,15 @@
     }
 
     function showPantryDetailFreshnessInfo() {
-      if (!state.activePantryDetailItem) return;
+      const overlay = document.getElementById('pantry-detail-freshness-overlay');
+      const textEl = document.getElementById('pantry-detail-freshness-overlay-text');
+      if (!overlay || !textEl || !state.activePantryDetailItem) return;
+
+      if (!overlay.classList.contains('hidden')) {
+        overlay.classList.add('hidden');
+        return;
+      }
+
       const item = state.activePantryDetailItem;
       const nameInput = document.getElementById('pantry-detail-name-input');
       const catSelect = document.getElementById('pantry-detail-category-select');
@@ -2826,12 +2839,19 @@
         const exp = new Date(dateExpInput.value);
         const now = new Date();
         const diff = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
-        if (diff < 0) daysMsg = `Expired ${Math.abs(diff)} day(s) ago based on the Best By Date.`;
-        else if (diff === 0) daysMsg = `Expires today based on the Best By Date.`;
-        else daysMsg = `${diff} day(s) remaining until the Best By Date.`;
+        if (diff < 0) daysMsg = `Expired ${Math.abs(diff)} day(s) ago. `;
+        else if (diff === 0) daysMsg = `Expires today. `;
+        else daysMsg = `${diff} day(s) left. `;
       }
 
-      alertBox(`${daysMsg}\n\nSmart Shelf-Life Estimate: ${est.label} (based on ${format} ${cat} stored in ${storage.replace('-', ' ')}).`, "How Freshness is Calculated");
+      textEl.textContent = `${daysMsg}Estimated ${est.label} for ${format} ${cat} in ${storage.replace('-', ' ')}.`;
+      overlay.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closePantryDetailFreshnessOverlay() {
+      const overlay = document.getElementById('pantry-detail-freshness-overlay');
+      if (overlay) overlay.classList.add('hidden');
     }
 
     function markPantryDetailEmpty() {
@@ -3024,6 +3044,7 @@
       const datesChevron = document.getElementById('icon-chevron-dates');
       if (extraDates) extraDates.classList.add('hidden');
       if (datesChevron) datesChevron.style.transform = '';
+      closePantryDetailFreshnessOverlay();
 
       // Ensure full nutrition panel starts collapsed on open
       const nutPanel = document.getElementById('pantry-full-nutrition-panel');
@@ -3067,6 +3088,11 @@
         }
       });
       if (window.lucide) lucide.createIcons();
+    }
+
+    function closePantryDetailFreshnessOverlay() {
+      const overlay = document.getElementById('pantry-detail-freshness-overlay');
+      if (overlay) overlay.classList.add('hidden');
     }
 
     function togglePantryDateDetails() {
@@ -3127,10 +3153,11 @@
 
     function setPantryDetailStorage(storageType) {
       if (state.activePantryDetailItem) state.activePantryDetailItem.storage = storageType;
-      const zones = ['fridge-crisper', 'fridge-main', 'freezer', 'counter', 'cupboard', 'pantry', 'spices'];
+      const zones = ['fridge-crisper', 'fridge-main', 'fridge-door', 'freezer', 'counter', 'cupboard', 'pantry', 'spices'];
       const zoneLabels = {
         'fridge-crisper': { icon: '🥬', label: 'Crisper' },
         'fridge-main': { icon: '❄️', label: 'Fridge' },
+        'fridge-door': { icon: '🫙', label: 'Door' },
         'freezer': { icon: '🧊', label: 'Freezer' },
         'counter': { icon: '🧺', label: 'Counter' },
         'cupboard': { icon: '🚪', label: 'Cupboard' },
@@ -3729,7 +3756,7 @@
     function setVerifyItemStorage(storageZone) {
       const storageInput = document.getElementById('verify-item-storage-select');
       if (storageInput) storageInput.value = storageZone;
-      const zones = ['fridge-crisper', 'fridge-main', 'freezer', 'counter', 'cupboard', 'pantry', 'spices'];
+      const zones = ['fridge-crisper', 'fridge-main', 'fridge-door', 'freezer', 'counter', 'cupboard', 'pantry', 'spices'];
       zones.forEach(z => {
         const btn = document.getElementById(`btn-vstorage-${z}`);
         if (!btn) return;

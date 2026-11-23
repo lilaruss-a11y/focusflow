@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=120">
+  <link rel="stylesheet" href="css/styles.css?v=121">
   <script>
     function resetViewportZoom() {
       try {
@@ -1020,7 +1020,6 @@
                 <button type="button" onclick="setPantryTypeFilter('beverages')" id="btn-ptype-beverages" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥤 Beverages</button>
                 <button type="button" onclick="setPantryTypeFilter('leftovers')" id="btn-ptype-leftovers" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-amber-300 hover:text-white transition text-[11px]">🍲 Leftovers</button>
                 <button type="button" onclick="setPantryTypeFilter('supplements')" id="btn-ptype-supplements" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-pastel-sky hover:text-white transition text-[11px]">💊 Supplements</button>
-                <button type="button" onclick="setPantryTypeFilter('canned')" id="btn-ptype-canned" class="px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]">🥫 Canned</button>
                 <button type="button" onclick="setPantryTypeFilter('expiring')" id="btn-ptype-expiring" class="px-2.5 py-1 rounded-xl bg-dark-base border border-rose-500/40 text-rose-300 hover:text-white transition text-[11px]">⚠️ Expiring</button>
               </div>
             </div>
@@ -1250,17 +1249,6 @@
               <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-supplements">0</span>
             </div>
             <div id="list-type-supplements" class="space-y-2 min-h-[100px]"></div>
-          </div>
-
-          <!-- 12. Canned & Jarred Goods -->
-          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
-            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
-              <span class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
-                <span>🥫</span> Canned &amp; Jarred Goods
-              </span>
-              <span class="text-xs text-slate-400 font-mono font-bold" id="count-type-canned">0</span>
-            </div>
-            <div id="list-type-canned" class="space-y-2 min-h-[100px]"></div>
           </div>
         </div>
       </div>
@@ -5569,7 +5557,6 @@
             <option value="beverages">beverages</option>
             <option value="leftovers">leftovers</option>
             <option value="supplements">supplements</option>
-            <option value="canned">canned</option>
           </select>
           <div class="grid grid-cols-3 gap-1">
             <button type="button" onclick="setPantryDetailCategory('protein')" id="btn-pantry-cat-protein" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
@@ -5615,10 +5602,6 @@
             <button type="button" onclick="setPantryDetailCategory('supplements')" id="btn-pantry-cat-supplements" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
               <span class="text-base leading-none">💊</span>
               <span class="text-[10px] truncate w-full text-center">Supplements</span>
-            </button>
-            <button type="button" onclick="setPantryDetailCategory('canned')" id="btn-pantry-cat-canned" class="p-1.5 rounded-xl bg-dark-elevated border border-dark-border text-center flex flex-col items-center justify-center gap-0.5">
-              <span class="text-base leading-none">🥫</span>
-              <span class="text-[10px] truncate w-full text-center">Canned</span>
             </button>
           </div>
         </div>
@@ -7451,7 +7434,7 @@
   <script src="js/sync.js?v=48"></script>
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
-  <script src="js/kitchen.js?v=120"></script>
+  <script src="js/kitchen.js?v=121"></script>
   <script src="js/recipes.js?v=94"></script>
   <script src="js/shopping.js?v=94"></script>
   <script src="js/chef.js?v=94"></script>

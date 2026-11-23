@@ -94,7 +94,7 @@
 
     function setPantryTypeFilter(type) {
       state.pantryTypeFilter = type;
-      const types = ['all', 'protein', 'dairy', 'vegetables', 'fruits', 'grains', 'baking', 'spices', 'snacks', 'beverages', 'leftovers', 'supplements', 'canned', 'expiring'];
+      const types = ['all', 'protein', 'dairy', 'vegetables', 'fruits', 'grains', 'baking', 'spices', 'snacks', 'beverages', 'leftovers', 'supplements', 'expiring'];
       types.forEach(t => {
         const btn = document.getElementById(`btn-ptype-${t}`);
         if (!btn) return;
@@ -1757,11 +1757,6 @@
         types.push('beverages');
       }
 
-      // 11. Canned & Jarred Goods
-      if (cat === 'canned' || /can\b|canned|jar\b|jarred|diced tomato|tomato paste|black bean|kidney bean|chickpea|broth|soup|marinara|pasta sauce|salsa|pickles|olives|tuna can/i.test(name)) {
-        types.push('canned');
-      }
-
       // Fallback if none matched
       if (types.length === 0) {
         if (cat === 'produce') types.push('vegetables');
@@ -1772,7 +1767,7 @@
         else if (cat === 'snacks') types.push('snacks');
         else if (cat === 'beverages') types.push('beverages');
         else if (cat === 'supplements') types.push('supplements');
-        else types.push('canned');
+        else types.push('vegetables');
       }
 
       return types;
@@ -2157,11 +2152,10 @@
         snacks: document.getElementById('list-type-snacks'),
         beverages: document.getElementById('list-type-beverages'),
         leftovers: document.getElementById('list-type-leftovers'),
-        supplements: document.getElementById('list-type-supplements'),
-        canned: document.getElementById('list-type-canned')
+        supplements: document.getElementById('list-type-supplements')
       };
       Object.keys(typeLists).forEach(k => { if (typeLists[k]) typeLists[k].innerHTML = ''; });
-      const typeCounts = { protein: 0, dairy: 0, vegetables: 0, fruits: 0, grains: 0, baking: 0, spices: 0, snacks: 0, beverages: 0, leftovers: 0, supplements: 0, canned: 0 };
+      const typeCounts = { protein: 0, dairy: 0, vegetables: 0, fruits: 0, grains: 0, baking: 0, spices: 0, snacks: 0, beverages: 0, leftovers: 0, supplements: 0 };
 
       const now = new Date();
       const expiringSoonItems = [];
@@ -2313,7 +2307,6 @@
       setTxt('count-type-beverages', typeCounts.beverages);
       setTxt('count-type-leftovers', typeCounts.leftovers);
       setTxt('count-type-supplements', typeCounts.supplements);
-      setTxt('count-type-canned', typeCounts.canned);
 
       setTxt('pantry-total-count-badge', (state.pantry || []).length);
 
@@ -3026,8 +3019,7 @@
         'snacks': { icon: '🍿', label: 'Snacks & Nuts' },
         'beverages': { icon: '🥤', label: 'Beverages' },
         'leftovers': { icon: '🍲', label: 'Leftovers' },
-        'supplements': { icon: '💊', label: 'Supplements' },
-        'canned': { icon: '🥫', label: 'Canned' }
+        'supplements': { icon: '💊', label: 'Supplements' }
       };
 
       const pillLabel = document.getElementById('pantry-pill-category-label');

@@ -1816,6 +1816,10 @@
       else if (u === 'gal' || u === 'gallon' || u === 'gallons') converted = amt * 3785.41;
       else if (u === 'qt' || u === 'quart' || u === 'quarts') converted = amt * 946.353;
       else if (u === 'pt' || u === 'pint' || u === 'pints') converted = amt * 473.176;
+      else if (['item', 'items', 'serving', 'servings', 'pack', 'packs', 'can', 'cans', 'bottle', 'bottles'].includes(u)) {
+        const perUnit = parseFloat((item && (item.servingGrams || item.nutrition?.servingGrams)) || 100) || 100;
+        converted = amt * perUnit;
+      }
 
       if (converted === null) return '';
       return `${Math.round(converted)} ${metricUnit}`;

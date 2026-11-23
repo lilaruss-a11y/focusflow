@@ -3030,10 +3030,8 @@
         'canned': { icon: '🥫', label: 'Canned' }
       };
 
-      const pillIcon = document.getElementById('pantry-pill-category-icon');
       const pillLabel = document.getElementById('pantry-pill-category-label');
       const catInfo = catLabelMap[catVal] || { icon: '🥗', label: catVal };
-      if (pillIcon) pillIcon.textContent = catInfo.icon;
       if (pillLabel) pillLabel.textContent = catInfo.label;
 
       Object.keys(catLabelMap).forEach(c => {
@@ -3068,10 +3066,8 @@
         'spices': { icon: '🧂', label: 'Spices' }
       };
 
-      const pillIcon = document.getElementById('pantry-pill-storage-icon');
       const pillLabel = document.getElementById('pantry-pill-storage-label');
       const zoneInfo = zoneLabels[storageType] || { icon: '❄️', label: storageType };
-      if (pillIcon) pillIcon.textContent = zoneInfo.icon;
       if (pillLabel) pillLabel.textContent = zoneInfo.label;
 
       zones.forEach(s => {
@@ -3097,10 +3093,8 @@
         'cooked': { icon: '🍳', label: 'Cooked' }
       };
 
-      const pillIcon = document.getElementById('pantry-pill-format-icon');
       const pillLabel = document.getElementById('pantry-pill-format-label');
       const fmtInfo = formatLabels[formatType] || { icon: '🌿', label: formatType };
-      if (pillIcon) pillIcon.textContent = fmtInfo.icon;
       if (pillLabel) pillLabel.textContent = fmtInfo.label;
 
       formats.forEach(f => {

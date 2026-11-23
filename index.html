@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=123">
+  <link rel="stylesheet" href="css/styles.css?v=124">
   <script>
     function resetViewportZoom() {
       try {
@@ -5668,32 +5668,29 @@
 
       <!-- 4. Dates & Freshness Tracking (Best By Prominent, Extra Dates Tucked) -->
       <div class="p-3 rounded-2xl bg-dark-base border border-dark-border space-y-2 text-xs">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-1.5">
-            <span class="font-bold text-white text-[11px]">Best By Date:</span>
-            <span id="pantry-detail-smart-exp-pill" class="text-[10px] text-pastel-mint font-mono"></span>
-          </div>
+        <div class="flex items-center justify-between gap-2">
+          <span class="font-bold text-white text-[11px]">Best By Date:</span>
           <div class="flex items-center gap-1.5">
             <button type="button" onclick="applySmartPantryDetailExpiration()" class="text-[10px] text-pastel-sky hover:underline font-mono">Estimate</button>
             <span id="pantry-detail-freshness-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30">✓ Fresh</span>
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <input type="date" id="pantry-detail-date-exp" class="flex-1 bg-dark-elevated border border-dark-border rounded-xl px-3 py-1.5 text-white font-mono text-xs shadow-sm">
+          <input type="date" id="pantry-detail-date-exp" class="flex-1 bg-dark-elevated border border-dark-border rounded-xl px-3 py-1.5 text-white font-mono text-xs shadow-sm min-w-0">
           <button type="button" onclick="togglePantryDateDetails()" id="btn-toggle-pantry-dates" class="px-2.5 py-1.5 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-dark-border text-slate-300 text-[10.5px] font-semibold flex items-center gap-1 transition shrink-0">
             <span>More Dates</span>
             <i id="icon-chevron-dates" data-lucide="chevron-down" class="w-3 h-3 text-slate-400 transition-transform"></i>
           </button>
         </div>
         <!-- Tucked Extra Dates Container -->
-        <div id="pantry-extra-dates-container" class="hidden pt-2 border-t border-dark-border/60 space-y-2">
+        <div id="pantry-extra-dates-container" class="hidden pt-2 border-t border-dark-border/60 grid grid-cols-2 gap-2">
           <div>
             <label class="text-[9.5px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">Date Added</label>
-            <input type="date" id="pantry-detail-date-added" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-3 py-1.5 text-white font-mono text-xs shadow-sm">
+            <input type="date" id="pantry-detail-date-added" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs shadow-sm">
           </div>
           <div>
-            <label class="text-[9.5px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">First Opened (Optional)</label>
-            <input type="date" id="pantry-detail-date-opened" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-3 py-1.5 text-white font-mono text-xs shadow-sm">
+            <label class="text-[9.5px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">First Opened</label>
+            <input type="date" id="pantry-detail-date-opened" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-white font-mono text-xs shadow-sm">
           </div>
         </div>
       </div>

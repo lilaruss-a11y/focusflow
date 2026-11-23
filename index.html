@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=131">
+  <link rel="stylesheet" href="css/styles.css?v=132">
   <script>
     function resetViewportZoom() {
       try {
@@ -5754,14 +5754,13 @@
         <!-- Compact Portion Stepper & Quick Log -->
         <div class="p-2 rounded-xl bg-dark-elevated/80 border border-dark-border flex items-center justify-between gap-2">
           <div class="flex items-center gap-1.5 min-w-0">
-            <span class="text-slate-300 font-semibold text-[11px] shrink-0">Portion:</span>
+            <span id="pantry-detail-serving-label" class="text-slate-300 font-semibold text-[11px] shrink-0">Serving:</span>
             <div class="flex items-center bg-dark-base border border-dark-border rounded-lg overflow-hidden h-7">
-              <button type="button" onclick="stepPantryDetailPortion(-0.5)" class="px-1.5 h-full text-slate-400 hover:text-white hover:bg-slate-700/60 transition flex items-center justify-center" title="Decrease by 0.5x">
+              <button type="button" onclick="stepPantryDetailPortion(-0.5)" class="px-1.5 h-full text-slate-400 hover:text-white hover:bg-slate-700/60 transition flex items-center justify-center" title="Decrease by 0.5">
                 <i data-lucide="chevron-down" class="w-3 h-3"></i>
               </button>
               <input type="number" id="pantry-detail-portion-input" value="1" step="any" min="0" oninput="handlePantryDetailPortionInput(this.value)" class="w-11 bg-transparent text-center font-mono font-bold text-pastel-mint text-[11px] focus:outline-none">
-              <span class="text-[10px] text-slate-400 font-mono pr-1">x</span>
-              <button type="button" onclick="stepPantryDetailPortion(0.5)" class="px-1.5 h-full text-slate-400 hover:text-white hover:bg-slate-700/60 transition flex items-center justify-center" title="Increase by 0.5x">
+              <button type="button" onclick="stepPantryDetailPortion(0.5)" class="px-1.5 h-full text-slate-400 hover:text-white hover:bg-slate-700/60 transition flex items-center justify-center" title="Increase by 0.5">
                 <i data-lucide="chevron-up" class="w-3 h-3"></i>
               </button>
             </div>

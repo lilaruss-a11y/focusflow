@@ -2527,6 +2527,10 @@
       if (inp && document.activeElement !== inp) {
         inp.value = Math.round(scale * 100) / 100;
       }
+      const lbl = document.getElementById('pantry-detail-serving-label');
+      if (lbl) {
+        lbl.textContent = Math.abs(scale - 1) < 1e-6 ? 'Serving:' : 'Servings:';
+      }
       if (state.activePantryDetailItem) {
         renderPantryItemDetailNutrients(state.activePantryDetailItem, scale);
       }

@@ -49,6 +49,8 @@ You are working on the **FocusFlow** web application for a non-technical user. F
 * **Browser Requirement:** The user **EXCLUSIVELY uses Google Chrome** (on both Mac and mobile). 
   * Do NOT provide Safari-specific shortcuts or advice.
   * All browser testing, developer tools guidance (e.g. `Right-Click > Inspect > Console`), and PWA behavior must be targeted for **Google Chrome**.
+* **Mobile Device Requirement:** The user's phone is an **iPhone 15** (`393 × 852` CSS pixels portrait viewport, ~59px top Dynamic Island safe area, ~34px bottom home indicator safe area) running **Google Chrome**.
+  * All mobile responsive layouts, tap targets, modal alignment, and pill spacing must fit cleanly within `393px` width without horizontal scrolling, overlapping badges, or clipped text.
 
 ---
 
@@ -243,7 +245,7 @@ After the user approves your plan and you make the changes:
 4. **Automatic Browser Visual & Interactive Testing:**
    Whenever diagnosing a visual/UI bug OR after making any UI, CSS, layout, modal, or interactive button change — do NOT wait for the user to type `/browser`:
    - Start a temporary local preview server (`python3 -m http.server 8000`, marked as daemon) and use Antigravity's built-in `browser` subagent (`invoke_subagent` with `TypeName: "browser"`) to open `http://localhost:8000`.
-   - Click through the affected screen, button, or modal, visually verify layout/layering, and check for console errors *before* committing and pushing to GitHub.
+   - Test both **desktop** and **iPhone 15 portrait (`393 × 852`)** viewports: verify there is zero horizontal overflow (`scrollWidth <= 393`), no clipped/wrapped badges or buttons, adequate tap-target spacing, proper modal alignment directly under the top header, and zero console errors *before* committing and pushing to GitHub.
    - Stop the temporary preview server once browser verification is complete.
    - Skip browser testing for docs-only (`AGENTS.md`, `README.md`, `scripts/`, `tests/`) or purely non-UI changes to save time and tokens.
 5. **Provide a Testing Checklist:**

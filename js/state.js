@@ -14,6 +14,39 @@
       appId: "1:263524620993:web:ab683c7a87b8a37fd19240"
     };
 
+    const PANTRY_ZONES = [
+      { id: 'fridge-crisper', label: 'Crisper', icon: '🥬', calmGroup: 'fridge' },
+      { id: 'fridge-main', label: 'Fridge Main', icon: '❄️', calmGroup: 'fridge' },
+      { id: 'fridge-door', label: 'Fridge Door', icon: '🫙', calmGroup: 'fridge' },
+      { id: 'freezer', label: 'Freezer', icon: '🧊', calmGroup: 'freezer' },
+      { id: 'counter', label: 'Counter', icon: '🧺', calmGroup: 'pantry' },
+      { id: 'cupboard', label: 'Cupboard', icon: '🚪', calmGroup: 'pantry' },
+      { id: 'pantry', label: 'Dry Pantry', icon: '🥫', calmGroup: 'pantry' },
+      { id: 'spices', label: 'Spices', icon: '🧂', calmGroup: 'spices' }
+    ];
+
+    const PANTRY_FORMATS = [
+      { id: 'fresh', label: 'Fresh / Raw', icon: '🌿', colorClass: 'text-emerald-400' },
+      { id: 'canned', label: 'Canned / Jarred', icon: '🥫', colorClass: 'text-amber-300' },
+      { id: 'frozen', label: 'Frozen', icon: '🧊', colorClass: 'text-pastel-sky' },
+      { id: 'dried', label: 'Dried / Dry Goods', icon: '🌾', colorClass: 'text-pastel-butter' },
+      { id: 'cooked', label: 'Cooked / Leftovers', icon: '🍳', colorClass: 'text-orange-300' }
+    ];
+
+    const PANTRY_FOOD_TYPES = [
+      { id: 'protein', label: 'Proteins & Meats', shortLabel: 'Protein', icon: '🥩', colorClass: 'text-rose-400' },
+      { id: 'dairy', label: 'Dairy & Alternatives', shortLabel: 'Dairy', icon: '🥛', colorClass: 'text-pastel-sky' },
+      { id: 'vegetables', label: 'Vegetables & Greens', shortLabel: 'Veggies', icon: '🥦', colorClass: 'text-emerald-400' },
+      { id: 'fruits', label: 'Fruits & Berries', shortLabel: 'Fruits', icon: '🍎', colorClass: 'text-pastel-coral' },
+      { id: 'grains', label: 'Grains, Breads & Starches', shortLabel: 'Grains', icon: '🌾', colorClass: 'text-pastel-butter' },
+      { id: 'baking', label: 'Baking & Staples', shortLabel: 'Baking', icon: '🧁', colorClass: 'text-pastel-butter' },
+      { id: 'spices', label: 'Spices, Oils & Condiments', shortLabel: 'Spices & Oils', icon: '🧂', colorClass: 'text-pastel-lavender' },
+      { id: 'snacks', label: 'Snacks, Nuts & Seeds', shortLabel: 'Snacks & Nuts', icon: '🍿', colorClass: 'text-pastel-peach' },
+      { id: 'beverages', label: 'Beverages & Drinks', shortLabel: 'Beverages', icon: '🥤', colorClass: 'text-pastel-sky' },
+      { id: 'leftovers', label: 'Leftovers & Prepared Meals', shortLabel: 'Leftovers', icon: '🍲', colorClass: 'text-emerald-400' },
+      { id: 'supplements', label: 'Supplements & Medications', shortLabel: 'Supplements', icon: '💊', colorClass: 'text-pastel-mint' }
+    ];
+
     const state = {
       activeTab: 'timeline',
       connectedCalendars: null,

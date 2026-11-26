@@ -52,13 +52,51 @@
       }
     }
 
+    function renderPantryFilterPills() {
+      const zoneRow = document.getElementById('pantry-filter-row-zones');
+      const formatRow = document.getElementById('pantry-filter-row-formats');
+      const typeRow = document.getElementById('pantry-filter-row-types');
+
+      const activeZone = state.pantryZoneFilter || 'all';
+      const activeFmt = state.pantryFormatFilter || 'all';
+      const activeType = state.pantryTypeFilter || 'all';
+
+      const pillCls = (isActive, extra = '') => isActive
+        ? 'px-2.5 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition text-[11px] shadow-sm'
+        : `px-2.5 py-1 rounded-xl bg-dark-base border ${extra || 'border-dark-border text-slate-300'} hover:text-white transition text-[11px]`;
+
+      if (zoneRow) {
+        const zones = typeof PANTRY_ZONES !== 'undefined' ? PANTRY_ZONES : [];
+        zoneRow.innerHTML = `<span class="text-slate-400 font-semibold text-[11px] mr-1">Zone:</span>` +
+          `<button type="button" onclick="setPantryZoneFilter('all')" id="btn-pzone-all" class="${pillCls(activeZone === 'all')}">All Zones</button>` +
+          zones.map(z => `<button type="button" onclick="setPantryZoneFilter('${z.id}')" id="btn-pzone-${z.id}" class="${pillCls(activeZone === z.id)}">${z.icon} ${z.label}</button>`).join('');
+      }
+
+      if (formatRow) {
+        const formats = typeof PANTRY_FORMATS !== 'undefined' ? PANTRY_FORMATS : [];
+        formatRow.innerHTML = `<span class="text-slate-400 font-semibold text-[11px] mr-1">Format:</span>` +
+          `<button type="button" onclick="setPantryFormatFilter('all')" id="btn-pformat-all" class="${pillCls(activeFmt === 'all')}">All Formats</button>` +
+          formats.map(f => `<button type="button" onclick="setPantryFormatFilter('${f.id}')" id="btn-pformat-${f.id}" class="${pillCls(activeFmt === f.id)}">${f.icon} ${f.label}</button>`).join('');
+      }
+
+      if (typeRow) {
+        const types = typeof PANTRY_FOOD_TYPES !== 'undefined' ? PANTRY_FOOD_TYPES : [];
+        typeRow.innerHTML = `<span class="text-slate-400 font-semibold text-[11px] mr-1">Food:</span>` +
+          `<button type="button" onclick="setPantryTypeFilter('all')" id="btn-ptype-all" class="${pillCls(activeType === 'all')}">All Types</button>` +
+          types.map(t => `<button type="button" onclick="setPantryTypeFilter('${t.id}')" id="btn-ptype-${t.id}" class="${pillCls(activeType === t.id)}">${t.icon} ${t.shortLabel || t.label}</button>`).join('') +
+          `<button type="button" onclick="setPantryTypeFilter('expiring')" id="btn-ptype-expiring" class="${pillCls(activeType === 'expiring', 'border-rose-500/40 text-rose-300')}">⚠️ Expiring</button>`;
+      }
+    }
+
     function switchPantryViewGroup(mode) {
       state.pantryViewGroup = mode;
       const btnZone = document.getElementById('btn-pantry-view-zone');
       const btnType = document.getElementById('btn-pantry-view-type');
+      const btnFormat = document.getElementById('btn-pantry-view-format');
       const btnMulti = document.getElementById('btn-pantry-view-multifilter');
       const gridZone = document.getElementById('pantry-grid-zone');
       const gridType = document.getElementById('pantry-grid-type');
+      const gridFormat = document.getElementById('pantry-grid-format');
       const panelMulti = document.getElementById('pantry-multifilter-panel');
 
       const activeBtnClass = "px-3 py-1.5 rounded-xl font-bold bg-pastel-mint text-dark-base shadow-sm transition flex items-center gap-1.5 text-xs";
@@ -66,25 +104,16 @@
 
       if (btnZone) btnZone.className = (mode === 'zone') ? activeBtnClass : inactiveBtnClass;
       if (btnType) btnType.className = (mode === 'type') ? activeBtnClass : inactiveBtnClass;
+      if (btnFormat) btnFormat.className = (mode === 'format') ? activeBtnClass : inactiveBtnClass;
       if (btnMulti) btnMulti.className = (mode === 'multifilter') ? activeBtnClass : inactiveBtnClass;
 
-      // In multi-filter mode, show the multi-filter codex panel; otherwise hide it to save space
       if (panelMulti) {
-        if (mode === 'multifilter') {
-          panelMulti.classList.remove('hidden');
-        } else {
-          panelMulti.classList.add('hidden');
-        }
+        panelMulti.classList.toggle('hidden', mode !== 'multifilter');
       }
 
-      if (mode === 'type') {
-        if (gridZone) gridZone.classList.add('hidden');
-        if (gridType) gridType.classList.remove('hidden');
-      } else {
-        // zone or multifilter defaults to the zone grid
-        if (gridZone) gridZone.classList.remove('hidden');
-        if (gridType) gridType.classList.add('hidden');
-      }
+      if (gridZone) gridZone.classList.toggle('hidden', mode === 'type' || mode === 'format');
+      if (gridType) gridType.classList.toggle('hidden', mode !== 'type');
+      if (gridFormat) gridFormat.classList.toggle('hidden', mode !== 'format');
 
       saveAppState();
       renderPantry();
@@ -92,47 +121,19 @@
 
     function setPantryZoneFilter(zone) {
       state.pantryZoneFilter = zone;
-      const zones = ['all', 'fridge', 'fridge-door', 'freezer', 'counter', 'cupboard', 'pantry', 'spices'];
-      zones.forEach(z => {
-        const btn = document.getElementById(`btn-pzone-${z}`);
-        if (!btn) return;
-        if (z === zone) {
-          btn.className = "px-2.5 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition text-[11px] shadow-sm";
-        } else {
-          btn.className = "px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]";
-        }
-      });
+      renderPantryFilterPills();
       renderPantry();
     }
 
     function setPantryTypeFilter(type) {
       state.pantryTypeFilter = type;
-      const types = ['all', 'protein', 'dairy', 'vegetables', 'fruits', 'grains', 'baking', 'spices', 'snacks', 'beverages', 'leftovers', 'supplements', 'expiring'];
-      types.forEach(t => {
-        const btn = document.getElementById(`btn-ptype-${t}`);
-        if (!btn) return;
-        if (t === type) {
-          btn.className = "px-2.5 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition text-[11px] shadow-sm";
-        } else {
-          const borderCls = t === 'expiring' ? 'border-rose-500/40 text-rose-300' : 'border-dark-border text-slate-300';
-          btn.className = `px-2.5 py-1 rounded-xl bg-dark-base border ${borderCls} hover:text-white transition text-[11px]`;
-        }
-      });
+      renderPantryFilterPills();
       renderPantry();
     }
 
     function setPantryFormatFilter(fmt) {
       state.pantryFormatFilter = fmt;
-      const formats = ['all', 'fresh', 'canned', 'frozen', 'dried', 'cooked'];
-      formats.forEach(f => {
-        const btn = document.getElementById(`btn-pformat-${f}`);
-        if (!btn) return;
-        if (f === fmt) {
-          btn.className = "px-2.5 py-1 rounded-xl font-bold bg-pastel-mint text-dark-base transition text-[11px] shadow-sm";
-        } else {
-          btn.className = "px-2.5 py-1 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white transition text-[11px]";
-        }
-      });
+      renderPantryFilterPills();
       renderPantry();
     }
 
@@ -2260,7 +2261,39 @@
       setPantrySearchQuery('');
     }
 
+    function renderGroupedPantryCards(containerEl, groups, itemsByGroup) {
+      if (!containerEl) return;
+      containerEl.innerHTML = '';
+      groups.forEach(group => {
+        const items = itemsByGroup[group.id] || [];
+        if (items.length === 0) return;
+
+        const card = document.createElement('div');
+        card.className = "bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md";
+        card.innerHTML = `
+          <div class="flex items-center justify-between border-b border-dark-border pb-2">
+            <span class="text-xs font-bold ${group.colorClass || 'text-slate-200'} flex items-center gap-1.5">
+              <span>${group.icon}</span> ${group.label}
+            </span>
+            <span class="text-xs text-slate-400 font-mono font-bold">${items.length}</span>
+          </div>
+          <div class="space-y-2"></div>
+        `;
+        const listEl = card.lastElementChild;
+        items.forEach(({ item, expiryBadge }) => {
+          const pill = document.createElement('div');
+          pill.className = "relative overflow-hidden flex items-center justify-between p-2.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm group";
+          pill.onclick = () => openPantryItemDetailModal(item.id);
+          pill.innerHTML = buildPantryItemPillHtml(item, expiryBadge);
+          listEl.appendChild(pill);
+        });
+        containerEl.appendChild(card);
+      });
+    }
+
     function renderPantry() {
+      renderPantryFilterPills();
+
       // 1. Calm Zone Lists (4 Merged Storage Groups)
       const zoneLists = {
         fridge: document.getElementById('list-zone-fridge'),
@@ -2270,24 +2303,15 @@
       };
       Object.keys(zoneLists).forEach(k => { if (zoneLists[k]) zoneLists[k].innerHTML = ''; });
       const zoneCounts = { fridge: 0, freezer: 0, pantry: 0, spices: 0 };
+      const itemsByType = {};
+      const itemsByFormat = {};
       let visibleTotalCount = 0;
 
-      // 2. Type Lists (Standardized Food Categories)
-      const typeLists = {
-        protein: document.getElementById('list-type-protein'),
-        dairy: document.getElementById('list-type-dairy'),
-        vegetables: document.getElementById('list-type-vegetables'),
-        fruits: document.getElementById('list-type-fruits'),
-        grains: document.getElementById('list-type-grains'),
-        baking: document.getElementById('list-type-baking'),
-        spices: document.getElementById('list-type-spices'),
-        snacks: document.getElementById('list-type-snacks'),
-        beverages: document.getElementById('list-type-beverages'),
-        leftovers: document.getElementById('list-type-leftovers'),
-        supplements: document.getElementById('list-type-supplements')
-      };
-      Object.keys(typeLists).forEach(k => { if (typeLists[k]) typeLists[k].innerHTML = ''; });
-      const typeCounts = { protein: 0, dairy: 0, vegetables: 0, fruits: 0, grains: 0, baking: 0, spices: 0, snacks: 0, beverages: 0, leftovers: 0, supplements: 0 };
+      // 2. Clean buckets keyed by master taxonomy (PANTRY_FOOD_TYPES & PANTRY_FORMATS)
+      const foodTypesList = typeof PANTRY_FOOD_TYPES !== 'undefined' ? PANTRY_FOOD_TYPES : [];
+      const formatsList = typeof PANTRY_FORMATS !== 'undefined' ? PANTRY_FORMATS : [];
+      foodTypesList.forEach(t => { itemsByType[t.id] = []; });
+      formatsList.forEach(f => { itemsByFormat[f.id] = []; });
 
       const now = new Date();
       const expiringSoonItems = [];
@@ -2339,24 +2363,14 @@
         const itemZone = getItemZone(item);
         const itemTypes = getItemTypes(item);
 
-        // Zone filter check:
+        // Zone filter check (matches all 8 zones from PANTRY_ZONES accurately):
         let matchesZone = false;
         if (zoneFilter === 'all') {
           matchesZone = true;
         } else if (zoneFilter === 'fridge') {
           matchesZone = (itemZone === 'fridge-crisper' || itemZone === 'fridge-main' || itemZone === 'fridge-door' || item.storage === 'fridge');
-        } else if (zoneFilter === 'fridge-door') {
-          matchesZone = (itemZone === 'fridge-door');
-        } else if (zoneFilter === 'freezer') {
-          matchesZone = (itemZone === 'freezer' || item.storage === 'frozen');
-        } else if (zoneFilter === 'counter') {
-          matchesZone = (itemZone === 'counter' || item.storage === 'counter');
-        } else if (zoneFilter === 'cupboard') {
-          matchesZone = (itemZone === 'cupboard' || item.storage === 'cupboard');
-        } else if (zoneFilter === 'pantry') {
-          matchesZone = (itemZone === 'pantry');
-        } else if (zoneFilter === 'spices') {
-          matchesZone = (itemZone === 'spices');
+        } else {
+          matchesZone = (itemZone === zoneFilter);
         }
 
         // Type filter check:
@@ -2407,21 +2421,17 @@
           zoneLists[calmZone].appendChild(pill);
         }
 
-        // Populate Type View:
+        // Collect into Type & Format buckets:
         const targetTypes = (typeFilter !== 'all' && typeFilter !== 'expiring') ? [typeFilter] : itemTypes;
         targetTypes.forEach(t => {
-          if (typeLists[t]) {
-            typeCounts[t] = (typeCounts[t] || 0) + 1;
-            const pill = document.createElement('div');
-            pill.className = "relative overflow-hidden flex items-center justify-between p-2.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm group";
-            pill.onclick = () => openPantryItemDetailModal(item.id);
-            pill.innerHTML = buildPantryItemPillHtml(item, expiryBadge);
-            typeLists[t].appendChild(pill);
-          }
+          if (itemsByType[t]) itemsByType[t].push({ item, expiryBadge });
         });
+        if (itemsByFormat[itemFormat]) {
+          itemsByFormat[itemFormat].push({ item, expiryBadge });
+        }
       });
 
-      // Update counters and auto-hide empty storage cards
+      // Update zone counters and auto-hide empty storage cards
       const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
       ['fridge', 'freezer', 'pantry', 'spices'].forEach(k => {
         setTxt(`count-zone-${k}`, zoneCounts[k]);
@@ -2429,13 +2439,10 @@
         if (card) card.classList.toggle('hidden', zoneCounts[k] === 0);
       });
 
-      Object.keys(typeCounts).forEach(t => {
-        setTxt(`count-type-${t}`, typeCounts[t]);
-        const listEl = typeLists[t];
-        if (listEl && listEl.parentElement) {
-          listEl.parentElement.classList.toggle('hidden', typeCounts[t] === 0);
-        }
-      });
+      const gridType = document.getElementById('pantry-grid-type');
+      const gridFormat = document.getElementById('pantry-grid-format');
+      renderGroupedPantryCards(gridType, foodTypesList, itemsByType);
+      renderGroupedPantryCards(gridFormat, formatsList, itemsByFormat);
 
       const emptyStateEl = document.getElementById('pantry-empty-state');
       if (emptyStateEl) {
@@ -2446,14 +2453,9 @@
 
       // Make sure active grid matches viewMode
       const gridZone = document.getElementById('pantry-grid-zone');
-      const gridType = document.getElementById('pantry-grid-type');
-      if (viewMode === 'type') {
-        if (gridZone) gridZone.classList.add('hidden');
-        if (gridType) gridType.classList.remove('hidden');
-      } else {
-        if (gridZone) gridZone.classList.remove('hidden');
-        if (gridType) gridType.classList.add('hidden');
-      }
+      if (gridZone) gridZone.classList.toggle('hidden', viewMode === 'type' || viewMode === 'format');
+      if (gridType) gridType.classList.toggle('hidden', viewMode !== 'type');
+      if (gridFormat) gridFormat.classList.toggle('hidden', viewMode !== 'format');
 
       // Render Use Me First strip and check expiring soon alert
       renderUseMeFirstStrip();

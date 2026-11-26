@@ -3083,8 +3083,10 @@
       alertBox(`Added "${finalName}" (${qtyStr}) to your Shopping List!`, "Added to Groceries");
     }
 
-    function openPantryItemDetailModal(id, options = {}) {
-      const item = (state.pantry || []).find(p => p.id === id);
+    function openPantryItemDetailModal(idOrItem, options = {}) {
+      const item = (typeof idOrItem === 'object' && idOrItem !== null)
+        ? idOrItem
+        : (state.pantry || []).find(p => p.id === idOrItem);
       if (!item) return;
       state.activePantryDetailItem = item;
       state.activePantryPortionScale = 1.0;
@@ -3526,11 +3528,17 @@
         item.unit = uVal;
       }
 
+      if (item.isPendingNewPantryItem) {
+        delete item.isPendingNewPantryItem;
+        if (!Array.isArray(state.pantry)) state.pantry = [];
+        state.pantry.push(item);
+      }
+
       saveAppState();
       renderPantry();
       closePantryItemDetailModal();
       playChime('bell');
-      alertBox(`Updated freshness and details for "${item.name}".`, "Item Saved");
+      alertBox(`Saved "${item.name}" to your pantry.`, "Item Saved");
     }
 
     function deletePantryItemFromDetail() {
@@ -3677,9 +3685,14 @@
         }
       }
 
-      // Sort by score descending (most relevant first) and pick top 6
+      // Sort by score descending (most relevant first) and ensure generic USDA foods aren't crowded out by recipes
       scoredMatches.sort((a, b) => b.score - a.score);
-      const matches = scoredMatches.slice(0, 6).map(s => s.item);
+      const topGeneral = scoredMatches.slice(0, 8).map(s => s.item);
+      const usdaExtras = scoredMatches
+        .filter(s => s.item.source === 'USDA' && !topGeneral.includes(s.item))
+        .slice(0, 4)
+        .map(s => s.item);
+      const matches = [...topGeneral, ...usdaExtras].slice(0, 12);
 
       box.innerHTML = '';
       state._activeSearchResults = matches;
@@ -4083,6 +4096,50 @@
     }
 
     function openVerifyFoodModalBeforeAdding(matchIdxOrItem) {
+      let m = null;
+      if (typeof matchIdxOrItem === 'number') {
+        const list = state._activeSearchResults || [];
+        m = list[matchIdxOrItem];
+      } else if (matchIdxOrItem && typeof matchIdxOrItem === 'object') {
+        m = matchIdxOrItem;
+      }
+      if (!m) return;
+
+      const srv = m.serving || m.nutrition?.serving || '1 serving';
+      const srvG = m.servingGrams || m.nutrition?.servingGrams || 100;
+      const newItem = {
+        id: `p-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        name: m.name || m.title || 'New Item',
+        category: m.category || 'produce',
+        storage: m.storage || 'fridge-main',
+        format: m.format || (typeof inferFoodFormat === 'function' ? inferFoodFormat(m.name || '', m.storage || '', m.category || '') : 'fresh'),
+        amount: 1,
+        amountRemaining: 1,
+        unit: m.unit || 'items',
+        serving: srv,
+        servingGrams: srvG,
+        isVerified: Boolean(m.isVerified),
+        sourceBadge: m.source || (m.isVerified ? '✓ Verified Reference' : ''),
+        nutrition: m.nutrition ? JSON.parse(JSON.stringify(m.nutrition)) : {
+          kcal: m.kcal || 0,
+          protein: m.protein || 0,
+          carbs: m.carbs || 0,
+          fat: m.fat || 0,
+          fiber: m.fiber || 0,
+          sugar: m.sugar || 0,
+          satFat: m.satFat || 0,
+          sodium: m.sodium || 0,
+          water: m.water || 0,
+          serving: srv,
+          servingGrams: srvG,
+          micros: m.micros ? JSON.parse(JSON.stringify(m.micros)) : {}
+        },
+        isPendingNewPantryItem: true
+      };
+      openPantryItemDetailModal(newItem);
+    }
+
+    function _legacyOpenVerifyFoodModalBeforeAdding(matchIdxOrItem) {
       let m = null;
       if (typeof matchIdxOrItem === 'number') {
         const list = state._activeSearchResults || [];

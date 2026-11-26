@@ -101,8 +101,8 @@
 
       const activeBtnClass = "flex-1 sm:flex-initial justify-center whitespace-nowrap min-w-0 px-2 sm:px-3 py-1.5 rounded-xl font-bold bg-pastel-mint text-dark-base shadow-sm transition flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs";
       const inactiveBtnClass = "flex-1 sm:flex-initial justify-center whitespace-nowrap min-w-0 px-2 sm:px-3 py-1.5 rounded-xl font-semibold text-slate-300 hover:text-white transition flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs";
-      const multiActiveClass = "px-2.5 py-1 rounded-lg font-bold bg-pastel-mint text-dark-base shadow-sm transition whitespace-nowrap flex items-center gap-1.5 text-xs";
-      const multiInactiveClass = "px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white transition whitespace-nowrap flex items-center gap-1.5 text-xs";
+      const multiActiveClass = "px-2 sm:px-2.5 py-1 rounded-lg font-bold bg-pastel-mint text-dark-base shadow-sm transition whitespace-nowrap flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs";
+      const multiInactiveClass = "px-2 sm:px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white transition whitespace-nowrap flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs";
 
       if (btnZone) btnZone.className = (mode === 'zone') ? activeBtnClass : inactiveBtnClass;
       if (btnType) btnType.className = (mode === 'type') ? activeBtnClass : inactiveBtnClass;
@@ -2497,9 +2497,9 @@
         const btn = document.getElementById(`btn-psort-${o}`);
         if (!btn) return;
         if (o === order) {
-          btn.className = "px-2 py-0.5 rounded-lg bg-pastel-butter text-dark-base font-bold text-[10.5px] shadow-sm transition";
+          btn.className = "px-1.5 sm:px-2 py-0.5 rounded-lg bg-pastel-butter text-dark-base font-bold text-[10px] sm:text-[10.5px] whitespace-nowrap shadow-sm transition";
         } else {
-          btn.className = "px-2 py-0.5 rounded-lg text-slate-400 hover:text-white text-[10.5px] transition";
+          btn.className = "px-1.5 sm:px-2 py-0.5 rounded-lg text-slate-400 hover:text-white text-[10px] sm:text-[10.5px] whitespace-nowrap transition";
         }
       });
       saveAppState();

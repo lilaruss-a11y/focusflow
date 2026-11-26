@@ -1261,30 +1261,38 @@
         const baseBarHtml = renderMicroBarRow(key, def, val, isVerified);
         const contribs = contribData?.contributorsByNutrient?.[key] || [];
         const hasContribs = contribs.length > 0;
-        const hintBadge = hasContribs
-          ? `<div class="flex items-center justify-end gap-1 mt-1 text-[9px] text-pastel-sky/90 font-semibold">
-               <span>Tap bar for ingredient breakdown (${contribs.length})</span>
-               <i data-lucide="chevron-down" id="recipe-nutrient-chev-${key}" class="w-3 h-3 transition-transform"></i>
-             </div>`
-          : '';
         return `
           <div data-recipe-nutrient-row="${key}" ${hasContribs ? `onclick="toggleRecipeNutrientContributors('${key}')"` : ''} class="${hasContribs ? 'cursor-pointer hover:ring-1 hover:ring-pastel-mint/50' : ''} rounded-xl transition">
             ${baseBarHtml}
-            ${hintBadge}
             <div id="recipe-nutrient-contrib-${key}" class="hidden mt-1.5 mx-1 mb-1 p-2 rounded-lg bg-dark-base/90 border border-dark-border/80 space-y-1.5 text-[10px]"></div>
           </div>
         `;
       };
 
       const macroRowsHtml = macroDefs.map(m => renderClickableRow(m.key, m, m.val, Boolean(verifiedMap[m.key]))).join('');
-      const vitRowsHtml = Object.keys(standards)
-        .filter(k => standards[k].type === 'vitamin')
+      const vitDefs = Object.keys(standards).filter(k => standards[k].type === 'vitamin');
+      const minDefs = Object.keys(standards).filter(k => standards[k].type === 'mineral');
+      const vitRowsHtml = vitDefs
         .map(k => renderClickableRow(k, standards[k], nut.micros ? nut.micros[k] : null, Boolean(verifiedMap[k])))
         .join('');
-      const minRowsHtml = Object.keys(standards)
-        .filter(k => standards[k].type === 'mineral')
+      const minRowsHtml = minDefs
         .map(k => renderClickableRow(k, standards[k], nut.micros ? nut.micros[k] : null, Boolean(verifiedMap[k])))
         .join('');
+
+      const renderCollapsibleSection = (secKey, title, countLabel, accentClass, rowsHtml) => `
+        <div data-recipe-nut-section="${secKey}" class="space-y-1.5 pt-1 border-t border-dark-border/50">
+          <button type="button" onclick="toggleRecipeNutritionSection('${secKey}')" id="recipe-nut-sec-btn-${secKey}" class="sticky top-0 z-20 w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-dark-elevated/95 backdrop-blur-md border border-dark-border hover:border-pastel-mint/50 text-left shadow-sm transition">
+            <span class="text-[10.5px] font-bold ${accentClass} uppercase tracking-wider truncate">${title} (${countLabel})</span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-dark-base border border-dark-border text-[10px] font-semibold text-slate-200 shrink-0">
+              <span id="recipe-nut-sec-label-${secKey}">Expand</span>
+              <i data-lucide="chevron-down" id="recipe-nut-sec-chev-${secKey}" class="w-3 h-3 transition-transform"></i>
+            </span>
+          </button>
+          <div id="recipe-nut-sec-body-${secKey}" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-0.5">
+            ${rowsHtml}
+          </div>
+        </div>
+      `;
 
       panel.innerHTML = `
         <div class="flex items-center justify-between flex-wrap gap-1 border-b border-dark-border/60 pb-2">
@@ -1314,35 +1322,53 @@
           </div>
         </div>
 
-        <div class="space-y-1.5">
-          <div class="flex items-center justify-between flex-wrap gap-1">
-            <span class="text-[10px] font-bold text-pastel-lavender uppercase tracking-wider">Macronutrients (Goal Range Color-Coded)</span>
-            <span class="text-[9.5px] text-slate-400">Tap any nutrient to see ingredient contributors</span>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-52 overflow-y-auto pr-1">
-            ${macroRowsHtml}
-          </div>
-        </div>
+        <p class="text-[10px] text-slate-400">Expand a section below and tap any nutrient bar to see contributing ingredients.</p>
 
-        <div class="space-y-1.5 pt-1 border-t border-dark-border/50">
-          <span class="text-[10px] font-bold text-pastel-sky uppercase tracking-wider block">Vitamins &amp; Minerals (Per 1 Serving = ${built.servingGrams} g)</span>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-52 overflow-y-auto pr-1">
-            ${vitRowsHtml}
-            ${minRowsHtml}
-          </div>
-        </div>
+        ${renderCollapsibleSection('macros', 'Macronutrients', macroDefs.length, 'text-pastel-lavender', macroRowsHtml)}
+        ${renderCollapsibleSection('vitamins', 'Vitamins', vitDefs.length, 'text-pastel-sky', vitRowsHtml)}
+        ${renderCollapsibleSection('minerals', 'Minerals', minDefs.length, 'text-pastel-mint', minRowsHtml)}
       `;
+    }
+
+    function toggleRecipeNutritionSection(secKey) {
+      const body = document.getElementById(`recipe-nut-sec-body-${secKey}`);
+      const label = document.getElementById(`recipe-nut-sec-label-${secKey}`);
+      const chev = document.getElementById(`recipe-nut-sec-chev-${secKey}`);
+      const btn = document.getElementById(`recipe-nut-sec-btn-${secKey}`);
+      if (!body) return;
+
+      const isCurrentlyHidden = body.classList.contains('hidden');
+      body.classList.toggle('hidden', !isCurrentlyHidden);
+      if (label) label.textContent = isCurrentlyHidden ? 'Collapse' : 'Expand';
+      if (chev) chev.style.transform = isCurrentlyHidden ? 'rotate(180deg)' : '';
+      if (btn) {
+        btn.classList.toggle('border-pastel-mint/50', isCurrentlyHidden);
+        btn.classList.toggle('border-dark-border', !isCurrentlyHidden);
+      }
+      if (!isCurrentlyHidden && btn) {
+        btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
 
     function toggleRecipeNutrientContributors(nutrientKey) {
       const box = document.getElementById(`recipe-nutrient-contrib-${nutrientKey}`);
-      const chev = document.getElementById(`recipe-nutrient-chev-${nutrientKey}`);
+      const rowEl = document.querySelector(`[data-recipe-nutrient-row="${nutrientKey}"]`);
       if (!box) return;
 
+      const prevKey = window._activeRecipeInspectKey;
       const isCurrentlyOpen = !box.classList.contains('hidden');
+
+      if (prevKey && prevKey !== nutrientKey) {
+        const prevBox = document.getElementById(`recipe-nutrient-contrib-${prevKey}`);
+        const prevRow = document.querySelector(`[data-recipe-nutrient-row="${prevKey}"]`);
+        if (prevBox) prevBox.classList.add('hidden');
+        if (prevRow) prevRow.classList.remove('ring-1', 'ring-pastel-mint/60');
+      }
+
       if (isCurrentlyOpen) {
         box.classList.add('hidden');
-        if (chev) chev.style.transform = '';
+        if (rowEl) rowEl.classList.remove('ring-1', 'ring-pastel-mint/60');
+        window._activeRecipeInspectKey = null;
         return;
       }
 
@@ -1368,7 +1394,8 @@
         `;
       }
       box.classList.remove('hidden');
-      if (chev) chev.style.transform = 'rotate(180deg)';
+      if (rowEl) rowEl.classList.add('ring-1', 'ring-pastel-mint/60');
+      window._activeRecipeInspectKey = nutrientKey;
     }
 
 function inspectRecipeDetails(idx) {
@@ -1601,6 +1628,7 @@ if (typeof window !== 'undefined') {
   window.sendRecipeToChoreographer = sendRecipeToChoreographer;
   window.logRecipeToNutrition = logRecipeToNutrition;
   window.renderRecipeInspectNutritionPanel = renderRecipeInspectNutritionPanel;
+  window.toggleRecipeNutritionSection = toggleRecipeNutritionSection;
   window.toggleRecipeNutrientContributors = toggleRecipeNutrientContributors;
   window.inspectRecipeDetails = inspectRecipeDetails;
   window.closeRecipeInspectModal = closeRecipeInspectModal;

@@ -39,6 +39,19 @@
       switchKitchenSubTab(activeSub);
     }
 
+    function togglePantryFiltersDrawer() {
+      const panel = document.getElementById('pantry-filters-panel');
+      const btn = document.getElementById('btn-toggle-pantry-filters');
+      if (!panel) return;
+      const willOpen = panel.classList.contains('hidden');
+      panel.classList.toggle('hidden', !willOpen);
+      if (btn) {
+        btn.className = willOpen
+          ? "h-9 px-3 rounded-xl bg-pastel-mint/15 border border-pastel-mint/40 text-pastel-mint text-xs font-bold flex items-center gap-1.5 transition shrink-0"
+          : "h-9 px-3 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white hover:border-pastel-mint/40 text-xs font-semibold flex items-center gap-1.5 transition shrink-0";
+      }
+    }
+
     function switchPantryViewGroup(mode) {
       state.pantryViewGroup = mode;
       const btnZone = document.getElementById('btn-pantry-view-zone');
@@ -2043,7 +2056,7 @@
 
     function getPantryStockStatus(item) {
       if (!item) return 'have';
-      if (item.stockStatus === 'have' || item.stockStatus === 'low' || item.stockStatus === 'out') {
+      if (item.stockStatus === 'have' || item.stockStatus === 'half' || item.stockStatus === 'low' || item.stockStatus === 'out') {
         return item.stockStatus;
       }
       if (item.amount != null && !isNaN(parseFloat(item.amount)) && parseFloat(item.amount) <= 0) {
@@ -2057,7 +2070,8 @@
       const item = state.pantry.find(p => p.id === id);
       if (!item) return;
       const current = getPantryStockStatus(item);
-      const next = current === 'have' ? 'low' : (current === 'low' ? 'out' : 'have');
+      const nextMap = { have: 'half', half: 'low', low: 'out', out: 'have' };
+      const next = nextMap[current] || 'have';
       item.stockStatus = next;
       if (next === 'out') {
         item.amount = 0;
@@ -2136,7 +2150,7 @@
       const isOutOfStock = stockStatus === 'out';
       const isLowStock = stockStatus === 'low' || isOutOfStock;
       const isUseMeFirst = Boolean(item.useMeFirst) && !isOutOfStock;
-      let pct = stockStatus === 'have' ? 100 : (stockStatus === 'low' ? 35 : 0);
+      let pct = stockStatus === 'have' ? 100 : (stockStatus === 'half' ? 50 : (stockStatus === 'low' ? 25 : 0));
 
       const lowStockCartAction = isLowStock
         ? `<button type="button" onclick="event.stopPropagation(); addPantryItemToShoppingList('${item.id}')" class="p-1 rounded-lg bg-pastel-sky/15 hover:bg-pastel-sky/30 border border-pastel-sky/35 text-pastel-sky transition shrink-0 flex items-center justify-center" title="Low or out! Tap to add to shopping list">
@@ -2144,11 +2158,15 @@
            </button>`
         : '';
 
-      // Color code by presence status (Have / Low / Out)
+      // Color code by presence status (Have / Half / Low / Out)
       let barColor = 'bg-pastel-mint';
       let statusLabel = 'Have';
       let statusBtnClass = 'bg-pastel-mint/15 border-pastel-mint/40 text-pastel-mint hover:bg-pastel-mint/25';
-      if (stockStatus === 'low') {
+      if (stockStatus === 'half') {
+        barColor = 'bg-pastel-sky';
+        statusLabel = 'Half';
+        statusBtnClass = 'bg-pastel-sky/15 border-pastel-sky/40 text-pastel-sky hover:bg-pastel-sky/25';
+      } else if (stockStatus === 'low') {
         barColor = 'bg-pastel-butter';
         statusLabel = 'Low';
         statusBtnClass = 'bg-pastel-butter/15 border-pastel-butter/40 text-pastel-butter hover:bg-pastel-butter/25';
@@ -2167,22 +2185,6 @@
           <div class="h-full ${barColor} transition-all duration-300" style="width: ${pct}%;"></div>
         </div>
       `;
-
-      // Format state badge (e.g. 🥫 Canned, 🧊 Frozen, 🌾 Dried, 🌿 Fresh, 🍳 Cooked)
-      // On mobile screens, collapse to icon-only to conserve horizontal space
-      const fmt = (item.format || (typeof inferFoodFormat === 'function' ? inferFoodFormat(item.name, item.storage, item.category) : 'fresh')).toLowerCase();
-      let formatBadge = '';
-      if (fmt === 'canned') {
-        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[9.5px] font-bold shrink-0 flex items-center" title="Format: Canned"><span>🥫</span><span class="hidden sm:inline ml-1">Canned</span></span>`;
-      } else if (fmt === 'frozen') {
-        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-sky-500/15 border border-sky-500/30 text-sky-300 text-[9.5px] font-bold shrink-0 flex items-center" title="Format: Frozen"><span>🧊</span><span class="hidden sm:inline ml-1">Frozen</span></span>`;
-      } else if (fmt === 'dried') {
-        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 text-[9.5px] font-bold shrink-0 flex items-center" title="Format: Dried"><span>🌾</span><span class="hidden sm:inline ml-1">Dried</span></span>`;
-      } else if (fmt === 'cooked') {
-        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-orange-500/15 border border-orange-500/30 text-orange-300 text-[9.5px] font-bold shrink-0 flex items-center" title="Format: Cooked"><span>🍳</span><span class="hidden sm:inline ml-1">Cooked</span></span>`;
-      } else if (fmt === 'fresh') {
-        formatBadge = `<span class="px-1.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[9.5px] font-bold shrink-0 flex items-center" title="Format: Fresh"><span>🌿</span><span class="hidden sm:inline ml-1">Fresh</span></span>`;
-      }
 
       // Clean generic display name for list (strip brand, marketing, sizes, packaging terms)
       const rawName = item.name || '';
@@ -2209,16 +2211,14 @@
 
       return `
         <div class="flex items-center gap-1.5 min-w-0 flex-1">
-          ${formatBadge}
           <span class="text-slate-200 font-semibold truncate group-hover:text-pastel-mint transition ${isOutOfStock ? 'line-through text-slate-400' : ''}" title="${rawName}${item.brand ? ' (' + item.brand + ')' : ''}">${displayName}</span>
-          ${expiryBadge}
         </div>
         <div class="flex items-center gap-1 shrink-0" onclick="event.stopPropagation()">
           ${lowStockCartAction}
           <button type="button" onclick="event.stopPropagation(); togglePantryUseMeFirst('${item.id}')" class="p-1 rounded-lg border transition flex items-center justify-center ${useMeFirstBtnClass}" title="${isUseMeFirst ? 'Flagged: Use Me First (tap to clear)' : 'Flag as Use Me First'}">
             <i data-lucide="flame" class="w-3.5 h-3.5"></i>
           </button>
-          <button type="button" onclick="event.stopPropagation(); cyclePantryStockStatus('${item.id}')" class="${statusBtnClass} border font-bold px-2 py-0.5 rounded-lg cursor-pointer font-mono text-[10.5px] transition active:scale-95" title="Tap to cycle: Have → Low → Out">
+          <button type="button" onclick="event.stopPropagation(); cyclePantryStockStatus('${item.id}')" class="${statusBtnClass} border font-bold px-2 py-0.5 rounded-lg cursor-pointer font-mono text-[10.5px] transition active:scale-95" title="Tap to cycle: Have → Half → Low → Out">
             ${statusLabel}
           </button>
           <button type="button" onclick="event.stopPropagation(); deletePantryItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-0.5" title="Remove ingredient">
@@ -2261,19 +2261,16 @@
     }
 
     function renderPantry() {
-      // 1. Zone Lists (8 Zones)
+      // 1. Calm Zone Lists (4 Merged Storage Groups)
       const zoneLists = {
-        'fridge-crisper': document.getElementById('list-zone-fridge-crisper'),
-        'fridge-main': document.getElementById('list-zone-fridge-main'),
-        'fridge-door': document.getElementById('list-zone-fridge-door'),
-        'freezer': document.getElementById('list-zone-freezer'),
-        'counter': document.getElementById('list-zone-counter'),
-        'cupboard': document.getElementById('list-zone-cupboard'),
-        'pantry': document.getElementById('list-zone-pantry'),
-        'spices': document.getElementById('list-zone-spices')
+        fridge: document.getElementById('list-zone-fridge'),
+        freezer: document.getElementById('list-zone-freezer'),
+        pantry: document.getElementById('list-zone-pantry'),
+        spices: document.getElementById('list-zone-spices')
       };
       Object.keys(zoneLists).forEach(k => { if (zoneLists[k]) zoneLists[k].innerHTML = ''; });
-      const zoneCounts = { 'fridge-crisper': 0, 'fridge-main': 0, 'fridge-door': 0, freezer: 0, counter: 0, cupboard: 0, pantry: 0, spices: 0 };
+      const zoneCounts = { fridge: 0, freezer: 0, pantry: 0, spices: 0 };
+      let visibleTotalCount = 0;
 
       // 2. Type Lists (Standardized Food Categories)
       const typeLists = {
@@ -2393,19 +2390,21 @@
 
         // Cross-filtering pass: must satisfy zone, type, format, and search filters
         if (!matchesZone || !matchesType || !matchesFormat || !matchesSearch) return;
+        visibleTotalCount++;
 
-        // Compute dynamic expiration glow and border
-        const expStyle = getExpirationGlowStyle(item.expirationDate);
+        // Map granular zone into 4 calm storage groups
+        const calmZone = (itemZone === 'fridge-crisper' || itemZone === 'fridge-main' || itemZone === 'fridge-door')
+          ? 'fridge'
+          : (itemZone === 'freezer' ? 'freezer' : (itemZone === 'spices' ? 'spices' : 'pantry'));
 
         // Populate Zone View:
-        if (zoneLists[itemZone]) {
-          zoneCounts[itemZone] = (zoneCounts[itemZone] || 0) + 1;
+        if (zoneLists[calmZone]) {
+          zoneCounts[calmZone] = (zoneCounts[calmZone] || 0) + 1;
           const pill = document.createElement('div');
-          pill.className = `relative overflow-hidden flex items-center justify-between p-2.5 rounded-xl bg-dark-base border ${expStyle.border} hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm group`;
-          if (expStyle.glow) pill.style.cssText = expStyle.glow;
+          pill.className = "relative overflow-hidden flex items-center justify-between p-2.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm group";
           pill.onclick = () => openPantryItemDetailModal(item.id);
           pill.innerHTML = buildPantryItemPillHtml(item, expiryBadge);
-          zoneLists[itemZone].appendChild(pill);
+          zoneLists[calmZone].appendChild(pill);
         }
 
         // Populate Type View:
@@ -2414,8 +2413,7 @@
           if (typeLists[t]) {
             typeCounts[t] = (typeCounts[t] || 0) + 1;
             const pill = document.createElement('div');
-            pill.className = `relative overflow-hidden flex items-center justify-between p-2.5 rounded-xl bg-dark-base border ${expStyle.border} hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm group`;
-            if (expStyle.glow) pill.style.cssText = expStyle.glow;
+            pill.className = "relative overflow-hidden flex items-center justify-between p-2.5 rounded-xl bg-dark-base border border-dark-border hover:border-pastel-mint/50 cursor-pointer text-xs gap-1.5 transition shadow-sm group";
             pill.onclick = () => openPantryItemDetailModal(item.id);
             pill.innerHTML = buildPantryItemPillHtml(item, expiryBadge);
             typeLists[t].appendChild(pill);
@@ -2423,28 +2421,26 @@
         });
       });
 
-      // Update counters in UI
+      // Update counters and auto-hide empty storage cards
       const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
-      setTxt('count-zone-fridge-crisper', zoneCounts['fridge-crisper']);
-      setTxt('count-zone-fridge-main', zoneCounts['fridge-main']);
-      setTxt('count-zone-fridge-door', zoneCounts['fridge-door']);
-      setTxt('count-zone-freezer', zoneCounts.freezer);
-      setTxt('count-zone-counter', zoneCounts.counter);
-      setTxt('count-zone-cupboard', zoneCounts.cupboard);
-      setTxt('count-zone-pantry', zoneCounts.pantry);
-      setTxt('count-zone-spices', zoneCounts.spices);
+      ['fridge', 'freezer', 'pantry', 'spices'].forEach(k => {
+        setTxt(`count-zone-${k}`, zoneCounts[k]);
+        const card = document.getElementById(`card-zone-${k}`);
+        if (card) card.classList.toggle('hidden', zoneCounts[k] === 0);
+      });
 
-      setTxt('count-type-protein', typeCounts.protein);
-      setTxt('count-type-dairy', typeCounts.dairy);
-      setTxt('count-type-vegetables', typeCounts.vegetables);
-      setTxt('count-type-fruits', typeCounts.fruits);
-      setTxt('count-type-grains', typeCounts.grains);
-      setTxt('count-type-baking', typeCounts.baking);
-      setTxt('count-type-spices', typeCounts.spices);
-      setTxt('count-type-snacks', typeCounts.snacks);
-      setTxt('count-type-beverages', typeCounts.beverages);
-      setTxt('count-type-leftovers', typeCounts.leftovers);
-      setTxt('count-type-supplements', typeCounts.supplements);
+      Object.keys(typeCounts).forEach(t => {
+        setTxt(`count-type-${t}`, typeCounts[t]);
+        const listEl = typeLists[t];
+        if (listEl && listEl.parentElement) {
+          listEl.parentElement.classList.toggle('hidden', typeCounts[t] === 0);
+        }
+      });
+
+      const emptyStateEl = document.getElementById('pantry-empty-state');
+      if (emptyStateEl) {
+        emptyStateEl.classList.toggle('hidden', visibleTotalCount > 0);
+      }
 
       setTxt('pantry-total-count-badge', (state.pantry || []).length);
 

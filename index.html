@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=139">
+  <link rel="stylesheet" href="css/styles.css?v=140">
   <script>
     function resetViewportZoom() {
       try {
@@ -941,19 +941,25 @@
       <!-- SUB-TAB 1: PANTRY INVENTORY                     -->
       <!-- ============================================== -->
       <div id="kitchen-view-pantry" class="space-y-5">
-        <!-- Storage Filters & Sorting Control Panel -->
-        <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3">
-          <!-- Live Pantry Search Bar -->
-          <div class="relative w-full">
-            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-            <input type="text" id="pantry-search-input" oninput="setPantrySearchQuery(this.value)" placeholder="Search your pantry items (e.g. eggs, olive oil, spinach, vitamin d)..." class="w-full bg-dark-base border border-dark-border rounded-xl pl-9 pr-9 py-2 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-pastel-mint transition">
-            <button type="button" id="btn-clear-pantry-search" onclick="clearPantrySearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" title="Clear search">
-              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+        <!-- Calm Search & Collapsible Filters Bar -->
+        <div class="bg-dark-surface border border-dark-border rounded-2xl p-3.5 space-y-3">
+          <div class="flex items-center gap-2">
+            <!-- Live Pantry Search Bar -->
+            <div class="relative flex-1 min-w-0">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+              <input type="text" id="pantry-search-input" oninput="setPantrySearchQuery(this.value)" placeholder="Search your pantry..." class="w-full bg-dark-base border border-dark-border rounded-xl pl-9 pr-9 py-2 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-pastel-mint transition">
+              <button type="button" id="btn-clear-pantry-search" onclick="clearPantrySearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" title="Clear search">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+            <button type="button" id="btn-toggle-pantry-filters" onclick="togglePantryFiltersDrawer()" class="h-9 px-3 rounded-xl bg-dark-base border border-dark-border text-slate-300 hover:text-white hover:border-pastel-mint/40 text-xs font-semibold flex items-center gap-1.5 transition shrink-0" title="Show view and filter options">
+              <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
+              <span>Filters</span>
             </button>
           </div>
 
-          <!-- Top View Mode, Sorting & Multi-Filter Control Panel -->
-          <div class="space-y-3 pt-2 border-t border-dark-border/60 text-xs">
+          <!-- Collapsible View Mode, Sorting & Multi-Filter Panel -->
+          <div id="pantry-filters-panel" class="hidden space-y-3 pt-2.5 border-t border-dark-border/60 text-xs">
             <!-- Row 1: Dual View Mode Switcher + Sort Pills -->
             <div class="flex items-center justify-between flex-wrap gap-2">
               <div class="flex items-center gap-1 bg-dark-base p-1 rounded-2xl border border-dark-border">
@@ -1067,95 +1073,57 @@
           </div>
         </div>
 
-        <!-- VIEW CONTAINER 1: BY KITCHEN ZONE (7 Zones) -->
-        <div id="pantry-grid-zone" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <!-- 1. Fridge: Fresh Crisper -->
-          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
-            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
-              <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                <span>🥬</span> Fridge: Fresh Crisper
-              </span>
-              <span class="text-xs text-slate-400 font-mono font-bold" id="count-zone-fridge-crisper">0</span>
-            </div>
-            <div id="list-zone-fridge-crisper" class="space-y-2 min-h-[100px]"></div>
-          </div>
-
-          <!-- 2. Fridge: Main & Deli -->
-          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
-            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+        <!-- VIEW CONTAINER 1: 4 CALM STORAGE GROUPS (Empty groups auto-hide) -->
+        <div id="pantry-grid-zone" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- 1. Fridge -->
+          <div id="card-zone-fridge" class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2">
               <span class="text-xs font-bold text-pastel-mint flex items-center gap-1.5">
-                <span>❄️</span> Fridge: Main &amp; Deli
+                <span>❄️</span> Fridge
               </span>
-              <span class="text-xs text-slate-400 font-mono font-bold" id="count-zone-fridge-main">0</span>
+              <span class="text-xs text-slate-400 font-mono font-bold" id="count-zone-fridge">0</span>
             </div>
-            <div id="list-zone-fridge-main" class="space-y-2 min-h-[100px]"></div>
+            <div id="list-zone-fridge" class="space-y-2"></div>
           </div>
 
-          <!-- 2b. Fridge: Door -->
-          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
-            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+          <!-- 2. Freezer -->
+          <div id="card-zone-freezer" class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2">
               <span class="text-xs font-bold text-pastel-sky flex items-center gap-1.5">
-                <span>🫙</span> Fridge: Door
-              </span>
-              <span class="text-xs text-slate-400 font-mono font-bold" id="count-zone-fridge-door">0</span>
-            </div>
-            <div id="list-zone-fridge-door" class="space-y-2 min-h-[100px]"></div>
-          </div>
-
-          <!-- 3. The Deep Freeze -->
-          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
-            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
-              <span class="text-xs font-bold text-pastel-sky flex items-center gap-1.5">
-                <span>🧊</span> Freezer: Deep Freeze
+                <span>🧊</span> Freezer
               </span>
               <span class="text-xs text-slate-400 font-mono font-bold" id="count-zone-freezer">0</span>
             </div>
-            <div id="list-zone-freezer" class="space-y-2 min-h-[100px]"></div>
+            <div id="list-zone-freezer" class="space-y-2"></div>
           </div>
 
-          <!-- 4. On the Counter -->
-          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
-            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
-              <span class="text-xs font-bold text-pastel-peach flex items-center gap-1.5">
-                <span>🧺</span> On the Counter
-              </span>
-              <span class="text-xs text-slate-400 font-mono font-bold" id="count-zone-counter">0</span>
-            </div>
-            <div id="list-zone-counter" class="space-y-2 min-h-[100px]"></div>
-          </div>
-
-          <!-- 5. Cupboard -->
-          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
-            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
-              <span class="text-xs font-bold text-teal-300 flex items-center gap-1.5">
-                <span>🚪</span> Cupboard
-              </span>
-              <span class="text-xs text-slate-400 font-mono font-bold" id="count-zone-cupboard">0</span>
-            </div>
-            <div id="list-zone-cupboard" class="space-y-2 min-h-[100px]"></div>
-          </div>
-
-          <!-- 6. Dry Pantry Shelves -->
-          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
-            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+          <!-- 3. Pantry & Counter -->
+          <div id="card-zone-pantry" class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2">
               <span class="text-xs font-bold text-pastel-butter flex items-center gap-1.5">
-                <span>🥫</span> Dry Pantry Shelves
+                <span>🥫</span> Pantry &amp; Counter
               </span>
               <span class="text-xs text-slate-400 font-mono font-bold" id="count-zone-pantry">0</span>
             </div>
-            <div id="list-zone-pantry" class="space-y-2 min-h-[100px]"></div>
+            <div id="list-zone-pantry" class="space-y-2"></div>
           </div>
 
-          <!-- 7. Spice Rack & Condiments -->
-          <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
-            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+          <!-- 4. Spices & Condiments -->
+          <div id="card-zone-spices" class="bg-dark-surface border border-dark-border rounded-2xl p-4 space-y-3 shadow-md">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2">
               <span class="text-xs font-bold text-pastel-lavender flex items-center gap-1.5">
-                <span>🧂</span> Spice Rack &amp; Condiments
+                <span>🧂</span> Spices &amp; Condiments
               </span>
               <span class="text-xs text-slate-400 font-mono font-bold" id="count-zone-spices">0</span>
             </div>
-            <div id="list-zone-spices" class="space-y-2 min-h-[100px]"></div>
+            <div id="list-zone-spices" class="space-y-2"></div>
           </div>
+        </div>
+
+        <!-- Empty State (Shown only when 0 items match) -->
+        <div id="pantry-empty-state" class="hidden p-6 rounded-2xl bg-dark-surface border border-dark-border text-center space-y-1.5">
+          <p class="text-xs font-bold text-slate-200">No pantry items match right now</p>
+          <p class="text-[11px] text-slate-400">Tap Search Foods above or import a grocery receipt to add what you have on hand.</p>
         </div>
 
         <!-- VIEW CONTAINER 2: BY FOOD TYPE (9 Food Groups) -->
@@ -7561,7 +7529,7 @@
   <script src="js/sync.js?v=48"></script>
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
-  <script src="js/kitchen.js?v=139"></script>
+  <script src="js/kitchen.js?v=140"></script>
   <script src="js/recipes.js?v=94"></script>
   <script src="js/shopping.js?v=139"></script>
   <script src="js/chef.js?v=137"></script>

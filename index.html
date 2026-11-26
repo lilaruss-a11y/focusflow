@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=141">
+  <link rel="stylesheet" href="css/styles.css?v=142">
   <script>
     function resetViewportZoom() {
       try {
@@ -858,39 +858,28 @@
     <!-- ============================================== -->
     <!-- TAB 5: SMART KITCHEN, MEAL PLANNER & SHOPPING  -->
     <!-- ============================================== -->
-    <div id="view-kitchen" class="hidden space-y-6">
-      <!-- Main Kitchen Header & Sub-Navigation -->
-      <div class="bg-dark-surface/90 border border-dark-border rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div class="min-w-0">
-            <div class="flex items-center gap-2 flex-wrap">
-              <h2 class="text-lg sm:text-xl font-bold text-slate-100">Smart Kitchen, Meal Planner &amp; Pantry</h2>
-              <span class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-pastel-butter/20 text-pastel-butter border border-pastel-butter/30 font-medium shrink-0">Weekly Prep Suite</span>
-            </div>
-            <p class="text-xs text-slate-400 mt-0.5">Mark what you have, flag perishables to use first, and plan 1–2 dinners without strict quantity math.</p>
-          </div>
-
-          <!-- Global Action Buttons Suite + Expandable Search in Top Header -->
-          <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap sm:flex-nowrap">
-            <button type="button" onclick="openReverseChefFromKitchen()" class="h-9 px-3 rounded-xl bg-gradient-to-r from-pastel-coral to-pastel-peach hover:opacity-90 text-dark-base font-bold text-xs shadow-md shadow-pastel-coral/20 transition active:scale-95 flex items-center gap-1.5 shrink-0" title="Launch Reverse Chef">
-              <i data-lucide="chef-hat" class="w-4 h-4 text-dark-base shrink-0"></i>
-              <span class="hidden sm:inline">Reverse Chef</span>
+    <div id="view-kitchen" class="hidden space-y-5">
+      <!-- Condensed Kitchen Header: 4 Action Buttons + 3-Section Switcher -->
+      <div class="bg-dark-surface/90 border border-dark-border rounded-2xl p-3 sm:p-4 shadow-xl space-y-2.5">
+        <!-- Global Action Buttons Suite + Expandable Search -->
+        <div class="flex items-center justify-between sm:justify-start gap-1.5 sm:gap-2 flex-wrap">
+          <button type="button" onclick="openReverseChefFromKitchen()" class="h-9 px-3 rounded-xl bg-gradient-to-r from-pastel-coral to-pastel-peach hover:opacity-90 text-dark-base font-bold text-xs shadow-md shadow-pastel-coral/20 transition active:scale-95 flex items-center gap-1.5 shrink-0" title="Launch Reverse Chef">
+            <i data-lucide="chef-hat" class="w-4 h-4 text-dark-base shrink-0"></i>
+            <span class="hidden sm:inline">Reverse Chef</span>
+          </button>
+          <button type="button" onclick="openWalmartGroceryImportModal()" class="h-9 px-3 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-sky/40 text-pastel-sky font-bold text-xs transition active:scale-95 flex items-center gap-1.5 shrink-0" title="Import groceries or store receipt photo with 1-by-1 approval">
+            <i data-lucide="shopping-cart" class="w-4 h-4 shrink-0"></i>
+            <span class="hidden sm:inline">Grocery Import</span>
+          </button>
+          <button type="button" onclick="openBarcodeScannerModal('pantry')" class="h-9 px-3 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender font-bold text-xs transition active:scale-95 flex items-center gap-1.5 shrink-0" title="Scan Barcode or package photos into Pantry">
+            <i data-lucide="scan-barcode" class="w-4 h-4 shrink-0"></i>
+            <span class="hidden sm:inline">Scan Barcode</span>
+          </button>
+          <div class="relative shrink-0">
+            <button type="button" onclick="expandKitchenHeaderSearch()" id="btn-kitchen-header-search-expand" class="h-9 px-3 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-mint/40 text-pastel-mint font-bold text-xs transition active:scale-95 flex items-center gap-1.5" title="Search food, recipes or USDA database">
+              <i data-lucide="search" class="w-4 h-4 shrink-0"></i>
+              <span class="hidden md:inline">Search Foods</span>
             </button>
-            <button type="button" onclick="openWalmartGroceryImportModal()" class="h-9 px-3 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-sky/40 text-pastel-sky font-bold text-xs transition active:scale-95 flex items-center gap-1.5 shrink-0" title="Import groceries or store receipt photo with 1-by-1 approval">
-              <i data-lucide="shopping-cart" class="w-4 h-4 shrink-0"></i>
-              <span class="hidden sm:inline">Grocery Import</span>
-            </button>
-            <button type="button" onclick="openBarcodeScannerModal('pantry')" class="h-9 px-3 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender font-bold text-xs transition active:scale-95 flex items-center gap-1.5 shrink-0" title="Scan Barcode or package photos into Pantry">
-              <i data-lucide="scan-barcode" class="w-4 h-4 shrink-0"></i>
-              <span class="hidden sm:inline">Scan Barcode</span>
-            </button>
-            <!-- Header Compact Search Pill (Expands to next row down on click) -->
-            <div class="relative shrink-0">
-              <button type="button" onclick="expandKitchenHeaderSearch()" id="btn-kitchen-header-search-expand" class="h-9 px-3 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-mint/40 text-pastel-mint font-bold text-xs transition active:scale-95 flex items-center gap-1.5" title="Search food, recipes or USDA database">
-                <i data-lucide="search" class="w-4 h-4 shrink-0"></i>
-                <span class="hidden md:inline">Search Foods</span>
-              </button>
-            </div>
           </div>
         </div>
 
@@ -910,29 +899,25 @@
         </div>
 
         <!-- Section View Switcher: Pantry vs Meal Planner vs Shopping List -->
-        <div class="pt-2.5 border-t border-dark-border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-          <div class="w-full sm:w-auto grid grid-cols-3 sm:flex items-center p-1 rounded-2xl bg-dark-base border border-dark-border gap-1 text-xs">
-            <button type="button" onclick="switchKitchenSubTab('pantry')" id="kitchen-subtab-btn-pantry" class="flex-1 min-w-0 px-2 sm:px-3.5 py-2 rounded-xl font-bold bg-pastel-butter text-dark-base transition flex items-center justify-center gap-1 shadow-sm">
+        <div class="pt-2.5 border-t border-dark-border">
+          <div class="w-full sm:w-auto grid grid-cols-3 sm:inline-flex items-center p-1 rounded-2xl bg-dark-base border border-dark-border gap-1 text-xs">
+            <button type="button" onclick="switchKitchenSubTab('pantry')" id="kitchen-subtab-btn-pantry" class="flex-1 sm:flex-initial whitespace-nowrap min-w-0 px-2 sm:px-3.5 py-2 rounded-xl font-bold bg-pastel-butter text-dark-base transition flex items-center justify-center gap-1 shadow-sm">
               <i data-lucide="package" class="w-4 h-4 shrink-0"></i>
               <span class="hidden sm:inline">Pantry Inventory</span>
               <span class="sm:hidden text-xs">Pantry</span>
               <span class="text-[11px] font-mono opacity-80">(<span id="pantry-total-count-badge">0</span>)</span>
             </button>
-            <button type="button" onclick="switchKitchenSubTab('planner')" id="kitchen-subtab-btn-planner" class="flex-1 min-w-0 px-2 sm:px-3.5 py-2 rounded-xl font-semibold text-slate-400 hover:text-white transition flex items-center justify-center gap-1">
+            <button type="button" onclick="switchKitchenSubTab('planner')" id="kitchen-subtab-btn-planner" class="flex-1 sm:flex-initial whitespace-nowrap min-w-0 px-2 sm:px-3.5 py-2 rounded-xl font-semibold text-slate-400 hover:text-white transition flex items-center justify-center gap-1">
               <i data-lucide="calendar" class="w-4 h-4 shrink-0"></i>
               <span class="hidden sm:inline">Weekly Meal Plan</span>
               <span class="sm:hidden text-xs">Meal Plan</span>
             </button>
-            <button type="button" onclick="switchKitchenSubTab('shopping')" id="kitchen-subtab-btn-shopping" class="flex-1 min-w-0 px-2 sm:px-3.5 py-2 rounded-xl font-semibold text-slate-400 hover:text-white transition flex items-center justify-center gap-1">
+            <button type="button" onclick="switchKitchenSubTab('shopping')" id="kitchen-subtab-btn-shopping" class="flex-1 sm:flex-initial whitespace-nowrap min-w-0 px-2 sm:px-3.5 py-2 rounded-xl font-semibold text-slate-400 hover:text-white transition flex items-center justify-center gap-1">
               <i data-lucide="shopping-bag" class="w-4 h-4 shrink-0"></i>
               <span class="hidden sm:inline">Shopping List</span>
               <span class="sm:hidden text-xs">Shopping</span>
               <span class="text-[11px] font-mono opacity-80">(<span id="shopping-list-pending-badge">0</span>)</span>
             </button>
-          </div>
-
-          <div id="kitchen-subtab-hint" class="hidden sm:block text-[11px] text-slate-400 font-mono">
-            🥫 Track on-hand items • 🗓️ Plan what to make • 🛒 Buy what's missing
           </div>
         </div>
       </div>
@@ -960,7 +945,7 @@
 
           <!-- Collapsible View Mode, Sorting & Multi-Filter Panel -->
           <div id="pantry-filters-panel" class="hidden space-y-3 pt-2.5 border-t border-dark-border/60 text-xs">
-            <!-- Row 1: View Mode Switcher + Sort Pills -->
+            <!-- Row 1: Grouping Pill + Multi-Filter Bubble + Sort Bubble -->
             <div class="flex items-center justify-between flex-wrap gap-2">
               <div class="flex flex-wrap items-center gap-1 bg-dark-base p-1 rounded-2xl border border-dark-border">
                 <button type="button" onclick="switchPantryViewGroup('zone')" id="btn-pantry-view-zone" class="px-3 py-1.5 rounded-xl font-bold bg-pastel-mint text-dark-base shadow-sm transition flex items-center gap-1.5 text-xs">
@@ -975,18 +960,24 @@
                   <i data-lucide="layers" class="w-3.5 h-3.5"></i>
                   <span>By Format</span>
                 </button>
-                <button type="button" onclick="switchPantryViewGroup('multifilter')" id="btn-pantry-view-multifilter" class="px-3 py-1.5 rounded-xl font-semibold text-slate-300 hover:text-white transition flex items-center gap-1.5 text-xs" title="Toggle multi-filter combination panel">
-                  <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
-                  <span>Multi-Filter</span>
-                </button>
               </div>
 
-              <!-- Sort Order Pills -->
-              <div class="flex items-center gap-1 bg-dark-base p-1 rounded-xl border border-dark-border text-[10.5px]">
-                <span class="text-slate-400 font-mono px-1.5 text-[10px]">Sort:</span>
-                <button type="button" onclick="setPantrySortOrder('expiring')" id="btn-psort-expiring" class="px-2 py-0.5 rounded-lg bg-pastel-butter text-dark-base font-bold text-[10.5px] shadow-sm transition" title="Sort soonest expiring first">⏳ Expiring</button>
-                <button type="button" onclick="setPantrySortOrder('name')" id="btn-psort-name" class="px-2 py-0.5 rounded-lg text-slate-400 hover:text-white text-[10.5px] transition" title="Sort alphabetically">A-Z</button>
-                <button type="button" onclick="setPantrySortOrder('recent')" id="btn-psort-recent" class="px-2 py-0.5 rounded-lg text-slate-400 hover:text-white text-[10.5px] transition" title="Sort recently added first">Recent</button>
+              <div class="flex items-center flex-wrap gap-2">
+                <!-- Multi-Filter Bubble -->
+                <div class="flex items-center bg-dark-base p-1 rounded-xl border border-dark-border">
+                  <button type="button" onclick="switchPantryViewGroup('multifilter')" id="btn-pantry-view-multifilter" class="px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white transition flex items-center gap-1.5 text-xs" title="Toggle multi-filter combination panel">
+                    <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
+                    <span>Multi-Filter</span>
+                  </button>
+                </div>
+
+                <!-- Sort Order Bubble -->
+                <div class="flex items-center gap-1 bg-dark-base p-1 rounded-xl border border-dark-border text-[10.5px]">
+                  <span class="text-slate-400 font-mono px-1.5 text-[10px]">Sort:</span>
+                  <button type="button" onclick="setPantrySortOrder('expiring')" id="btn-psort-expiring" class="px-2 py-0.5 rounded-lg bg-pastel-butter text-dark-base font-bold text-[10.5px] shadow-sm transition" title="Sort soonest expiring first">⏳ Expiring</button>
+                  <button type="button" onclick="setPantrySortOrder('name')" id="btn-psort-name" class="px-2 py-0.5 rounded-lg text-slate-400 hover:text-white text-[10.5px] transition" title="Sort alphabetically">A-Z</button>
+                  <button type="button" onclick="setPantrySortOrder('recent')" id="btn-psort-recent" class="px-2 py-0.5 rounded-lg text-slate-400 hover:text-white text-[10.5px] transition" title="Sort recently added first">Recent</button>
+                </div>
               </div>
             </div>
 
@@ -7377,7 +7368,7 @@
   <script src="js/sync.js?v=48"></script>
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
-  <script src="js/kitchen.js?v=141"></script>
+  <script src="js/kitchen.js?v=142"></script>
   <script src="js/recipes.js?v=94"></script>
   <script src="js/shopping.js?v=139"></script>
   <script src="js/chef.js?v=137"></script>

@@ -240,7 +240,13 @@ After the user approves your plan and you make the changes:
         - `verify.py` check 5c automatically blocks deployment if any child modal lacks Tier 3 stacking.
    - **Dead Button Prevention:** `verify.py` automatically scans all 400+ `onclick` handlers in `index.html` to guarantee 100% of button calls resolve to real functions. Never leave dummy or disconnected handlers.
    - **Verify Desired Effect:** Did the edit specifically produce the user's requested behavior without collateral side-effects?
-4. **Provide a Testing Checklist:**
+4. **Automatic Browser Visual & Interactive Testing:**
+   Whenever diagnosing a visual/UI bug OR after making any UI, CSS, layout, modal, or interactive button change — do NOT wait for the user to type `/browser`:
+   - Start a temporary local preview server (`python3 -m http.server 8000`, marked as daemon) and use Antigravity's built-in `browser` subagent (`invoke_subagent` with `TypeName: "browser"`) to open `http://localhost:8000`.
+   - Click through the affected screen, button, or modal, visually verify layout/layering, and check for console errors *before* committing and pushing to GitHub.
+   - Stop the temporary preview server once browser verification is complete.
+   - Skip browser testing for docs-only (`AGENTS.md`, `README.md`, `scripts/`, `tests/`) or purely non-UI changes to save time and tokens.
+5. **Provide a Testing Checklist:**
    Give the user a simple, 1-2-3 checklist of what to tap in Google Chrome on their computer or phone to verify the change.
 
 ### Rule 3: Version Bump, Anti-Overwrite Sync & GitHub Pages Deployment Verification

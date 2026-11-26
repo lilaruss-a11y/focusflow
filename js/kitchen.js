@@ -259,6 +259,9 @@
         name: val,
         category: cat,
         storage: storage,
+        stockStatus: 'have',
+        useMeFirst: false,
+        useMeFirstNote: '',
         amount: 1,
         unit: 'item',
         serving: '1 serving',
@@ -2038,45 +2041,126 @@
       }
     }
 
-    function buildPantryItemPillHtml(item, expiryBadge) {
-      const isOutOfStock = (item.amount == null || item.amount <= 0);
-      const totalAmt = (item.amount != null && !isNaN(parseFloat(item.amount))) ? parseFloat(item.amount) : 1;
-      const remAmt = (item.amountRemaining != null && !isNaN(parseFloat(item.amountRemaining))) ? parseFloat(item.amountRemaining) : totalAmt;
-      
-      let pct = 100;
-      if (totalAmt > 0) {
-        pct = Math.min(100, Math.max(0, Math.round((remAmt / totalAmt) * 100)));
+    function getPantryStockStatus(item) {
+      if (!item) return 'have';
+      if (item.stockStatus === 'have' || item.stockStatus === 'low' || item.stockStatus === 'out') {
+        return item.stockStatus;
+      }
+      if (item.amount != null && !isNaN(parseFloat(item.amount)) && parseFloat(item.amount) <= 0) {
+        return 'out';
+      }
+      return 'have';
+    }
+
+    function cyclePantryStockStatus(id) {
+      if (!Array.isArray(state.pantry)) return;
+      const item = state.pantry.find(p => p.id === id);
+      if (!item) return;
+      const current = getPantryStockStatus(item);
+      const next = current === 'have' ? 'low' : (current === 'low' ? 'out' : 'have');
+      item.stockStatus = next;
+      if (next === 'out') {
+        item.amount = 0;
+        item.useMeFirst = false;
+      } else if (item.amount == null || parseFloat(item.amount) <= 0) {
+        item.amount = 1;
+      }
+      saveAppState();
+      renderPantry();
+    }
+
+    function togglePantryUseMeFirst(id) {
+      if (!Array.isArray(state.pantry)) return;
+      const item = state.pantry.find(p => p.id === id);
+      if (!item) return;
+      item.useMeFirst = !item.useMeFirst;
+      if (item.useMeFirst && getPantryStockStatus(item) === 'out') {
+        item.stockStatus = 'have';
+        if (item.amount == null || parseFloat(item.amount) <= 0) item.amount = 1;
+      }
+      saveAppState();
+      renderPantry();
+    }
+
+    function renderUseMeFirstStrip() {
+      const strip = document.getElementById('pantry-use-me-first-strip');
+      const chipsWrap = document.getElementById('pantry-use-me-first-chips');
+      if (!strip || !chipsWrap) return;
+
+      const flagged = (state.pantry || []).filter(item => Boolean(item.useMeFirst) && getPantryStockStatus(item) !== 'out');
+      if (flagged.length === 0) {
+        strip.classList.add('hidden');
+        chipsWrap.innerHTML = '';
+        return;
       }
 
-      const isLowStock = pct <= 25 || isOutOfStock;
+      strip.classList.remove('hidden');
+      chipsWrap.innerHTML = flagged.map(item => {
+        const displayName = item.genericName || item.name || 'Item';
+        const noteText = item.useMeFirstNote ? ` (${item.useMeFirstNote})` : '';
+        return `
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-pastel-coral/15 border border-pastel-coral/40 text-pastel-coral text-[11px] font-semibold">
+            <i data-lucide="flame" class="w-3 h-3 shrink-0"></i>
+            <span>${displayName}${noteText}</span>
+            <button type="button" onclick="togglePantryUseMeFirst('${item.id}')" class="text-pastel-coral/80 hover:text-white ml-0.5" title="Remove Use Me First flag">
+              <i data-lucide="x" class="w-3 h-3"></i>
+            </button>
+          </span>
+        `;
+      }).join('');
+    }
+
+    function suggestDinnersFromUseMeFirst() {
+      const flagged = (state.pantry || []).filter(item => Boolean(item.useMeFirst) && getPantryStockStatus(item) !== 'out');
+      const haveStaples = (state.pantry || []).filter(item => !item.useMeFirst && getPantryStockStatus(item) === 'have');
+      const priorityNames = flagged.map(i => i.genericName || i.name).filter(Boolean);
+      const stapleNames = haveStaples.slice(0, 12).map(i => i.genericName || i.name).filter(Boolean);
+
+      if (typeof openReverseChefFromKitchen === 'function') openReverseChefFromKitchen();
+      if (typeof goToReverseChefStep === 'function') goToReverseChefStep(2);
+      if (typeof sendSousChefQuickPrompt === 'function') {
+        const useFirstPart = priorityNames.length > 0
+          ? `Use these "Use Me First" perishables first: ${priorityNames.join(', ')}. `
+          : '';
+        const staplePart = stapleNames.length > 0
+          ? `I also have these staples on hand: ${stapleNames.join(', ')}. `
+          : '';
+        sendSousChefQuickPrompt(
+          `${useFirstPart}${staplePart}Suggest 1 or 2 beginner-friendly dinners for this week with simple steps and only a short list of extra ingredients to buy.`
+        );
+      }
+    }
+
+    function buildPantryItemPillHtml(item, expiryBadge) {
+      const stockStatus = getPantryStockStatus(item);
+      const isOutOfStock = stockStatus === 'out';
+      const isLowStock = stockStatus === 'low' || isOutOfStock;
+      const isUseMeFirst = Boolean(item.useMeFirst) && !isOutOfStock;
+      let pct = stockStatus === 'have' ? 100 : (stockStatus === 'low' ? 35 : 0);
+
       const lowStockCartAction = isLowStock
-        ? `<button type="button" onclick="event.stopPropagation(); addPantryItemToShoppingList('${item.id}')" class="p-1 rounded-lg bg-pastel-sky/15 hover:bg-pastel-sky/30 border border-pastel-sky/35 text-pastel-sky transition shrink-0 flex items-center justify-center" title="Low stock! Tap to add to shopping list">
+        ? `<button type="button" onclick="event.stopPropagation(); addPantryItemToShoppingList('${item.id}')" class="p-1 rounded-lg bg-pastel-sky/15 hover:bg-pastel-sky/30 border border-pastel-sky/35 text-pastel-sky transition shrink-0 flex items-center justify-center" title="Low or out! Tap to add to shopping list">
              <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
            </button>`
         : '';
 
-      const outOfStockAction = isOutOfStock
-        ? `<button type="button" onclick="event.stopPropagation(); addPantryItemToShoppingList('${item.id}')" class="px-2 py-0.5 rounded-lg bg-pastel-coral/20 hover:bg-pastel-coral/30 border border-pastel-coral/40 text-pastel-coral text-[10px] font-bold flex items-center gap-1 transition" title="Item is out of stock! Tap to add to shopping list">
-             <i data-lucide="shopping-cart" class="w-3 h-3"></i>
-             <span>+ Add to Shopping List</span>
-           </button>`
-        : '';
-
-      // Display formatted remaining quantity: e.g. "12 oz" and smaller metric equivalent
-      const displayLabel = formatPantryAmountAndUnit(remAmt, item.unit);
-      const metricLabel = getMetricEquivalentLabel(remAmt, item.unit, item);
-      const metricSubHtml = metricLabel ? ` <span class="text-[9px] text-slate-400 font-normal ml-0.5">${metricLabel}</span>` : '';
-
-      // Color code by stock level
+      // Color code by presence status (Have / Low / Out)
       let barColor = 'bg-pastel-mint';
-      let badgeTextColor = 'text-pastel-mint';
-      if (pct <= 25) {
-        barColor = 'bg-pastel-coral';
-        badgeTextColor = 'text-pastel-coral';
-      } else if (pct <= 50) {
+      let statusLabel = 'Have';
+      let statusBtnClass = 'bg-pastel-mint/15 border-pastel-mint/40 text-pastel-mint hover:bg-pastel-mint/25';
+      if (stockStatus === 'low') {
         barColor = 'bg-pastel-butter';
-        badgeTextColor = 'text-pastel-butter';
+        statusLabel = 'Low';
+        statusBtnClass = 'bg-pastel-butter/15 border-pastel-butter/40 text-pastel-butter hover:bg-pastel-butter/25';
+      } else if (stockStatus === 'out') {
+        barColor = 'bg-pastel-coral';
+        statusLabel = 'Out';
+        statusBtnClass = 'bg-pastel-coral/15 border-pastel-coral/40 text-pastel-coral hover:bg-pastel-coral/25';
       }
+
+      const useMeFirstBtnClass = isUseMeFirst
+        ? 'bg-pastel-coral/20 border-pastel-coral/50 text-pastel-coral'
+        : 'bg-dark-elevated border-dark-border text-slate-500 hover:text-pastel-coral hover:border-pastel-coral/40';
 
       const bottomProgressBar = `
         <div class="absolute bottom-0 left-0 right-0 h-[3px] bg-dark-border/60 overflow-hidden rounded-b-xl">
@@ -2129,13 +2213,14 @@
           <span class="text-slate-200 font-semibold truncate group-hover:text-pastel-mint transition ${isOutOfStock ? 'line-through text-slate-400' : ''}" title="${rawName}${item.brand ? ' (' + item.brand + ')' : ''}">${displayName}</span>
           ${expiryBadge}
         </div>
-        <div class="flex items-center gap-1.5 shrink-0" onclick="event.stopPropagation()">
+        <div class="flex items-center gap-1 shrink-0" onclick="event.stopPropagation()">
           ${lowStockCartAction}
-          <!-- Amount Display with stock percentage tooltip -->
-          <span onclick="event.stopPropagation(); openPantryItemDetailModal('${item.id}', { focusAmountRemaining: true })" class="${badgeTextColor} font-bold px-2 py-0.5 rounded-lg bg-dark-elevated border border-dark-border hover:border-pastel-sky/60 cursor-pointer font-mono text-[10.5px] transition" title="${remAmt} left of ${totalAmt} ${item.unit || 'items'} (${pct}% remaining) — Tap to edit amount remaining">
-            ${displayLabel}${metricSubHtml}
-          </span>
-          <!-- Delete -->
+          <button type="button" onclick="event.stopPropagation(); togglePantryUseMeFirst('${item.id}')" class="p-1 rounded-lg border transition flex items-center justify-center ${useMeFirstBtnClass}" title="${isUseMeFirst ? 'Flagged: Use Me First (tap to clear)' : 'Flag as Use Me First'}">
+            <i data-lucide="flame" class="w-3.5 h-3.5"></i>
+          </button>
+          <button type="button" onclick="event.stopPropagation(); cyclePantryStockStatus('${item.id}')" class="${statusBtnClass} border font-bold px-2 py-0.5 rounded-lg cursor-pointer font-mono text-[10.5px] transition active:scale-95" title="Tap to cycle: Have → Low → Out">
+            ${statusLabel}
+          </button>
           <button type="button" onclick="event.stopPropagation(); deletePantryItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-0.5" title="Remove ingredient">
             <i data-lucide="x" class="w-3.5 h-3.5"></i>
           </button>
@@ -2374,7 +2459,8 @@
         if (gridType) gridType.classList.add('hidden');
       }
 
-      // Check expiring soon alert in kitchen & reverse chef
+      // Render Use Me First strip and check expiring soon alert
+      renderUseMeFirstStrip();
       checkExpiringSoonAlerts(expiringSoonItems);
       if (window.lucide) lucide.createIcons();
     }

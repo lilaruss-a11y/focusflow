@@ -2,21 +2,21 @@
 // - The app page (index.html): network-first, falls back to the cached copy when offline.
 // - Libraries from CDNs (Tailwind, Lucide, Firebase SDK, fonts): cache-first.
 // - Google sign-in, Firestore and other API traffic is never touched (always goes to the network).
-const CACHE_VERSION = 'focusflow-v138-unified-kitchen-search-and-usda-db';
+const CACHE_VERSION = 'focusflow-v139-presence-only-pantry-use-me-first';
 const APP_SHELL = [
   './',
   './index.html',
-  './css/styles.css?v=138',
+  './css/styles.css?v=139',
   './data/family-cookbook.js?v=48',
   './data/usda-foods.js?v=138',
   './js/audio.js?v=137',
-  './js/state.js?v=48',
+  './js/state.js?v=139',
   './js/sync.js?v=48',
   './js/timeline.js?v=48',
   './js/calendar-categories.js?v=48',
-  './js/kitchen.js?v=138',
+  './js/kitchen.js?v=139',
   './js/recipes.js?v=94',
-  './js/shopping.js?v=94',
+  './js/shopping.js?v=139',
   './js/chef.js?v=137',
   './js/body-profile.js?v=94',
   './js/nutrition.js?v=108',

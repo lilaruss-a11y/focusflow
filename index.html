@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=138">
+  <link rel="stylesheet" href="css/styles.css?v=139">
   <script>
     function resetViewportZoom() {
       try {
@@ -867,7 +867,7 @@
               <h2 class="text-lg sm:text-xl font-bold text-slate-100">Smart Kitchen, Meal Planner &amp; Pantry</h2>
               <span class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-pastel-butter/20 text-pastel-butter border border-pastel-butter/30 font-medium shrink-0">Weekly Prep Suite</span>
             </div>
-            <p class="text-xs text-slate-400 mt-0.5">Inventory your pantry, plan balanced meals for the week, and auto-generate your grocery shopping list.</p>
+            <p class="text-xs text-slate-400 mt-0.5">Mark what you have, flag perishables to use first, and plan 1–2 dinners without strict quantity math.</p>
           </div>
 
           <!-- Global Action Buttons Suite + Expandable Search in Top Header -->
@@ -1025,6 +1025,24 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Use Me First Priority Strip (Low-Friction Perishable Pin) -->
+        <div id="pantry-use-me-first-strip" class="hidden p-3.5 rounded-2xl bg-gradient-to-r from-pastel-coral/15 via-dark-surface to-dark-surface border border-pastel-coral/40 space-y-2.5 shadow-lg">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <i data-lucide="flame" class="w-4 h-4 text-pastel-coral shrink-0"></i>
+              <div>
+                <span class="text-xs font-bold text-pastel-coral block">Use Me First</span>
+                <span class="text-[11px] text-slate-400">Flagged perishables to prioritize in your 1–2 dinners this week</span>
+              </div>
+            </div>
+            <button type="button" onclick="suggestDinnersFromUseMeFirst()" class="px-3 py-1.5 rounded-xl bg-pastel-coral hover:bg-rose-300 text-dark-base font-bold text-xs flex items-center gap-1.5 transition active:scale-95 shrink-0">
+              <i data-lucide="chef-hat" class="w-3.5 h-3.5"></i>
+              <span>Suggest Dinners With These</span>
+            </button>
+          </div>
+          <div id="pantry-use-me-first-chips" class="flex flex-wrap gap-1.5"></div>
         </div>
 
         <!-- Expiring Soon Alert Banner -->
@@ -7539,13 +7557,13 @@
   <script src="js/audio.js?v=137"></script>
 
   <!-- Application Logic Modules -->
-  <script src="js/state.js?v=48"></script>
+  <script src="js/state.js?v=139"></script>
   <script src="js/sync.js?v=48"></script>
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
-  <script src="js/kitchen.js?v=138"></script>
+  <script src="js/kitchen.js?v=139"></script>
   <script src="js/recipes.js?v=94"></script>
-  <script src="js/shopping.js?v=94"></script>
+  <script src="js/shopping.js?v=139"></script>
   <script src="js/chef.js?v=137"></script>
   <script src="js/body-profile.js?v=94"></script>
   <script src="js/nutrition.js?v=108"></script>

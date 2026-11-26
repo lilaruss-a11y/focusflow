@@ -200,16 +200,29 @@
         if (cat === 'other') cat = 'condiments';
 
         const storage = (cat === 'protein' || cat === 'produce') ? 'fridge' : (item.category === 'frozen' ? 'frozen' : 'shelf');
+        const normName = (item.name || '').trim().toLowerCase();
+        const existing = state.pantry.find(p => (p.name || '').trim().toLowerCase() === normName);
 
-        state.pantry.push({
-          id: `p-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-          name: item.name,
-          category: cat,
-          storage: storage,
-          amount: parseFloat(item.quantity) || 1,
-          unit: item.quantity ? item.quantity.replace(/[0-9.]/g, '').trim() || 'item' : 'item',
-          dateAdded: todayStr
-        });
+        if (existing) {
+          existing.stockStatus = 'have';
+          existing.dateAdded = todayStr;
+          if (!existing.amount || parseFloat(existing.amount) <= 0) {
+            existing.amount = parseFloat(item.quantity) || 1;
+          }
+        } else {
+          state.pantry.push({
+            id: `p-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            name: item.name,
+            category: cat,
+            storage: storage,
+            stockStatus: 'have',
+            useMeFirst: false,
+            useMeFirstNote: '',
+            amount: parseFloat(item.quantity) || 1,
+            unit: item.quantity ? item.quantity.replace(/[0-9.]/g, '').trim() || 'item' : 'item',
+            dateAdded: todayStr
+          });
+        }
       });
 
       // Remove moved items from shopping list
@@ -983,20 +996,35 @@ function approveAndCommitGroceriesToPantry() {
     expDate.setDate(expDate.getDate() + expDays);
     const expDateStr = expDate.toISOString().split('T')[0];
 
-    state.pantry.push({
-      id: `p-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`,
-      name: item.name,
-      category: item.category,
-      storage: item.storage || 'fridge-main',
-      amount: parseFloat(item.amount) || 1,
-      unit: item.unit || 'items',
-      nutrition: item.nutrition,
-      isVerified: Boolean(item.isVerified),
-      nutritionSource: item.nutritionSource || (item.isVerified ? 'USDA / Label' : 'Clinical Estimate'),
-      sourceBadge: item.sourceBadge || (item.isVerified ? '✓ Verified' : '~ Clinical Estimate'),
-      dateAdded: todayStr,
-      expirationDate: expDateStr
-    });
+    const normName = (item.name || '').trim().toLowerCase();
+    const existing = state.pantry.find(p => (p.name || '').trim().toLowerCase() === normName);
+
+    if (existing) {
+      existing.stockStatus = 'have';
+      existing.dateAdded = todayStr;
+      existing.expirationDate = expDateStr;
+      if (!existing.amount || parseFloat(existing.amount) <= 0) {
+        existing.amount = parseFloat(item.amount) || 1;
+      }
+    } else {
+      state.pantry.push({
+        id: `p-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`,
+        name: item.name,
+        category: item.category,
+        storage: item.storage || 'fridge-main',
+        stockStatus: 'have',
+        useMeFirst: false,
+        useMeFirstNote: '',
+        amount: parseFloat(item.amount) || 1,
+        unit: item.unit || 'items',
+        nutrition: item.nutrition,
+        isVerified: Boolean(item.isVerified),
+        nutritionSource: item.nutritionSource || (item.isVerified ? 'USDA / Label' : 'Clinical Estimate'),
+        sourceBadge: item.sourceBadge || (item.isVerified ? '✓ Verified' : '~ Clinical Estimate'),
+        dateAdded: todayStr,
+        expirationDate: expDateStr
+      });
+    }
   });
 
   saveAppState();

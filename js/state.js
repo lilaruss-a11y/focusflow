@@ -117,6 +117,11 @@
         saturday: { breakfast: '', lunch: '', dinner: '', snack: '' },
         sunday: { breakfast: '', lunch: '', dinner: '', snack: '' }
       },
+      kitchenDefaults: {
+        standingSmoothieItems: ['Fruit', 'Kale', 'Greek Yogurt', 'Protein Powder'],
+        lunchBackups: ['Apple + Granola Bar', 'Greek Yogurt Bowl', 'Turkey & Cheese Wrap'],
+        weeklyDinnerTarget: 2
+      },
       pantry: [
         {
           id: 'p-1',
@@ -124,6 +129,9 @@
           brand: 'Organic Farm Fresh',
           category: 'produce',
           storage: 'fridge',
+          stockStatus: 'have',
+          useMeFirst: false,
+          useMeFirstNote: '',
           amount: 1,
           unit: 'items',
           dateAdded: '2026-11-01',

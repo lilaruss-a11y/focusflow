@@ -1005,6 +1005,302 @@
       };
     }
 
+    function _parseRecipeIngredientQuantity(rawIngredient = '') {
+      const unicodeMap = {
+        '½': ' 1/2', '⅓': ' 1/3', '⅔': ' 2/3', '¼': ' 1/4', '¾': ' 3/4',
+        '⅛': ' 1/8', '⅜': ' 3/8', '⅝': ' 5/8', '⅞': ' 7/8', '⅕': ' 1/5',
+        '⅖': ' 2/5', '⅗': ' 3/5', '⅘': ' 4/5', '⅙': ' 1/6', '⅚': ' 5/6'
+      };
+      const raw = String(rawIngredient || '')
+        .replace(/[½⅓⅔¼¾⅛⅜⅝⅞⅕⅖⅗⅘⅙⅚]/g, ch => unicodeMap[ch] || ch)
+        .replace(/\s+/g, ' ')
+        .trim();
+      const qtyMatch = raw.match(/^\s*(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?)\s*(cups?|tbsp|tablespoons?|tsp|teaspoons?|oz|ounces?|lbs?|pounds?|g|grams?|kg|ml|liters?|cloves?|slices?|cans?|blocks?|medium|large|small)?\b/i);
+      let qty = 1;
+      let unit = '';
+      if (qtyMatch) {
+        const numStr = qtyMatch[1].trim();
+        if (numStr.includes(' ') && numStr.includes('/')) {
+          const [whole, frac] = numStr.split(/\s+/);
+          const [a, b] = frac.split('/').map(Number);
+          qty = (Number(whole) || 0) + (b ? a / b : 0);
+        } else if (numStr.includes('/')) {
+          const [a, b] = numStr.split('/').map(Number);
+          qty = b ? a / b : 1;
+        } else {
+          qty = parseFloat(numStr) || 1;
+        }
+        unit = (qtyMatch[2] || '').toLowerCase();
+      }
+      const cleanName = raw
+        .replace(/^\s*(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?)\s*(?:cups?|tbsp|tablespoons?|tsp|teaspoons?|oz|ounces?|lbs?|pounds?|g|grams?|kg|ml|liters?|cloves?|slices?|cans?|blocks?|medium|large|small)?\b/i, '')
+        .replace(/\(.*?\)/g, ' ')
+        .replace(/\b(?:of|fresh|raw|cooked|chopped|diced|minced|sliced|melted|shredded|drained|optional|to taste)\b/gi, ' ')
+        .replace(/[,]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      return { qty, unit, cleanName: cleanName || raw };
+    }
+
+    function _parseRecipeServingsCount(recipe) {
+      if (!recipe) return 1;
+      if (typeof recipe.servings === 'number' && recipe.servings > 0) return recipe.servings;
+      const s = String(recipe.servings || '').trim();
+      if (!s) return 1;
+      const rangeMatch = s.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/);
+      if (rangeMatch) {
+        return Math.max(1, (parseFloat(rangeMatch[1]) + parseFloat(rangeMatch[2])) / 2);
+      }
+      const singleMatch = s.match(/(\d+(?:\.\d+)?)/);
+      return singleMatch ? Math.max(1, parseFloat(singleMatch[1])) : 1;
+    }
+
+    function _inferIngredientFallbackProfile(cleanName = '') {
+      const n = (cleanName || '').toLowerCase();
+      if (/protein powder|whey|casein|collagen|pea protein/i.test(n)) {
+        return { category: 'protein', kcal: 120, protein: 24, carbs: 3, fat: 1.5, fiber: 1, sugar: 1, satFat: 0.5, sodium: 130, water: 2, grams: 32 };
+      }
+      if (/yogurt|kefir|milk|cheese|cream|butter/i.test(n)) {
+        const isButter = /butter/i.test(n);
+        if (isButter) return { category: 'fats', kcal: 102, protein: 0.1, carbs: 0, fat: 11.5, fiber: 0, sugar: 0, satFat: 7.3, sodium: 91, water: 2, grams: 14 };
+        return { category: 'dairy', kcal: 100, protein: 12, carbs: 6, fat: 2, fiber: 0, sugar: 5, satFat: 1.2, sodium: 65, water: 125, grams: 150 };
+      }
+      if (/egg|chicken|beef|turkey|salmon|fish|tofu|tempeh|shrimp|beans|lentil|chickpea/i.test(n)) {
+        return { category: 'protein', kcal: 145, protein: 18, carbs: 2, fat: 7, fiber: 0, sugar: 0.5, satFat: 2, sodium: 95, water: 75, grams: 100 };
+      }
+      if (/berry|berries|banana|apple|orange|mango|pineapple|peach|fruit|date|raisin/i.test(n)) {
+        return { category: 'fruits', kcal: 75, protein: 1, carbs: 18, fat: 0.4, fiber: 3.5, sugar: 12, satFat: 0.1, sodium: 2, water: 95, grams: 120 };
+      }
+      if (/spinach|kale|broccoli|carrot|pepper|onion|garlic|tomato|greens|lettuce|cucumber|zucchini|celery|mushroom|veggie|vegetable/i.test(n)) {
+        return { category: 'vegetables', kcal: 28, protein: 2, carbs: 5, fat: 0.3, fiber: 2.2, sugar: 2, satFat: 0.05, sodium: 25, water: 75, grams: 80 };
+      }
+      if (/flour|oat|rice|pasta|bread|quinoa|tortilla|noodle|cracker/i.test(n)) {
+        return { category: 'grains', kcal: 150, protein: 4.5, carbs: 30, fat: 1.5, fiber: 2.5, sugar: 1, satFat: 0.3, sodium: 10, water: 12, grams: 45 };
+      }
+      if (/oil|nut|seed|chia|flax|almond|peanut|walnut|avocado/i.test(n)) {
+        return { category: 'fats', kcal: 140, protein: 3.5, carbs: 4, fat: 13, fiber: 2.5, sugar: 0.5, satFat: 1.5, sodium: 5, water: 4, grams: 24 };
+      }
+      if (/salt|pepper|cinnamon|baking soda|baking powder|spice|herb|vanilla|extract|vinegar|soy sauce|seasoning/i.test(n)) {
+        const isSalt = /^salt\b|sea salt|table salt/i.test(n);
+        if (isSalt) return { category: 'spices', kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, satFat: 0, sodium: 590, water: 0, grams: 1.5 };
+        return { category: 'spices', kcal: 8, protein: 0.2, carbs: 1.5, fat: 0.1, fiber: 0.5, sugar: 0.3, satFat: 0, sodium: 12, water: 1, grams: 3 };
+      }
+      return { category: 'produce', kcal: 65, protein: 2, carbs: 11, fat: 1.5, fiber: 1.5, sugar: 3, satFat: 0.3, sodium: 25, water: 45, grams: 65 };
+    }
+
+    function computeRecipeIngredientContributions(recipe) {
+      const standards = (typeof DAILY_NUTRITION_STANDARDS !== 'undefined') ? DAILY_NUTRITION_STANDARDS : (window.DAILY_NUTRITION_STANDARDS || {});
+      const microKeys = Object.keys(standards);
+      const macroDefs = [
+        { key: 'kcal', unit: 'kcal' },
+        { key: 'protein', unit: 'g' },
+        { key: 'carbs', unit: 'g' },
+        { key: 'fat', unit: 'g' },
+        { key: 'fiber', unit: 'g' },
+        { key: 'water', unit: 'ml' },
+        { key: 'sugar', unit: 'g' },
+        { key: 'satFat', unit: 'g' },
+        { key: 'sodium', unit: 'mg' }
+      ];
+      const allKeys = [
+        ...macroDefs,
+        ...microKeys.map(k => ({ key: k, unit: standards[k]?.unit || '' }))
+      ];
+
+      const rawIngredients = Array.isArray(recipe?.ingredients) ? recipe.ingredients.filter(Boolean) : [];
+      const servingsCount = _parseRecipeServingsCount(recipe);
+      const totals = { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, water: 0, sugar: 0, satFat: 0, sodium: 0, micros: {}, verifiedNutrients: {} };
+      microKeys.forEach(k => { totals.micros[k] = 0; });
+
+      const rawContribMap = {};
+      allKeys.forEach(d => { rawContribMap[d.key] = []; });
+
+      let customFoodsList = [];
+      try {
+        customFoodsList = JSON.parse(localStorage.getItem('focusflow_custom_foods') || '[]');
+      } catch (e) {}
+
+      const pantryPool = (window.state && Array.isArray(window.state.pantry)) ? window.state.pantry : [];
+
+      const resolvedIngredients = rawIngredients.map(rawIng => {
+        const { qty, unit, cleanName } = _parseRecipeIngredientQuantity(rawIng);
+        const cleanLower = cleanName.toLowerCase();
+
+        // Find best data source: Personal Pantry -> Custom Foods -> USDA Whole Foods -> Smart Fallback
+        const pantryMatch = pantryPool.find(p => {
+          const pn = (p.genericName || p.name || '').toLowerCase();
+          return pn && (pn === cleanLower || pn.includes(cleanLower) || cleanLower.includes(pn));
+        });
+        const customMatch = !pantryMatch ? customFoodsList.find(f => {
+          const fn = (f.name || '').toLowerCase();
+          return fn && (fn === cleanLower || fn.includes(cleanLower) || cleanLower.includes(fn));
+        }) : null;
+        const usdaMatch = findClosestUsdaFood(cleanName);
+
+        let base = null;
+        let isEstimated = true;
+        if (pantryMatch && (pantryMatch.nutrition || pantryMatch.kcal != null)) {
+          const n = pantryMatch.nutrition || pantryMatch;
+          base = {
+            category: pantryMatch.category || 'produce',
+            kcal: parseFloat(n.kcal) || 0,
+            protein: parseFloat(n.protein) || 0,
+            carbs: parseFloat(n.carbs) || 0,
+            fat: parseFloat(n.fat) || 0,
+            fiber: parseFloat(n.fiber) || 0,
+            water: parseFloat(n.water) || 0,
+            sugar: parseFloat(n.sugar) || 0,
+            satFat: parseFloat(n.satFat) || 0,
+            sodium: parseFloat(n.sodium) || 0,
+            grams: parseFloat(pantryMatch.servingGrams || n.servingGrams) || 100,
+            micros: (n.micros && Object.keys(n.micros).length > 0) ? n.micros : estimateMicronutrientsForFood(pantryMatch.category || 'produce', n.kcal || 60, n.protein || 2, n.carbs || 8, n.fat || 1, cleanName, pantryMatch.servingGrams || 100)
+          };
+          isEstimated = !Boolean(pantryMatch.isVerified);
+        } else if (customMatch) {
+          base = {
+            category: customMatch.category || 'produce',
+            kcal: parseFloat(customMatch.kcal) || 0,
+            protein: parseFloat(customMatch.protein) || 0,
+            carbs: parseFloat(customMatch.carbs) || 0,
+            fat: parseFloat(customMatch.fat) || 0,
+            fiber: parseFloat(customMatch.fiber) || 0,
+            water: parseFloat(customMatch.water) || 0,
+            sugar: parseFloat(customMatch.sugar) || 0,
+            satFat: parseFloat(customMatch.satFat) || 0,
+            sodium: parseFloat(customMatch.sodium) || 0,
+            grams: parseFloat(customMatch.servingGrams) || 100,
+            micros: customMatch.micros || estimateMicronutrientsForFood(customMatch.category || 'produce', customMatch.kcal || 60, customMatch.protein || 2, customMatch.carbs || 8, customMatch.fat || 1, cleanName, customMatch.servingGrams || 100)
+          };
+          isEstimated = !Boolean(customMatch.isVerified);
+        } else if (usdaMatch) {
+          base = {
+            category: usdaMatch.category || 'produce',
+            kcal: parseFloat(usdaMatch.kcal) || 0,
+            protein: parseFloat(usdaMatch.protein) || 0,
+            carbs: parseFloat(usdaMatch.carbs) || 0,
+            fat: parseFloat(usdaMatch.fat) || 0,
+            fiber: parseFloat(usdaMatch.fiber) || 0,
+            water: parseFloat(usdaMatch.water) || 0,
+            sugar: parseFloat(usdaMatch.sugar) || 0,
+            satFat: parseFloat(usdaMatch.satFat) || 0,
+            sodium: parseFloat(usdaMatch.sodium) || 0,
+            grams: parseFloat(usdaMatch.servingGrams) || 100,
+            micros: usdaMatch.micros || {}
+          };
+          isEstimated = false;
+        } else {
+          const fb = _inferIngredientFallbackProfile(cleanName);
+          base = {
+            ...fb,
+            micros: estimateMicronutrientsForFood(fb.category, fb.kcal, fb.protein, fb.carbs, fb.fat, cleanName, fb.grams)
+          };
+          isEstimated = true;
+        }
+
+        // Convert unit into factor relative to one reference serving, then divide by recipe servings
+        let amountFactor = qty;
+        if (unit === 'tsp' || unit === 'teaspoon' || unit === 'teaspoons') amountFactor = qty * 0.05;
+        else if (unit === 'tbsp' || unit === 'tablespoon' || unit === 'tablespoons') amountFactor = qty * 0.15;
+        else if (unit === 'g' || unit === 'gram' || unit === 'grams') amountFactor = qty / Math.max(base.grams || 100, 1);
+        else if (unit === 'oz' || unit === 'ounce' || unit === 'ounces') amountFactor = (qty * 28.35) / Math.max(base.grams || 100, 1);
+        else if (unit === 'lb' || unit === 'lbs' || unit === 'pound' || unit === 'pounds') amountFactor = (qty * 453.6) / Math.max(base.grams || 100, 1);
+        else if (unit === 'clove' || unit === 'cloves') amountFactor = qty * 0.1;
+
+        const perServingScale = Math.min(Math.max(amountFactor / servingsCount, 0.04), 5.0);
+
+        const ingValues = {};
+        allKeys.forEach(({ key }) => {
+          const rawVal = microKeys.includes(key)
+            ? (parseFloat(base.micros?.[key]) || 0)
+            : (parseFloat(base[key]) || 0);
+          const scaled = rawVal * perServingScale;
+          ingValues[key] = scaled;
+
+          if (microKeys.includes(key)) {
+            totals.micros[key] += scaled;
+          } else {
+            totals[key] += scaled;
+          }
+          if (scaled > 0.0001) {
+            rawContribMap[key].push({
+              ingredient: cleanName,
+              rawIngredient: rawIng,
+              rawAmount: scaled,
+              isEstimated
+            });
+          }
+        });
+
+        return { rawIngredient: rawIng, ingredient: cleanName, isEstimated, values: ingValues };
+      });
+
+      // Align displayed ingredient contribution amounts if recipe has explicit calibrated macros
+      const targetNutrition = (recipe && (recipe.kcal != null || recipe.nutrition))
+        ? buildRecipeUnifiedNutrition(recipe).nutrition
+        : {
+            kcal: Math.round(totals.kcal),
+            protein: Math.round(totals.protein * 10) / 10,
+            carbs: Math.round(totals.carbs * 10) / 10,
+            fat: Math.round(totals.fat * 10) / 10,
+            fiber: Math.round(totals.fiber * 10) / 10,
+            water: Math.round(totals.water),
+            sugar: Math.round(totals.sugar * 10) / 10,
+            satFat: Math.round(totals.satFat * 10) / 10,
+            sodium: Math.round(totals.sodium),
+            micros: {},
+            verifiedNutrients: {}
+          };
+
+      if (!recipe || (recipe.kcal == null && !recipe.nutrition)) {
+        microKeys.forEach(k => {
+          const val = totals.micros[k] || 0;
+          targetNutrition.micros[k] = val >= 10 ? Math.round(val) : parseFloat(val.toFixed(2));
+        });
+      }
+
+      const contributorsByNutrient = {};
+      allKeys.forEach(({ key, unit }) => {
+        const list = rawContribMap[key] || [];
+        const sumRaw = list.reduce((acc, c) => acc + c.rawAmount, 0);
+        if (sumRaw <= 0 || list.length === 0) {
+          contributorsByNutrient[key] = [];
+          return;
+        }
+        const displayTotal = microKeys.includes(key)
+          ? (parseFloat(targetNutrition.micros?.[key]) || sumRaw)
+          : (parseFloat(targetNutrition[key]) || sumRaw);
+
+        const items = list
+          .map(c => {
+            const share = c.rawAmount / sumRaw;
+            const amount = displayTotal * share;
+            const roundedAmount = amount >= 10 ? Math.round(amount) : parseFloat(amount.toFixed(2));
+            return {
+              ingredient: c.ingredient,
+              rawIngredient: c.rawIngredient,
+              pct: Math.max(1, Math.round(share * 100)),
+              amount: roundedAmount,
+              unit,
+              isEstimated: c.isEstimated
+            };
+          })
+          .sort((a, b) => b.pct - a.pct);
+
+        contributorsByNutrient[key] = items;
+      });
+
+      return {
+        servingsCount,
+        ingredientsResolved: resolvedIngredients,
+        totalNutrition: targetNutrition,
+        contributorsByNutrient
+      };
+    }
+
+    if (typeof window !== 'undefined') {
+      window.computeRecipeIngredientContributions = computeRecipeIngredientContributions;
+    }
+
     function getUnifiedFoodOrMeal(query = '') {
       const q = (query || '').toLowerCase().trim();
       const results = [];

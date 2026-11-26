@@ -992,8 +992,14 @@
       };
 
       state.recipes.unshift(newRec);
+      if (typeof saveAppState === 'function') saveAppState();
       closeAddRecipeModal();
       renderRecipes();
+      if (typeof window._onRecipeCreatedHook === 'function') {
+        const hook = window._onRecipeCreatedHook;
+        window._onRecipeCreatedHook = null;
+        hook(newRec);
+      }
       playChime('bell');
       alertBox(`Saved "${title}" to your Recipe Codex.`, "Recipe Stored");
     }
@@ -1196,25 +1202,43 @@
       const panel = document.getElementById('inspect-recipe-nutrition-panel');
       if (!panel) return;
 
-      const built = (typeof buildRecipeUnifiedNutrition === 'function')
-        ? buildRecipeUnifiedNutrition(recipeObj)
-        : {
-            serving: recipeObj.serving || '1 serving',
-            servingGrams: recipeObj.servingGrams || 250,
-            nutrition: {
-              kcal: recipeObj.kcal || 450,
-              protein: recipeObj.protein || Math.round(((recipeObj.kcal || 450) * 0.25) / 4),
-              carbs: recipeObj.carbs || Math.round(((recipeObj.kcal || 450) * 0.45) / 4),
-              fat: recipeObj.fat || Math.round(((recipeObj.kcal || 450) * 0.30) / 9),
-              fiber: 5,
-              sugar: 6,
-              satFat: 3,
-              sodium: 320,
-              water: 95,
-              verifiedNutrients: {},
-              micros: {}
-            }
-          };
+      let built;
+      const contribData = (typeof computeRecipeIngredientContributions === 'function')
+        ? computeRecipeIngredientContributions(recipeObj)
+        : null;
+      window._activeRecipeContribData = contribData;
+      window._activeRecipeInspectKey = null;
+
+      if (recipeObj.kcal == null && !recipeObj.nutrition && contribData && contribData.totalNutrition) {
+        const estMeta = (typeof estimateRecipeServingGrams === 'function')
+          ? estimateRecipeServingGrams(recipeObj.title || recipeObj.name || '', recipeObj.ingredients || [])
+          : { serving: '1 serving', servingGrams: 250 };
+        built = {
+          serving: recipeObj.serving || estMeta.serving,
+          servingGrams: recipeObj.servingGrams || estMeta.servingGrams,
+          nutrition: contribData.totalNutrition
+        };
+      } else {
+        built = (typeof buildRecipeUnifiedNutrition === 'function')
+          ? buildRecipeUnifiedNutrition(recipeObj)
+          : {
+              serving: recipeObj.serving || '1 serving',
+              servingGrams: recipeObj.servingGrams || 250,
+              nutrition: {
+                kcal: recipeObj.kcal || 450,
+                protein: recipeObj.protein || Math.round(((recipeObj.kcal || 450) * 0.25) / 4),
+                carbs: recipeObj.carbs || Math.round(((recipeObj.kcal || 450) * 0.45) / 4),
+                fat: recipeObj.fat || Math.round(((recipeObj.kcal || 450) * 0.30) / 9),
+                fiber: 5,
+                sugar: 6,
+                satFat: 3,
+                sodium: 320,
+                water: 95,
+                verifiedNutrients: {},
+                micros: {}
+              }
+            };
+      }
 
       const nut = built.nutrition;
       const verifiedMap = nut.verifiedNutrients || {};
@@ -1233,14 +1257,33 @@
         { key: 'sodium', name: 'Sodium', unit: 'mg', dv: profile.dailySodiumTarget || 2300, isUpperLimit: true, val: nut.sodium }
       ];
 
-      const macroRowsHtml = macroDefs.map(m => renderMicroBarRow(m.key, m, m.val, Boolean(verifiedMap[m.key]))).join('');
+      const renderClickableRow = (key, def, val, isVerified) => {
+        const baseBarHtml = renderMicroBarRow(key, def, val, isVerified);
+        const contribs = contribData?.contributorsByNutrient?.[key] || [];
+        const hasContribs = contribs.length > 0;
+        const hintBadge = hasContribs
+          ? `<div class="flex items-center justify-end gap-1 mt-1 text-[9px] text-pastel-sky/90 font-semibold">
+               <span>Tap bar for ingredient breakdown (${contribs.length})</span>
+               <i data-lucide="chevron-down" id="recipe-nutrient-chev-${key}" class="w-3 h-3 transition-transform"></i>
+             </div>`
+          : '';
+        return `
+          <div data-recipe-nutrient-row="${key}" ${hasContribs ? `onclick="toggleRecipeNutrientContributors('${key}')"` : ''} class="${hasContribs ? 'cursor-pointer hover:ring-1 hover:ring-pastel-mint/50' : ''} rounded-xl transition">
+            ${baseBarHtml}
+            ${hintBadge}
+            <div id="recipe-nutrient-contrib-${key}" class="hidden mt-1.5 mx-1 mb-1 p-2 rounded-lg bg-dark-base/90 border border-dark-border/80 space-y-1.5 text-[10px]"></div>
+          </div>
+        `;
+      };
+
+      const macroRowsHtml = macroDefs.map(m => renderClickableRow(m.key, m, m.val, Boolean(verifiedMap[m.key]))).join('');
       const vitRowsHtml = Object.keys(standards)
         .filter(k => standards[k].type === 'vitamin')
-        .map(k => renderMicroBarRow(k, standards[k], nut.micros ? nut.micros[k] : null, Boolean(verifiedMap[k])))
+        .map(k => renderClickableRow(k, standards[k], nut.micros ? nut.micros[k] : null, Boolean(verifiedMap[k])))
         .join('');
       const minRowsHtml = Object.keys(standards)
         .filter(k => standards[k].type === 'mineral')
-        .map(k => renderMicroBarRow(k, standards[k], nut.micros ? nut.micros[k] : null, Boolean(verifiedMap[k])))
+        .map(k => renderClickableRow(k, standards[k], nut.micros ? nut.micros[k] : null, Boolean(verifiedMap[k])))
         .join('');
 
       panel.innerHTML = `
@@ -1272,20 +1315,60 @@
         </div>
 
         <div class="space-y-1.5">
-          <span class="text-[10px] font-bold text-pastel-lavender uppercase tracking-wider block">Macronutrients (Goal Range Color-Coded)</span>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto pr-1">
+          <div class="flex items-center justify-between flex-wrap gap-1">
+            <span class="text-[10px] font-bold text-pastel-lavender uppercase tracking-wider">Macronutrients (Goal Range Color-Coded)</span>
+            <span class="text-[9.5px] text-slate-400">Tap any nutrient to see ingredient contributors</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-52 overflow-y-auto pr-1">
             ${macroRowsHtml}
           </div>
         </div>
 
         <div class="space-y-1.5 pt-1 border-t border-dark-border/50">
           <span class="text-[10px] font-bold text-pastel-sky uppercase tracking-wider block">Vitamins &amp; Minerals (Per 1 Serving = ${built.servingGrams} g)</span>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto pr-1">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-52 overflow-y-auto pr-1">
             ${vitRowsHtml}
             ${minRowsHtml}
           </div>
         </div>
       `;
+    }
+
+    function toggleRecipeNutrientContributors(nutrientKey) {
+      const box = document.getElementById(`recipe-nutrient-contrib-${nutrientKey}`);
+      const chev = document.getElementById(`recipe-nutrient-chev-${nutrientKey}`);
+      if (!box) return;
+
+      const isCurrentlyOpen = !box.classList.contains('hidden');
+      if (isCurrentlyOpen) {
+        box.classList.add('hidden');
+        if (chev) chev.style.transform = '';
+        return;
+      }
+
+      const contribs = window._activeRecipeContribData?.contributorsByNutrient?.[nutrientKey] || [];
+      if (contribs.length === 0) {
+        box.innerHTML = '<span class="text-slate-400 italic">No ingredient breakdown available for this nutrient yet.</span>';
+      } else {
+        box.innerHTML = `
+          <div class="text-[9.5px] font-bold text-pastel-mint uppercase tracking-wider pb-0.5 border-b border-dark-border/60">
+            Ingredient Contributors
+          </div>
+          ${contribs.map(c => `
+            <div class="space-y-0.5">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-slate-200 font-medium truncate">${c.ingredient}</span>
+                <span class="font-mono text-slate-300 shrink-0"><strong class="text-pastel-mint">${c.pct}%</strong> (${c.amount} ${c.unit})</span>
+              </div>
+              <div class="w-full bg-dark-elevated rounded-full h-1 overflow-hidden">
+                <div class="bg-pastel-mint/80 h-1 rounded-full" style="width: ${Math.min(100, c.pct)}%"></div>
+              </div>
+            </div>
+          `).join('')}
+        `;
+      }
+      box.classList.remove('hidden');
+      if (chev) chev.style.transform = 'rotate(180deg)';
     }
 
 function inspectRecipeDetails(idx) {
@@ -1409,10 +1492,81 @@ function inspectRecipeDetails(idx) {
       renderRecipeInspectNutritionPanel(recipe);
 
       if (cookBtn) {
+        cookBtn.classList.remove('hidden');
         cookBtn.onclick = () => {
           closeRecipeInspectModal();
           sendRecipeToChoreographer(recipe.id);
         };
+      }
+
+      if (modal) modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+      playChime('bell');
+    }
+
+    function viewCustomMealNutritionDetails(mealObj) {
+      if (!mealObj) return;
+      const contrib = (typeof computeRecipeIngredientContributions === 'function')
+        ? computeRecipeIngredientContributions(mealObj)
+        : null;
+      const kcalDisplay = contrib?.totalNutrition?.kcal ?? mealObj.kcal ?? 320;
+      const syntheticRecipe = {
+        id: mealObj.recipeId || mealObj.id || null,
+        title: mealObj.title || mealObj.name || 'Planned Meal',
+        ingredients: Array.isArray(mealObj.ingredients) ? mealObj.ingredients : [],
+        kcal: kcalDisplay,
+        nutrition: mealObj.nutrition || (contrib ? contrib.totalNutrition : null),
+        serving: mealObj.serving || '1 meal serving',
+        servingGrams: mealObj.servingGrams || 280
+      };
+
+      const modal = document.getElementById('recipe-inspect-modal');
+      const titleEl = document.getElementById('inspect-recipe-title');
+      const metaEl = document.getElementById('inspect-recipe-meta');
+      const descEl = document.getElementById('inspect-recipe-desc');
+      const ingListEl = document.getElementById('inspect-recipe-ingredients');
+      const stepsListEl = document.getElementById('inspect-recipe-steps');
+      const cookBtn = document.getElementById('inspect-recipe-cook-btn');
+
+      if (titleEl) titleEl.textContent = syntheticRecipe.title;
+      if (metaEl) metaEl.textContent = `Weekly Meal Plan Option • ${kcalDisplay} kcal • 1 serving = ${syntheticRecipe.serving} (${syntheticRecipe.servingGrams} g)`;
+      if (descEl) descEl.textContent = 'Estimated nutritional profile calculated directly from the listed ingredients. Tap any nutrient bar below to inspect which ingredient supplies it.';
+
+      if (ingListEl) {
+        ingListEl.innerHTML = '';
+        if (syntheticRecipe.ingredients.length === 0) {
+          ingListEl.innerHTML = '<div class="p-2 rounded-xl bg-dark-base border border-dark-border text-xs text-slate-400">No individual ingredients listed for this quick meal.</div>';
+        } else {
+          syntheticRecipe.ingredients.forEach(ing => {
+            const item = document.createElement('div');
+            item.className = "p-2 rounded-xl bg-dark-base border border-dark-border flex items-center justify-between text-xs";
+            item.innerHTML = `
+              <span class="text-white font-medium">${ing}</span>
+              <span class="text-[10px] text-pastel-mint font-mono font-bold">Ingredient</span>
+            `;
+            ingListEl.appendChild(item);
+          });
+        }
+      }
+
+      if (stepsListEl) {
+        stepsListEl.innerHTML = `
+          <div class="p-2.5 rounded-xl border bg-dark-base border-dark-border text-slate-300 text-xs leading-relaxed">
+            Assemble listed ingredients cleanly. Nutrients shown reflect all ingredients combined per 1 meal serving.
+          </div>
+        `;
+      }
+
+      renderRecipeInspectNutritionPanel(syntheticRecipe);
+
+      if (cookBtn) {
+        cookBtn.classList.toggle('hidden', !mealObj.recipeId);
+        if (mealObj.recipeId) {
+          cookBtn.onclick = () => {
+            closeRecipeInspectModal();
+            sendRecipeToChoreographer(mealObj.recipeId);
+          };
+        }
       }
 
       if (modal) modal.classList.remove('hidden');
@@ -1447,9 +1601,11 @@ if (typeof window !== 'undefined') {
   window.sendRecipeToChoreographer = sendRecipeToChoreographer;
   window.logRecipeToNutrition = logRecipeToNutrition;
   window.renderRecipeInspectNutritionPanel = renderRecipeInspectNutritionPanel;
+  window.toggleRecipeNutrientContributors = toggleRecipeNutrientContributors;
   window.inspectRecipeDetails = inspectRecipeDetails;
   window.closeRecipeInspectModal = closeRecipeInspectModal;
   window.viewRecipeDetails = viewRecipeDetails;
+  window.viewCustomMealNutritionDetails = viewCustomMealNutritionDetails;
   window.openCookbookModal = openCookbookModal;
   window.closeCookbookModal = closeCookbookModal;
   window.setCookbookModalIcon = setCookbookModalIcon;

@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=147">
+  <link rel="stylesheet" href="css/styles.css?v=148">
   <script>
     function resetViewportZoom() {
       try {
@@ -882,7 +882,14 @@
         </div>
 
         <!-- Expanded Full-Width Search Bar Row (Expands when clicked or triggered) -->
-        <div id="kitchen-expanded-search-container" class="hidden pt-2 border-t border-dark-border/70 transition-all">
+        <div id="kitchen-expanded-search-container" class="hidden pt-2 border-t border-dark-border/70 transition-all space-y-2">
+          <div id="kitchen-search-context-bar" class="hidden flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl bg-pastel-mint/10 border border-pastel-mint/30 text-[11px]">
+            <span id="kitchen-search-context-label" class="font-semibold text-pastel-mint truncate">Adding to: Pantry</span>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button type="button" id="btn-kitchen-search-leftovers" onclick="quickAddLeftoverFromSearch()" class="hidden px-2 py-0.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-bold text-[10px] transition">+ Leftovers</button>
+              <button type="button" id="btn-kitchen-search-reset" onclick="resetKitchenSearchTargetToPantry()" class="px-2 py-0.5 rounded-lg bg-dark-base hover:bg-dark-elevated border border-dark-border text-slate-300 hover:text-white text-[10px] transition">Reset to Pantry</button>
+            </div>
+          </div>
           <div class="relative">
             <div class="relative flex items-center">
               <i data-lucide="search" class="w-4 h-4 text-pastel-mint absolute left-3.5 top-3 pointer-events-none"></i>
@@ -5737,6 +5744,30 @@
         <div class="text-[10px] text-slate-400 font-mono pt-0.5 hidden" id="pantry-detail-micros"></div>
       </div>
 
+      <!-- 5b. Add Destination Options (Meal Plan / Shopping) -->
+      <div id="pantry-detail-destination-bar" class="p-2.5 rounded-xl bg-dark-base border border-dark-border space-y-2">
+        <div class="flex items-center justify-between text-[10.5px]">
+          <span class="font-bold text-slate-300 uppercase tracking-wider">Quick Destination</span>
+          <span id="pantry-detail-destination-week" class="font-mono text-pastel-mint font-semibold">This Week</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5">
+          <select id="pantry-detail-mealplan-section" class="bg-dark-elevated border border-dark-border rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-pastel-mint">
+            <option value="breakfast">Breakfast</option>
+            <option value="lunch">Lunch</option>
+            <option value="dinner" selected>Dinner</option>
+            <option value="snacks">Snacks</option>
+          </select>
+          <button type="button" id="btn-pantry-detail-add-mealplan" onclick="addDetailItemToMealPlan()" class="flex-1 min-w-[120px] px-2.5 py-1.5 rounded-xl bg-pastel-lavender/20 hover:bg-pastel-lavender/30 border border-pastel-lavender/40 text-pastel-lavender font-bold text-xs flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+            <span>Add to Meal Plan</span>
+          </button>
+          <button type="button" id="btn-pantry-detail-add-shopping" onclick="addDetailItemToShopping()" class="px-2.5 py-1.5 rounded-xl bg-pastel-sky/15 hover:bg-pastel-sky/25 border border-pastel-sky/40 text-pastel-sky font-bold text-xs flex items-center justify-center gap-1 transition">
+            <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
+            <span>+ Shopping</span>
+          </button>
+        </div>
+      </div>
+
       <!-- 6. Footer Actions -->
       <div class="pt-2 flex justify-between items-center border-t border-dark-border">
         <button type="button" id="btn-pantry-detail-delete" onclick="deletePantryItemFromDetail()" class="text-rose-400 hover:text-rose-300 text-xs">Delete Item</button>
@@ -7358,12 +7389,12 @@
   <script src="js/sync.js?v=48"></script>
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
-  <script src="js/kitchen.js?v=147"></script>
-  <script src="js/recipes.js?v=94"></script>
+  <script src="js/kitchen.js?v=148"></script>
+  <script src="js/recipes.js?v=148"></script>
   <script src="js/shopping.js?v=139"></script>
   <script src="js/chef.js?v=137"></script>
   <script src="js/body-profile.js?v=94"></script>
-  <script src="js/nutrition.js?v=108"></script>
+  <script src="js/nutrition.js?v=148"></script>
   <script src="js/barcode.js?v=137"></script>
   <script src="js/health.js?v=94"></script>
   <script src="js/biometrics.js?v=94"></script>

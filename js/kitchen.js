@@ -171,16 +171,94 @@
         // ==============================================
     // EXPANDABLE KITCHEN HEADER SEARCH BAR
     // ==============================================
-    function expandKitchenHeaderSearch() {
+    function getMealSectionLabel(sectionKey = 'dinner') {
+      const map = { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', snacks: 'Snacks' };
+      return map[sectionKey] || 'Dinner';
+    }
+
+    function updateKitchenSearchContextUI() {
+      const bar = document.getElementById('kitchen-search-context-bar');
+      const label = document.getElementById('kitchen-search-context-label');
+      const resetBtn = document.getElementById('btn-kitchen-search-reset');
+      const leftBtn = document.getElementById('btn-kitchen-search-leftovers');
+      const input = document.getElementById('kitchen-food-search-input');
+
+      const target = state.kitchenSearchTarget || { mode: 'pantry', section: 'dinner' };
+      const isMealPlan = target.mode === 'mealplan';
+
+      if (bar) bar.classList.toggle('hidden', !isMealPlan);
+      if (label) {
+        if (isMealPlan) {
+          const weekLabel = (state.activeMealPlanWeek || 'thisWeek') === 'nextWeek' ? 'Next Week' : 'This Week';
+          label.textContent = `Adding to: ${weekLabel} -> ${getMealSectionLabel(target.section)} (+ adds in 1 tap, row opens card)`;
+        } else {
+          label.textContent = 'Adding to: Pantry';
+        }
+      }
+      if (resetBtn) resetBtn.classList.toggle('hidden', !isMealPlan);
+      if (leftBtn) leftBtn.classList.toggle('hidden', !(isMealPlan && (target.section === 'dinner' || target.section === 'lunch')));
+      if (input) {
+        input.placeholder = isMealPlan
+          ? `Search recipes or foods to add to ${getMealSectionLabel(target.section)}...`
+          : 'Search food, recipes, or USDA (e.g. Sliced Almonds, Tofu, German Pancakes)...';
+      }
+    }
+
+    function resetKitchenSearchTargetToPantry() {
+      state.kitchenSearchTarget = { mode: 'pantry', section: 'dinner' };
+      updateKitchenSearchContextUI();
+      const input = document.getElementById('kitchen-food-search-input');
+      if (input && input.value.trim()) {
+        searchWholeFoodsForPantry(input.value);
+      } else {
+        const box = document.getElementById('kitchen-search-suggestions');
+        if (box) {
+          box.classList.add('hidden');
+          box.innerHTML = '';
+        }
+      }
+    }
+
+    function quickAddLeftoverFromSearch() {
+      ensureMealPlanWeeks();
+      const target = state.kitchenSearchTarget || { mode: 'mealplan', section: 'dinner' };
+      const section = target.section || 'dinner';
+      const week = state.activeMealPlanWeek || 'thisWeek';
+      state.mealPlanWeeks[week][section].push({
+        id: `mp-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        title: 'Leftovers',
+        ingredients: [],
+        isLeftovers: true
+      });
+      saveAppState();
+      renderWeeklyMealPlan();
+      collapseKitchenHeaderSearch();
+      playChime('bell');
+    }
+
+    function expandKitchenHeaderSearch(options = null) {
       const container = document.getElementById('kitchen-expanded-search-container');
       const input = document.getElementById('kitchen-food-search-input');
+      if (options && options.mode) {
+        state.kitchenSearchTarget = {
+          mode: options.mode,
+          section: options.section || 'dinner'
+        };
+      } else if (!state.kitchenSearchTarget) {
+        state.kitchenSearchTarget = {
+          mode: (state.kitchenSubTab === 'planner') ? 'mealplan' : 'pantry',
+          section: 'dinner'
+        };
+      }
+      updateKitchenSearchContextUI();
       if (container) {
         container.classList.remove('hidden');
+        if (options && options.mode === 'mealplan') {
+          container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
         if (input) {
           input.focus();
-          if (input.value.trim()) {
-            searchWholeFoodsForPantry(input.value);
-          }
+          searchWholeFoodsForPantry(input.value || '');
         }
       }
     }
@@ -517,8 +595,63 @@
     }
 
     function toggleMealSectionAddForm(section) {
-      openMealSectionAddForm = (openMealSectionAddForm === section) ? null : section;
+      expandKitchenHeaderSearch({ mode: 'mealplan', section: section || 'dinner' });
+    }
+
+    function addSearchMatchToMealPlan(idx, overrideSection = null) {
+      const list = state._activeSearchResults || [];
+      const m = list[idx];
+      if (!m) return;
+      ensureMealPlanWeeks();
+      const target = state.kitchenSearchTarget || { mode: 'mealplan', section: 'dinner' };
+      const section = overrideSection || target.section || 'dinner';
+      const week = state.activeMealPlanWeek || 'thisWeek';
+      if (!Array.isArray(state.mealPlanWeeks[week][section])) {
+        state.mealPlanWeeks[week][section] = [];
+      }
+
+      const cleanTitle = (m.name || m.title || 'Planned Meal').replace(/\s*\([0-9]+[^)]*\)/g, '').trim();
+      const linkedRecipeId = m.recipeId || (m.type === 'recipe' ? m.id : null) || null;
+      const ingredients = Array.isArray(m.ingredients) && m.ingredients.length > 0
+        ? [...m.ingredients]
+        : [cleanTitle];
+
+      state.mealPlanWeeks[week][section].push({
+        id: `mp-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        title: cleanTitle,
+        recipeId: linkedRecipeId,
+        ingredients,
+        kcal: m.kcal != null ? m.kcal : (m.nutrition?.kcal ?? null),
+        serving: m.serving || m.nutrition?.serving || null,
+        servingGrams: m.servingGrams || m.nutrition?.servingGrams || null,
+        nutrition: m.nutrition || null,
+        isLeftovers: m.type === 'leftover'
+      });
+
+      saveAppState();
       renderWeeklyMealPlan();
+      collapseKitchenHeaderSearch();
+      playChime('bell');
+    }
+
+    function openMealNutritionBreakdown(sectionKey, itemId) {
+      ensureMealPlanWeeks();
+      const week = state.activeMealPlanWeek || 'thisWeek';
+      const list = (state.mealPlanWeeks[week] && state.mealPlanWeeks[week][sectionKey]) || [];
+      const meal = list.find(m => m.id === itemId);
+      if (!meal) return;
+
+      if (meal.recipeId && typeof viewRecipeDetails === 'function') {
+        const allRecipes = (state.recipes || []).concat(typeof familyCookbookDatabase !== 'undefined' ? familyCookbookDatabase : []);
+        if (allRecipes.some(r => r.id === meal.recipeId)) {
+          viewRecipeDetails(meal.recipeId);
+          return;
+        }
+      }
+
+      if (typeof viewCustomMealNutritionDetails === 'function') {
+        viewCustomMealNutritionDetails(meal);
+      }
     }
 
     function addRecipeToMealSection(section, recipeId) {
@@ -785,9 +918,16 @@
             : `<span class="text-[10px] font-mono text-pastel-mint shrink-0">ready</span>`)
         : '';
 
+      const nutritionBtnHtml = (!isAutoPantryLeftover && !meal.isLeftovers)
+        ? `<button type="button" onclick="event.stopPropagation(); openMealNutritionBreakdown('${sectionKey}', '${meal.id}')" class="text-slate-400 hover:text-pastel-lavender p-1 rounded-lg hover:bg-dark-elevated transition shrink-0" title="View nutrition breakdown &amp; ingredient contributors">
+             <i data-lucide="pie-chart" class="w-3.5 h-3.5"></i>
+           </button>`
+        : '';
+
       const actionRightHtml = isAutoPantryLeftover
         ? `<button type="button" onclick="event.stopPropagation(); markPantryLeftoverOut('${meal.pantryId}')" class="text-[10px] px-2 py-0.5 rounded-lg bg-dark-elevated hover:bg-rose-950/40 border border-dark-border text-slate-400 hover:text-rose-300 transition shrink-0" title="Mark leftovers finished in Pantry">Mark Out</button>`
-        : `<button type="button" onclick="event.stopPropagation(); removeMealPlanOption('${sectionKey}', '${meal.id}')" class="text-slate-500 hover:text-rose-400 p-0.5 shrink-0" title="Remove meal">
+        : `${nutritionBtnHtml}
+           <button type="button" onclick="event.stopPropagation(); removeMealPlanOption('${sectionKey}', '${meal.id}')" class="text-slate-500 hover:text-rose-400 p-0.5 shrink-0" title="Remove meal">
              <i data-lucide="x" class="w-3.5 h-3.5"></i>
            </button>`;
 
@@ -852,24 +992,6 @@
           ...manualMeals.map(m => renderMealCardHtml(sec.key, m, false))
         ].join('');
 
-        const isAddOpen = openMealSectionAddForm === sec.key;
-        const addDrawerHtml = isAddOpen ? `
-          <div class="p-3 rounded-xl bg-dark-base border border-pastel-mint/40 space-y-2 text-xs">
-            <select onchange="addRecipeToMealSection('${sec.key}', this.value)" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-pastel-mint">
-              <option value="">Pick a saved recipe (adds automatically)...</option>
-              ${recipes.map(r => `<option value="${r.id}">${r.title}</option>`).join('')}
-            </select>
-            <div class="flex flex-col gap-1.5 pt-1 border-t border-dark-border/60">
-              <input type="text" id="meal-add-title-${sec.key}" onkeydown="if(event.key==='Enter') addCustomMealOption('${sec.key}')" placeholder="Or type quick meal (e.g. Pumpkin Oatmeal)" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-pastel-mint">
-              <input type="text" id="meal-add-ings-${sec.key}" onkeydown="if(event.key==='Enter') addCustomMealOption('${sec.key}')" placeholder="Optional ingredients (comma-separated)" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-[11px] text-white placeholder:text-slate-500 focus:outline-none focus:border-pastel-mint">
-              <div class="flex items-center justify-end gap-2 pt-0.5">
-                ${sec.key === 'dinner' ? `<button type="button" onclick="addCustomMealOption('${sec.key}', true)" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-semibold text-[11px] transition">+ Leftovers</button>` : ''}
-                <button type="button" onclick="addCustomMealOption('${sec.key}')" class="px-3 py-1.5 rounded-lg bg-pastel-mint hover:bg-emerald-300 text-dark-base font-bold text-[11px] transition">Add</button>
-              </div>
-            </div>
-          </div>
-        ` : '';
-
         const dinnerExtrasHtml = sec.key === 'dinner' ? `
           <div class="flex flex-wrap items-center justify-between gap-2 pb-1">
             <button type="button" onclick="suggestDinnersFromUseMeFirst()" class="px-2.5 py-1.5 rounded-xl bg-pastel-coral/15 hover:bg-pastel-coral/25 border border-pastel-coral/40 text-pastel-coral font-bold text-[11px] flex items-center gap-1.5 transition">
@@ -902,12 +1024,11 @@
                 <span>${sec.label}</span>
               </span>
               <button type="button" onclick="toggleMealSectionAddForm('${sec.key}')" class="px-2.5 py-1 rounded-xl bg-dark-base hover:bg-dark-elevated border border-dark-border text-slate-200 hover:text-pastel-mint font-bold text-[11px] flex items-center gap-1 transition">
-                <i data-lucide="${isAddOpen ? 'x' : 'plus'}" class="w-3.5 h-3.5"></i>
-                <span>${isAddOpen ? 'Close' : 'Add'}</span>
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Add</span>
               </button>
             </div>
             ${dinnerExtrasHtml}
-            ${addDrawerHtml}
             <div class="space-y-2">
               ${cardsHtml || `<p class="text-[11px] text-slate-500 py-2 text-center">Nothing listed yet — tap + Add anytime.</p>`}
             </div>
@@ -3602,6 +3723,21 @@
         }
       }
 
+      const destWeekEl = document.getElementById('pantry-detail-destination-week');
+      const destSecSelect = document.getElementById('pantry-detail-mealplan-section');
+      const destBar = document.getElementById('pantry-detail-destination-bar');
+      if (destWeekEl) {
+        destWeekEl.textContent = (state.activeMealPlanWeek || 'thisWeek') === 'nextWeek' ? 'Next Week' : 'This Week';
+      }
+      if (destSecSelect && state.kitchenSearchTarget && state.kitchenSearchTarget.section) {
+        destSecSelect.value = state.kitchenSearchTarget.section;
+      }
+      if (destBar) {
+        const highlightMealPlan = Boolean(isPendingNew && state.kitchenSearchTarget?.mode === 'mealplan');
+        destBar.classList.toggle('border-pastel-lavender', highlightMealPlan);
+        destBar.classList.toggle('border-dark-border', !highlightMealPlan);
+      }
+
       if (modal) modal.classList.remove('hidden');
       if (window.lucide) lucide.createIcons();
       playChime('bell');
@@ -3919,6 +4055,55 @@
       alertBox(`Saved "${item.name}" to your pantry.`, "Item Saved");
     }
 
+    function addDetailItemToMealPlan() {
+      if (!state.activePantryDetailItem) return;
+      ensureMealPlanWeeks();
+      const item = state.activePantryDetailItem;
+      const nameInput = document.getElementById('pantry-detail-name-input');
+      const finalName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : (item.name || 'Planned Meal');
+      const secSelect = document.getElementById('pantry-detail-mealplan-section');
+      const section = (secSelect && secSelect.value) ? secSelect.value : 'dinner';
+      const week = state.activeMealPlanWeek || 'thisWeek';
+
+      if (!Array.isArray(state.mealPlanWeeks[week][section])) {
+        state.mealPlanWeeks[week][section] = [];
+      }
+
+      const linkedRecipe = item.recipeId
+        ? (state.recipes || []).concat(typeof familyCookbookDatabase !== 'undefined' ? familyCookbookDatabase : []).find(r => r.id === item.recipeId)
+        : null;
+
+      const ingredients = (linkedRecipe && Array.isArray(linkedRecipe.ingredients) && linkedRecipe.ingredients.length > 0)
+        ? [...linkedRecipe.ingredients]
+        : (Array.isArray(item.ingredients) && item.ingredients.length > 0 ? [...item.ingredients] : [finalName]);
+
+      state.mealPlanWeeks[week][section].push({
+        id: `mp-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        title: finalName,
+        recipeId: item.recipeId || null,
+        ingredients,
+        kcal: item.nutrition?.kcal ?? item.kcal ?? null,
+        serving: item.serving || item.nutrition?.serving || null,
+        servingGrams: item.servingGrams || item.nutrition?.servingGrams || null,
+        nutrition: item.nutrition || null,
+        isLeftovers: (item.category || '').toLowerCase() === 'leftovers'
+      });
+
+      if (item.isPendingNewPantryItem) delete item.isPendingNewPantryItem;
+      saveAppState();
+      renderWeeklyMealPlan();
+      collapseKitchenHeaderSearch();
+      closePantryItemDetailModal();
+      playChime('bell');
+      alertBox(`Added "${finalName}" to ${week === 'nextWeek' ? 'Next Week' : 'This Week'} ${getMealSectionLabel(section)}!`, "Added to Meal Plan");
+    }
+
+    function addDetailItemToShopping() {
+      moveActivePantryDetailToShoppingList();
+      collapseKitchenHeaderSearch();
+      closePantryItemDetailModal();
+    }
+
     function deletePantryItemFromDetail() {
       if (!state.activePantryDetailItem) return;
       const item = state.activePantryDetailItem;
@@ -4067,7 +4252,8 @@
       if (!box) return;
       const q = (query || '').trim();
       const qLower = q.toLowerCase();
-      if (!qLower) {
+      const isMealPlanTarget = state.kitchenSearchTarget && state.kitchenSearchTarget.mode === 'mealplan';
+      if (!qLower && !isMealPlanTarget) {
         box.classList.add('hidden');
         box.innerHTML = '';
         return;
@@ -4116,6 +4302,7 @@
       // 2. My Recipes (state.recipes) & Family Cookbooks
       const myRecipes = (Array.isArray(state.recipes) ? state.recipes : []).map(r => {
         const built = (typeof buildRecipeUnifiedNutrition === 'function') ? buildRecipeUnifiedNutrition(r) : null;
+        const bNut = built?.nutrition || r.nutrition || null;
         return {
           ...r,
           recipeId: r.id,
@@ -4123,25 +4310,26 @@
           type: 'recipe',
           category: 'leftovers',
           source: 'My Recipes',
-          kcal: built ? built.kcal : (r.nutrition?.kcal || r.kcal || 0),
-          protein: built ? built.protein : (r.nutrition?.protein || r.protein || 0),
-          carbs: built ? built.carbs : (r.nutrition?.carbs || r.carbs || 0),
-          fat: built ? built.fat : (r.nutrition?.fat || r.fat || 0),
-          fiber: built ? built.fiber : (r.nutrition?.fiber || 0),
-          sugar: built ? built.sugar : (r.nutrition?.sugar || 0),
-          satFat: built ? built.satFat : (r.nutrition?.satFat || 0),
-          sodium: built ? built.sodium : (r.nutrition?.sodium || 0),
-          micros: built ? built.micros : (r.nutrition?.micros || {}),
-          serving: built ? built.serving : '1 serving',
-          servingGrams: built ? built.servingGrams : 250,
-          nutrition: built || r.nutrition || null,
-          isVerified: Boolean(built?.isVerified || r.isVerified)
+          kcal: bNut?.kcal ?? r.kcal ?? 0,
+          protein: bNut?.protein ?? r.protein ?? 0,
+          carbs: bNut?.carbs ?? r.carbs ?? 0,
+          fat: bNut?.fat ?? r.fat ?? 0,
+          fiber: bNut?.fiber ?? 0,
+          sugar: bNut?.sugar ?? 0,
+          satFat: bNut?.satFat ?? 0,
+          sodium: bNut?.sodium ?? 0,
+          micros: bNut?.micros || {},
+          serving: built?.serving || '1 serving',
+          servingGrams: built?.servingGrams || 250,
+          nutrition: bNut,
+          isVerified: Boolean(bNut?.isVerified || r.isVerified)
         };
       });
 
       const cookbookRecipes = (typeof familyCookbookDatabase !== 'undefined' && Array.isArray(familyCookbookDatabase))
         ? familyCookbookDatabase.map(r => {
             const built = (typeof buildRecipeUnifiedNutrition === 'function') ? buildRecipeUnifiedNutrition(r) : null;
+            const bNut = built?.nutrition || r.nutrition || null;
             return {
               ...r,
               recipeId: r.id,
@@ -4149,14 +4337,19 @@
               type: 'recipe',
               category: 'leftovers',
               source: r.origin === 'family' ? 'Heirloom Cookbook' : 'Recipe Codex',
-              kcal: built ? built.kcal : (r.kcal || 0),
-              protein: built ? built.protein : (r.protein || 0),
-              carbs: built ? built.carbs : (r.carbs || 0),
-              fat: built ? built.fat : (r.fat || 0),
-              serving: built ? built.serving : (r.serving || '1 serving'),
-              servingGrams: built ? built.servingGrams : (r.servingGrams || 250),
-              nutrition: built || r.nutrition || null,
-              isVerified: Boolean(built?.isVerified || r.isVerified)
+              kcal: bNut?.kcal ?? r.kcal ?? 0,
+              protein: bNut?.protein ?? r.protein ?? 0,
+              carbs: bNut?.carbs ?? r.carbs ?? 0,
+              fat: bNut?.fat ?? r.fat ?? 0,
+              fiber: bNut?.fiber ?? 0,
+              sugar: bNut?.sugar ?? 0,
+              satFat: bNut?.satFat ?? 0,
+              sodium: bNut?.sodium ?? 0,
+              micros: bNut?.micros || {},
+              serving: built?.serving || r.serving || '1 serving',
+              servingGrams: built?.servingGrams || r.servingGrams || 250,
+              nutrition: bNut,
+              isVerified: Boolean(bNut?.isVerified || r.isVerified)
             };
           })
         : [];
@@ -4188,9 +4381,14 @@
         const dedupKey = `${name.toLowerCase()}|${item.type === 'recipe' ? 'recipe' : 'food'}`;
         if (seenKeys.has(dedupKey)) continue;
 
-        let score = scoreFoodSearchMatch(qLower, name);
-        if (item.brand) {
-          score = Math.max(score, scoreFoodSearchMatch(qLower, `${item.brand} ${name}`));
+        let score = 0;
+        if (!qLower) {
+          score = item.type === 'recipe' ? 400 : (item.source === 'My Verified DB' ? 300 : 120);
+        } else {
+          score = scoreFoodSearchMatch(qLower, name);
+          if (item.brand) {
+            score = Math.max(score, scoreFoodSearchMatch(qLower, `${item.brand} ${name}`));
+          }
         }
         if (score > 0) {
           seenKeys.add(dedupKey);
@@ -4226,12 +4424,19 @@
             : ((typeof renderEstimatedTildeIcon === 'function') ? renderEstimatedTildeIcon() : '~');
           const sourceTag = m.source || (m.type === 'recipe' ? 'Recipe' : 'USDA');
           const authorTag = m.author ? `<span class="text-[9.5px] text-pastel-sky font-normal italic truncate max-w-[120px]">by ${m.author}</span>` : '';
+          const targetSectionLabel = getMealSectionLabel(state.kitchenSearchTarget?.section || 'dinner');
+          const plusOnclick = isMealPlanTarget
+            ? `event.stopPropagation(); addSearchMatchToMealPlan(${idx});`
+            : `event.stopPropagation(); openVerifyFoodModalBeforeAdding(${idx});`;
+          const plusTitle = isMealPlanTarget
+            ? `Add directly to ${targetSectionLabel}`
+            : `Open item popup and add`;
           const row = document.createElement('div');
           row.className = "p-2 rounded-xl bg-dark-base hover:bg-slate-700 flex items-center justify-between text-xs transition gap-2 group cursor-pointer";
           row.onclick = () => openVerifyFoodModalBeforeAdding(idx);
 
           row.innerHTML = `
-            <div class="min-w-0 pr-2 flex-1" title="Tap to open item details and add to pantry">
+            <div class="min-w-0 pr-2 flex-1" title="Tap row to inspect nutrition &amp; choose destination">
               <div class="flex items-center gap-1.5 flex-wrap">
                 ${badgeIcon}
                 <span class="font-bold text-white group-hover:text-pastel-mint transition truncate">${m.name}</span>
@@ -4240,7 +4445,7 @@
               </div>
               <span class="text-[10px] text-slate-400 font-mono block mt-0.5">1 serving = ${srv} (${srvG} g) • <span class="text-pastel-lavender font-bold">${m.kcal} kcal</span> • <span class="text-pastel-coral">P:${m.protein}g</span> <span class="text-pastel-mint">C:${m.carbs}g</span> <span class="text-pastel-butter">F:${m.fat}g</span></span>
             </div>
-            <button type="button" onclick="event.stopPropagation(); openVerifyFoodModalBeforeAdding(${idx});" class="w-7 h-7 rounded-lg bg-pastel-mint hover:bg-emerald-300 text-dark-base font-extrabold text-sm flex items-center justify-center shrink-0 shadow-sm transition active:scale-95" title="Open item popup and add">
+            <button type="button" onclick="${plusOnclick}" class="w-7 h-7 rounded-lg bg-pastel-mint hover:bg-emerald-300 text-dark-base font-extrabold text-sm flex items-center justify-center shrink-0 shadow-sm transition active:scale-95" title="${plusTitle}">
               +
             </button>
           `;
@@ -4920,9 +5125,32 @@
     }
 
     function proceedToCreateCustomRecipe() {
+      const targetSnapshot = state.kitchenSearchTarget ? { ...state.kitchenSearchTarget } : null;
+      const weekSnapshot = state.activeMealPlanWeek || 'thisWeek';
       closeCreateChoiceModal();
       collapseKitchenHeaderSearch();
       const q = state._pendingCreateQuery || '';
+      if (targetSnapshot && targetSnapshot.mode === 'mealplan') {
+        window._onRecipeCreatedHook = (newRec) => {
+          ensureMealPlanWeeks();
+          const sec = targetSnapshot.section || 'dinner';
+          if (!Array.isArray(state.mealPlanWeeks[weekSnapshot][sec])) {
+            state.mealPlanWeeks[weekSnapshot][sec] = [];
+          }
+          state.mealPlanWeeks[weekSnapshot][sec].push({
+            id: `mp-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            title: newRec.title,
+            recipeId: newRec.id,
+            ingredients: Array.isArray(newRec.ingredients) && newRec.ingredients.length > 0 ? [...newRec.ingredients] : [newRec.title],
+            kcal: newRec.kcal || null,
+            isLeftovers: false
+          });
+          saveAppState();
+          renderWeeklyMealPlan();
+        };
+      } else {
+        window._onRecipeCreatedHook = null;
+      }
       if (typeof openAddRecipeModal === 'function') {
         openAddRecipeModal();
         const titleInput = document.getElementById('recipe-title-input');
@@ -5516,4 +5744,10 @@ RULES:
       window.setAiDishPortionQuickPill = setAiDishPortionQuickPill;
       window.submitAiDishClarifications = submitAiDishClarifications;
       window.renderAiDishClarifyingQuestions = renderAiDishClarifyingQuestions;
+      window.resetKitchenSearchTargetToPantry = resetKitchenSearchTargetToPantry;
+      window.quickAddLeftoverFromSearch = quickAddLeftoverFromSearch;
+      window.addSearchMatchToMealPlan = addSearchMatchToMealPlan;
+      window.openMealNutritionBreakdown = openMealNutritionBreakdown;
+      window.addDetailItemToMealPlan = addDetailItemToMealPlan;
+      window.addDetailItemToShopping = addDetailItemToShopping;
     }

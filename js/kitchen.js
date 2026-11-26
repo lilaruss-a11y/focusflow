@@ -2471,15 +2471,12 @@
       const hasExpiring = items && items.length > 0;
       const msg = hasExpiring ? `Ingredients expiring soon: ${items.slice(0, 3).join(', ')}. Use them up in your next recipe!` : '';
 
-      [pantryBanner, chefBanner].forEach(b => {
-        if (b) {
-          if (hasExpiring) b.classList.remove('hidden');
-          else b.classList.add('hidden');
-        }
-      });
-      [pantryText, chefText].forEach(t => {
-        if (t && hasExpiring) t.textContent = msg;
-      });
+      if (pantryBanner) pantryBanner.classList.add('hidden');
+      if (chefBanner) {
+        if (hasExpiring) chefBanner.classList.remove('hidden');
+        else chefBanner.classList.add('hidden');
+      }
+      if (chefText && hasExpiring) chefText.textContent = msg;
     }
 
     function prioritizeExpiringIngredients() {

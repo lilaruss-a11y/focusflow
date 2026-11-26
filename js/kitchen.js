@@ -3248,6 +3248,18 @@
 
       updatePantryDetailSmartExpirationTip();
 
+      const deleteBtn = document.getElementById('btn-pantry-detail-delete');
+      const saveBtn = document.getElementById('btn-pantry-detail-save');
+      const isPendingNew = Boolean(item.isPendingNewPantryItem);
+      if (deleteBtn) deleteBtn.classList.toggle('hidden', isPendingNew);
+      if (saveBtn) {
+        if (isPendingNew) {
+          saveBtn.textContent = (state.kitchenSubTab === 'shopping') ? 'Add to Shopping List' : 'Add to Pantry';
+        } else {
+          saveBtn.textContent = 'Save Changes';
+        }
+      }
+
       if (modal) modal.classList.remove('hidden');
       if (window.lucide) lucide.createIcons();
       playChime('bell');
@@ -3530,6 +3542,30 @@
 
       if (item.isPendingNewPantryItem) {
         delete item.isPendingNewPantryItem;
+        const searchInput = document.getElementById('kitchen-food-search-input');
+        const suggestionsBox = document.getElementById('kitchen-search-suggestions');
+        if (searchInput) searchInput.value = '';
+        if (suggestionsBox) suggestionsBox.classList.add('hidden');
+
+        if (state.kitchenSubTab === 'shopping') {
+          if (!Array.isArray(state.shoppingList)) state.shoppingList = [];
+          state.shoppingList.push({
+            id: `shop-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            name: item.name,
+            quantity: `${item.amount || 1} ${item.unit || 'items'}`,
+            category: item.category || 'vegetables',
+            checked: false,
+            source: item.sourceBadge || 'Kitchen Search'
+          });
+          saveAppState();
+          if (typeof renderShoppingList === 'function') renderShoppingList();
+          if (typeof updateShoppingBadges === 'function') updateShoppingBadges();
+          closePantryItemDetailModal();
+          playChime('bell');
+          alertBox(`Added "${item.name}" to your Shopping List!`, "Added to Groceries");
+          return;
+        }
+
         if (!Array.isArray(state.pantry)) state.pantry = [];
         state.pantry.push(item);
       }
@@ -3567,42 +3603,84 @@
             dp[i][j - 1] + 1,      // insertion
             dp[i - 1][j - 1] + cost // substitution
           );
+          // Damerau transposition (e.g. chikcen -> chicken, tomtao -> tomato) counts as 1 edit
+          if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+            dp[i][j] = Math.min(dp[i][j], dp[i - 2][j - 2] + cost);
+          }
         }
       }
       return dp[m][n];
     }
 
+    function normalizeSearchWord(w) {
+      let s = (w || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (s.length <= 3) return s;
+      if (s.endsWith('ies') && s.length > 4) return s.slice(0, -3) + 'y';
+      if (s.endsWith('oes') && s.length > 4) return s.slice(0, -2);
+      if (/(ches|shes|xes|zes)$/.test(s) && s.length > 4) return s.slice(0, -2);
+      if (s.endsWith('s') && !s.endsWith('ss')) return s.slice(0, -1);
+      return s;
+    }
+
     function scoreFoodSearchMatch(query, targetName) {
       if (!query || !targetName) return 0;
-      const q = query.trim().toLowerCase();
-      const t = targetName.trim().toLowerCase();
+      const q = query.trim().toLowerCase().replace(/\s+/g, ' ');
+      const t = targetName.trim().toLowerCase().replace(/\s+/g, ' ');
       if (!q || !t) return 0;
 
-      // 1. Exact or prefix matches get highest priority
+      // 1. Exact, normalized exact, or prefix matches get highest priority
       if (t === q) return 1000;
-      if (t.startsWith(q)) return 800 - (t.length - q.length);
-      if (t.includes(q)) return 600 - (t.length - q.length);
-
       const qTokens = q.split(/\s+/).filter(tok => tok.length > 0);
-      const tTokens = t.split(/\s+/).filter(tok => tok.length > 0);
+      const tTokensRaw = t.split(/[\s,()\/-]+/).filter(tok => tok.length > 0);
+      const qNormStr = qTokens.map(normalizeSearchWord).join(' ');
+      const tNormStr = tTokensRaw.map(normalizeSearchWord).join(' ');
+      if (qNormStr && tNormStr === qNormStr) return 950;
+      if (t.startsWith(q)) return 850 - (t.length - q.length);
+
+      // Word-boundary prefix match (e.g. "pea" matches "Green Peas", ahead of mid-word matches)
+      if (tTokensRaw.some(tok => tok.startsWith(q) || normalizeSearchWord(tok) === qNormStr)) {
+        return 720 - (t.length - q.length);
+      }
+
+      // Multi-character substring match inside phrase (avoid short 2-3 char substrings like "ham" in "graham")
+      if (q.length >= 4 && t.includes(q)) return 600 - (t.length - q.length);
 
       // 2. Multi-token queries: ALL query tokens must match or closely match target tokens
       let matchedTokens = 0;
       let tokenScore = 0;
-      for (const qt of qTokens) {
+      for (const qtRaw of qTokens) {
+        const qt = normalizeSearchWord(qtRaw);
+        if (!qt) continue;
         let bestTokenScore = 0;
-        for (const tt of tTokens) {
-          if (tt === qt) {
+        for (const ttRaw of tTokensRaw) {
+          const tt = normalizeSearchWord(ttRaw);
+          if (!tt) continue;
+          if (tt === qt || ttRaw === qtRaw) {
             bestTokenScore = Math.max(bestTokenScore, 100);
-          } else if (tt.startsWith(qt)) {
+          } else if (tt.startsWith(qt) || ttRaw.startsWith(qtRaw)) {
             bestTokenScore = Math.max(bestTokenScore, 80);
-          } else if (tt.includes(qt)) {
-            bestTokenScore = Math.max(bestTokenScore, 60);
-          } else if (qt.length >= 4) {
+          } else if (qt.length >= 4 && tt.includes(qt)) {
+            bestTokenScore = Math.max(bestTokenScore, 45);
+          } else if (qt.length >= 4 && tt.length >= 3) {
+            const maxLen = Math.max(qt.length, tt.length);
+            const lenDiff = Math.abs(qt.length - tt.length);
             const dist = computeLevenshteinDistance(qt, tt);
-            const maxD = qt.length > 6 ? 2 : 1;
-            if (dist <= maxD) {
-              bestTokenScore = Math.max(bestTokenScore, 50 - dist * 10);
+            const sim = 1 - (dist / maxLen);
+
+            if (qt.length <= 5) {
+              // Strict guard on short 4-5 letter words: max 1 edit, same start or end, high similarity
+              if (dist <= 1 && lenDiff <= 1 && sim >= 0.75 && (qt[0] === tt[0] || qt[qt.length - 1] === tt[tt.length - 1])) {
+                bestTokenScore = Math.max(bestTokenScore, 55);
+              }
+            } else if (qt.length <= 8) {
+              if (dist <= 2 && lenDiff <= 2 && sim >= 0.70) {
+                bestTokenScore = Math.max(bestTokenScore, 55 - dist * 10);
+              }
+            } else {
+              const maxD = qt.length >= 11 ? 3 : 2;
+              if (dist <= maxD && lenDiff <= 3 && sim >= 0.72) {
+                bestTokenScore = Math.max(bestTokenScore, 55 - dist * 8);
+              }
             }
           }
         }
@@ -3612,22 +3690,25 @@
         }
       }
 
-      if (matchedTokens === qTokens.length) {
-        return 400 + tokenScore - t.length;
+      if (matchedTokens === qTokens.length && matchedTokens > 0) {
+        return 400 + tokenScore - Math.min(120, t.length);
       }
 
-      // 3. Fused / typo words (e.g. "tikimasala" -> "chicken tikka masala" or "chikcen" -> "chicken")
-      if (qTokens.length === 1 && q.length >= 4) {
+      // 3. Fused / multi-word typo words (e.g. "tikimasala" -> "chicken tikka masala")
+      if (qTokens.length === 1 && q.length >= 5) {
         const qSquashed = q.replace(/[^a-z0-9]/g, '');
-        for (let span = 1; span <= Math.min(3, tTokens.length); span++) {
-          for (let i = 0; i <= tTokens.length - span; i++) {
-            const sub = tTokens.slice(i, i + span).join('').replace(/[^a-z0-9]/g, '');
-            if (!sub || sub.length < 3) continue;
+        for (let span = 2; span <= Math.min(3, tTokensRaw.length); span++) {
+          for (let i = 0; i <= tTokensRaw.length - span; i++) {
+            const sub = tTokensRaw.slice(i, i + span).join('').replace(/[^a-z0-9]/g, '');
+            if (!sub || sub.length < 5) continue;
             if (sub === qSquashed) return 350;
             if (sub.startsWith(qSquashed)) return 300;
             const dist = computeLevenshteinDistance(qSquashed, sub);
-            const maxD = qSquashed.length > 6 ? 2 : 1;
-            if (dist <= maxD) return 250 - dist * 20;
+            const maxLen = Math.max(qSquashed.length, sub.length);
+            const maxD = qSquashed.length > 8 ? 2 : 1;
+            if (dist <= maxD && (1 - dist / maxLen) >= 0.75) {
+              return 250 - dist * 20;
+            }
           }
         }
       }
@@ -3650,49 +3731,144 @@
         return;
       }
 
-      // Query centralized food & recipe database first
-      const unifiedMatches = (typeof getUnifiedFoodOrMeal === 'function')
-        ? getUnifiedFoodOrMeal(qLower)
-        : [];
+      // 1. Personal Scanned & Verified Database (barcode DB, custom foods, verified pantry items)
+      let personalBarcodeItems = [];
+      try {
+        const barcodeDb = (typeof getCustomBarcodeDb === 'function')
+          ? getCustomBarcodeDb()
+          : JSON.parse(localStorage.getItem('focusflow_custom_barcode_db') || '{}');
+        personalBarcodeItems = Object.values(barcodeDb || {}).map(b => ({
+          ...b,
+          type: 'food',
+          source: 'My Verified DB',
+          isVerified: true
+        }));
+      } catch (e) {}
 
       let customFoods = [];
       try {
         const savedCustom = localStorage.getItem('focusflow_custom_foods');
-        if (savedCustom) customFoods = JSON.parse(savedCustom);
-      } catch(e) {}
+        if (savedCustom) {
+          customFoods = JSON.parse(savedCustom).map(f => ({
+            ...f,
+            type: 'food',
+            source: f.source || 'My Saved Foods',
+            isVerified: Boolean(f.isVerified)
+          }));
+        }
+      } catch (e) {}
 
-      // Pool all candidates: Recipes, USDA foods, branded items, and custom foods
+      const verifiedPantryItems = (Array.isArray(state.pantry) ? state.pantry : [])
+        .filter(p => p && (p.isVerified || p.barcode))
+        .map(p => ({
+          ...p,
+          kcal: p.nutrition?.kcal ?? p.kcal ?? 0,
+          protein: p.nutrition?.protein ?? p.protein ?? 0,
+          carbs: p.nutrition?.carbs ?? p.carbs ?? 0,
+          fat: p.nutrition?.fat ?? p.fat ?? 0,
+          type: p.category === 'leftovers' ? 'leftover' : 'food',
+          source: 'My Verified DB',
+          isVerified: true
+        }));
+
+      // 2. My Recipes (state.recipes) & Family Cookbooks
+      const myRecipes = (Array.isArray(state.recipes) ? state.recipes : []).map(r => {
+        const built = (typeof buildRecipeUnifiedNutrition === 'function') ? buildRecipeUnifiedNutrition(r) : null;
+        return {
+          ...r,
+          recipeId: r.id,
+          name: r.title || r.name || 'Custom Recipe',
+          type: 'recipe',
+          category: 'leftovers',
+          source: 'My Recipes',
+          kcal: built ? built.kcal : (r.nutrition?.kcal || r.kcal || 0),
+          protein: built ? built.protein : (r.nutrition?.protein || r.protein || 0),
+          carbs: built ? built.carbs : (r.nutrition?.carbs || r.carbs || 0),
+          fat: built ? built.fat : (r.nutrition?.fat || r.fat || 0),
+          fiber: built ? built.fiber : (r.nutrition?.fiber || 0),
+          sugar: built ? built.sugar : (r.nutrition?.sugar || 0),
+          satFat: built ? built.satFat : (r.nutrition?.satFat || 0),
+          sodium: built ? built.sodium : (r.nutrition?.sodium || 0),
+          micros: built ? built.micros : (r.nutrition?.micros || {}),
+          serving: built ? built.serving : '1 serving',
+          servingGrams: built ? built.servingGrams : 250,
+          nutrition: built || r.nutrition || null,
+          isVerified: Boolean(built?.isVerified || r.isVerified)
+        };
+      });
+
+      const cookbookRecipes = (typeof familyCookbookDatabase !== 'undefined' && Array.isArray(familyCookbookDatabase))
+        ? familyCookbookDatabase.map(r => {
+            const built = (typeof buildRecipeUnifiedNutrition === 'function') ? buildRecipeUnifiedNutrition(r) : null;
+            return {
+              ...r,
+              recipeId: r.id,
+              name: r.title || r.name || 'Recipe',
+              type: 'recipe',
+              category: 'leftovers',
+              source: r.origin === 'family' ? 'Heirloom Cookbook' : 'Recipe Codex',
+              kcal: built ? built.kcal : (r.kcal || 0),
+              protein: built ? built.protein : (r.protein || 0),
+              carbs: built ? built.carbs : (r.carbs || 0),
+              fat: built ? built.fat : (r.fat || 0),
+              serving: built ? built.serving : (r.serving || '1 serving'),
+              servingGrams: built ? built.servingGrams : (r.servingGrams || 250),
+              nutrition: built || r.nutrition || null,
+              isVerified: Boolean(built?.isVerified || r.isVerified)
+            };
+          })
+        : [];
+
+      // 3. USDA Common Whole Foods Database & Branded Groceries
+      const usdaFoods = (typeof commonFoodsDatabase !== 'undefined' && Array.isArray(commonFoodsDatabase))
+        ? commonFoodsDatabase.map(u => ({ ...u, type: 'food', source: 'USDA', isVerified: true }))
+        : [];
+      const brandedFoods = (typeof brandedGroceriesDatabase !== 'undefined' && Array.isArray(brandedGroceriesDatabase))
+        ? brandedGroceriesDatabase
+        : [];
+
       const allDatabaseCandidates = [
-        ...unifiedMatches,
-        ...(typeof familyCookbookDatabase !== 'undefined' ? familyCookbookDatabase.map(r => ({ ...r, name: r.title, type: 'recipe', source: r.origin === 'family' ? 'Heirloom Cookbook' : 'Recipe Codex' })) : []),
-        ...(typeof commonFoodsDatabase !== 'undefined' ? commonFoodsDatabase.map(u => ({ ...u, type: 'food', source: 'USDA' })) : []),
-        ...(typeof brandedGroceriesDatabase !== 'undefined' ? brandedGroceriesDatabase : []),
-        ...customFoods
+        ...personalBarcodeItems,
+        ...customFoods,
+        ...verifiedPantryItems,
+        ...myRecipes,
+        ...usdaFoods,
+        ...cookbookRecipes,
+        ...brandedFoods
       ];
 
-      // Score and rank all matches
-      const seenNames = new Set();
-      const scoredMatches = [];
+      // Score and rank all matches (prefer personal verified > My Recipes > USDA > Cookbook on duplicate names)
+      const seenKeys = new Set();
+      let scoredMatches = [];
       for (const item of allDatabaseCandidates) {
-        const name = item.name || item.title || '';
-        const key = name.toLowerCase().trim();
-        if (!key || seenNames.has(key)) continue;
+        const name = (item.name || item.title || '').trim();
+        if (!name) continue;
+        const dedupKey = `${name.toLowerCase()}|${item.type === 'recipe' ? 'recipe' : 'food'}`;
+        if (seenKeys.has(dedupKey)) continue;
 
-        const score = scoreFoodSearchMatch(qLower, name);
+        let score = scoreFoodSearchMatch(qLower, name);
+        if (item.brand) {
+          score = Math.max(score, scoreFoodSearchMatch(qLower, `${item.brand} ${name}`));
+        }
         if (score > 0) {
-          seenNames.add(key);
+          seenKeys.add(dedupKey);
           scoredMatches.push({ item, score });
         }
       }
 
-      // Sort by score descending (most relevant first) and ensure generic USDA foods aren't crowded out by recipes
       scoredMatches.sort((a, b) => b.score - a.score);
+
+      // Trim weak fuzzy noise when strong exact/prefix matches exist
+      if (scoredMatches.length > 0 && scoredMatches[0].score >= 700) {
+        scoredMatches = scoredMatches.filter(s => s.score >= 350);
+      }
+
       const topGeneral = scoredMatches.slice(0, 8).map(s => s.item);
-      const usdaExtras = scoredMatches
-        .filter(s => s.item.source === 'USDA' && !topGeneral.includes(s.item))
+      const priorityExtras = scoredMatches
+        .filter(s => (s.item.source === 'USDA' || s.item.source === 'My Verified DB' || s.item.source === 'My Recipes') && !topGeneral.includes(s.item))
         .slice(0, 4)
         .map(s => s.item);
-      const matches = [...topGeneral, ...usdaExtras].slice(0, 12);
+      const matches = [...topGeneral, ...priorityExtras].slice(0, 12);
 
       box.innerHTML = '';
       state._activeSearchResults = matches;
@@ -3709,19 +3885,20 @@
           const sourceTag = m.source || (m.type === 'recipe' ? 'Recipe' : 'USDA');
           const authorTag = m.author ? `<span class="text-[9.5px] text-pastel-sky font-normal italic truncate max-w-[120px]">by ${m.author}</span>` : '';
           const row = document.createElement('div');
-          row.className = "p-2 rounded-xl bg-dark-base hover:bg-slate-700 flex items-center justify-between text-xs transition gap-2 group";
-          
+          row.className = "p-2 rounded-xl bg-dark-base hover:bg-slate-700 flex items-center justify-between text-xs transition gap-2 group cursor-pointer";
+          row.onclick = () => openVerifyFoodModalBeforeAdding(idx);
+
           row.innerHTML = `
-            <div class="min-w-0 pr-2 flex-1 cursor-pointer" onclick="openVerifyFoodModalBeforeAdding(${idx})" title="Click to verify item and adjust amount before adding">
+            <div class="min-w-0 pr-2 flex-1" title="Tap to open item details and add to pantry">
               <div class="flex items-center gap-1.5 flex-wrap">
                 ${badgeIcon}
                 <span class="font-bold text-white group-hover:text-pastel-mint transition truncate">${m.name}</span>
                 ${authorTag}
                 <span class="text-[9px] px-1.5 py-0.2 rounded bg-dark-elevated text-slate-400 font-mono">${sourceTag}</span>
               </div>
-              <span onclick="event.stopPropagation(); openNutrientBreakdownForSearchResult(${idx});" class="text-[10px] text-slate-400 hover:text-white font-mono block mt-0.5 hover:underline cursor-pointer" title="Click to view full nutritional & micronutrient breakdown">1 serving = ${srv} (${srvG} g) • <span class="text-pastel-lavender font-bold">${m.kcal} kcal</span> • <span class="text-pastel-coral">P:${m.protein}g</span> <span class="text-pastel-mint">C:${m.carbs}g</span> <span class="text-pastel-butter">F:${m.fat}g</span> <span class="text-[9px] text-pastel-mint ml-1">📊 View facts</span></span>
+              <span class="text-[10px] text-slate-400 font-mono block mt-0.5">1 serving = ${srv} (${srvG} g) • <span class="text-pastel-lavender font-bold">${m.kcal} kcal</span> • <span class="text-pastel-coral">P:${m.protein}g</span> <span class="text-pastel-mint">C:${m.carbs}g</span> <span class="text-pastel-butter">F:${m.fat}g</span></span>
             </div>
-            <button type="button" onclick="event.stopPropagation(); openVerifyFoodModalBeforeAdding(${idx});" class="w-7 h-7 rounded-lg bg-pastel-mint hover:bg-emerald-300 text-dark-base font-extrabold text-sm flex items-center justify-center shrink-0 shadow-sm transition active:scale-95" title="Verify item and set amount before adding">
+            <button type="button" onclick="event.stopPropagation(); openVerifyFoodModalBeforeAdding(${idx});" class="w-7 h-7 rounded-lg bg-pastel-mint hover:bg-emerald-300 text-dark-base font-extrabold text-sm flex items-center justify-center shrink-0 shadow-sm transition active:scale-95" title="Open item popup and add">
               +
             </button>
           `;
@@ -4107,15 +4284,32 @@
 
       const srv = m.serving || m.nutrition?.serving || '1 serving';
       const srvG = m.servingGrams || m.nutrition?.servingGrams || 100;
+      const itemName = m.name || m.title || 'New Item';
+      let normCat = (m.category || 'vegetables').toLowerCase();
+      if (normCat === 'produce') {
+        normCat = /apple|banana|berry|berries|orange|lemon|lime|avocado|grape|melon|peach|pear|mango|pineapple|kiwi|plum|cherry|fruit/i.test(itemName) ? 'fruits' : 'vegetables';
+      } else if (normCat === 'condiments') {
+        normCat = 'spices';
+      } else if (normCat === 'pantry_staples') {
+        normCat = 'baking';
+      }
+
+      let normStorage = (m.storage || 'fridge-main').toLowerCase();
+      if (normStorage === 'fridge') normStorage = 'fridge-main';
+      else if (normStorage === 'shelf') normStorage = 'pantry';
+      else if (normStorage === 'frozen') normStorage = 'freezer';
+
       const newItem = {
         id: `p-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        name: m.name || m.title || 'New Item',
-        category: m.category || 'produce',
-        storage: m.storage || 'fridge-main',
-        format: m.format || (typeof inferFoodFormat === 'function' ? inferFoodFormat(m.name || '', m.storage || '', m.category || '') : 'fresh'),
-        amount: 1,
-        amountRemaining: 1,
-        unit: m.unit || 'items',
+        name: itemName,
+        brand: m.brand || '',
+        recipeId: m.recipeId || (m.type === 'recipe' ? m.id : null) || null,
+        category: normCat,
+        storage: normStorage,
+        format: m.format || (typeof inferFoodFormat === 'function' ? inferFoodFormat(itemName, normStorage, normCat) : 'fresh'),
+        amount: m.amount || 1,
+        amountRemaining: m.amountRemaining != null ? m.amountRemaining : (m.amount || 1),
+        unit: m.unit || (m.type === 'recipe' ? 'servings' : 'items'),
         serving: srv,
         servingGrams: srvG,
         isVerified: Boolean(m.isVerified),

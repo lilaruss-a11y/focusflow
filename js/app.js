@@ -395,6 +395,9 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         localStorage.setItem('focusflow_pantry', JSON.stringify(state.pantry));
         localStorage.setItem('focusflow_shopping_list', JSON.stringify(state.shoppingList || []));
         localStorage.setItem('focusflow_weekly_meal_plan', JSON.stringify(state.weeklyMealPlan || {}));
+        localStorage.setItem('focusflow_meal_plan_weeks', JSON.stringify(state.mealPlanWeeks || {}));
+        localStorage.setItem('focusflow_active_meal_plan_week', state.activeMealPlanWeek || 'thisWeek');
+        localStorage.setItem('focusflow_dinner_fed_days', JSON.stringify(state.dinnerGlanceFedDays || []));
         localStorage.setItem('focusflow_apple_health_data', JSON.stringify(state.appleHealthData));
         localStorage.setItem('focusflow_scaffold_stages', JSON.stringify(state.scaffoldStages));
         localStorage.setItem('focusflow_connected_calendars', JSON.stringify(state.connectedCalendars || []));
@@ -725,6 +728,24 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
         if (savedPantry !== null) {
           const parsed = JSON.parse(savedPantry);
           if (Array.isArray(parsed)) state.pantry = parsed;
+        }
+      } catch (e) {}
+
+      // 8b. Meal Plan Weeks (This Week vs Next Week)
+      try {
+        const savedWeeks = localStorage.getItem('focusflow_meal_plan_weeks');
+        if (savedWeeks) {
+          const parsed = JSON.parse(savedWeeks);
+          if (parsed && parsed.thisWeek && parsed.nextWeek) state.mealPlanWeeks = parsed;
+        }
+        const savedActiveWeek = localStorage.getItem('focusflow_active_meal_plan_week');
+        if (savedActiveWeek === 'thisWeek' || savedActiveWeek === 'nextWeek') {
+          state.activeMealPlanWeek = savedActiveWeek;
+        }
+        const savedFed = localStorage.getItem('focusflow_dinner_fed_days');
+        if (savedFed) {
+          const parsedFed = JSON.parse(savedFed);
+          if (Array.isArray(parsedFed)) state.dinnerGlanceFedDays = parsedFed;
         }
       } catch (e) {}
 

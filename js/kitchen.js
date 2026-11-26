@@ -384,277 +384,536 @@
     }
 
     // ==============================================
-    // WEEKLY MEAL PLANNER ENGINE ("WHAT TO MAKE")
+    // ZERO-PREDICTION MEAL PLANNER ("THIS WEEK" vs "NEXT WEEK")
     // ==============================================
-    const WEEK_DAYS = [
-      { key: 'monday', label: 'Monday', short: 'Mon' },
-      { key: 'tuesday', label: 'Tuesday', short: 'Tue' },
-      { key: 'wednesday', label: 'Wednesday', short: 'Wed' },
-      { key: 'thursday', label: 'Thursday', short: 'Thu' },
-      { key: 'friday', label: 'Friday', short: 'Fri' },
-      { key: 'saturday', label: 'Saturday', short: 'Sat' },
-      { key: 'sunday', label: 'Sunday', short: 'Sun' }
+    const MEAL_PLAN_SECTIONS = [
+      { key: 'breakfast', label: 'Breakfast', icon: '🌅', colorClass: 'text-pastel-butter', borderClass: 'border-pastel-butter/30' },
+      { key: 'lunch', label: 'Lunch', icon: '🥪', colorClass: 'text-pastel-sky', borderClass: 'border-pastel-sky/30' },
+      { key: 'dinner', label: 'Dinner', icon: '🍲', colorClass: 'text-pastel-coral', borderClass: 'border-pastel-coral/30' },
+      { key: 'snacks', label: 'Snacks', icon: '🍎', colorClass: 'text-pastel-mint', borderClass: 'border-pastel-mint/30' }
     ];
 
-    const MEAL_SLOTS = [
-      { type: 'breakfast', label: 'Breakfast', icon: '🌅', color: 'text-pastel-butter' },
-      { type: 'lunch', label: 'Lunch', icon: '🥪', color: 'text-pastel-sky' },
-      { type: 'dinner', label: 'Dinner', icon: '🍲', color: 'text-pastel-coral' },
-      { type: 'snack', label: 'Snack / Prep', icon: '🍎', color: 'text-pastel-mint' }
+    const ROUGH_WEEK_DAYS = [
+      { key: 'mon', label: 'Mon' },
+      { key: 'tue', label: 'Tue' },
+      { key: 'wed', label: 'Wed' },
+      { key: 'thu', label: 'Thu' },
+      { key: 'fri', label: 'Fri' },
+      { key: 'sat', label: 'Sat' },
+      { key: 'sun', label: 'Sun' }
     ];
 
-    function renderWeeklyMealPlan() {
-      const grid = document.getElementById('weekly-meal-planner-grid');
-      if (!grid) return;
-      grid.innerHTML = '';
+    const expandedMealPlanCardIds = new Set();
+    let openMealSectionAddForm = null;
+    let roughWeekGlanceOpen = false;
+    let mealPlannerSwipeBound = false;
 
-      if (!state.weeklyMealPlan) {
-        state.weeklyMealPlan = {
-          monday: { breakfast: '', lunch: '', dinner: '', snack: '' },
-          tuesday: { breakfast: '', lunch: '', dinner: '', snack: '' },
-          wednesday: { breakfast: '', lunch: '', dinner: '', snack: '' },
-          thursday: { breakfast: '', lunch: '', dinner: '', snack: '' },
-          friday: { breakfast: '', lunch: '', dinner: '', snack: '' },
-          saturday: { breakfast: '', lunch: '', dinner: '', snack: '' },
-          sunday: { breakfast: '', lunch: '', dinner: '', snack: '' }
-        };
+    function ensureMealPlanWeeks() {
+      if (!state.activeMealPlanWeek || (state.activeMealPlanWeek !== 'thisWeek' && state.activeMealPlanWeek !== 'nextWeek')) {
+        state.activeMealPlanWeek = 'thisWeek';
       }
-
-      const pantryNames = (state.pantry || []).map(p => (p.name || '').toLowerCase());
-      const recipes = state.recipes || [];
-
-      WEEK_DAYS.forEach(day => {
-        const dayPlan = state.weeklyMealPlan[day.key] || {};
-        const col = document.createElement('div');
-        col.className = "bg-dark-surface border border-dark-border rounded-2xl p-3.5 space-y-3 flex flex-col justify-between shadow-md";
-
-        let slotsHtml = '';
-        MEAL_SLOTS.forEach(slot => {
-          const val = dayPlan[slot.type] || '';
-          const recipeObj = recipes.find(r => r.id === val || r.title === val);
-          const mealTitle = recipeObj ? recipeObj.title : val;
-
-          let ingredientCheckHtml = '';
-          let hasMissing = false;
-
-          if (recipeObj && Array.isArray(recipeObj.ingredients)) {
-            const inStock = [];
-            const missing = [];
-
-            recipeObj.ingredients.forEach(rawIng => {
-              const cleanIng = rawIng.toLowerCase()
-                .replace(/^[0-9\/.\s]+(cup|tbsp|tsp|can|clove|slice|handful|scoop|oz|lb|g|ml)s?\s+/i, '')
-                .trim();
-              const found = pantryNames.some(pn => pn.includes(cleanIng) || cleanIng.includes(pn));
-              if (found) inStock.push(cleanIng);
-              else missing.push(cleanIng);
-            });
-
-            if (missing.length > 0) hasMissing = true;
-
-            ingredientCheckHtml = `
-              <div class="pt-1.5 border-t border-dark-border/60 text-[10px] space-y-1">
-                <div class="flex items-center justify-between text-slate-400">
-                  <span class="text-emerald-400 font-semibold">✓ ${inStock.length} in pantry</span>
-                  <span class="${missing.length > 0 ? 'text-rose-400 font-bold' : 'text-slate-500'}">! ${missing.length} missing</span>
-                </div>
-                ${missing.length > 0 ? `
-                  <button type="button" onclick="addMissingIngredientsFromMeal('${day.key}', '${slot.type}')" class="w-full py-1 px-1.5 rounded-lg bg-pastel-coral/20 hover:bg-pastel-coral/30 border border-pastel-coral/40 text-pastel-coral font-bold text-[9.5px] flex items-center justify-center gap-1 transition">
-                    <span>🛒 + Add ${missing.length} to Shopping</span>
-                  </button>
-                ` : '<span class="text-[9px] text-emerald-300 block text-center font-medium">✓ Ready to cook!</span>'}
-              </div>
-            `;
+      if (!state.mealPlanWeeks || typeof state.mealPlanWeeks !== 'object') {
+        state.mealPlanWeeks = {};
+      }
+      ['thisWeek', 'nextWeek'].forEach(wk => {
+        if (!state.mealPlanWeeks[wk] || typeof state.mealPlanWeeks[wk] !== 'object') {
+          state.mealPlanWeeks[wk] = { breakfast: [], lunch: [], dinner: [], snacks: [] };
+        }
+        MEAL_PLAN_SECTIONS.forEach(sec => {
+          if (!Array.isArray(state.mealPlanWeeks[wk][sec.key])) {
+            state.mealPlanWeeks[wk][sec.key] = [];
           }
-
-          slotsHtml += `
-            <div class="p-2.5 rounded-xl bg-dark-base border border-dark-border/70 space-y-1.5 text-xs">
-              <div class="flex items-center justify-between">
-                <span class="text-[10px] font-bold uppercase tracking-wider ${slot.color} flex items-center gap-1">
-                  <span>${slot.icon}</span>
-                  <span>${slot.label}</span>
-                </span>
-                ${val ? `
-                  <button type="button" onclick="clearMealPlanSlot('${day.key}', '${slot.type}')" class="text-slate-500 hover:text-rose-400 text-xs p-0.5" title="Remove meal">✕</button>
-                ` : ''}
-              </div>
-
-              ${val ? `
-                <div>
-                  <span class="text-slate-200 font-bold block text-[11px] leading-tight">${mealTitle}</span>
-                  ${recipeObj ? `<span class="text-[9.5px] text-pastel-coral font-mono">${recipeObj.cookTime}m • ${recipeObj.kcal} kcal</span>` : ''}
-                </div>
-                ${ingredientCheckHtml}
-              ` : `
-                <div class="pt-1">
-                  <select onchange="setMealPlanSlot('${day.key}', '${slot.type}', this.value)" class="w-full bg-dark-elevated border border-dark-border rounded-lg px-2 py-1 text-[11px] text-slate-300 focus:outline-none focus:border-pastel-sky">
-                    <option value="">+ Choose meal...</option>
-                    <optgroup label="Codex Recipes">
-                      ${recipes.map(r => `<option value="${r.id}">${r.title}</option>`).join('')}
-                    </optgroup>
-                    <optgroup label="Quick Ideas">
-                      <option value="Custom: Scrambled Eggs & Toast">Eggs & Toast</option>
-                      <option value="Custom: Chicken Rice Bowl">Chicken Rice Bowl</option>
-                      <option value="Custom: Protein Oatmeal & Berries">Protein Oatmeal</option>
-                      <option value="Custom: Leftovers / Dining Out">Leftovers</option>
-                    </optgroup>
-                  </select>
-                </div>
-              `}
-            </div>
-          `;
         });
-
-        col.innerHTML = `
-          <div class="border-b border-dark-border pb-2 flex items-center justify-between">
-            <span class="font-bold text-white text-xs sm:text-sm">${day.label}</span>
-            <span class="text-[10px] uppercase font-bold text-pastel-butter font-mono">${day.short}</span>
-          </div>
-          <div class="space-y-2 flex-1">
-            ${slotsHtml}
-          </div>
-        `;
-        grid.appendChild(col);
       });
-
-      if (window.lucide) lucide.createIcons();
+      if (!Array.isArray(state.dinnerGlanceFedDays)) {
+        state.dinnerGlanceFedDays = [];
+      }
     }
 
-    function setMealPlanSlot(dayKey, mealType, val) {
-      if (!val) return;
-      if (!state.weeklyMealPlan) state.weeklyMealPlan = {};
-      if (!state.weeklyMealPlan[dayKey]) state.weeklyMealPlan[dayKey] = {};
-      state.weeklyMealPlan[dayKey][mealType] = val;
+    function cleanIngredientLabel(rawIng) {
+      return (rawIng || '')
+        .toLowerCase()
+        .replace(/^[0-9\/.\s]+(cup|tbsp|tsp|can|clove|slice|handful|scoop|oz|lb|g|ml)s?\s+/i, '')
+        .trim();
+    }
+
+    function getIngredientPantryMatch(ingredientText) {
+      const cleanIng = cleanIngredientLabel(ingredientText);
+      if (!cleanIng) return { matchedItem: null, stockStatus: 'missing' };
+
+      const matchedItem = (state.pantry || []).find(p => {
+        const pn = (p.genericName || p.name || '').toLowerCase().trim();
+        const rawPn = (p.name || '').toLowerCase().trim();
+        return (pn && (pn.includes(cleanIng) || cleanIng.includes(pn))) ||
+               (rawPn && (rawPn.includes(cleanIng) || cleanIng.includes(rawPn)));
+      }) || null;
+
+      if (!matchedItem) return { matchedItem: null, stockStatus: 'missing' };
+      return { matchedItem, stockStatus: getPantryStockStatus(matchedItem) };
+    }
+
+    function switchMealPlanWeek(weekKey) {
+      if (weekKey !== 'thisWeek' && weekKey !== 'nextWeek') return;
+      state.activeMealPlanWeek = weekKey;
+      openMealSectionAddForm = null;
+      saveAppState();
+      renderWeeklyMealPlan();
+    }
+
+    function promoteNextWeekToThisWeek() {
+      ensureMealPlanWeeks();
+      const nw = state.mealPlanWeeks.nextWeek;
+      state.mealPlanWeeks.thisWeek = {
+        breakfast: nw.breakfast.map(m => ({ ...m, ingredients: [...(m.ingredients || [])] })),
+        lunch: nw.lunch.map(m => ({ ...m, ingredients: [...(m.ingredients || [])] })),
+        dinner: nw.dinner.map(m => ({ ...m, ingredients: [...(m.ingredients || [])] })),
+        snacks: nw.snacks.map(m => ({ ...m, ingredients: [...(m.ingredients || [])] }))
+      };
+      // Carry over Breakfast, Lunch, Snacks, and any Leftovers in Dinner; clear only Next Week's 1-2 cooked dinners
+      state.mealPlanWeeks.nextWeek.dinner = nw.dinner
+        .filter(m => Boolean(m.isLeftovers))
+        .map(m => ({ ...m, ingredients: [...(m.ingredients || [])] }));
+
+      state.activeMealPlanWeek = 'thisWeek';
+      openMealSectionAddForm = null;
+      saveAppState();
+      renderWeeklyMealPlan();
+      playChime('bell');
+      alertBox("Moved Next Week into This Week! Your standing Breakfast, Lunch, Snacks, and Leftovers stayed ready in Next Week.", "New Week Ready");
+    }
+
+    function initMealPlannerSwipe() {
+      if (mealPlannerSwipeBound) return;
+      const container = document.getElementById('meal-planner-4section-view');
+      if (!container) return;
+      mealPlannerSwipeBound = true;
+
+      let startX = 0;
+      let startY = 0;
+      container.addEventListener('touchstart', e => {
+        if (!e.touches || e.touches.length !== 1) return;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+      }, { passive: true });
+
+      container.addEventListener('touchend', e => {
+        if (!e.changedTouches || e.changedTouches.length !== 1) return;
+        const dx = e.changedTouches[0].clientX - startX;
+        const dy = e.changedTouches[0].clientY - startY;
+        if (Math.abs(dx) >= 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+          if (dx < 0 && state.activeMealPlanWeek !== 'nextWeek') switchMealPlanWeek('nextWeek');
+          else if (dx > 0 && state.activeMealPlanWeek !== 'thisWeek') switchMealPlanWeek('thisWeek');
+        }
+      }, { passive: true });
+    }
+
+    function toggleMealPlanCardExpand(section, itemId) {
+      const key = `${section}:${itemId}`;
+      if (expandedMealPlanCardIds.has(key)) expandedMealPlanCardIds.delete(key);
+      else expandedMealPlanCardIds.add(key);
+      renderWeeklyMealPlan();
+    }
+
+    function toggleMealSectionAddForm(section) {
+      openMealSectionAddForm = (openMealSectionAddForm === section) ? null : section;
+      renderWeeklyMealPlan();
+    }
+
+    function addRecipeToMealSection(section, recipeId) {
+      if (!recipeId) return;
+      ensureMealPlanWeeks();
+      const recipe = (state.recipes || []).find(r => r.id === recipeId);
+      if (!recipe) return;
+
+      const week = state.activeMealPlanWeek || 'thisWeek';
+      state.mealPlanWeeks[week][section].push({
+        id: `mp-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        title: recipe.title,
+        recipeId: recipe.id,
+        ingredients: Array.isArray(recipe.ingredients) ? [...recipe.ingredients] : [],
+        isLeftovers: false
+      });
+      openMealSectionAddForm = null;
       saveAppState();
       renderWeeklyMealPlan();
       playChime('bell');
     }
 
-    function clearMealPlanSlot(dayKey, mealType) {
-      if (!state.weeklyMealPlan || !state.weeklyMealPlan[dayKey]) return;
-      state.weeklyMealPlan[dayKey][mealType] = '';
+    function addCustomMealOption(section, isLeftovers = false) {
+      ensureMealPlanWeeks();
+      const week = state.activeMealPlanWeek || 'thisWeek';
+      const titleInput = document.getElementById(`meal-add-title-${section}`);
+      const ingsInput = document.getElementById(`meal-add-ings-${section}`);
+
+      let title = titleInput ? titleInput.value.trim() : '';
+      if (isLeftovers && !title) title = 'Leftovers';
+      if (!title) {
+        alertBox("Type a meal name first (or pick a saved recipe above).", "Meal Name Needed");
+        return;
+      }
+
+      const rawIngs = (!isLeftovers && ingsInput) ? ingsInput.value : '';
+      const ingredients = rawIngs
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      state.mealPlanWeeks[week][section].push({
+        id: `mp-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        title: title,
+        ingredients: ingredients,
+        isLeftovers: Boolean(isLeftovers)
+      });
+
+      openMealSectionAddForm = null;
+      saveAppState();
+      renderWeeklyMealPlan();
+      playChime('bell');
+    }
+
+    function removeMealPlanOption(section, itemId) {
+      ensureMealPlanWeeks();
+      const week = state.activeMealPlanWeek || 'thisWeek';
+      state.mealPlanWeeks[week][section] = (state.mealPlanWeeks[week][section] || []).filter(m => m.id !== itemId);
+      expandedMealPlanCardIds.delete(`${section}:${itemId}`);
       saveAppState();
       renderWeeklyMealPlan();
     }
 
-    function addMissingIngredientsFromMeal(dayKey, mealType) {
-      const val = state.weeklyMealPlan && state.weeklyMealPlan[dayKey] && state.weeklyMealPlan[dayKey][mealType];
-      if (!val) return;
-      const recipes = state.recipes || [];
-      const recipe = recipes.find(r => r.id === val || r.title === val);
-      if (!recipe || !Array.isArray(recipe.ingredients)) return;
+    function markPantryLeftoverOut(pantryId) {
+      const item = (state.pantry || []).find(p => p.id === pantryId);
+      if (!item) return;
+      item.stockStatus = 'out';
+      item.amount = 0;
+      item.useMeFirst = false;
+      saveAppState();
+      renderPantry();
+      renderWeeklyMealPlan();
+    }
 
-      const pantryNames = (state.pantry || []).map(p => (p.name || '').toLowerCase());
+    function cycleMealPlanPantryStatus(pantryId) {
+      cyclePantryStockStatus(pantryId);
+      renderWeeklyMealPlan();
+    }
+
+    function inferShoppingCategory(cleanIng) {
+      if (/chicken|beef|meat|egg|salmon|fish|protein|yogurt|milk|cheese|tofu|turkey/i.test(cleanIng)) return 'protein';
+      if (/rice|oat|quinoa|bread|pasta|cereal|flour|tortilla|granola/i.test(cleanIng)) return 'grains';
+      if (/oil|sauce|dressing|condiment|spice|salt|pepper|vinegar|honey|cinnamon|hummus/i.test(cleanIng)) return 'condiments';
+      return 'produce';
+    }
+
+    function pushIngredientToShoppingList(rawIng, sourceLabel) {
       if (!Array.isArray(state.shoppingList)) state.shoppingList = [];
+      const cleanIng = cleanIngredientLabel(rawIng) || (rawIng || '').trim().toLowerCase();
+      if (!cleanIng) return false;
+      const already = state.shoppingList.some(s => (s.name || '').toLowerCase() === cleanIng && !s.checked);
+      if (already) return false;
+
+      state.shoppingList.push({
+        id: `shop-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        name: rawIng,
+        quantity: '1',
+        category: inferShoppingCategory(cleanIng),
+        checked: false,
+        source: sourceLabel || 'Meal Plan'
+      });
+      return true;
+    }
+
+    function addSingleIngredientToShoppingList(encodedName, encodedSource = 'Meal%20Plan') {
+      const rawName = decodeURIComponent(encodedName || '');
+      const sourceLabel = decodeURIComponent(encodedSource || 'Meal%20Plan');
+      if (!rawName) return;
+
+      const added = pushIngredientToShoppingList(rawName, sourceLabel);
+      saveAppState();
+      renderShoppingList();
+      updateShoppingBadges();
+      playChime('bell');
+      alertBox(
+        added ? `Added "${rawName}" to your Shopping List!` : `"${rawName}" is already on your Shopping List.`,
+        added ? "Added to Shopping" : "Already on List"
+      );
+    }
+
+    function addMissingFromMealOption(section, itemId) {
+      ensureMealPlanWeeks();
+      const week = state.activeMealPlanWeek || 'thisWeek';
+      const meal = (state.mealPlanWeeks[week][section] || []).find(m => m.id === itemId);
+      if (!meal || !Array.isArray(meal.ingredients)) return;
 
       let addedCount = 0;
-      recipe.ingredients.forEach(rawIng => {
-        const cleanIng = rawIng.toLowerCase()
-          .replace(/^[0-9\/.\s]+(cup|tbsp|tsp|can|clove|slice|handful|scoop|oz|lb|g|ml)s?\s+/i, '')
-          .trim();
-        const inPantry = pantryNames.some(pn => pn.includes(cleanIng) || cleanIng.includes(pn));
-        if (!inPantry) {
-          const alreadyInList = state.shoppingList.some(s => s.name.toLowerCase() === cleanIng && !s.checked);
-          if (!alreadyInList) {
-            let cat = 'produce';
-            if (/chicken|beef|meat|egg|salmon|fish|protein|yogurt|milk|cheese|tofu/i.test(cleanIng)) cat = 'protein';
-            else if (/rice|oat|quinoa|bread|pasta|cereal|flour/i.test(cleanIng)) cat = 'grains';
-            else if (/oil|sauce|dressing|condiment|spice|salt|pepper|vinegar|honey/i.test(cleanIng)) cat = 'condiments';
-
-            state.shoppingList.push({
-              id: `shop-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-              name: rawIng,
-              quantity: '1',
-              category: cat,
-              checked: false,
-              source: `Meal Plan (${recipe.title})`
-            });
-            addedCount++;
-          }
+      meal.ingredients.forEach(ing => {
+        const { stockStatus } = getIngredientPantryMatch(ing);
+        if (stockStatus === 'low' || stockStatus === 'out' || stockStatus === 'missing') {
+          if (pushIngredientToShoppingList(ing, meal.title)) addedCount++;
         }
       });
 
       saveAppState();
-      renderWeeklyMealPlan();
       renderShoppingList();
       updateShoppingBadges();
       playChime('bell');
-      alertBox(`Added ${addedCount} missing ingredients for "${recipe.title}" to your Shopping List!`, "Added to Groceries");
+      alertBox(
+        addedCount > 0
+          ? `Added ${addedCount} needed ingredient${addedCount === 1 ? '' : 's'} for "${meal.title}" to your Shopping List!`
+          : `All ingredients for "${meal.title}" are already stocked or on your list.`,
+        addedCount > 0 ? "Added to Shopping" : "All Set"
+      );
     }
 
-    function addAllMissingMealPlanIngredientsToShoppingList() {
-      const plan = state.weeklyMealPlan || {};
-      const recipes = state.recipes || [];
-      const pantryNames = (state.pantry || []).map(p => (p.name || '').toLowerCase());
-      if (!Array.isArray(state.shoppingList)) state.shoppingList = [];
+    function toggleRoughWeekGlance() {
+      roughWeekGlanceOpen = !roughWeekGlanceOpen;
+      renderWeeklyMealPlan();
+    }
 
-      let addedCount = 0;
-      WEEK_DAYS.forEach(day => {
-        const dayPlan = plan[day.key] || {};
-        MEAL_SLOTS.forEach(slot => {
-          const val = dayPlan[slot.type];
-          if (!val) return;
-          const recipe = recipes.find(r => r.id === val || r.title === val);
-          if (!recipe || !Array.isArray(recipe.ingredients)) return;
-
-          recipe.ingredients.forEach(rawIng => {
-            const cleanIng = rawIng.toLowerCase()
-              .replace(/^[0-9\/.\s]+(cup|tbsp|tsp|can|clove|slice|handful|scoop|oz|lb|g|ml)s?\s+/i, '')
-              .trim();
-            const inPantry = pantryNames.some(pn => pn.includes(cleanIng) || cleanIng.includes(pn));
-            if (!inPantry) {
-              const alreadyInList = state.shoppingList.some(s => s.name.toLowerCase() === cleanIng && !s.checked);
-              if (!alreadyInList) {
-                let cat = 'produce';
-                if (/chicken|beef|meat|egg|salmon|fish|protein|yogurt|milk|cheese|tofu/i.test(cleanIng)) cat = 'protein';
-                else if (/rice|oat|quinoa|bread|pasta|cereal|flour/i.test(cleanIng)) cat = 'grains';
-                else if (/oil|sauce|dressing|condiment|spice|salt|pepper|vinegar|honey/i.test(cleanIng)) cat = 'condiments';
-
-                state.shoppingList.push({
-                  id: `shop-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-                  name: rawIng,
-                  quantity: '1',
-                  category: cat,
-                  checked: false,
-                  source: `Weekly Menu`
-                });
-                addedCount++;
-              }
-            }
-          });
-        });
-      });
-
+    function toggleDinnerFedDay(dayKey) {
+      ensureMealPlanWeeks();
+      const idx = state.dinnerGlanceFedDays.indexOf(dayKey);
+      if (idx >= 0) state.dinnerGlanceFedDays.splice(idx, 1);
+      else state.dinnerGlanceFedDays.push(dayKey);
       saveAppState();
       renderWeeklyMealPlan();
-      renderShoppingList();
-      updateShoppingBadges();
-      playChime('bell');
+    }
 
-      if (addedCount > 0) {
-        alertBox(`Scanned whole week: Added ${addedCount} missing ingredients to your Shopping List!`, "Shopping List Populated");
-        switchKitchenSubTab('shopping');
-      } else {
-        alertBox("All planned meals are fully stocked in your pantry! No missing ingredients found.", "Fully Stocked!");
+    function launchDinnerInReverseChef(section, itemId) {
+      ensureMealPlanWeeks();
+      const week = state.activeMealPlanWeek || 'thisWeek';
+      const meal = (state.mealPlanWeeks[week][section] || []).find(m => m.id === itemId);
+      if (!meal) return;
+
+      if (typeof openReverseChefFromKitchen === 'function') openReverseChefFromKitchen();
+      if (typeof goToReverseChefStep === 'function') goToReverseChefStep(2);
+      if (typeof sendSousChefQuickPrompt === 'function') {
+        const ingText = (meal.ingredients && meal.ingredients.length > 0)
+          ? ` using: ${meal.ingredients.join(', ')}`
+          : '';
+        sendSousChefQuickPrompt(`Guide me step-by-step like a beginner to cook "${meal.title}"${ingText}. Include prep first, plain heat levels, visual doneness cues, and cleanup checkpoints.`);
       }
     }
 
-    function clearWeeklyMealPlan() {
-      if (confirm("Reset the whole week's meal schedule to blank?")) {
-        state.weeklyMealPlan = {
-          monday: { breakfast: '', lunch: '', dinner: '', snack: '' },
-          tuesday: { breakfast: '', lunch: '', dinner: '', snack: '' },
-          wednesday: { breakfast: '', lunch: '', dinner: '', snack: '' },
-          thursday: { breakfast: '', lunch: '', dinner: '', snack: '' },
-          friday: { breakfast: '', lunch: '', dinner: '', snack: '' },
-          saturday: { breakfast: '', lunch: '', dinner: '', snack: '' },
-          sunday: { breakfast: '', lunch: '', dinner: '', snack: '' }
-        };
-        saveAppState();
-        renderWeeklyMealPlan();
-        playChime('bell');
-        alertBox("Weekly meal planner reset to blank.", "Menu Cleared");
+    function renderMealCardHtml(sectionKey, meal, isAutoPantryLeftover = false) {
+      const isExpanded = !meal.isLeftovers && Array.isArray(meal.ingredients) && meal.ingredients.length > 0 && expandedMealPlanCardIds.has(`${sectionKey}:${meal.id}`);
+      const canExpand = !meal.isLeftovers && Array.isArray(meal.ingredients) && meal.ingredients.length > 0;
+
+      let ingStatusCounts = { have: 0, need: 0 };
+      let expandedBodyHtml = '';
+
+      if (canExpand) {
+        const rows = meal.ingredients.map(ing => {
+          const { matchedItem, stockStatus } = getIngredientPantryMatch(ing);
+          const isNeeded = (stockStatus === 'low' || stockStatus === 'out' || stockStatus === 'missing');
+          if (isNeeded) ingStatusCounts.need++;
+          else ingStatusCounts.have++;
+
+          let pillText = 'Need';
+          let pillCls = 'bg-dark-elevated border-dark-border text-slate-400';
+          if (stockStatus === 'have') {
+            pillText = 'Have';
+            pillCls = 'bg-pastel-mint/15 border-pastel-mint/40 text-pastel-mint hover:bg-pastel-mint/25';
+          } else if (stockStatus === 'half') {
+            pillText = 'Half';
+            pillCls = 'bg-pastel-sky/15 border-pastel-sky/40 text-pastel-sky hover:bg-pastel-sky/25';
+          } else if (stockStatus === 'low') {
+            pillText = 'Low';
+            pillCls = 'bg-pastel-butter/15 border-pastel-butter/40 text-pastel-butter hover:bg-pastel-butter/25';
+          } else if (stockStatus === 'out') {
+            pillText = 'Out';
+            pillCls = 'bg-pastel-coral/15 border-pastel-coral/40 text-pastel-coral hover:bg-pastel-coral/25';
+          }
+
+          const pillHtml = matchedItem
+            ? `<button type="button" onclick="event.stopPropagation(); cycleMealPlanPantryStatus('${matchedItem.id}')" class="${pillCls} border font-bold px-2 py-0.5 rounded-lg font-mono text-[10px] transition active:scale-95" title="Tap to update pantry status">${pillText}</button>`
+            : `<span class="${pillCls} border font-bold px-2 py-0.5 rounded-lg font-mono text-[10px]">${pillText}</span>`;
+
+          const shopBtnHtml = isNeeded
+            ? `<button type="button" onclick="event.stopPropagation(); addSingleIngredientToShoppingList('${encodeURIComponent(ing)}', '${encodeURIComponent(meal.title)}')" class="px-2 py-0.5 rounded-lg bg-pastel-sky/15 hover:bg-pastel-sky/25 border border-pastel-sky/40 text-pastel-sky text-[10px] font-bold flex items-center gap-1 transition" title="Add to Shopping List">
+                 <i data-lucide="shopping-cart" class="w-3 h-3"></i>
+                 <span>+ Shop</span>
+               </button>`
+            : '';
+
+          return `
+            <div class="flex items-center justify-between gap-2 py-1.5 px-2 rounded-lg bg-dark-surface/70 border border-dark-border/60 text-[11px]">
+              <span class="text-slate-200 truncate">${ing}</span>
+              <div class="flex items-center gap-1.5 shrink-0">
+                ${shopBtnHtml}
+                ${pillHtml}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        if (isExpanded) {
+          const addMissingBtn = ingStatusCounts.need > 0
+            ? `<button type="button" onclick="event.stopPropagation(); addMissingFromMealOption('${sectionKey}', '${meal.id}')" class="px-2.5 py-1.5 rounded-xl bg-pastel-sky/15 hover:bg-pastel-sky/25 border border-pastel-sky/40 text-pastel-sky font-bold text-[11px] flex items-center gap-1 transition">
+                 <i data-lucide="shopping-cart" class="w-3 h-3"></i>
+                 <span>Add ${ingStatusCounts.need} Needed</span>
+               </button>`
+            : '';
+          const cookNowBtn = sectionKey === 'dinner'
+            ? `<button type="button" onclick="event.stopPropagation(); launchDinnerInReverseChef('${sectionKey}', '${meal.id}')" class="px-2.5 py-1.5 rounded-xl bg-pastel-coral hover:bg-rose-300 text-dark-base font-bold text-[11px] flex items-center gap-1 transition">
+                 <i data-lucide="chef-hat" class="w-3 h-3"></i>
+                 <span>Cook Now</span>
+               </button>`
+            : '';
+
+          expandedBodyHtml = `
+            <div class="pt-2.5 mt-2 border-t border-dark-border/70 space-y-1.5" onclick="event.stopPropagation()">
+              ${rows}
+              ${(addMissingBtn || cookNowBtn) ? `
+                <div class="flex items-center justify-end gap-2 pt-1 flex-wrap">
+                  ${addMissingBtn}
+                  ${cookNowBtn}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }
       }
+
+      const leftoverBadge = meal.isLeftovers
+        ? `<span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold shrink-0">Leftovers</span>`
+        : '';
+
+      const statusSummaryChip = canExpand
+        ? (ingStatusCounts.need > 0
+            ? `<span class="text-[10px] font-mono text-pastel-butter shrink-0">${ingStatusCounts.need} need</span>`
+            : `<span class="text-[10px] font-mono text-pastel-mint shrink-0">ready</span>`)
+        : '';
+
+      const actionRightHtml = isAutoPantryLeftover
+        ? `<button type="button" onclick="event.stopPropagation(); markPantryLeftoverOut('${meal.pantryId}')" class="text-[10px] px-2 py-0.5 rounded-lg bg-dark-elevated hover:bg-rose-950/40 border border-dark-border text-slate-400 hover:text-rose-300 transition shrink-0" title="Mark leftovers finished in Pantry">Mark Out</button>`
+        : `<button type="button" onclick="event.stopPropagation(); removeMealPlanOption('${sectionKey}', '${meal.id}')" class="text-slate-500 hover:text-rose-400 p-0.5 shrink-0" title="Remove meal">
+             <i data-lucide="x" class="w-3.5 h-3.5"></i>
+           </button>`;
+
+      return `
+        <div ${canExpand ? `onclick="toggleMealPlanCardExpand('${sectionKey}', '${meal.id}')"` : ''} class="p-3 rounded-xl bg-dark-base border border-dark-border ${canExpand ? 'hover:border-pastel-mint/40 cursor-pointer' : ''} transition shadow-sm">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0 flex-1">
+              ${canExpand ? `<i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>` : ''}
+              <span class="text-xs font-semibold text-slate-100 truncate">${meal.title}</span>
+              ${leftoverBadge}
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              ${statusSummaryChip}
+              ${actionRightHtml}
+            </div>
+          </div>
+          ${expandedBodyHtml}
+        </div>
+      `;
+    }
+
+    function renderWeeklyMealPlan() {
+      ensureMealPlanWeeks();
+      initMealPlannerSwipe();
+
+      const activeWeek = state.activeMealPlanWeek || 'thisWeek';
+      const btnThis = document.getElementById('btn-mealweek-thisWeek');
+      const btnNext = document.getElementById('btn-mealweek-nextWeek');
+      const subtitleEl = document.getElementById('mealweek-subtitle');
+      const promoteBtn = document.getElementById('btn-promote-next-week');
+
+      const activeTabCls = "px-4 py-2 rounded-xl font-bold bg-pastel-mint text-dark-base shadow-sm transition flex items-center justify-center gap-1.5 whitespace-nowrap";
+      const inactiveTabCls = "px-4 py-2 rounded-xl font-semibold text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5 whitespace-nowrap";
+
+      if (btnThis) btnThis.className = activeWeek === 'thisWeek' ? activeTabCls : inactiveTabCls;
+      if (btnNext) btnNext.className = activeWeek === 'nextWeek' ? activeTabCls : inactiveTabCls;
+      if (subtitleEl) {
+        subtitleEl.textContent = activeWeek === 'thisWeek'
+          ? 'Locked-in meals & leftovers on hand'
+          : 'Flexible ideas for your next grocery trip';
+      }
+      if (promoteBtn) promoteBtn.classList.toggle('hidden', activeWeek !== 'nextWeek');
+
+      const container = document.getElementById('meal-planner-4section-view');
+      if (!container) return;
+
+      const weekData = state.mealPlanWeeks[activeWeek];
+      const recipes = state.recipes || [];
+
+      // Auto-sync Pantry Leftovers (non-Out items with category 'leftovers' or format 'cooked') on This Week
+      const autoLeftovers = activeWeek === 'thisWeek'
+        ? (state.pantry || [])
+            .filter(p => getPantryStockStatus(p) !== 'out' && ((p.category || '').toLowerCase() === 'leftovers' || (p.format || '').toLowerCase() === 'cooked'))
+            .map(p => ({ id: `auto-lo-${p.id}`, pantryId: p.id, title: p.genericName || p.name, ingredients: [], isLeftovers: true }))
+        : [];
+
+      container.innerHTML = MEAL_PLAN_SECTIONS.map(sec => {
+        const manualMeals = weekData[sec.key] || [];
+        const includeLeftovers = (sec.key === 'dinner' || sec.key === 'lunch') ? autoLeftovers : [];
+        const cardsHtml = [
+          ...includeLeftovers.map(m => renderMealCardHtml(sec.key, m, true)),
+          ...manualMeals.map(m => renderMealCardHtml(sec.key, m, false))
+        ].join('');
+
+        const isAddOpen = openMealSectionAddForm === sec.key;
+        const addDrawerHtml = isAddOpen ? `
+          <div class="p-3 rounded-xl bg-dark-base border border-pastel-mint/40 space-y-2 text-xs">
+            <select onchange="addRecipeToMealSection('${sec.key}', this.value)" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-pastel-mint">
+              <option value="">Pick a saved recipe (adds automatically)...</option>
+              ${recipes.map(r => `<option value="${r.id}">${r.title}</option>`).join('')}
+            </select>
+            <div class="flex flex-col gap-1.5 pt-1 border-t border-dark-border/60">
+              <input type="text" id="meal-add-title-${sec.key}" onkeydown="if(event.key==='Enter') addCustomMealOption('${sec.key}')" placeholder="Or type quick meal (e.g. Pumpkin Oatmeal)" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-pastel-mint">
+              <input type="text" id="meal-add-ings-${sec.key}" onkeydown="if(event.key==='Enter') addCustomMealOption('${sec.key}')" placeholder="Optional ingredients (comma-separated)" class="w-full bg-dark-elevated border border-dark-border rounded-xl px-2.5 py-1.5 text-[11px] text-white placeholder:text-slate-500 focus:outline-none focus:border-pastel-mint">
+              <div class="flex items-center justify-end gap-2 pt-0.5">
+                ${sec.key === 'dinner' ? `<button type="button" onclick="addCustomMealOption('${sec.key}', true)" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-semibold text-[11px] transition">+ Leftovers</button>` : ''}
+                <button type="button" onclick="addCustomMealOption('${sec.key}')" class="px-3 py-1.5 rounded-lg bg-pastel-mint hover:bg-emerald-300 text-dark-base font-bold text-[11px] transition">Add</button>
+              </div>
+            </div>
+          </div>
+        ` : '';
+
+        const dinnerExtrasHtml = sec.key === 'dinner' ? `
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-1">
+            <button type="button" onclick="suggestDinnersFromUseMeFirst()" class="px-2.5 py-1.5 rounded-xl bg-pastel-coral/15 hover:bg-pastel-coral/25 border border-pastel-coral/40 text-pastel-coral font-bold text-[11px] flex items-center gap-1.5 transition">
+              <i data-lucide="flame" class="w-3.5 h-3.5 shrink-0"></i>
+              <span>Suggest With Use Me First</span>
+            </button>
+            <button type="button" onclick="toggleRoughWeekGlance()" class="px-2.5 py-1.5 rounded-xl bg-dark-base border border-dark-border text-slate-400 hover:text-white text-[11px] font-semibold flex items-center gap-1 transition">
+              <i data-lucide="${roughWeekGlanceOpen ? 'chevron-down' : 'chevron-right'}" class="w-3 h-3"></i>
+              <span>Rough Week Glance</span>
+            </button>
+          </div>
+          ${roughWeekGlanceOpen ? `
+            <div class="p-2.5 rounded-xl bg-dark-base border border-dark-border/80 space-y-2 text-[11px]">
+              <span class="text-slate-400 block">Tap any nights you already know you are fed (optional — no math required):</span>
+              <div class="grid grid-cols-7 gap-1">
+                ${ROUGH_WEEK_DAYS.map(d => {
+                  const isFed = state.dinnerGlanceFedDays.includes(d.key);
+                  return `<button type="button" onclick="toggleDinnerFedDay('${d.key}')" class="py-1.5 rounded-lg border font-semibold text-[10px] transition ${isFed ? 'bg-pastel-mint/20 border-pastel-mint/50 text-pastel-mint' : 'bg-dark-elevated border-dark-border text-slate-400 hover:text-white'}">${d.label}</button>`;
+                }).join('')}
+              </div>
+            </div>
+          ` : ''}
+        ` : '';
+
+        return `
+          <div class="bg-dark-surface border ${sec.borderClass} rounded-2xl p-4 space-y-3 shadow-md flex flex-col">
+            <div class="flex items-center justify-between border-b border-dark-border pb-2.5">
+              <span class="text-sm font-bold ${sec.colorClass} flex items-center gap-1.5">
+                <span>${sec.icon}</span>
+                <span>${sec.label}</span>
+              </span>
+              <button type="button" onclick="toggleMealSectionAddForm('${sec.key}')" class="px-2.5 py-1 rounded-xl bg-dark-base hover:bg-dark-elevated border border-dark-border text-slate-200 hover:text-pastel-mint font-bold text-[11px] flex items-center gap-1 transition">
+                <i data-lucide="${isAddOpen ? 'x' : 'plus'}" class="w-3.5 h-3.5"></i>
+                <span>${isAddOpen ? 'Close' : 'Add'}</span>
+              </button>
+            </div>
+            ${dinnerExtrasHtml}
+            ${addDrawerHtml}
+            <div class="space-y-2">
+              ${cardsHtml || `<p class="text-[11px] text-slate-500 py-2 text-center">Nothing listed yet — tap + Add anytime.</p>`}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
     }
 
     // [Shopping List Engine moved to js/shopping.js]

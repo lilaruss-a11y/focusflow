@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=143">
+  <link rel="stylesheet" href="css/styles.css?v=145">
   <script>
     function resetViewportZoom() {
       try {
@@ -1089,46 +1089,35 @@
       </div>
 
       <!-- ============================================== -->
-      <!-- SUB-TAB 2: WEEKLY MEAL PLANNER ("WHAT TO MAKE") -->
+      <!-- SUB-TAB 2: THIS WEEK vs NEXT WEEK MEAL PLANNER -->
       <!-- ============================================== -->
-      <div id="kitchen-view-planner" class="hidden space-y-5">
-        <!-- Planner Top Action Bar -->
-        <div class="bg-dark-surface border border-dark-border rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 class="text-base font-bold text-white flex items-center gap-2">
-                <span>Next Week's Menu &amp; Meal Schedule</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full bg-pastel-mint/15 text-pastel-mint border border-pastel-mint/30 font-semibold font-mono">Pantry-Aware</span>
-              </h3>
-              <p class="text-xs text-slate-400 mt-0.5">Plan your daily breakfasts, lunches, and dinners. FocusFlow cross-references each recipe with your actual pantry to highlight missing items.</p>
-            </div>
-            <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-              <button type="button" onclick="addAllMissingMealPlanIngredientsToShoppingList()" class="flex-1 sm:flex-initial px-3 sm:px-4 py-2.5 rounded-xl bg-gradient-to-r from-pastel-mint to-pastel-sky hover:opacity-90 text-dark-base font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-pastel-mint/20 transition active:scale-95">
-                <i data-lucide="shopping-cart" class="w-4 h-4 shrink-0"></i>
-                <span class="hidden sm:inline">Add All Missing Items to Shopping List</span>
-                <span class="sm:hidden">Add Missing to List</span>
+      <div id="kitchen-view-planner" class="hidden space-y-4">
+        <!-- Compact Week Switcher Bar: This Week vs Next Week -->
+        <div class="bg-dark-surface border border-dark-border rounded-2xl p-3 sm:p-4 shadow-lg space-y-2.5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div class="w-full sm:w-auto grid grid-cols-2 items-center p-1 rounded-2xl bg-dark-base border border-dark-border gap-1 text-xs">
+              <button type="button" onclick="switchMealPlanWeek('thisWeek')" id="btn-mealweek-thisWeek" class="px-4 py-2 rounded-xl font-bold bg-pastel-mint text-dark-base shadow-sm transition flex items-center justify-center gap-1.5 whitespace-nowrap">
+                <i data-lucide="calendar-check" class="w-3.5 h-3.5 shrink-0"></i>
+                <span>This Week</span>
               </button>
-              <button type="button" onclick="clearWeeklyMealPlan()" class="px-3 py-2.5 rounded-xl bg-dark-base hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-dark-border text-xs transition" title="Clear Week Plan">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              <button type="button" onclick="switchMealPlanWeek('nextWeek')" id="btn-mealweek-nextWeek" class="px-4 py-2 rounded-xl font-semibold text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5 whitespace-nowrap">
+                <i data-lucide="calendar-plus" class="w-3.5 h-3.5 shrink-0"></i>
+                <span>Next Week</span>
               </button>
             </div>
-          </div>
 
-          <!-- Quick Suggestions Banner -->
-          <div class="p-3 bg-dark-base rounded-xl border border-dark-border flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300">
-            <div class="flex items-center gap-2">
-              <span class="text-base">💡</span>
-              <span><strong>Recipe Codex Ready:</strong> Choose from your saved recipes or write your own meals. Missing ingredients automatically link to your shopping list.</span>
+            <div class="flex items-center justify-between sm:justify-end gap-2">
+              <span id="mealweek-subtitle" class="text-[11px] text-slate-400">Locked-in meals &amp; leftovers on hand</span>
+              <button type="button" id="btn-promote-next-week" onclick="promoteNextWeekToThisWeek()" class="hidden px-3 py-2 rounded-xl bg-gradient-to-r from-pastel-mint to-pastel-sky hover:opacity-90 text-dark-base font-bold text-xs flex items-center gap-1.5 shadow-md transition active:scale-95 shrink-0">
+                <i data-lucide="arrow-left-right" class="w-3.5 h-3.5 shrink-0"></i>
+                <span>Move Next to This Week</span>
+              </button>
             </div>
-            <button type="button" onclick="switchTab('recipes')" class="text-pastel-coral hover:underline font-semibold flex items-center gap-1">
-              <span>Open Recipe Codex</span>
-              <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-            </button>
           </div>
         </div>
 
-        <!-- 7-Day Interactive Meal Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-3.5" id="weekly-meal-planner-grid">
+        <!-- 4-Section Calm Meal Planner (Swipe Left/Right on Mobile) -->
+        <div id="meal-planner-4section-view" class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Populated dynamically via renderWeeklyMealPlan() -->
         </div>
       </div>
@@ -7362,11 +7351,11 @@
   <script src="js/audio.js?v=137"></script>
 
   <!-- Application Logic Modules -->
-  <script src="js/state.js?v=141"></script>
+  <script src="js/state.js?v=145"></script>
   <script src="js/sync.js?v=48"></script>
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
-  <script src="js/kitchen.js?v=144"></script>
+  <script src="js/kitchen.js?v=145"></script>
   <script src="js/recipes.js?v=94"></script>
   <script src="js/shopping.js?v=139"></script>
   <script src="js/chef.js?v=137"></script>
@@ -7375,6 +7364,6 @@
   <script src="js/barcode.js?v=137"></script>
   <script src="js/health.js?v=94"></script>
   <script src="js/biometrics.js?v=94"></script>
-  <script src="js/app.js?v=137"></script>
+  <script src="js/app.js?v=145"></script>
 </body>
 </html>

@@ -2,19 +2,19 @@
 // - The app page (index.html): network-first, falls back to the cached copy when offline.
 // - Libraries from CDNs (Tailwind, Lucide, Firebase SDK, fonts): cache-first.
 // - Google sign-in, Firestore and other API traffic is never touched (always goes to the network).
-const CACHE_VERSION = 'focusflow-v144-hide-pantry-auto-expiring-banner';
+const CACHE_VERSION = 'focusflow-v145-simplified-this-week-next-week-meal-planner';
 const APP_SHELL = [
   './',
   './index.html',
-  './css/styles.css?v=143',
+  './css/styles.css?v=145',
   './data/family-cookbook.js?v=48',
   './data/usda-foods.js?v=138',
   './js/audio.js?v=137',
-  './js/state.js?v=141',
+  './js/state.js?v=145',
   './js/sync.js?v=48',
   './js/timeline.js?v=48',
   './js/calendar-categories.js?v=48',
-  './js/kitchen.js?v=144',
+  './js/kitchen.js?v=145',
   './js/recipes.js?v=94',
   './js/shopping.js?v=139',
   './js/chef.js?v=137',
@@ -23,7 +23,7 @@ const APP_SHELL = [
   './js/barcode.js?v=137',
   './js/health.js?v=94',
   './js/biometrics.js?v=94',
-  './js/app.js?v=137',
+  './js/app.js?v=145',
   './assets/icons/favicon.ico',
   './assets/icons/apple-touch-icon.png',
   './assets/icons/icon-192.png',

@@ -155,6 +155,38 @@
         lunchBackups: ['Apple + Granola Bar', 'Greek Yogurt Bowl', 'Turkey & Cheese Wrap'],
         weeklyDinnerTarget: 2
       },
+      activeMealPlanWeek: 'thisWeek',
+      mealPlanWeeks: {
+        thisWeek: {
+          breakfast: [
+            { id: 'mp-tw-b1', title: 'Daily Fruit Smoothie', ingredients: ['Fruit', 'Kale', 'Greek Yogurt', 'Protein Powder'], isLeftovers: false },
+            { id: 'mp-tw-b2', title: 'Pumpkin Oatmeal', ingredients: ['Rolled Oats', 'Pumpkin Puree', 'Cinnamon', 'Milk'], isLeftovers: false }
+          ],
+          lunch: [
+            { id: 'mp-tw-l1', title: 'Apple & Granola Bar', ingredients: ['Apple', 'Granola Bar'], isLeftovers: false },
+            { id: 'mp-tw-l2', title: 'Greek Yogurt Bowl', ingredients: ['Greek Yogurt', 'Fruit', 'Granola'], isLeftovers: false }
+          ],
+          dinner: [],
+          snacks: [
+            { id: 'mp-tw-s1', title: 'Carrots & Hummus', ingredients: ['Carrots', 'Hummus'], isLeftovers: false },
+            { id: 'mp-tw-s2', title: 'Apple', ingredients: ['Apple'], isLeftovers: false },
+            { id: 'mp-tw-s3', title: 'Granola Bar', ingredients: ['Granola Bar'], isLeftovers: false }
+          ]
+        },
+        nextWeek: {
+          breakfast: [
+            { id: 'mp-nw-b1', title: 'Daily Fruit Smoothie', ingredients: ['Fruit', 'Kale', 'Greek Yogurt', 'Protein Powder'], isLeftovers: false }
+          ],
+          lunch: [
+            { id: 'mp-nw-l1', title: 'Apple & Granola Bar', ingredients: ['Apple', 'Granola Bar'], isLeftovers: false }
+          ],
+          dinner: [],
+          snacks: [
+            { id: 'mp-nw-s1', title: 'Carrots & Hummus', ingredients: ['Carrots', 'Hummus'], isLeftovers: false }
+          ]
+        }
+      },
+      dinnerGlanceFedDays: [],
       pantry: [
         {
           id: 'p-1',

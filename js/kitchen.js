@@ -99,13 +99,15 @@
       const gridFormat = document.getElementById('pantry-grid-format');
       const panelMulti = document.getElementById('pantry-multifilter-panel');
 
-      const activeBtnClass = "px-3 py-1.5 rounded-xl font-bold bg-pastel-mint text-dark-base shadow-sm transition flex items-center gap-1.5 text-xs";
-      const inactiveBtnClass = "px-3 py-1.5 rounded-xl font-semibold text-slate-300 hover:text-white transition flex items-center gap-1.5 text-xs";
+      const activeBtnClass = "flex-1 sm:flex-initial justify-center whitespace-nowrap min-w-0 px-2 sm:px-3 py-1.5 rounded-xl font-bold bg-pastel-mint text-dark-base shadow-sm transition flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs";
+      const inactiveBtnClass = "flex-1 sm:flex-initial justify-center whitespace-nowrap min-w-0 px-2 sm:px-3 py-1.5 rounded-xl font-semibold text-slate-300 hover:text-white transition flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs";
+      const multiActiveClass = "px-2.5 py-1 rounded-lg font-bold bg-pastel-mint text-dark-base shadow-sm transition whitespace-nowrap flex items-center gap-1.5 text-xs";
+      const multiInactiveClass = "px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white transition whitespace-nowrap flex items-center gap-1.5 text-xs";
 
       if (btnZone) btnZone.className = (mode === 'zone') ? activeBtnClass : inactiveBtnClass;
       if (btnType) btnType.className = (mode === 'type') ? activeBtnClass : inactiveBtnClass;
       if (btnFormat) btnFormat.className = (mode === 'format') ? activeBtnClass : inactiveBtnClass;
-      if (btnMulti) btnMulti.className = (mode === 'multifilter') ? activeBtnClass : inactiveBtnClass;
+      if (btnMulti) btnMulti.className = (mode === 'multifilter') ? multiActiveClass : multiInactiveClass;
 
       if (panelMulti) {
         panelMulti.classList.toggle('hidden', mode !== 'multifilter');

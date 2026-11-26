@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=145">
+  <link rel="stylesheet" href="css/styles.css?v=146">
   <script>
     function resetViewportZoom() {
       try {
@@ -945,18 +945,21 @@
           <div id="pantry-filters-panel" class="hidden space-y-3 pt-2.5 border-t border-dark-border/60 text-xs">
             <!-- Row 1: Grouping Pill + Multi-Filter Bubble + Sort Bubble -->
             <div class="flex items-center justify-between flex-wrap gap-2">
-              <div class="flex flex-wrap items-center gap-1 bg-dark-base p-1 rounded-2xl border border-dark-border">
-                <button type="button" onclick="switchPantryViewGroup('zone')" id="btn-pantry-view-zone" class="px-3 py-1.5 rounded-xl font-bold bg-pastel-mint text-dark-base shadow-sm transition flex items-center gap-1.5 text-xs">
-                  <i data-lucide="home" class="w-3.5 h-3.5"></i>
-                  <span>By Kitchen Zone</span>
+              <div class="flex flex-nowrap items-center gap-1 bg-dark-base p-1 rounded-2xl border border-dark-border w-full sm:w-auto">
+                <button type="button" onclick="switchPantryViewGroup('zone')" id="btn-pantry-view-zone" class="flex-1 sm:flex-initial justify-center whitespace-nowrap min-w-0 px-2 sm:px-3 py-1.5 rounded-xl font-bold bg-pastel-mint text-dark-base shadow-sm transition flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs">
+                  <i data-lucide="home" class="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0"></i>
+                  <span class="hidden sm:inline">By Kitchen Zone</span>
+                  <span class="sm:hidden">Zone</span>
                 </button>
-                <button type="button" onclick="switchPantryViewGroup('type')" id="btn-pantry-view-type" class="px-3 py-1.5 rounded-xl font-semibold text-slate-300 hover:text-white transition flex items-center gap-1.5 text-xs">
-                  <i data-lucide="utensils" class="w-3.5 h-3.5"></i>
-                  <span>By Food Type</span>
+                <button type="button" onclick="switchPantryViewGroup('type')" id="btn-pantry-view-type" class="flex-1 sm:flex-initial justify-center whitespace-nowrap min-w-0 px-2 sm:px-3 py-1.5 rounded-xl font-semibold text-slate-300 hover:text-white transition flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs">
+                  <i data-lucide="utensils" class="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0"></i>
+                  <span class="hidden sm:inline">By Food Type</span>
+                  <span class="sm:hidden">Food Type</span>
                 </button>
-                <button type="button" onclick="switchPantryViewGroup('format')" id="btn-pantry-view-format" class="px-3 py-1.5 rounded-xl font-semibold text-slate-300 hover:text-white transition flex items-center gap-1.5 text-xs">
-                  <i data-lucide="layers" class="w-3.5 h-3.5"></i>
-                  <span>By Format</span>
+                <button type="button" onclick="switchPantryViewGroup('format')" id="btn-pantry-view-format" class="flex-1 sm:flex-initial justify-center whitespace-nowrap min-w-0 px-2 sm:px-3 py-1.5 rounded-xl font-semibold text-slate-300 hover:text-white transition flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs">
+                  <i data-lucide="layers" class="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0"></i>
+                  <span class="hidden sm:inline">By Format</span>
+                  <span class="sm:hidden">Format</span>
                 </button>
               </div>
 
@@ -7355,7 +7358,7 @@
   <script src="js/sync.js?v=48"></script>
   <script src="js/timeline.js?v=48"></script>
   <script src="js/calendar-categories.js?v=48"></script>
-  <script src="js/kitchen.js?v=145"></script>
+  <script src="js/kitchen.js?v=146"></script>
   <script src="js/recipes.js?v=94"></script>
   <script src="js/shopping.js?v=139"></script>
   <script src="js/chef.js?v=137"></script>

@@ -976,7 +976,7 @@ Goal: Please inspect index.html, index the codebase, and suggest next upgrades (
       state.ocdSettings.completedSurfsCount = (state.ocdSettings.completedSurfsCount || 0) + 1;
       saveAppState();
       renderOcdSupportUI();
-      playChime('bell');
+      playChime('timer');
       alertBox("🌊 You rode the wave! You allowed discomfort without giving in to the compulsion. Your brain grew stronger.", "Urge Surfed Successfully");
     }
 

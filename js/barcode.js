@@ -283,7 +283,7 @@
       if (window.lucide) lucide.createIcons();
 
       if (typeof playChime === 'function') {
-        try { playChime('bell'); } catch (e) {}
+        try { playChime('scan'); } catch (e) {}
       }
 
       const input = document.getElementById('barcode-manual-input');

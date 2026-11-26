@@ -808,7 +808,7 @@ Return ONLY valid JSON matching this schema:
           updateCookingTimerDisplay();
         } else {
           pauseCookingStepTimer();
-          playChime('bell');
+          playChime('timer');
           alertBox("Step timer complete! Advance to next step.", "Step Finished");
         }
       }, 1000);

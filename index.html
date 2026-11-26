@@ -49,7 +49,7 @@
     }
   </script>
   <!-- FocusFlow Custom Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=142">
+  <link rel="stylesheet" href="css/styles.css?v=143">
   <script>
     function resetViewportZoom() {
       try {
@@ -861,26 +861,24 @@
     <div id="view-kitchen" class="hidden space-y-5">
       <!-- Condensed Kitchen Header: 4 Action Buttons + 3-Section Switcher -->
       <div class="bg-dark-surface/90 border border-dark-border rounded-2xl p-3 sm:p-4 shadow-xl space-y-2.5">
-        <!-- Global Action Buttons Suite + Expandable Search -->
-        <div class="flex items-center justify-between sm:justify-start gap-1.5 sm:gap-2 flex-wrap">
-          <button type="button" onclick="openReverseChefFromKitchen()" class="h-9 px-3 rounded-xl bg-gradient-to-r from-pastel-coral to-pastel-peach hover:opacity-90 text-dark-base font-bold text-xs shadow-md shadow-pastel-coral/20 transition active:scale-95 flex items-center gap-1.5 shrink-0" title="Launch Reverse Chef">
+        <!-- Global Action Buttons Suite + Expandable Search (Even 4-Column Row) -->
+        <div class="grid grid-cols-4 gap-2">
+          <button type="button" onclick="openReverseChefFromKitchen()" class="w-full h-9 px-2 sm:px-3 rounded-xl bg-gradient-to-r from-pastel-coral to-pastel-peach hover:opacity-90 text-dark-base font-bold text-xs shadow-md shadow-pastel-coral/20 transition active:scale-95 flex items-center justify-center gap-1.5 min-w-0" title="Launch Reverse Chef">
             <i data-lucide="chef-hat" class="w-4 h-4 text-dark-base shrink-0"></i>
-            <span class="hidden sm:inline">Reverse Chef</span>
+            <span class="hidden sm:inline truncate">Reverse Chef</span>
           </button>
-          <button type="button" onclick="openWalmartGroceryImportModal()" class="h-9 px-3 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-sky/40 text-pastel-sky font-bold text-xs transition active:scale-95 flex items-center gap-1.5 shrink-0" title="Import groceries or store receipt photo with 1-by-1 approval">
+          <button type="button" onclick="openWalmartGroceryImportModal()" class="w-full h-9 px-2 sm:px-3 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-sky/40 text-pastel-sky font-bold text-xs transition active:scale-95 flex items-center justify-center gap-1.5 min-w-0" title="Import groceries or store receipt photo with 1-by-1 approval">
             <i data-lucide="shopping-cart" class="w-4 h-4 shrink-0"></i>
-            <span class="hidden sm:inline">Grocery Import</span>
+            <span class="hidden sm:inline truncate">Grocery Import</span>
           </button>
-          <button type="button" onclick="openBarcodeScannerModal('pantry')" class="h-9 px-3 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender font-bold text-xs transition active:scale-95 flex items-center gap-1.5 shrink-0" title="Scan Barcode or package photos into Pantry">
+          <button type="button" onclick="openBarcodeScannerModal('pantry')" class="w-full h-9 px-2 sm:px-3 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-lavender/40 text-pastel-lavender font-bold text-xs transition active:scale-95 flex items-center justify-center gap-1.5 min-w-0" title="Scan Barcode or package photos into Pantry">
             <i data-lucide="scan-barcode" class="w-4 h-4 shrink-0"></i>
-            <span class="hidden sm:inline">Scan Barcode</span>
+            <span class="hidden sm:inline truncate">Scan Barcode</span>
           </button>
-          <div class="relative shrink-0">
-            <button type="button" onclick="expandKitchenHeaderSearch()" id="btn-kitchen-header-search-expand" class="h-9 px-3 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-mint/40 text-pastel-mint font-bold text-xs transition active:scale-95 flex items-center gap-1.5" title="Search food, recipes or USDA database">
-              <i data-lucide="search" class="w-4 h-4 shrink-0"></i>
-              <span class="hidden md:inline">Search Foods</span>
-            </button>
-          </div>
+          <button type="button" onclick="expandKitchenHeaderSearch()" id="btn-kitchen-header-search-expand" class="w-full h-9 px-2 sm:px-3 rounded-xl bg-dark-elevated hover:bg-slate-700 border border-pastel-mint/40 text-pastel-mint font-bold text-xs transition active:scale-95 flex items-center justify-center gap-1.5 min-w-0" title="Search food, recipes or USDA database">
+            <i data-lucide="search" class="w-4 h-4 shrink-0"></i>
+            <span class="hidden sm:inline truncate">Search Foods</span>
+          </button>
         </div>
 
         <!-- Expanded Full-Width Search Bar Row (Expands when clicked or triggered) -->
@@ -900,7 +898,7 @@
 
         <!-- Section View Switcher: Pantry vs Meal Planner vs Shopping List -->
         <div class="pt-2.5 border-t border-dark-border">
-          <div class="w-full sm:w-auto grid grid-cols-3 sm:inline-flex items-center p-1 rounded-2xl bg-dark-base border border-dark-border gap-1 text-xs">
+          <div class="w-full grid grid-cols-3 items-center p-1 rounded-2xl bg-dark-base border border-dark-border gap-1 text-xs">
             <button type="button" onclick="switchKitchenSubTab('pantry')" id="kitchen-subtab-btn-pantry" class="flex-1 sm:flex-initial whitespace-nowrap min-w-0 px-2 sm:px-3.5 py-2 rounded-xl font-bold bg-pastel-butter text-dark-base transition flex items-center justify-center gap-1 shadow-sm">
               <i data-lucide="package" class="w-4 h-4 shrink-0"></i>
               <span class="hidden sm:inline">Pantry Inventory</span>

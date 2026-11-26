@@ -3708,7 +3708,7 @@
               </div>
               <span onclick="event.stopPropagation(); openNutrientBreakdownForSearchResult(${idx});" class="text-[10px] text-slate-400 hover:text-white font-mono block mt-0.5 hover:underline cursor-pointer" title="Click to view full nutritional & micronutrient breakdown">1 serving = ${srv} (${srvG} g) • <span class="text-pastel-lavender font-bold">${m.kcal} kcal</span> • <span class="text-pastel-coral">P:${m.protein}g</span> <span class="text-pastel-mint">C:${m.carbs}g</span> <span class="text-pastel-butter">F:${m.fat}g</span> <span class="text-[9px] text-pastel-mint ml-1">📊 View facts</span></span>
             </div>
-            <button type="button" onclick="event.stopPropagation(); quickAddSearchResultItem(${idx});" class="w-7 h-7 rounded-lg bg-pastel-mint hover:bg-emerald-300 text-dark-base font-extrabold text-sm flex items-center justify-center shrink-0 shadow-sm transition active:scale-95" title="Quick 1-tap add to current section">
+            <button type="button" onclick="event.stopPropagation(); openVerifyFoodModalBeforeAdding(${idx});" class="w-7 h-7 rounded-lg bg-pastel-mint hover:bg-emerald-300 text-dark-base font-extrabold text-sm flex items-center justify-center shrink-0 shadow-sm transition active:scale-95" title="Verify item and set amount before adding">
               +
             </button>
           `;

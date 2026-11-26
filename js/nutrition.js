@@ -12,7 +12,7 @@
       } else {
         if (pct > 115) return { barClass: 'bg-rose-500', textClass: 'text-rose-400', status: 'too_much' };
         if (pct >= 90) return { barClass: 'bg-emerald-400', textClass: 'text-emerald-300', status: 'correct' };
-        return { barClass: 'bg-slate-500', textClass: 'text-slate-400', status: 'need_more' };
+        return { barClass: 'bg-yellow-200', textClass: 'text-yellow-200', status: 'need_more' };
       }
     }
 

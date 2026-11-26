@@ -3101,7 +3101,7 @@
       const dateExpInput = document.getElementById('pantry-detail-date-exp');
 
       if (nameInput) nameInput.value = item.name || '';
-      if (catSelect) catSelect.value = item.category || 'produce';
+      if (catSelect) catSelect.value = item.category || 'vegetables';
       const amtInput = document.getElementById('pantry-detail-amount');
       if (amtInput) amtInput.value = item.amount != null ? item.amount : 1;
       const amtRemInput = document.getElementById('pantry-detail-amount-remaining');
@@ -4171,7 +4171,7 @@
 
       if (titleEl) titleEl.textContent = m.name;
       if (nameInput) nameInput.value = m.name;
-      if (catSelect) catSelect.value = m.category || 'produce';
+      if (catSelect) catSelect.value = m.category || 'vegetables';
 
       if (badgeEl) {
         badgeEl.textContent = m.isVerified ? "✓ Verified Reference" : "~ Clinical / Recipe Estimate";
